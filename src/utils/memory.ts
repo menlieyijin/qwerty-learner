@@ -135,6 +135,26 @@ export async function getMemoryRecords(): Promise<IMemoryRecord[]> {
   }
 }
 
+/** v8.5：开始页概览（今日新学 / 到期复习 / 已学总数），只读 memoryRecords */
+export async function getLearningSummary(): Promise<{ learned: number; due: number; todayNew: number }> {
+  try {
+    const now = Date.now()
+    const start = new Date()
+    start.setHours(0, 0, 0, 0)
+    const startTs = start.getTime()
+    const records = await db.memoryRecords.toArray()
+    let due = 0
+    let todayNew = 0
+    for (const r of records) {
+      if ((Number(r.due) || 0) <= now) due += 1
+      if ((Number(r.createdAt) || 0) >= startTs) todayNew += 1
+    }
+    return { learned: records.length, due, todayNew }
+  } catch {
+    return { learned: 0, due: 0, todayNew: 0 }
+  }
+}
+
 /** 老版本迁移时可能没有写释义；这里在读取时补齐，保证跨词库复习也能显示简洁释义 */
 let fillingTrans = false
 async function fillMissingTransInRecords(records: IMemoryRecord[]): Promise<void> {

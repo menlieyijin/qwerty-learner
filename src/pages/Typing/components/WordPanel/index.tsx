@@ -8,8 +8,9 @@ import WordComponent from './components/Word'
 import { usePrefetchPronunciationSound } from '@/hooks/usePronunciation'
 import { isReviewModeAtom, isShowPrevAndNextWordAtom, loopWordConfigAtom, phoneticConfigAtom, reviewModeInfoAtom } from '@/store'
 import type { Word, WordWithIndex } from '@/typings'
+import { getLearningSummary } from '@/utils/memory'
 import { useAtomValue, useSetAtom } from 'jotai'
-import { useCallback, useContext, useMemo, useState } from 'react'
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { useHotkeys } from 'react-hotkeys-hook'
 
 export default function WordPanel({
@@ -26,9 +27,23 @@ export default function WordPanel({
   const { times: loopWordTimes } = useAtomValue(loopWordConfigAtom)
   const currentWord = state.chapterData.words[state.chapterData.index]
   const nextWord = state.chapterData.words[state.chapterData.index + 1] as Word | undefined
+  // v8.5：开始/暂停页概览（今日新学、到期复习、累计）
+  const [summary, setSummary] = useState<{ learned: number; due: number; todayNew: number } | null>(null)
 
   const setReviewModeInfo = useSetAtom(reviewModeInfoAtom)
   const isReviewMode = useAtomValue(isReviewModeAtom)
+
+  useEffect(() => {
+    let cancelled = false
+    getLearningSummary()
+      .then((s) => {
+        if (!cancelled) setSummary(s)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [state.chapterData.index, state.isTyping])
 
   const prevIndex = useMemo(() => {
     const newIndex = state.chapterData.index - 1
@@ -187,10 +202,15 @@ export default function WordPanel({
           <div className="relative flex w-full justify-center">
             {!state.isTyping && (
               <div className="absolute flex h-full w-full justify-center">
-                <div className="z-10 flex w-full items-center backdrop-blur-sm">
+                <div className="z-10 flex w-full flex-col items-center justify-center backdrop-blur-sm">
                   <p className="w-full select-none text-center text-xl text-gray-600 dark:text-gray-50">
                     按任意键{state.timerData.time ? '继续' : '开始'}
                   </p>
+                  {summary && (
+                    <p className="mt-2 w-full select-none text-center text-xs text-gray-500 dark:text-gray-400">
+                      今日已学 {summary.todayNew} · 到期复习 {summary.due} · 累计 {summary.learned}
+                    </p>
+                  )}
                 </div>
               </div>
             )}

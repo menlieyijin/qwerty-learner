@@ -37,7 +37,15 @@ function Root() {
     const handleResize = () => {
       const isMobile = window.innerWidth <= 600
       if (!isMobile) {
-        window.location.href = '/'
+        // v8.6 修复：官方原代码用 window.location.href = '/'，在 Electron file:// 下会解析成
+        // file:///D:/（盘符根目录），窗口直接白屏且 IndexedDB 被拒。改为 HashRouter 的 hash 导航。
+        try {
+          if (window.location.hash && window.location.hash !== '#/' && window.location.hash !== '#') {
+            window.location.hash = '#/'
+          }
+        } catch {
+          /* ignore */
+        }
       }
       setIsMobile(isMobile)
     }

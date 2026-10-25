@@ -40,7 +40,7 @@
   const nowIso = () => new Date().toISOString();
   function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
 
-  let settings = { version: '1.0.0-enhanced-v8.4', dailyGoal: 30, dailyNewWords: 20, memoryReviewCap: 200, memoryAutoPron: false, theme: 'indigo', panelAppearance: 'auto', dictFavorites: [], dictRecent: {}, fontFamily: 'default', opacity: 1, zoom: 1, pomodoroFocus: 25, pomodoroBreak: 5, keySound: false, keySoundVolume: 0.25, clipboardWatch: false, onlineLookup: true, aiExperimental: false, pronCache: false, closeToTray: true, alwaysOnTop: false, miniMode: false, todayStats: {} };
+  let settings = { version: '1.0.0-enhanced-v8.6', dailyGoal: 30, dailyNewWords: 20, memoryReviewCap: 200, memoryAutoPron: false, theme: 'indigo', panelAppearance: 'auto', dictFavorites: [], dictRecent: {}, fontFamily: 'default', opacity: 1, zoom: 1, pomodoroFocus: 25, pomodoroBreak: 5, keySound: false, keySoundVolume: 0.25, clipboardWatch: false, onlineLookup: true, aiExperimental: false, pronCache: false, closeToTray: true, alwaysOnTop: false, miniMode: false, todayStats: {} };
   let appStats = null; // 缓存统计
   let panelOpen = false;
 
@@ -867,7 +867,7 @@
     <div class="chip" id="qz-chip" title="点击打开增强面板"><span id="qz-chip-text">今日 0/30 · 连续 0 天</span></div>
     <div class="panel" id="qz-panel">
       <div class="ph">
-        <div class="t">增强工具 <small>Qwerty Plus v8.4</small></div>
+        <div class="t">增强工具 <small>Qwerty Plus v8.6</small></div>
         <button class="x" id="qz-close" title="关闭">✕</button>
       </div>
       <div class="tabs">
@@ -1217,7 +1217,7 @@
           <div class="sec">
             <h4>Qwerty Learner Plus</h4>
             <div class="muted">
-              版本：<b>1.0.0-enhanced-v8.4（随机出词 + 艾宾浩斯记忆曲线 + 错词当场重现 + 数据收口 + 错误分类提示；无章节、无每日上限）</b><br>
+              版本：<b>1.0.0-enhanced-v8.6（随机出词 + 艾宾浩斯记忆曲线 + 错词当场重现 + 数据收口 + 错误分类提示；无章节、无每日上限）</b><br>
               基于官方 Qwerty Learner 源码（commit 1182426）自行构建：练习页不再有章节选择，直接按记忆曲线随机出词；官方打字/默写/音标/音效/错题本/数据统计/词库画廊/设置等功能全部保留；v1~v6 的增强功能收纳到顶栏「工具」全屏页。本地魔改由 dsh 完成，不跟随官方更新。
             </div>
           </div>
@@ -3107,7 +3107,7 @@
     refreshReviewBadge().catch(() => {});
     renderStatsToPanel(appStats || { today: TODAY(), words: 0, goal: settings.dailyGoal, streak: 0, ratio: 0, totalWords: 0, wrongWords: [], heat: [], source: 'none' });
     pomoRender();
-    console.log('[QZ-ENHANCE] UI injected, version', settings.version || '1.0.0-enhanced-v8.4');
+    console.log('[QZ-ENHANCE] UI injected, version', settings.version || '1.0.0-enhanced-v8.6');
   }
   init();
 
