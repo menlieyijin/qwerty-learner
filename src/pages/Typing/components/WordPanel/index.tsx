@@ -206,6 +206,15 @@ export default function WordPanel({
                   onMouseLeave={() => handleShowTranslation(false)}
                 />
               )}
+              {currentWord.hint && (
+                <p
+                  className={`mt-1 text-center text-xs font-medium ${
+                    currentWord.hint === 'retry' ? 'text-amber-500 dark:text-amber-400' : 'text-sky-500 dark:text-sky-400'
+                  }`}
+                >
+                  {currentWord.hint === 'retry' ? '再练一次' : '随机回顾'}
+                </p>
+              )}
             </div>
           </div>
         )}

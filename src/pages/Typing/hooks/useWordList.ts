@@ -12,12 +12,12 @@ export type UseWordListResult = {
   nextWord: (answered?: Word) => Promise<WordWithIndex | null>
 }
 
-function toIndexWord(word: Word, dict?: string, index = 0): WordWithIndex {
+function toIndexWord(word: Word, dict?: string, index = 0, hint?: Word['hint']): WordWithIndex {
   let trans: string[]
   if (Array.isArray(word.trans)) trans = word.trans.filter((item) => typeof item === 'string')
   else if (word.trans == null) trans = []
   else trans = [String(word.trans)]
-  return { ...word, trans, dict: dict || word.dict, index }
+  return { ...word, trans, dict: dict || word.dict, index, ...(hint ? { hint } : {}) }
 }
 
 /**
@@ -73,7 +73,7 @@ export function useWordList(): UseWordListResult {
         })
         if (cancelled) return
         if (pick) {
-          setWords([toIndexWord(pick.word, pick.dict)])
+          setWords([toIndexWord(pick.word, pick.dict, 0, pick.hint)])
           setLevelInfo(pick.level)
         } else {
           setWords([])
@@ -122,7 +122,7 @@ export function useWordList(): UseWordListResult {
           return null
         }
         setLevelInfo(pick.level)
-        return toIndexWord(pick.word, pick.dict)
+        return toIndexWord(pick.word, pick.dict, 0, pick.hint)
       } catch (e) {
         console.error('next word failed', e)
         return null

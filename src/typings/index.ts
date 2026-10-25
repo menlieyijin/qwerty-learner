@@ -27,6 +27,8 @@ export type Word = {
   notation?: string
   /** v7 记忆曲线：记录命名空间（自动进阶 auto:<levelId>，手动为词库 id） */
   dict?: string
+  /** v8 出词提示：retry=错词当场重练，review=随机回顾 */
+  hint?: 'retry' | 'review'
 }
 
 export type WordWithIndex = Word & {

@@ -5,6 +5,7 @@ import type { TypingState } from '@/pages/Typing/store/type'
 import { currentChapterAtom, currentDictIdAtom, isReviewModeAtom } from '@/store'
 import { MEMORY_GRADUATE_STAGE, MEMORY_SLOW_MS, clampStage, ladderDays } from '@/utils/memoryLadder'
 import { consumeRefresh } from '@/utils/refreshMarker'
+import { pushWrongWordRequeue } from '@/utils/sessionRequeue'
 import type { Table } from 'dexie'
 import Dexie from 'dexie'
 import { useAtomValue } from 'jotai'
@@ -211,6 +212,14 @@ export function useSaveWordRecord() {
         await updateMemoryProgress(recordDict, word, wrongCount, totalMs, trans, phone)
       } catch (e) {
         console.error('save memory progress failed', e)
+      }
+      // v8 错词当场重现：本次会话内隔几个词再练一次（不影响 memoryRecords 的 10 分钟档）
+      if (Number(wrongCount) > 0) {
+        try {
+          pushWrongWordRequeue(recordDict, word, trans, phone)
+        } catch (e) {
+          console.error('push requeue failed', e)
+        }
       }
       if (dispatch) {
         dbID > 0 && dispatch({ type: TypingStateActionType.ADD_WORD_RECORD_ID, payload: dbID })

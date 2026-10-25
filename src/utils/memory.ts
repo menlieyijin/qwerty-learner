@@ -4,6 +4,7 @@ import { db } from './db'
 import { idDictionaryMap } from '@/resources/dictionary'
 import { LEARNING_PATH, loadDictWords, loadLevelWords } from './learningPath'
 import { markRefresh } from './refreshMarker'
+import { takeRequeueWord } from './sessionRequeue'
 
 export const MEMORY_MIGRATED_KEY = 'memoryMigratedV1'
 
@@ -23,6 +24,8 @@ export type PickResult = {
   dict: string
   level: LevelInfo | null
   refresh: boolean
+  /** v8：retry=会话内错词重练，review=随机回顾 */
+  hint?: 'retry' | 'review'
 }
 
 export function normalizeWordName(name: string): string {
@@ -250,6 +253,13 @@ export async function pickDynamicWord(opts: {
   }
   newWords = newWords.filter((w) => !recentSet.has(normalizeWordName(w.name)))
 
+  // v8 错词当场重现：答错的词隔几个词优先拉回一次，避免只等 10 分钟档而本次练习再也见不到
+  const requeued = takeRequeueWord()
+  if (requeued) {
+    markRefresh(memoryKey(requeued.dict, requeued.word.name))
+    return { word: requeued.word, dict: requeued.dict, level: levelInfo, refresh: true, hint: 'retry' }
+  }
+
   const dueByWord = new Map<string, IMemoryRecord>()
   const refreshRecords: IMemoryRecord[] = []
   for (const rec of opts.records) {
@@ -268,7 +278,7 @@ export async function pickDynamicWord(opts: {
   if (refreshRecords.length > 0 && Math.random() < 0.12) {
     const rec = randOf(refreshRecords)
     markRefresh(rec.key)
-    return { word: recordToWord(rec), dict: rec.dict, level: levelInfo, refresh: true }
+    return { word: recordToWord(rec), dict: rec.dict, level: levelInfo, refresh: true, hint: 'review' }
   }
 
   const newDict = opts.mode === 'auto' ? 'auto:' + (levelInfo?.id || 'level') : opts.manualDict || 'manual'
@@ -284,7 +294,7 @@ export async function pickDynamicWord(opts: {
   if (refreshRecords.length > 0) {
     const rec = randOf(refreshRecords)
     markRefresh(rec.key)
-    return { word: recordToWord(rec), dict: rec.dict, level: levelInfo, refresh: true }
+    return { word: recordToWord(rec), dict: rec.dict, level: levelInfo, refresh: true, hint: 'review' }
   }
   return null
 }
