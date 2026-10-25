@@ -40,7 +40,7 @@
   const nowIso = () => new Date().toISOString();
   function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
 
-  let settings = { version: '1.0.0-enhanced-v8.7', dailyGoal: 30, dailyNewWords: 20, memoryReviewCap: 200, memoryAutoPron: false, theme: 'indigo', panelAppearance: 'auto', dictFavorites: [], dictRecent: {}, fontFamily: 'default', opacity: 1, zoom: 1, pomodoroFocus: 25, pomodoroBreak: 5, keySound: false, keySoundVolume: 0.25, clipboardWatch: false, onlineLookup: true, aiExperimental: false, pronCache: false, closeToTray: true, alwaysOnTop: false, miniMode: false, todayStats: {} };
+  let settings = { version: '1.0.0-enhanced-v8.8', dailyGoal: 30, theme: 'indigo', panelAppearance: 'auto', dictFavorites: [], dictRecent: {}, fontFamily: 'default', opacity: 1, zoom: 1, pomodoroFocus: 25, pomodoroBreak: 5, keySound: false, keySoundVolume: 0.25, clipboardWatch: false, onlineLookup: true, aiExperimental: false, pronCache: false, closeToTray: true, alwaysOnTop: false, miniMode: false, todayStats: {} };
   let appStats = null; // 缓存统计
   let panelOpen = false;
 
@@ -140,202 +140,10 @@
     if (!plusDBPromise) {
       plusDBPromise = idbOpen('QwertyPlusDB', 3, (db) => {
         if (!db.objectStoreNames.contains('dicts')) db.createObjectStore('dicts', { keyPath: 'name' });
-        if (!db.objectStoreNames.contains('practice')) db.createObjectStore('practice', { keyPath: 'id', autoIncrement: true });
-        if (!db.objectStoreNames.contains('notes')) db.createObjectStore('notes', { keyPath: 'id' });
-        if (!db.objectStoreNames.contains('wrongbook')) db.createObjectStore('wrongbook', { keyPath: 'word' });
-        // v3 新增：SRS 复习记录 + 键位统计（升级迁移不会覆盖旧 store 数据）
-        if (!db.objectStoreNames.contains('srs')) db.createObjectStore('srs', { keyPath: 'key' });
-        if (!db.objectStoreNames.contains('keystats')) db.createObjectStore('keystats', { keyPath: 'key' });
+
       }).catch((e) => { console.warn('[QZ] plus db:', e); return null; });
     }
     return plusDBPromise;
-  }
-  function idbGet(db, store, key) {
-    return new Promise((resolve) => {
-      if (!db.objectStoreNames.contains(store)) return resolve(null);
-      try {
-        const req = db.transaction(store, 'readonly').objectStore(store).get(key);
-        req.onsuccess = () => resolve(req.result || null);
-        req.onerror = () => resolve(null);
-      } catch { resolve(null); }
-    });
-  }
-  // ---------- L1：SRS 间隔重复（v6：艾宾浩斯记忆曲线阶梯） ----------
-  const DAY_MS = 24 * 3600 * 1000;
-  const SRS_SLOW_MS = 6000; // 单次作答超过 6s 记为“慢”
-  // 阶梯单位为天：10分钟 / 30分钟 / 12小时 / 1天 / 2天 / 4天 / 7天 / 15天 / 30天 / 60天 / 120天 / 240天
-  const SRS_LADDER = [10 / 1440, 30 / 1440, 0.5, 1, 2, 4, 7, 15, 30, 60, 120, 240];
-  const SRS_LADDER_TEXT = ['10 分钟', '30 分钟', '12 小时', '1 天', '2 天', '4 天', '7 天', '15 天', '30 天', '60 天', '120 天', '240 天'];
-  const SRS_NEW_GRADUATE_STAGE = 3; // 新词首次答对 → 1 天后复习
-  function srsLadderDays(stage) { return SRS_LADDER[clamp(Number(stage) || 0, 0, SRS_LADDER.length - 1)]; }
-  function srsLadderText(stage) { return SRS_LADDER_TEXT[clamp(Number(stage) || 0, 0, SRS_LADDER_TEXT.length - 1)]; }
-  function srsStageFromInterval(days) {
-    const d = Number(days) || 0;
-    let best = 0, bestDiff = Infinity;
-    SRS_LADDER.forEach((x, i) => { const diff = Math.abs(x - d); if (diff < bestDiff) { bestDiff = diff; best = i; } });
-    return best;
-  }
-  function srsKey(dict, word) { return `${String(dict || 'default')}::${String(word || '').toLowerCase()}`; }
-  function calcSrs(prev, ans, now) {
-    const isNew = !prev;
-    const rec = prev ? { ...prev } : {
-      key: srsKey(ans.dict, ans.word), word: ans.word, dict: ans.dict || '', trans: ans.trans || '',
-      interval: 0, ease: 2.5, wrong: 0, slow: 0, attempts: 0, totalMs: 0, lastSeen: 0, due: 0,
-      created: now, createdAt: now, stage: 0, lapses: 0,
-    };
-    if (rec.stage == null) rec.stage = srsStageFromInterval(rec.interval);
-    if (!rec.createdAt) rec.createdAt = Number(rec.created) || 0;
-    rec.word = ans.word;
-    if (ans.dict) rec.dict = ans.dict;
-    if (ans.trans) rec.trans = ans.trans;
-    if (ans.phone) rec.phone = ans.phone;
-    rec.attempts = (rec.attempts || 0) + 1;
-    rec.totalMs = (rec.totalMs || 0) + Math.max(0, Number(ans.elapsed) || 0);
-    rec.lastSeen = now;
-    if (ans.ok) {
-      rec.stage = isNew ? SRS_NEW_GRADUATE_STAGE : clamp((Number(rec.stage) || 0) + 1, 0, SRS_LADDER.length - 1);
-      rec.ease = Math.min(3.0, Math.round(((rec.ease || 2.5) + 0.1) * 100) / 100);
-    } else {
-      rec.stage = 0;
-      rec.wrong = (rec.wrong || 0) + 1;
-      rec.lapses = (rec.lapses || 0) + 1;
-      rec.ease = Math.max(1.3, Math.round(((rec.ease || 2.5) - 0.2) * 100) / 100);
-    }
-    rec.interval = srsLadderDays(rec.stage);
-    rec.due = now + rec.interval * DAY_MS;
-    if ((Number(ans.elapsed) || 0) > SRS_SLOW_MS) rec.slow = (rec.slow || 0) + 1;
-    rec.avgMs = Math.round((rec.totalMs || 0) / rec.attempts);
-    rec.lastResult = ans.ok ? 'ok' : 'wrong';
-    return rec;
-  }
-  async function readSrsAll() {
-    try { const db = await getPlusDB(); return db ? await idbAll(db, 'srs') : []; } catch { return []; }
-  }
-  async function putSrsRecord(rec) {
-    try {
-      const db = await getPlusDB();
-      if (!db || !rec) return false;
-      await idbPut(db, 'srs', rec);
-      return true;
-    } catch (e) { console.warn('[QZ] srs put', e); return false; }
-  }
-  async function saveSrsBatch(answers) {
-    try {
-      const db = await getPlusDB();
-      if (!db) return 0;
-      const now = Date.now();
-      const all = await idbAll(db, 'srs');
-      const map = new Map(all.map((r) => [r.key, r]));
-      for (const a of answers) {
-        const k = srsKey(a.dict, a.word);
-        map.set(k, calcSrs(map.get(k), a, now));
-      }
-      const tx = db.transaction('srs', 'readwrite');
-      const store = tx.objectStore('srs');
-      for (const rec of map.values()) store.put(rec);
-      await new Promise((resolve) => { tx.oncomplete = resolve; tx.onerror = resolve; });
-      return answers.length;
-    } catch (e) { console.warn('[QZ] srs save', e); return 0; }
-  }
-  async function importAppWrongToSrs() {
-    try {
-      const s = await collectStats();
-      const db = await getPlusDB();
-      if (!db) return 0;
-      const all = await idbAll(db, 'srs');
-      const map = new Map(all.map((r) => [r.key, r]));
-      const now = Date.now();
-      let added = 0;
-      for (const w of s.wrongWords || []) {
-        const k = srsKey(w.dict || 'app', w.word);
-        const prev = map.get(k);
-        if (prev) { if (prev.due > now) { prev.due = now; added++; } continue; }
-        map.set(k, {
-          key: k, word: w.word, dict: w.dict || 'app', trans: '', interval: 0, ease: 2.5,
-          wrong: Math.max(1, Number(w.wrongCount) || 1), slow: 0, attempts: 0, totalMs: 0,
-          lastSeen: now, due: now, created: now, avgMs: 0, source: 'app-import',
-        });
-        added++;
-      }
-      const tx = db.transaction('srs', 'readwrite');
-      const store = tx.objectStore('srs');
-      for (const rec of map.values()) store.put(rec);
-      await new Promise((resolve) => { tx.oncomplete = resolve; tx.onerror = resolve; });
-      return added;
-    } catch (e) { console.warn('[QZ] srs import', e); return 0; }
-  }
-  async function readKeyStats() {
-    try { const db = await getPlusDB(); return db ? await idbAll(db, 'keystats') : []; } catch { return []; }
-  }
-  async function saveKeyStats(keyStats) {
-    try {
-      const db = await getPlusDB();
-      if (!db) return;
-      const entries = Object.entries(keyStats || {});
-      if (!entries.length) return;
-      const all = await idbAll(db, 'keystats');
-      const map = new Map(all.map((r) => [r.key, r]));
-      const now = Date.now();
-      for (const [k, rec] of entries) {
-        const prev = map.get(k) || { key: rec.key || k.toUpperCase(), hits: 0, errors: 0, delaySum: 0, delayN: 0, lastTs: 0 };
-        prev.key = rec.key || prev.key || k.toUpperCase();
-        prev.hits += rec.hits || 0;
-        prev.errors += rec.errors || 0;
-        prev.delaySum += rec.delaySum || 0;
-        prev.delayN += rec.delayN || 0;
-        prev.lastTs = now;
-        prev.avgDelay = prev.delayN ? Math.round(prev.delaySum / prev.delayN) : 0;
-        prev.errRate = prev.hits ? Math.round((prev.errors / prev.hits) * 1000) / 10 : 0;
-        map.set(k, prev);
-      }
-      const tx = db.transaction('keystats', 'readwrite');
-      const store = tx.objectStore('keystats');
-      for (const rec of map.values()) store.put(rec);
-      await new Promise((resolve) => { tx.oncomplete = resolve; tx.onerror = resolve; });
-    } catch (e) { console.warn('[QZ] keystats save', e); }
-  }
-  // L2：插件本地错词本（自定义练习答错的词，按词合并计数）
-  async function addWrongWord(word, extra, trans) {
-    try {
-      const db = await getPlusDB();
-      if (!db) return;
-      const w = String(word || '').trim();
-      if (!w) return;
-      await new Promise((resolve) => {
-        try {
-          const tx = db.transaction('wrongbook', 'readwrite');
-          const store = tx.objectStore('wrongbook');
-          const g = store.get(w);
-          g.onsuccess = () => {
-            const prev = g.result || { word: w, count: 0, dicts: [] };
-            store.put({
-              word: w, count: (prev.count || 0) + 1, lastTs: Date.now(),
-              trans: prev.trans || trans || '',
-              dicts: [...new Set([...(prev.dicts || []), extra || ''])].slice(0, 5),
-            });
-          };
-          tx.oncomplete = resolve; tx.onerror = resolve;
-        } catch { resolve(); }
-      });
-    } catch { /* ignore */ }
-  }
-  async function reduceWrongWord(word, trans) {
-    try {
-      const db = await getPlusDB();
-      if (!db) return false;
-      const w = String(word || '').trim();
-      const prev = await idbGet(db, 'wrongbook', w);
-      if (!prev) return false;
-      if ((prev.count || 1) <= 1) { await idbDelete(db, 'wrongbook', w); return true; }
-      prev.count -= 1;
-      prev.lastTs = Date.now();
-      prev.trans = prev.trans || trans || '';
-      await idbPut(db, 'wrongbook', prev);
-      return true;
-    } catch { return false; }
-  }
-  async function readWrongBook() {
-    try { const db = await getPlusDB(); return db ? await idbAll(db, 'wrongbook') : []; } catch { return []; }
   }
 
   // ---------------------------------------------------------------- 统计
@@ -637,7 +445,6 @@
     padding: 5px; border-radius: 6px; cursor: pointer; }
   .ph .x:hover { color: var(--qz-text); background: var(--qz-accent-soft); }
   .tabs { flex-shrink: 0; display: flex; gap: 2px; padding: 0 28px; background: var(--qz-bg); border-bottom: 1px solid var(--qz-border); }
-  .tabs button[data-tab="review"] { display: none !important; }
   .tabs button { position: relative; background: none; border: none; color: var(--qz-muted);
     padding: 9px 8px; font-size: 13px; font-weight: 500; cursor: pointer; border-radius: 0; }
   .tabs button:hover { color: var(--qz-text); }
@@ -713,20 +520,6 @@
     display: flex; flex-direction: column; align-items: center; justify-content: center; }
   .ring .t { font-size: 25px; font-weight: 700; color: var(--qz-text-strong); font-variant-numeric: tabular-nums; }
   .ring .s { margin-top: 2px; font-size: 10.5px; color: var(--qz-muted); }
-  .practice-mask { position: fixed; inset: 0; z-index: 2147483001; display: flex; align-items: center;
-    justify-content: center; background: var(--qz-mask); }
-  .practice-card { width: 620px; max-width: calc(100vw - 40px); padding: 20px; border-radius: 12px;
-    background: var(--qz-bg); color: var(--qz-text); border: 1px solid var(--qz-border); box-shadow: var(--qz-shadow); }
-  .practice-card .w { margin: 16px 0 4px; font-size: 38px; font-weight: 700; text-align: center;
-    color: var(--qz-text-strong); letter-spacing: .5px; word-break: break-all; }
-  .practice-card .tr { min-height: 20px; text-align: center; font-size: 14px; color: var(--qz-muted); }
-  .practice-card .typing { width: 100%; margin-top: 16px; padding: 11px 14px; border-radius: 8px;
-    background: var(--qz-input-bg); border: 1px solid var(--qz-border); color: var(--qz-text);
-    font-size: 22px; text-align: center; outline: none; }
-  .practice-card .typing:focus { border-color: var(--qz-accent); box-shadow: 0 0 0 2px var(--qz-accent-soft); }
-  .practice-card .meta { display: flex; justify-content: space-between; margin-top: 12px; font-size: 12px; color: var(--qz-muted); }
-  .feedback { min-height: 20px; margin-top: 6px; text-align: center; font-size: 13px; }
-  .ok { color: var(--qz-accent); } .bad { color: #ef4444; }
   .toast-wrap { position: fixed; right: 22px; bottom: 130px; display: flex; flex-direction: column; gap: 8px; z-index: 2147483002; }
   .toast { max-width: 340px; padding: 9px 13px; border-radius: 8px; background: var(--qz-bg);
     color: var(--qz-text); border: 1px solid var(--qz-border); font-size: 12.5px; box-shadow: 0 8px 22px rgba(15, 23, 42, .12); }
@@ -778,11 +571,6 @@
     margin-bottom: 5px; background: var(--qz-surface); border: 1px solid var(--qz-border); border-radius: 8px; font-size: 12px; }
   .wb-item .nm { color: var(--qz-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .wb-item .c { flex: 0 0 auto; font-size: 11px; color: var(--qz-muted); }
-  .srs-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 10px;
-    margin-bottom: 5px; background: var(--qz-surface); border: 1px solid var(--qz-border); border-radius: 8px; font-size: 12px; }
-  .srs-item .w { min-width: 120px; font-weight: 600; color: var(--qz-text); }
-  .srs-item .m { font-size: 11px; color: var(--qz-muted); }
-  .srs-item .due { font-size: 10.5px; color: var(--qz-accent); }
   .kb-heat { display: flex; flex-direction: column; gap: 5px; margin-top: 6px; }
   .kb-row { display: flex; gap: 5px; justify-content: center; }
   .kb-key { width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center;
@@ -796,8 +584,6 @@
     margin-bottom: 4px; background: var(--qz-surface); border: 1px solid var(--qz-border); border-radius: 6px; font-size: 11.5px; }
   .list-row .k { color: var(--qz-text); }
   .list-row .v { font-size: 11px; color: var(--qz-muted); }
-  .review-badge { position: absolute; top: -6px; right: -6px; min-width: 15px; height: 15px; line-height: 15px;
-    padding: 0 4px; text-align: center; border-radius: 999px; background: var(--qz-accent); color: #fff; font-size: 9px; }
 
   /* —— v5：词库管理 / 在线更新 / 发音预缓存 —— */
   .dict-toolbar { display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap; align-items:center; }
@@ -821,35 +607,6 @@
   .pc-line { display:flex; justify-content:space-between; gap:8px; font-size:11.5px; color:var(--qz-muted); }
   .pc-fail { max-height:72px; overflow:auto; margin-top:4px; color:#b45309; font-size:10.5px; line-height:1.5; white-space:pre-wrap; }
 
-  /* —— v6：记忆曲线（不按章节，自动出词） —— */
-  .mv-stats { margin-bottom: 10px; }
-  .mv-cta { display: flex; gap: 8px; flex-wrap: wrap; }
-  .mv-start { flex: 1; min-width: 150px; height: 38px; font-size: 14px; font-weight: 600; }
-  .mv-dictrow { align-items: flex-start; }
-  .mv-badge { display: inline-block; flex: 0 0 auto; padding: 2px 8px; border-radius: 999px;
-    font-size: 10px; line-height: 1.5; border: 1px solid var(--qz-border); color: var(--qz-muted); background: var(--qz-bg); }
-  .mv-badge.new { color: var(--qz-accent); border-color: var(--qz-accent); background: var(--qz-accent-soft); }
-  .mv-badge.review { color: #b45309; border-color: rgba(180, 83, 9, .45); background: rgba(245, 158, 11, .12); }
-  .mv-badge.relearn { color: #ef4444; border-color: rgba(239, 68, 68, .45); background: rgba(239, 68, 68, .1); }
-  .mv-next-item { display: flex; align-items: center; gap: 8px; padding: 6px 9px; margin-bottom: 5px;
-    background: var(--qz-surface); border: 1px solid var(--qz-border); border-radius: 8px; font-size: 12px; }
-  .mv-next-item .nm { flex: 0 0 auto; min-width: 110px; max-width: 44%; font-weight: 600; color: var(--qz-text);
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .mv-next-item .tr { flex: 1; min-width: 0; font-size: 11px; color: var(--qz-muted);
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .mv-next-item .due { flex: 0 0 auto; font-size: 10.5px; color: var(--qz-accent); }
-  .memory-card { width: 680px; }
-  .mcv-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
-  .mcv-title { font-size: 13px; font-weight: 600; color: var(--qz-text-strong); }
-  .mcv-sub { margin-top: 3px; font-size: 11px; color: var(--qz-muted); }
-  .mcv-actions { display: flex; gap: 6px; flex: 0 0 auto; }
-  .mcv-badges { display: flex; align-items: center; justify-content: center; gap: 6px; flex-wrap: wrap; margin-top: 14px; }
-  .mcv-phone { min-height: 18px; margin-top: 4px; text-align: center; font-size: 13px; color: var(--qz-muted); }
-  .mcv-bar { height: 5px; margin: 12px 0 0; background: var(--qz-track); border-radius: 999px; overflow: hidden; }
-  .mcv-bar > i { display: block; height: 100%; width: 0%; background: var(--qz-accent); border-radius: 999px; transition: width .25s; }
-  .mcv-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 10px;
-    font-size: 11.5px; color: var(--qz-muted); flex-wrap: wrap; }
-  .mcv-done-grid { margin-top: 16px; }
 `;
   const styleEl = document.createElement('style');
   styleEl.textContent = PANEL_CSS;
@@ -867,12 +624,11 @@
     <div class="chip" id="qz-chip" title="点击打开增强面板"><span id="qz-chip-text">今日 0/30 · 连续 0 天</span></div>
     <div class="panel" id="qz-panel">
       <div class="ph">
-        <div class="t">增强工具 <small>Qwerty Plus v8.7</small></div>
+        <div class="t">增强工具 <small>Qwerty Plus v8.8</small></div>
         <button class="x" id="qz-close" title="关闭">✕</button>
       </div>
       <div class="tabs">
         <button data-tab="general" class="active">常规</button>
-        <button data-tab="review">记忆曲线</button>
         <button data-tab="data">数据</button>
         <button data-tab="dict">词库</button>
         <button data-tab="tools">工具</button>
@@ -936,69 +692,6 @@
               <span class="kbd">Ctrl+Alt+Q</span> 显示 / 隐藏主窗口 · <span class="kbd">Ctrl+Alt+M</span> 迷你模式<br>
               托盘图标：左键显示/隐藏，右键菜单含进度、备份、退出。
             </div>
-          </div>
-        </div>
-
-        <!-- 记忆曲线（v6：不按章节，自动出词） -->
-        <div class="tabpane" id="tab-review">
-          <div class="hint">不再一章一章学：把「当前词库」整本当词池，按记忆曲线自动决定下一个词。<br>
-            到期复习优先，新词按词库顺序每天补额度；答错会在本组稍后重现，答对间隔逐级拉长（10 分钟 → 1 天 → 4 天 → 15 天 …）。</div>
-          <div class="sec">
-            <h4>今日学习计划</h4>
-            <div class="grid4 mv-stats">
-              <div class="stat"><div class="n" id="mv-new-today">0/20</div><div class="k">今日新学</div></div>
-              <div class="stat"><div class="n" id="mv-due">0</div><div class="k">到期复习</div></div>
-              <div class="stat"><div class="n" id="mv-learned">0</div><div class="k">已学词数</div></div>
-              <div class="stat"><div class="n" id="mv-streak">0</div><div class="k">连续学习(天)</div></div>
-            </div>
-            <div class="mv-cta">
-              <button class="btn primary mv-start" id="btn-review-start">开始记忆曲线</button>
-              <button class="btn ghost" id="btn-memory-due">只复习到期</button>
-              <button class="btn ghost" id="btn-review-refresh">刷新</button>
-            </div>
-            <div class="muted" id="mv-info" style="margin-top:8px"></div>
-          </div>
-          <div class="sec">
-            <h4>词池（整本词库，不区分章节）</h4>
-            <div class="row mv-dictrow">
-              <div class="grow">
-                <div class="lbl" id="mv-dict-name">-</div>
-                <div class="desc" id="mv-dict-meta">-</div>
-                <div class="progress" style="margin-top:8px"><i id="mv-dict-bar" style="width:0%"></i></div>
-              </div>
-              <button class="btn sm ghost" id="btn-mv-godict">换词库</button>
-            </div>
-            <div class="muted" id="mv-dict-note"></div>
-          </div>
-          <div class="sec">
-            <h4>学习设置</h4>
-            <div class="flex" style="margin-bottom:8px;flex-wrap:wrap">
-              <span class="muted">每天新词上限</span>
-              <input class="input" id="mv-newquota" type="number" min="5" max="300" step="5" style="width:90px">
-              <button class="btn sm primary" id="btn-mv-savequota">保存</button>
-              <span class="muted">答错约 <b>4</b> 个词后重现</span>
-            </div>
-            <div class="row"><div class="grow"><div class="lbl">出词时自动发音</div><div class="desc">每次换词自动朗读（有道发音，需联网；可在「工具」页开启发音缓存后离线可用）</div></div>
-              <label class="switch"><input type="checkbox" id="sw-mv-pron"><span class="slider"></span></label></div>
-            <div class="muted">新词按词库顺序推进；已经学过的词不会重复占用新词额度。今日新学是「首次进入记忆曲线」的词数。</div>
-          </div>
-          <div class="sec">
-            <h4>接下来（按记忆曲线自动排队）</h4>
-            <div id="mv-next-list"><div class="muted">加载中…</div></div>
-          </div>
-          <div class="sec">
-            <h4>学习数据</h4>
-            <div class="btns">
-              <button class="btn ghost" id="btn-srs-import">从应用错词导入</button>
-              <button class="btn ghost" id="btn-srs-clear">清空记忆曲线记录</button>
-            </div>
-            <div class="muted" style="margin-top:6px">记录存本机 QwertyPlusDB（srs），与官方练习记录互不影响；清空只重置本面板的记忆曲线计划。</div>
-          </div>
-          <div class="sec">
-            <h4>算法说明（艾宾浩斯记忆曲线）</h4>
-            <div class="muted">间隔阶梯：10 分钟 → 30 分钟 → 12 小时 → 1 天 → 2 天 → 4 天 → 7 天 → 15 天 → 30 天 → 60 天 → 120 天 → 240 天。<br>
-              答对升一级；答错回到阶梯起点（10 分钟），并在本次学习中稍后重现；单次作答 &gt; 6 秒记为慢词。<br>
-              到期词按到期时间优先；新词按词库顺序补齐每日额度；其它词库的到期词也会一起复习，不会漏。</div>
           </div>
         </div>
 
@@ -1122,7 +815,7 @@
           </div>
           <div class="sec">
             <h4>导入自定义词库（B6）</h4>
-            <div class="hint">支持 CSV（word,释义）、JSON（[{"name":"word","trans":"释义"}]）、TXT（每行 单词 或 单词&lt;Tab&gt;释义）。导入后可在本面板"开始练习"。</div>
+            <div class="hint">支持 CSV（word,释义）、JSON（[{"name":"word","trans":"释义"}]）、TXT（每行 单词 或 单词&lt;Tab&gt;释义）。导入后可在「我的自定义词库」点「记忆曲线」进入主练习流程。</div>
             <input type="file" id="file-dict" accept=".csv,.json,.txt" class="input">
             <div class="flex" style="margin-top:8px">
               <input class="input grow" id="in-dict-name" placeholder="词库名称（留空则用文件名）">
@@ -1134,16 +827,7 @@
             <h4>我的自定义词库</h4>
             <div id="dict-list"><div class="muted">暂无，先导入一个词库。</div></div>
           </div>
-          <div class="sec">
-            <h4>练习设置</h4>
-            <div class="flex">
-              <span class="muted">每轮词数</span>
-              <select class="input" id="sel-round" style="width:110px">
-                <option>10</option><option selected>20</option><option>50</option><option value="9999">全部</option>
-              </select>
-              <span class="muted">练习记录会存到插件自己的数据库（不影响应用数据）。</span>
-            </div>
-          </div>
+
         </div>
 
         <!-- 工具 -->
@@ -1217,8 +901,8 @@
           <div class="sec">
             <h4>Qwerty Learner Plus</h4>
             <div class="muted">
-              版本：<b>1.0.0-enhanced-v8.7（随机出词 + 艾宾浩斯记忆曲线 + 错词当场重现 + 数据收口 + 错误分类提示；无章节、无每日上限）</b><br>
-              基于官方 Qwerty Learner 源码（commit 1182426）自行构建：练习页不再有章节选择，直接按记忆曲线随机出词；官方打字/默写/音标/音效/错题本/数据统计/词库画廊/设置等功能全部保留；v1~v6 的增强功能收纳到顶栏「工具」全屏页。本地魔改由 dsh 完成，不跟随官方更新。
+              版本：<b>1.0.0-enhanced-v8.8（随机出词 + 艾宾浩斯记忆曲线 + 错词当场重现 + 数据收口 + 错误分类提示；无章节、无每日上限）</b><br>
+              基于官方 Qwerty Learner 源码（commit 1182426）自行构建：练习页不再有章节选择，直接按记忆曲线随机出词；官方打字/默写/音标/音效/错题本/数据统计/词库画廊/设置等功能全部保留；v1~v6 中仍适用的增强功能收纳到顶栏「工具」全屏页。本地魔改由 dsh 完成，不跟随官方更新。
             </div>
           </div>
           <div class="sec">
@@ -1226,7 +910,7 @@
             <div class="muted">
               A 层：置顶 · 全局快捷键 · 迷你模式 · 托盘 · 开机自启 · 透明度/缩放 · 每日备份 · 错误日志 · 托盘进度<br>
               B 层：每日目标/打卡 · CSV 快速导出 · 统计热力图 · 自定义词库 · 番茄钟 · 主题/字体/键音 · 免费释义/整句翻译 · 剪贴板查词 · 发音缓存<br>
-              v3 学习层：错词本一键重练（答对自动移出）· 键位热力图 + 慢词榜 + 错误键榜<br>
+              数据页：错词 Top 10 · 键位热力图 · 慢词榜 · 错误键榜（只读 RecordDB）<br>
               v7 记忆曲线：当前词库整本作为词池、无章节；到期复习词与未学词随机混排；艾宾浩斯间隔阶梯（10 分钟 → 1 天 → 4 天 → 15 天 …）；答错回到 10 分钟档；一批练完自动续批、无需重新按键；没有每日新词上限，随时背随时退；旧版学习记录自动导入<br>
               v8 复习增强：答错的词在本次练习内隔 3 个词强制再练一次（同一词最多 2 次），答对只刷新记忆、不延长间隔；随机回顾词会标注「随机回顾」，错词重练会标注「再练一次」<br>
               v8.1 数据收口：数据页的错词/键位/慢词/时长统一读官方 RecordDB；新增学习报告（掌握度分布 + 未来 7 天到期）<br>
@@ -1234,6 +918,7 @@
               v8.3 影子调度：按正确率 / ease / 慢词比例并行计算自适应间隔并记录到 memoryRecords（暂不启用，数据页可看对比）<br>
               v8.4 自定义词库进主流程：「工具 → 词库 → 我的自定义词库 → 记忆曲线」即可按记忆曲线练习自己的词表（记录命名空间 custom:名称；官方错题本对自定义词只显示单词与错误次数）<br>
               v8.7 视觉：开始页概览改为 14px、数字加粗、到期数高亮；错误提示 15px；「再练一次 / 随机回顾」改为徽标<br>
+              v8.8 清理：移除旧 v6 记忆曲线/插件练习/键位统计死代码（约 860 行）；面板只保留 常规 / 数据 / 词库 / 工具 / 关于<br>
               v5 词库层：内置 385 词库搜索/收藏/最近/分类 + 设为当前 · GitHub 官方词库在线更新（逐个下载、SHA 比对、可回滚）· 当前词库发音预缓存（美/英音、续传、暂停/继续/取消、失败重试）
             </div>
           </div>
@@ -1246,7 +931,7 @@
               · ECDICT 离线词典为预留功能，当前版本未提供下载；<br>
               · 发音缓存为实验功能，个别网络环境下可能影响发音，可在"常规"页关闭；<br>
               · 迷你模式依靠 CSS 隐藏页面头部，官方页面结构若大改可能失效；<br>
-              · 自定义词库：「记忆曲线」按钮进入主练习流程（记录命名空间 custom:名称），官方错题本/统计对自定义词只显示单词与错误次数，暂无释义；旧「练习」按钮仍为插件独立练习。<br>
+              · 自定义词库：「记忆曲线」按钮进入主练习流程（记录命名空间 custom:名称），官方错题本/统计对自定义词只显示单词与错误次数，暂无释义。<br>
               · v8 数据收口：错词/键位/慢词/时长均只读官方 RecordDB（wordRecords/memoryRecords），旧插件练习数据不再写入也不迁移显示；<br>
               · WPM 与练习时长按按键间隔估算（不含读题停顿），仅供参考；键位延迟为相邻按键的近似间隔。<br>
               · 词库「设为当前」依赖官方“词典切换”弹层的 DOM 自动化；官方改版或弹层结构变化时可能失败，失败会打开官方选择器供手动选择（不会直接改应用未知存储）。<br>
@@ -1265,7 +950,6 @@
         </div>
       </div>
     </div>
-    <div id="qz-practice-root"></div>
     <div id="qz-wordcard-root"></div>
     <div class="qz-tooltip" id="qz-tooltip"></div>
     <div class="toast-wrap" id="qz-toasts"></div>
@@ -1299,13 +983,12 @@
   window.addEventListener('qz-open-enhance', () => { if (!panelOpen) openPanel('general'); });
   $('#qz-close').addEventListener('click', closePanel);
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') { if (handleGlobalEscape()) e.stopPropagation(); }
+    if (e.key === 'Escape' && panelOpen) { closePanel(); e.stopPropagation(); }
   }, true);
 
   function switchTab(name) {
     shadow.querySelectorAll('.tabs button').forEach((b) => b.classList.toggle('active', b.dataset.tab === name));
     shadow.querySelectorAll('.tabpane').forEach((p) => p.classList.toggle('active', p.id === 'tab-' + name));
-    if (name === 'review') refreshReviewUI();
     if (name === 'data') refreshStatsUI();
     if (name === 'dict') { refreshDictManager(); refreshDictUI(); refreshUpdateInfo(); }
     if (name === 'tools') refreshToolsUI();
@@ -1326,7 +1009,7 @@
       } catch (e) { toast('设置失败: ' + (e.message || e)); }
     });
   };
-  const labelOf = (k) => ({ alwaysOnTop: '窗口置顶', miniMode: '迷你模式', closeToTray: '关闭进托盘', autoStart: '开机自启', clipboardWatch: '剪贴板查词', onlineLookup: '在线释义/整句翻译', aiExperimental: 'AI 增强（实验）', pronCache: '发音缓存', keySound: '键音', memoryAutoPron: '自动发音' }[k] || k);
+  const labelOf = (k) => ({ alwaysOnTop: '窗口置顶', miniMode: '迷你模式', closeToTray: '关闭进托盘', autoStart: '开机自启', clipboardWatch: '剪贴板查词', onlineLookup: '在线释义/整句翻译', aiExperimental: 'AI 增强（实验）', pronCache: '发音缓存', keySound: '键音' }[k] || k);
 
   bindToggle('sw-top', 'alwaysOnTop');
   bindToggle('sw-mini', 'miniMode');
@@ -1338,7 +1021,6 @@
   bindToggle('sw-pron', 'pronCache');
   bindToggle('sw-keysound', 'keySound');
   bindToggle('sw-dark', 'darkMode', (v) => applyTheme());
-  bindToggle('sw-mv-pron', 'memoryAutoPron');
 
   $('#rg-opacity').addEventListener('input', () => {
     const v = Number($('#rg-opacity').value);
@@ -1378,7 +1060,6 @@
     set('sw-tray', settings.closeToTray); set('sw-autostart', settings.autoStart);
     set('sw-clip', settings.clipboardWatch); set('sw-online', settings.onlineLookup !== false); set('sw-aiexp', !!settings.aiExperimental);
     set('sw-pron', settings.pronCache); set('sw-keysound', settings.keySound);
-    set('sw-mv-pron', !!settings.memoryAutoPron);
     set('sw-dark', typeof settings.darkMode === 'boolean' ? settings.darkMode : isDark());
     $('#rg-opacity').value = settings.opacity || 1; $('#v-opacity').textContent = Math.round((settings.opacity || 1) * 100) + '%';
     $('#rg-zoom').value = settings.zoom || 1; $('#v-zoom').textContent = Math.round((settings.zoom || 1) * 100) + '%';
@@ -1475,7 +1156,6 @@
       const s = await collectStats(); appStats = s; renderStatsToPanel(s);
       refreshWrongbookUI();
       refreshKeyboardUI();
-      refreshReviewBadge();
       return s;
     } catch (e) { console.warn('[QZ] stats', e); return null; }
   }
@@ -1910,12 +1590,10 @@
       <div class="item">
         <div class="grow"><div class="nm">${esc(d.name)}</div><div class="cnt">${fmtNum((d.words || []).length)} 词 · ${tsText(d.createdAt)}</div></div>
         <button class="btn sm primary" data-memory="${esc(d.name)}">记忆曲线</button>
-        <button class="btn sm" data-practice="${esc(d.name)}">练习</button>
         <button class="btn sm ghost" data-export="${esc(d.name)}">导出</button>
         <button class="btn sm ghost" data-del="${esc(d.name)}">删除</button>
       </div>`).join('');
     box.querySelectorAll('[data-memory]').forEach((b) => b.addEventListener('click', () => startCustomMemory(b.dataset.memory)));
-    box.querySelectorAll('[data-practice]').forEach((b) => b.addEventListener('click', () => startPractice(b.dataset.practice)));
     box.querySelectorAll('[data-export]').forEach((b) => b.addEventListener('click', () => exportDict(b.dataset.export)));
     box.querySelectorAll('[data-del]').forEach((b) => b.addEventListener('click', async () => {
       if (!confirm('确定删除词库「' + b.dataset.del + '」？')) return;
@@ -1972,585 +1650,6 @@
     } catch (e) { toast('导入失败: ' + (e.message || e)); }
   });
 
-  // ---------------------------------------------------------------- 自定义词库练习
-  let practiceState = null;
-  function shuffle(arr) {
-    const a = arr.slice();
-    for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
-    return a;
-  }
-  async function startPractice(name) {
-    const d = dictCache.find((x) => x.name === name);
-    if (!d || !d.words || !d.words.length) return toast('词库为空');
-    const roundSize = Number($('#sel-round').value) || 20;
-    const words = shuffle(d.words).slice(0, Math.min(roundSize, d.words.length));
-    startPracticeQueue(words, { title: '自定义词库练习 · ' + name, dict: name, kind: 'dict', restart: () => startPractice(name) });
-  }
-  function startPracticeQueue(words, meta) {
-    const p = {
-      words: (words || []).map((w) => ({
-        name: String(w.name || w.word || ''),
-        trans: String(w.trans || ''),
-        key: w.key || '',
-        dict: w.dict || meta.dict || '',
-      })).filter((w) => w.name),
-      idx: 0, correct: 0, wrong: 0, startAt: Date.now(), done: 0, answers: [], keyStats: {},
-      wordStart: Date.now(), keyLast: 0, timer: null, finalized: false,
-    };
-    Object.assign(p, meta);
-    if (!p.title) p.title = '练习';
-    practiceState = p;
-    renderPractice();
-  }
-  async function finalizePractice(p) {
-    if (!p || p.finalized) return (p && p.finalizeResult) || {};
-    p.finalized = true;
-    const res = { srs: 0, mastered: 0, wrongAdded: 0, kind: p.kind || 'dict' };
-    try {
-      if (p.answers.length) {
-        await saveSrsBatch(p.answers.map((a) => ({ ...a, dict: a.dict || p.dict || '', trans: a.trans || '' })));
-        res.srs = p.answers.length;
-      }
-      await saveKeyStats(p.keyStats);
-      if (p.kind === 'dict') {
-        for (const a of p.answers) if (!a.ok) { await addWrongWord(a.word, a.dict || p.dict, a.trans); res.wrongAdded++; }
-      } else if (p.kind === 'wrongbook') {
-        for (const a of p.answers) {
-          if (a.ok) { if (await reduceWrongWord(a.word, a.trans)) res.mastered++; }
-          else { await addWrongWord(a.word, a.dict || p.dict, a.trans); res.wrongAdded++; }
-        }
-      } else if (p.kind === 'review') {
-        for (const a of p.answers) if (!a.ok) { await addWrongWord(a.word, a.dict || p.dict, a.trans); res.wrongAdded++; }
-      }
-      const db = await getPlusDB();
-      if (db) {
-        const wpm = Math.round(p.done / Math.max(0.05, (Date.now() - p.startAt) / 60000));
-        await idbPut(db, 'practice', {
-          dict: p.dict || p.kind || 'dict', kind: p.kind || 'dict', total: p.words.length,
-          correct: p.correct, wrong: p.wrong, wpm, ts: Date.now(),
-        });
-      }
-    } catch (e) { console.warn('[QZ] finalize practice', e); }
-    p.finalizeResult = res;
-    return res;
-  }
-  function refreshAfterPractice() {
-    if (!panelOpen) return;
-    const active = shadow.querySelector('.tabs button.active');
-    const tab = active && active.dataset.tab;
-    if (tab === 'review') refreshReviewUI();
-    if (tab === 'data') refreshStatsUI();
-    refreshReviewBadge();
-  }
-  function renderPractice() {
-    const root = $('#qz-practice-root');
-    if (!practiceState) { root.innerHTML = ''; return; }
-    const p = practiceState;
-    if (p.idx >= p.words.length) {
-      if (p.timer) { clearInterval(p.timer); p.timer = null; }
-      const min = Math.max(0.05, (Date.now() - p.startAt) / 60000);
-      const wpm = Math.round(p.done / min);
-      root.innerHTML = `<div class="practice-mask"><div class="practice-card">
-        <div style="font-size:18px;font-weight:700;text-align:center;color:#a5b4fc">${esc(p.title)} · 完成</div>
-        <div class="grid4" style="margin-top:18px">
-          <div class="stat"><div class="n">${p.words.length}</div><div class="k">词数</div></div>
-          <div class="stat"><div class="n ok">${p.correct}</div><div class="k">正确</div></div>
-          <div class="stat"><div class="n bad">${p.wrong}</div><div class="k">错误</div></div>
-          <div class="stat"><div class="n">${wpm}</div><div class="k">WPM</div></div>
-        </div>
-        <div class="muted" id="qp-final-msg" style="text-align:center;margin-top:14px;color:#a5b4fc">正在保存复习计划 / 键位统计…</div>
-        <div class="flex" style="justify-content:center;margin-top:18px">
-          <button class="btn primary" id="qp-again">再来一轮</button>
-          <button class="btn ghost" id="qp-close">关闭</button>
-        </div></div></div>`;
-      const close = () => {
-        practiceState = null; root.innerHTML = '';
-        refreshAfterPractice();
-      };
-      const again = root.querySelector('#qp-again');
-      again.onclick = () => {
-        practiceState = null;
-        if (p.restart) p.restart();
-        else if (p.kind === 'review') startReviewFromQueue();
-        else if (p.kind === 'wrongbook') startWrongbookPractice();
-        else close();
-      };
-      root.querySelector('#qp-close').onclick = close;
-      finalizePractice(p).then((res) => {
-        const el = root.querySelector('#qp-final-msg');
-        if (!el) return;
-        el.textContent = `已更新 SRS 复习计划（${res.srs} 词）` +
-          (res.mastered ? ` · 移出错词本 ${res.mastered} 词` : '') +
-          (res.wrongAdded ? ` · 新增错词 ${res.wrongAdded} 词` : '');
-        refreshAfterPractice();
-      });
-      return;
-    }
-    const w = p.words[p.idx];
-    if (p.timer) { clearInterval(p.timer); p.timer = null; }
-    root.innerHTML = `<div class="practice-mask"><div class="practice-card">
-      <div class="flex" style="justify-content:space-between"><span class="muted">${esc(p.title)}</span>
-        <span class="muted">${p.idx + 1} / ${p.words.length}</span></div>
-      <div class="w">${esc(w.name)}</div>
-      <div class="tr">${esc(w.trans || '（无释义）')}</div>
-      <input class="typing" id="qp-input" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="输入后按回车">
-      <div class="feedback" id="qp-feedback"></div>
-      <div class="meta"><span>正确 ${p.correct} · 错误 ${p.wrong}</span><span id="qp-wpm">WPM -</span><button class="btn ghost sm" id="qp-quit">退出</button></div>
-    </div></div>`;
-    const input = root.querySelector('#qp-input');
-    input.focus();
-    p.wordStart = Date.now();
-    p.keyLast = 0;
-    const feedback = root.querySelector('#qp-feedback');
-    const submit = () => {
-      const v = input.value.trim();
-      if (!v) return;
-      const ok = v.toLowerCase() === String(w.name).toLowerCase();
-      input.disabled = true;
-      const elapsed = Date.now() - p.wordStart;
-      p.done++;
-      p.answers.push({ word: w.name, trans: w.trans, ok, elapsed, dict: w.dict || p.dict || '', key: w.key || '' });
-      if (ok) { p.correct++; feedback.textContent = '✓ 正确'; feedback.className = 'feedback ok'; }
-      else { p.wrong++; feedback.textContent = '✗ 正确拼写: ' + w.name; feedback.className = 'feedback bad'; }
-      p.idx++;
-      setTimeout(renderPractice, 260);
-    };
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') { e.preventDefault(); submit(); return; }
-      if (e.key === 'Backspace') { p.keyLast = Date.now(); return; }
-      if (e.key && e.key.length === 1 && /[a-zA-Z0-9 ,.;'\/\-]/.test(e.key)) {
-        const expected = String(w.name)[input.value.length] || '';
-        const now = Date.now();
-        const k = e.key.toLowerCase();
-        const rec = p.keyStats[k] || (p.keyStats[k] = { key: e.key === ' ' ? '␣' : e.key.toUpperCase(), hits: 0, errors: 0, delaySum: 0, delayN: 0 });
-        rec.hits++;
-        const delay = p.keyLast ? Math.min(3000, now - p.keyLast) : 0;
-        if (delay) { rec.delaySum += delay; rec.delayN++; }
-        if (expected && k !== expected.toLowerCase()) rec.errors++;
-        p.keyLast = now;
-      }
-    });
-    p.timer = setInterval(() => {
-      if (!practiceState || practiceState !== p) return;
-      const min = Math.max(0.02, (Date.now() - p.startAt) / 60000);
-      const wpm = Math.round(p.done / min);
-      const el = root.querySelector('#qp-wpm');
-      if (el) el.textContent = 'WPM ' + wpm;
-    }, 1000);
-    root.querySelector('#qp-quit').onclick = async () => {
-      if (p.timer) clearInterval(p.timer);
-      p.timer = null;
-      await finalizePractice(p);
-      practiceState = null;
-      root.innerHTML = '';
-      refreshAfterPractice();
-    };
-  }
-
-  // ---------------------------------------------------------------- v6：记忆曲线（不按章节，自动出词）/ 键位统计
-  function fmtInterval(d) {
-    const n = Number(d) || 0;
-    if (n >= 1) return Math.round(n) + ' 天';
-    if (n >= 1 / 24) return Math.round(n * 24) + ' 小时';
-    return Math.round(n * 1440) + ' 分钟';
-  }
-  function dueText(ts) {
-    const diff = (Number(ts) || 0) - Date.now();
-    if (diff <= 0) return '已到期';
-    const m = Math.round(diff / 60000);
-    if (m < 60) return `${Math.max(1, m)} 分钟后`;
-    const h = Math.round(diff / 3600000);
-    return h < 24 ? `${Math.max(1, h)} 小时后` : `${Math.round(h / 24)} 天后`;
-  }
-  function srsStreak(records) {
-    const daySet = new Set();
-    for (const r of records) {
-      const ts = Number(r.lastSeen) || Number(r.createdAt) || 0;
-      if (ts) daySet.add(dayKey(ts));
-    }
-    let cursor = new Date();
-    if (!daySet.has(dayKey(cursor.getTime()))) cursor.setDate(cursor.getDate() - 1);
-    let n = 0;
-    for (let i = 0; i < 3650; i++) {
-      const k = dayKey(cursor.getTime());
-      if (daySet.has(k)) { n++; cursor.setDate(cursor.getDate() - 1); } else break;
-    }
-    return n;
-  }
-  async function refreshReviewBadge(count) {
-    try {
-      const btn = shadow.querySelector('.tabs button[data-tab="review"]');
-      if (!btn) return;
-      if (count == null) {
-        const all = await readSrsAll();
-        const now = Date.now();
-        count = all.filter((r) => (r.due || 0) <= now).length;
-      }
-      btn.textContent = count > 0 ? `记忆曲线 (${count})` : '记忆曲线';
-    } catch { /* ignore */ }
-  }
-
-  // —— 整本词库词池（无章节）——
-  let memoryDictCache = { file: '', entry: null, words: null };
-  let memoryPlanCache = null;
-  async function loadMemoryDict() {
-    await loadBuiltinDicts();
-    const entry = currentDictEntry();
-    if (!entry) return { ok: false, error: '未识别当前词库（请先在应用内选择词库）', entry: null, words: [] };
-    if (memoryDictCache.file === entry.file && Array.isArray(memoryDictCache.words) && memoryDictCache.words.length) {
-      return { ok: true, entry, words: memoryDictCache.words, source: memoryDictCache.source || 'asar' };
-    }
-    if (typeof api.dictRead !== 'function') return { ok: false, error: '当前版本不支持读取词库（请重启应用）', entry, words: [] };
-    try {
-      const r = await api.dictRead(entry.file);
-      if (!r || !r.ok || !Array.isArray(r.words) || !r.words.length) {
-        return { ok: false, error: (r && r.error) || '词库读取失败', entry, words: [] };
-      }
-      memoryDictCache = { file: entry.file, entry, words: r.words, source: r.source || 'asar' };
-      return { ok: true, entry, words: r.words, source: r.source || 'asar' };
-    } catch (e) {
-      return { ok: false, error: String(e.message || e), entry, words: [] };
-    }
-  }
-  async function computeMemoryPlan() {
-    const dict = await loadMemoryDict();
-    const all = await readSrsAll();
-    const map = new Map(all.map((r) => [r.key, r]));
-    const now = Date.now();
-    const today = TODAY();
-    const quota = clamp(Math.round(Number(settings.dailyNewWords) || 20), 5, 300);
-    let newToday = 0;
-    for (const r of all) {
-      const ts = Number(r.createdAt) || 0;
-      if (ts && dayKey(ts) === today) newToday++;
-    }
-    const due = all.filter((r) => (Number(r.due) || 0) <= now).sort((a, b) => (a.due || 0) - (b.due || 0));
-    let remainingNew = 0;
-    const unseen = [];
-    if (dict.ok) {
-      remainingNew = Math.max(0, quota - newToday);
-      const file = dict.entry.file;
-      for (const w of dict.words) {
-        const k = srsKey(file, w.name);
-        if (!map.has(k)) unseen.push({ name: w.name, trans: w.trans || '', phone: w.phone || '', key: k });
-      }
-    }
-    return { dict, all, map, now, today, quota, newToday, remainingNew, due, unseen };
-  }
-  function buildMemoryQueue(plan, onlyDue) {
-    const items = [];
-    const cap = clamp(Math.round(Number(settings.memoryReviewCap) || 200), 10, 2000);
-    for (const r of plan.due.slice(0, cap)) {
-      items.push({
-        kind: 'review', name: r.word, trans: r.trans || '', phone: r.phone || '',
-        dict: r.dict || '', key: r.key || srsKey(r.dict, r.word), due: Number(r.due) || 0,
-        stage: r.stage == null ? srsStageFromInterval(r.interval) : Number(r.stage) || 0,
-      });
-    }
-    if (!onlyDue && plan.dict.ok && plan.remainingNew > 0) {
-      for (const w of plan.unseen.slice(0, plan.remainingNew)) {
-        items.push({ kind: 'new', name: w.name, trans: w.trans || '', phone: w.phone || '', dict: plan.dict.entry.file, key: w.key, due: 0, stage: null });
-      }
-    }
-    return items;
-  }
-  function renderMemoryPreview(plan) {
-    const box = $('#mv-next-list');
-    if (!box) return;
-    const cap = clamp(Math.round(Number(settings.memoryReviewCap) || 200), 10, 2000);
-    const dueItems = plan.due.slice(0, 10);
-    const newItems = plan.dict.ok ? plan.unseen.slice(0, 10) : [];
-    if (!dueItems.length && !newItems.length) {
-      box.innerHTML = '<div class="muted">没有待学内容：今日新词额度已完成，且没有到期复习。明天再来，或去「词库」页换一本词库。</div>';
-      return;
-    }
-    const row = (it, kind) => `<div class="mv-next-item">
-      <span class="mv-badge ${kind}">${kind === 'new' ? '新词' : '复习'}</span>
-      <span class="nm">${esc(it.name)}</span>
-      <span class="tr">${esc(it.trans || '（无释义）')}</span>
-      <span class="due">${kind === 'new' ? '今天新学' : dueText(it.due)}</span></div>`;
-    let html = '';
-    if (dueItems.length) html += dueItems.map((r) => row({ name: r.word, trans: r.trans, due: r.due }, 'review')).join('');
-    if (newItems.length) html += newItems.map((w) => row({ name: w.name, trans: w.trans }, 'new')).join('');
-    box.innerHTML = html + `<div class="muted" style="margin-top:4px">到期复习 ${plan.due.length} 个（单次最多带入 ${cap} 个） · 今日剩余新词 ${plan.remainingNew} 个 · 新词按词库顺序。</div>`;
-  }
-  async function refreshReviewUI() {
-    const box = $('#mv-next-list');
-    if (!box) return;
-    let plan;
-    try { plan = await computeMemoryPlan(); } catch (e) { box.innerHTML = '<div class="muted">读取计划失败：' + esc(e.message || e) + '</div>'; return; }
-    memoryPlanCache = plan;
-    const d = plan.dict;
-    $('#mv-new-today').textContent = `${plan.newToday}/${plan.quota}`;
-    $('#mv-due').textContent = plan.due.length;
-    $('#mv-learned').textContent = fmtNum(plan.all.length);
-    $('#mv-streak').textContent = srsStreak(plan.all);
-    if ($('#mv-newquota') && document.activeElement !== $('#mv-newquota')) $('#mv-newquota').value = plan.quota;
-    $('#btn-review-start').disabled = !d.ok || (plan.due.length + plan.remainingNew) === 0;
-    $('#btn-memory-due').disabled = plan.due.length === 0;
-    if (d.ok && d.entry) {
-      const file = d.entry.file;
-      const learnedInDict = plan.all.filter((r) => r.dict === file).length;
-      const total = Number(d.entry.count) || d.words.length || 0;
-      $('#mv-dict-name').textContent = `${d.entry.name} · ${fmtNum(total)} 词`;
-      $('#mv-dict-meta').textContent = `整本词池 · 已学 ${fmtNum(learnedInDict)} 词 · 来源 ${file}${d.source === 'update' ? '（在线更新版）' : ''}`;
-      $('#mv-dict-bar').style.width = total ? Math.round((learnedInDict / total) * 100) + '%' : '0%';
-      $('#mv-dict-note').textContent = plan.remainingNew > 0
-        ? `今日还可学 ${plan.remainingNew} 个新词；到期复习 ${plan.due.length} 个（其它词库的到期词也会一起复习，不会漏）。`
-        : `今日新词额度已用完（${plan.newToday}/${plan.quota}），仍可复习到期词。`;
-    } else {
-      $('#mv-dict-name').textContent = '未识别当前词库';
-      $('#mv-dict-meta').textContent = d.error || '请先在应用内选择词库';
-      $('#mv-dict-note').textContent = '';
-    }
-    const info = $('#mv-info');
-    if (info) {
-      info.textContent = (plan.due.length + plan.remainingNew) > 0
-        ? `可以开始：到期 ${plan.due.length} 个 + 今日新词 ${plan.remainingNew} 个；新词学习完会自动进入间隔复习。`
-        : '今日计划已完成：没有到期词，新词额度也用完了。明天再来吧。';
-    }
-    renderMemoryPreview(plan);
-    refreshReviewBadge(plan.due.length);
-  }
-  function startReviewFromQueue() { return startMemoryCurve({ onlyDue: true }); }
-
-  // —— 记忆曲线练习会话 ——
-  let memorySession = null;
-  let memoryRefreshTimer = null;
-  function scheduleMemoryRefresh() {
-    if (!panelOpen) return;
-    if (memoryRefreshTimer) return;
-    memoryRefreshTimer = setTimeout(() => {
-      memoryRefreshTimer = null;
-      const active = shadow.querySelector('.tabs button.active');
-      if (active && active.dataset.tab === 'review') refreshReviewUI();
-      refreshReviewBadge();
-    }, 600);
-  }
-  function stopMemoryTimers(s) {
-    if (!s) return;
-    if (s.timer) { clearInterval(s.timer); s.timer = null; }
-    if (s.advTimer) { clearTimeout(s.advTimer); s.advTimer = null; }
-  }
-  async function startMemoryCurve(opts = {}) {
-    if (memorySession) return toast('已经在记忆曲线练习中');
-    const onlyDue = !!opts.onlyDue;
-    toast(onlyDue ? '正在准备到期复习词…' : '正在按记忆曲线准备词…', 1500);
-    let plan;
-    try { plan = await computeMemoryPlan(); } catch (e) { return toast('准备失败：' + (e.message || e)); }
-    if (!plan.dict.ok) return toast(plan.dict.error || '当前词库不可用');
-    const items = buildMemoryQueue(plan, onlyDue);
-    if (!items.length) {
-      if (onlyDue) return toast('当前没有到期词');
-      if (plan.remainingNew <= 0) return toast(`今日新词已完成（${plan.newToday}/${plan.quota}），明天再来`);
-      return toast('没有可学的新词或到期词');
-    }
-    if (practiceState) {
-      if (practiceState.timer) { clearInterval(practiceState.timer); practiceState.timer = null; }
-      practiceState = null;
-    }
-    memorySession = {
-      queue: items, pos: 0, answered: 0, correct: 0, wrong: 0,
-      newLearned: 0, reviewAnswered: 0, seenNew: new Set(),
-      map: new Map(plan.all.map((r) => [r.key, r])),
-      dictName: plan.dict.entry.name, dictFile: plan.dict.entry.file, onlyDue,
-      startAt: Date.now(), wordStart: Date.now(), keyLast: 0, keyStats: {},
-      timer: null, advTimer: null, done: false,
-      quota: plan.quota, newTodayBefore: plan.newToday,
-    };
-    renderMemoryPractice();
-  }
-  function renderMemoryPractice() {
-    const root = $('#qz-practice-root');
-    const s = memorySession;
-    if (!root) return;
-    if (!s) { root.innerHTML = ''; return; }
-    if (s.pos >= s.queue.length) { renderMemoryDone(); return; }
-    const item = s.queue[s.pos];
-    const remaining = s.queue.length - s.pos;
-    const todayNew = Math.min(s.quota, s.newTodayBefore + s.newLearned);
-    root.innerHTML = `<div class="practice-mask"><div class="practice-card memory-card">
-      <div class="mcv-top">
-        <div><div class="mcv-title">记忆曲线 · ${esc(s.dictName)}</div>
-          <div class="mcv-sub">今日新学 ${todayNew}/${s.quota} · 本轮已答 ${s.answered} · 队列剩余 ${remaining}</div></div>
-        <div class="mcv-actions">
-          <button class="btn sm ghost" id="mcv-pron" title="朗读单词">🔊</button>
-          <button class="btn sm ghost" id="mcv-quit">退出</button>
-        </div>
-      </div>
-      <div class="mcv-badges">
-        <span class="mv-badge ${item.kind === 'new' ? 'new' : (item.kind === 'relearn' ? 'relearn' : 'review')}">${item.kind === 'new' ? '新词' : (item.kind === 'relearn' ? '再练一次' : '到期复习')}</span>
-        ${item.stage != null ? `<span class="mv-badge">间隔 ${esc(srsLadderText(item.stage))}</span>` : '<span class="mv-badge">首次学习</span>'}
-      </div>
-      <div class="w">${esc(item.name)}</div>
-      <div class="mcv-phone">${item.phone ? '/' + esc(item.phone) + '/' : ''}</div>
-      <div class="tr">${esc(item.trans || '（无释义）')}</div>
-      <input class="typing" id="mcv-input" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="输入单词后按回车">
-      <div class="feedback" id="mcv-feedback"></div>
-      <div class="mcv-bar"><i id="mcv-bar" style="width:${Math.round((s.answered / Math.max(1, s.queue.length)) * 100)}%"></i></div>
-      <div class="mcv-foot"><span>✓ ${s.correct} · ✗ ${s.wrong}</span><span id="mcv-wpm">WPM ${s.answered ? Math.round(s.answered / Math.max(0.02, (Date.now() - s.startAt) / 60000)) : '-'}</span><span>答错自动重现 · Esc 退出</span></div>
-    </div></div>`;
-    const input = root.querySelector('#mcv-input');
-    input.focus();
-    s.wordStart = Date.now();
-    s.keyLast = 0;
-    const feedback = root.querySelector('#mcv-feedback');
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') { e.preventDefault(); submitMemoryAnswer(s, item, input, feedback); return; }
-      if (e.key === 'Backspace') { s.keyLast = Date.now(); return; }
-      if (e.key && e.key.length === 1 && /[a-zA-Z0-9 ,.;'\/\-]/.test(e.key)) {
-        const expected = String(item.name)[input.value.length] || '';
-        const now = Date.now();
-        const k = e.key.toLowerCase();
-        const rec = s.keyStats[k] || (s.keyStats[k] = { key: e.key === ' ' ? '␣' : e.key.toUpperCase(), hits: 0, errors: 0, delaySum: 0, delayN: 0 });
-        rec.hits++;
-        const delay = s.keyLast ? Math.min(3000, now - s.keyLast) : 0;
-        if (delay) { rec.delaySum += delay; rec.delayN++; }
-        if (expected && k !== expected.toLowerCase()) rec.errors++;
-        s.keyLast = now;
-      }
-    });
-    if (root.querySelector('#mcv-pron')) root.querySelector('#mcv-pron').onclick = () => playPron(item.name);
-    if (root.querySelector('#mcv-quit')) root.querySelector('#mcv-quit').onclick = () => quitMemorySession();
-    if (s.timer) { clearInterval(s.timer); s.timer = null; }
-    s.timer = setInterval(() => {
-      if (memorySession !== s) { clearInterval(s.timer); s.timer = null; return; }
-      const min = Math.max(0.02, (Date.now() - s.startAt) / 60000);
-      const el = root.querySelector('#mcv-wpm');
-      if (el) el.textContent = 'WPM ' + Math.round(s.answered / min);
-    }, 1000);
-    if (settings.memoryAutoPron) playPron(item.name, true);
-  }
-  function submitMemoryAnswer(s, item, input, feedback) {
-    if (memorySession !== s || !input || input.disabled) return;
-    const v = input.value.trim();
-    if (!v) return;
-    const expected = String(item.name || '').trim();
-    const norm = (x) => String(x || '').trim().toLowerCase().replace(/\s+/g, ' ');
-    const ok = norm(v) === norm(expected);
-    input.disabled = true;
-    const elapsed = Date.now() - s.wordStart;
-    const now = Date.now();
-    s.answered++;
-    if (ok) s.correct++; else s.wrong++;
-    s.wordStart = now;
-    const ans = { word: expected, dict: item.dict || s.dictFile || '', trans: item.trans || '', phone: item.phone || '', ok, elapsed };
-    const key = item.key || srsKey(ans.dict, expected);
-    const rec = calcSrs(s.map.get(key), ans, now);
-    s.map.set(key, rec);
-    putSrsRecord(rec).then(() => scheduleMemoryRefresh());
-    if (item.kind === 'new') s.newLearned++;
-    else s.reviewAnswered++;
-    if (!ok) {
-      addWrongWord(expected, ans.dict, ans.trans);
-      const at = Math.min(s.pos + 4, s.queue.length);
-      s.queue.splice(at, 0, { ...item, kind: 'relearn', stage: Number(rec.stage) || 0 });
-    }
-    const bar = $('#mcv-bar');
-    if (bar) bar.style.width = Math.round((s.answered / Math.max(1, s.queue.length)) * 100) + '%';
-    if (feedback) {
-      feedback.textContent = ok
-        ? '✓ 正确 · 下次复习 ' + srsLadderText(rec.stage)
-        : '✗ 正确拼写：' + expected + ' · 稍后自动重现';
-      feedback.className = 'feedback ' + (ok ? 'ok' : 'bad');
-    }
-    s.pos++;
-    if (s.advTimer) clearTimeout(s.advTimer);
-    s.advTimer = setTimeout(() => {
-      s.advTimer = null;
-      if (memorySession !== s) return;
-      renderMemoryPractice();
-    }, ok ? 280 : 950);
-  }
-  function renderMemoryDone() {
-    const root = $('#qz-practice-root');
-    const s = memorySession;
-    if (!root || !s) return;
-    stopMemoryTimers(s);
-    const min = Math.max(0.05, (Date.now() - s.startAt) / 60000);
-    const wpm = Math.round(s.answered / min);
-    const todayNew = Math.min(s.quota, s.newTodayBefore + s.newLearned);
-    root.innerHTML = `<div class="practice-mask"><div class="practice-card memory-card">
-      <div class="mcv-title" style="text-align:center;font-size:17px;color:var(--qz-accent)">本轮完成 · 记忆曲线</div>
-      <div class="muted" style="text-align:center;margin-top:4px">${esc(s.dictName)} · 今日新学 ${todayNew}/${s.quota}</div>
-      <div class="grid4 mcv-done-grid">
-        <div class="stat"><div class="n">${s.answered}</div><div class="k">作答词数</div></div>
-        <div class="stat"><div class="n ok">${s.correct}</div><div class="k">正确</div></div>
-        <div class="stat"><div class="n bad">${s.wrong}</div><div class="k">错误</div></div>
-        <div class="stat"><div class="n">${wpm}</div><div class="k">WPM</div></div>
-      </div>
-      <div class="muted" id="mcv-done-msg" style="text-align:center;margin-top:12px">正在保存学习记录…</div>
-      <div class="flex" style="justify-content:center;margin-top:14px;flex-wrap:wrap">
-        <button class="btn primary" id="mcv-again">继续下一组</button>
-        <button class="btn ghost" id="mcv-plan">查看今日计划</button>
-        <button class="btn ghost" id="mcv-close">关闭</button>
-      </div></div></div>`;
-    const close = () => {
-      root.innerHTML = '';
-      memorySession = null;
-      scheduleMemoryRefresh();
-    };
-    root.querySelector('#mcv-close').onclick = close;
-    root.querySelector('#mcv-plan').onclick = () => { close(); openPanel('review'); };
-    root.querySelector('#mcv-again').onclick = () => {
-      const onlyDue = !!s.onlyDue;
-      root.innerHTML = '';
-      memorySession = null;
-      scheduleMemoryRefresh();
-      startMemoryCurve({ onlyDue });
-    };
-    finalizeMemorySession(s).then(() => {
-      const msg = root.querySelector('#mcv-done-msg');
-      if (!msg) return;
-      const parts = [`新学 ${s.newLearned} 词`, `复习 ${s.reviewAnswered} 词`];
-      if (s.wrong) parts.push(`答错 ${s.wrong} 次（已加入错词本）`);
-      msg.textContent = '已保存：' + parts.join(' · ');
-    });
-  }
-  async function finalizeMemorySession(s) {
-    if (!s || s.done) return;
-    s.done = true;
-    try {
-      await saveKeyStats(s.keyStats);
-      const db = await getPlusDB();
-      if (db) {
-        const minutes = Math.max(0.05, (Date.now() - s.startAt) / 60000);
-        await idbPut(db, 'practice', {
-          dict: s.dictFile, kind: 'memory', total: s.answered,
-          correct: s.correct, wrong: s.wrong, wpm: Math.round(s.answered / minutes), ts: Date.now(),
-        });
-      }
-    } catch (e) { console.warn('[QZ] finalize memory', e); }
-    refreshReviewBadge();
-  }
-  function quitMemorySession() {
-    const s = memorySession;
-    if (!s) return;
-    stopMemoryTimers(s);
-    const root = $('#qz-practice-root');
-    if (root) root.innerHTML = '';
-    memorySession = null;
-    finalizeMemorySession(s);
-    scheduleMemoryRefresh();
-    toast('已退出记忆曲线，进度已保存', 2600);
-  }
-  function handleGlobalEscape() {
-    if (memorySession) { quitMemorySession(); return true; }
-    if (panelOpen) { closePanel(); return true; }
-    return false;
-  }
-
-  async function startWrongbookPractice() {
-    const list = await readWrongBook();
-    if (!list.length) return toast('本地错词本为空');
-    const words = list.slice(0, 50).map((w) => ({
-      name: w.word, trans: w.trans || '', dict: (w.dicts && w.dicts[0]) || 'wrongbook',
-    }));
-    startPracticeQueue(shuffle(words), {
-      title: '错词重练（答对自动移出）', kind: 'wrongbook', dict: 'wrongbook',
-      restart: () => startWrongbookPractice(),
-    });
-  }
   // v8：键位热力图 / 慢词 / 错误键全部改由 RecordDB.wordRecords 计算（只读）
   async function refreshKeyboardUI() {
     const heat = $('#kb-heat');
@@ -2621,40 +1720,6 @@
         : '<div class="muted">暂无错误键数据</div>';
     }
   }
-  async function clearStore(name) {
-    try {
-      const db = await getPlusDB();
-      if (!db) return;
-      await new Promise((resolve) => { const tx = db.transaction(name, 'readwrite'); tx.objectStore(name).clear(); tx.oncomplete = resolve; tx.onerror = resolve; });
-    } catch { /* ignore */ }
-  }
-  $('#btn-review-start').addEventListener('click', () => startMemoryCurve());
-  $('#btn-memory-due').addEventListener('click', () => startMemoryCurve({ onlyDue: true }));
-  $('#btn-review-refresh').addEventListener('click', async () => { await refreshReviewUI(); toast('已刷新记忆曲线计划'); });
-  $('#btn-mv-godict').addEventListener('click', () => { switchTab('dict'); toast('在「词库」页选择当前词库后，回到「记忆曲线」即可按新词库出词'); });
-  $('#btn-mv-savequota').addEventListener('click', async () => {
-    const v = clamp(Math.round(Number($('#mv-newquota').value) || 20), 5, 300);
-    try {
-      settings = await api.updateSettings({ dailyNewWords: v });
-      if ($('#mv-newquota')) $('#mv-newquota').value = v;
-      await refreshReviewUI();
-      toast('每天新词上限：' + v);
-    } catch (e) { toast('保存失败：' + (e.message || e)); }
-  });
-  $('#btn-srs-import').addEventListener('click', async () => {
-    toast('正在从应用错词导入…', 3000);
-    const n = await importAppWrongToSrs();
-    await refreshReviewUI();
-    toast(`已从应用错词导入 ${n} 词到记忆曲线`);
-  });
-  $('#btn-srs-clear').addEventListener('click', async () => {
-    if (!confirm('确定清空所有记忆曲线记录？（不影响错词本和练习历史）')) return;
-    await clearStore('srs');
-    await refreshReviewUI();
-    toast('记忆曲线记录已清空');
-  });
-
-
   // ---------------------------------------------------------------- 番茄钟
   const pomo = {
     mode: 'focus', running: false, remain: (settings.pomodoroFocus || 25) * 60,
@@ -3105,10 +2170,9 @@
     // 预加载词库列表与面板数据
     refreshDictUI().catch(() => {});
     refreshWrongbookUI().catch(() => {});
-    refreshReviewBadge().catch(() => {});
     renderStatsToPanel(appStats || { today: TODAY(), words: 0, goal: settings.dailyGoal, streak: 0, ratio: 0, totalWords: 0, wrongWords: [], heat: [], source: 'none' });
     pomoRender();
-    console.log('[QZ-ENHANCE] UI injected, version', settings.version || '1.0.0-enhanced-v8.7');
+    console.log('[QZ-ENHANCE] UI injected, version', settings.version || '1.0.0-enhanced-v8.8');
   }
   init();
 
