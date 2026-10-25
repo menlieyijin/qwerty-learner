@@ -34,3 +34,5 @@ stats.html
 /blob-report/
 /playwright/.cache/
 playwright-report
+# local build error log
+/build-error.log
