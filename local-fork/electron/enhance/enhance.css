@@ -1,0 +1,89 @@
+/* ==========================================================================
+   Qwerty Learner Plus — 全局注入样式（由主进程注入到 <head>，不改 build/ 原文件）
+   ========================================================================== */
+
+/* —— A3 迷你模式：隐藏页面顶部导航与页脚，只留练习内容 —— */
+body.qz-mini header,
+body.qz-mini nav,
+body.qz-mini footer,
+body.qz-mini [class*='fixed'][class*='top-0'],
+body.qz-mini [class*='sticky'][class*='top-'] {
+  display: none !important;
+}
+body.qz-mini #root {
+  padding-top: 0 !important;
+}
+body.qz-mini ::-webkit-scrollbar {
+  display: none;
+}
+
+/* —— B9 主题：强调色覆盖（Tailwind indigo 系列工具类）—— */
+html.qz-accent-indigo {
+  --qz-accent: #818cf8;
+}
+html.qz-accent-emerald {
+  --qz-accent: #34d399;
+}
+html.qz-accent-rose {
+  --qz-accent: #fb7185;
+}
+html.qz-accent-amber {
+  --qz-accent: #fbbf24;
+}
+html.qz-accent-sky {
+  --qz-accent: #38bdf8;
+}
+html.qz-accent-violet {
+  --qz-accent: #a78bfa;
+}
+html[class*='qz-accent-']:not(.qz-accent-indigo) .text-indigo-500,
+html[class*='qz-accent-']:not(.qz-accent-indigo) .text-indigo-600,
+html[class*='qz-accent-']:not(.qz-accent-indigo) .text-indigo-400 {
+  color: var(--qz-accent) !important;
+}
+html[class*='qz-accent-']:not(.qz-accent-indigo) .bg-indigo-500,
+html[class*='qz-accent-']:not(.qz-accent-indigo) .bg-indigo-600,
+html[class*='qz-accent-']:not(.qz-accent-indigo) .bg-indigo-400 {
+  background-color: var(--qz-accent) !important;
+}
+html[class*='qz-accent-']:not(.qz-accent-indigo) .border-indigo-500,
+html[class*='qz-accent-']:not(.qz-accent-indigo) .border-indigo-400,
+html[class*='qz-accent-']:not(.qz-accent-indigo) .border-indigo-600 {
+  border-color: var(--qz-accent) !important;
+}
+html[class*='qz-accent-']:not(.qz-accent-indigo) .shadow-indigo-300,
+html[class*='qz-accent-']:not(.qz-accent-indigo) .shadow-indigo-400 {
+  --tw-shadow-color: var(--qz-accent) !important;
+}
+html[class*='qz-accent-']:not(.qz-accent-indigo) .ring-indigo-500 {
+  --tw-ring-color: var(--qz-accent) !important;
+}
+html[class*='qz-accent-']:not(.qz-accent-indigo) .from-indigo-500,
+html[class*='qz-accent-']:not(.qz-accent-indigo) .from-indigo-400 {
+  --tw-gradient-from: var(--qz-accent) !important;
+}
+
+/* —— B9 字体：只作用于练习区的单词/翻译文本 —— */
+html.qz-font-mono #root [class*='text-5xl'],
+html.qz-font-mono #root [class*='text-6xl'],
+html.qz-font-mono #root [class*='text-7xl'],
+html.qz-font-mono #root [class*='text-4xl'] {
+  font-family: 'JetBrains Mono', 'Cascadia Code', Consolas, 'Courier New', monospace !important;
+}
+html.qz-font-serif #root [class*='text-5xl'],
+html.qz-font-serif #root [class*='text-6xl'],
+html.qz-font-serif #root [class*='text-7xl'],
+html.qz-font-serif #root [class*='text-4xl'] {
+  font-family: Georgia, 'Times New Roman', 'Songti SC', serif !important;
+}
+html.qz-font-round #root [class*='text-5xl'],
+html.qz-font-round #root [class*='text-6xl'],
+html.qz-font-round #root [class*='text-7xl'],
+html.qz-font-round #root [class*='text-4xl'] {
+  font-family: 'Comic Sans MS', 'Segoe UI', 'Microsoft YaHei', sans-serif !important;
+}
+
+/* 关掉页面滚动条带来的布局跳动（增强面板使用自己的滚动条） */
+body.qz-no-scroll {
+  overflow: hidden;
+}

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; media-src https:" />
+<title>剪贴板查词</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; background: transparent; overflow: hidden; }
+  body {
+    font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+    background: #0f172a; color: #e2e8f0;
+    border-radius: 12px; border: 1px solid rgba(148,163,184,.25);
+    box-shadow: 0 12px 40px rgba(0,0,0,.55);
+    display: flex; flex-direction: column; height: 100%;
+  }
+  .bar { display: flex; align-items: center; justify-content: space-between; padding: 7px 12px;
+    background: linear-gradient(135deg,#4f46e5,#7c3aed); border-radius: 11px 11px 0 0; }
+  .bar .t { font-size: 11px; font-weight: 700; letter-spacing: .4px; opacity: .95; }
+  .bar .x { background: none; border: none; color: #fff; font-size: 15px; cursor: pointer; opacity: .8; }
+  .body { flex: 1; padding: 9px 13px; display: flex; flex-direction: column; gap: 7px; overflow: hidden; }
+  .row1 { display: flex; align-items: baseline; gap: 8px; }
+  .word { font-size: 25px; font-weight: 800; color: #fff; letter-spacing: .5px; word-break: break-word; }
+  .ph { font-size: 12px; color: #94a3b8; }
+  .zh { font-size: 12.5px; line-height: 1.55; color: #dbeafe; }
+  .en { font-size: 11.5px; line-height: 1.5; color: #94a3b8; max-height: 46px; overflow: auto; }
+  .en b { color: #a5b4fc; font-weight: 600; }
+  .btns { display: flex; gap: 6px; align-items: center; }
+  button {
+    background: #312e81; color: #e0e7ff; border: 1px solid #4338ca; border-radius: 7px;
+    padding: 4px 9px; font-size: 11.5px; cursor: pointer; font-weight: 600;
+  }
+  button:hover { background: #3730a3; }
+  button.primary { background: #4f46e5; color: #fff; }
+  button.ghost { background: transparent; border-color: rgba(148,163,184,.35); color: #cbd5e1; }
+  .src { font-size: 10px; color: #64748b; margin-top: auto; }
+  .offline { background: rgba(245,158,11,.16); border: 1px solid rgba(245,158,11,.4); color: #fbbf24;
+    border-radius: 6px; padding: 3px 8px; font-size: 10.5px; }
+  .out { font-size: 11px; color: #cbd5e1; background: #0b1220; border: 1px solid rgba(148,163,184,.18);
+    border-radius: 6px; padding: 5px 8px; max-height: 42px; overflow: auto; white-space: pre-wrap; }
+  .out:empty { display: none; }
+</style>
+</head>
+<body>
+  <div class="bar">
+    <span class="t">剪贴板查词 · Qwerty Plus（免费释义）</span>
+    <button class="x" id="close" title="关闭">✕</button>
+  </div>
+  <div class="body">
+    <div class="row1"><span class="word" id="word">—</span><span class="ph" id="ph"></span></div>
+    <div class="zh" id="zh">复制英文单词后自动查词…</div>
+    <div class="en" id="en"></div>
+    <div class="out" id="out"></div>
+    <div class="btns">
+      <button class="primary" id="speak">🔊 发音</button>
+      <button class="ghost" id="copy">复制</button>
+      <button class="ghost" id="lookup">重新查词</button>
+      <span class="offline" id="offline" style="display:none">离线 / 缓存</span>
+    </div>
+    <div class="src" id="src"></div>
+  </div>
+<script>
+  const api = window.qwertyEnhance;
+  const $ = (id) => document.getElementById(id);
+  let current = '';
+  let last = null;
+
+  function play(url) {
+    if (!url) return;
+    try { const a = new Audio(url); a.volume = 1; a.play().catch(() => {}); } catch (e) { /* ignore */ }
+  }
+  function render(r) {
+    if (!r) return;
+    last = r;
+    $('word').textContent = r.word || current || '—';
+    $('ph').textContent = r.phonetic || r.usphone || r.ukphone || '';
+    const zh = (r.zhLines || []).map((x) => x.text).join('；');
+    $('zh').textContent = zh || '（暂无中文释义）';
+    $('en').innerHTML = (r.defs || []).slice(0, 2).map((d) => `<b>${d.pos || ''}</b> ${String(d.def || '').replace(/</g, '&lt;')}`).join('<br>') || '';
+    $('src').textContent = (r.sources || []).length ? '来源：' + r.sources.join(' + ') + (r.cached ? ' · 缓存' : '') : '';
+    $('offline').style.display = r.offline ? 'inline-block' : 'none';
+    $('out').textContent = '';
+  }
+  async function lookup(word) {
+    current = String(word || '').trim();
+    $('word').textContent = current || '—';
+    $('ph').textContent = ''; $('en').innerHTML = ''; $('zh').textContent = '查询中…';
+    if (!current) { $('zh').textContent = '复制英文单词后自动查词…'; return; }
+    try {
+      const r = await api.freeLookup(current);
+      if (r && r.ok) render(r);
+      else { $('zh').textContent = (r && r.error) || '未找到释义'; $('offline').style.display = 'inline-block'; }
+    } catch (e) { $('zh').textContent = '查询失败：' + (e.message || e); }
+  }
+  api.onClipboardWord((word) => lookup(word));
+  $('speak').addEventListener('click', () => play('https://dict.youdao.com/dictvoice?audio=' + encodeURIComponent(current || (last && last.word) || '') + '&type=2'));
+  $('copy').addEventListener('click', async () => { try { await navigator.clipboard.writeText(current); $('out').textContent = '已复制：' + current; } catch { $('out').textContent = '复制失败'; } });
+  $('lookup').addEventListener('click', () => lookup(current));
+  $('close').addEventListener('click', () => api.closeClipboard());
+</script>
+</body>
+</html>
