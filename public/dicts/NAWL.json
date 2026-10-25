@@ -1,0 +1,7530 @@
+[
+  {
+    "name": "abdominal",
+    "trans": [
+      "adj.腹部的,鱼有腹鳍的n.腹肌（常用作复数）"
+    ],
+    "ukphone": "æbˈdɒmɪnl",
+    "usphone": "æbˈdɑ:mɪnl"
+  },
+  {
+    "name": "absorb",
+    "trans": [
+      "vt.吸收（液体、气体等）,吸引（注意）,吞并，合并,忍受，承担（费用）"
+    ],
+    "ukphone": "əbˈsɔ:b",
+    "usphone": "əbˈsɔ:rb"
+  },
+  {
+    "name": "absorption",
+    "trans": [
+      "n.吸收,专注,合并"
+    ],
+    "ukphone": "əbˈsɔ:pʃn",
+    "usphone": "əbˈsɔ:rpʃn"
+  },
+  {
+    "name": "accelerate",
+    "trans": [
+      "vt.（使）加快，（使）增速,加速，催促,促进,速度增加vi.加快，加速"
+    ],
+    "ukphone": "əkˈseləreɪt",
+    "usphone": "ækˈsɛləˌret"
+  },
+  {
+    "name": "acceleration",
+    "trans": [
+      "n.加速,<物>加速度,加速升级,（优秀学生的）跳级"
+    ],
+    "ukphone": "əkˌseləˈreɪʃn",
+    "usphone": "ækˌsɛləˈreʃən"
+  },
+  {
+    "name": "accent",
+    "trans": [
+      "n.重音,口音,腔调,重音符号（标在字母上）"
+    ],
+    "ukphone": "ˈæksent",
+    "usphone": "ˈækˌsɛnt"
+  },
+  {
+    "name": "accumulate",
+    "trans": [
+      "vt.& vi.堆积，积累vi.（数量）逐渐增加，（质量）渐渐提高"
+    ],
+    "ukphone": "əˈkju:mjəleɪt",
+    "usphone": "əˈkjumjəˌlet"
+  },
+  {
+    "name": "accumulation",
+    "trans": [
+      "n.积累,堆积物,累积量"
+    ],
+    "ukphone": "əˌkju:mjə'leɪʃn",
+    "usphone": "əˌkjumjəˈleʃən"
+  },
+  {
+    "name": "accuracy",
+    "trans": [
+      "n.精确（性），准确（性）"
+    ],
+    "ukphone": "ˈækjərəsi",
+    "usphone": "ˈækjərəsi"
+  },
+  {
+    "name": "accurately",
+    "trans": [
+      "adv.正确无误地，准确地,精确地,如实"
+    ],
+    "ukphone": "'ækjərətlɪ",
+    "usphone": "'ækjərətlɪ"
+  },
+  {
+    "name": "acid",
+    "trans": [
+      "adj.酸味的,尖刻的,酸的,酸性的n.<化>酸,酸味物质"
+    ],
+    "ukphone": "ˈæsɪd",
+    "usphone": "ˈæsɪd"
+  },
+  {
+    "name": "acidic",
+    "trans": [
+      "adj.（味）酸的,化酸的，酸性的,含有大量硅酸的"
+    ],
+    "ukphone": "əˈsɪdɪk",
+    "usphone": "əˈsɪdɪk"
+  },
+  {
+    "name": "activate",
+    "trans": [
+      "vt.使活动，起动，触发,使开始作用"
+    ],
+    "ukphone": "ˈæktɪveɪt",
+    "usphone": "ˈæktəˌvet"
+  },
+  {
+    "name": "actively",
+    "trans": [
+      "adv.活跃地，积极地"
+    ],
+    "ukphone": "'æktɪvlɪ",
+    "usphone": "'æktɪvlɪ"
+  },
+  {
+    "name": "acute",
+    "trans": [
+      "adj.尖的，锐的,敏锐的，敏感的,严重的，剧烈的,医急性的"
+    ],
+    "ukphone": "əˈkju:t",
+    "usphone": "əˈkjut"
+  },
+  {
+    "name": "adaptation",
+    "trans": [
+      "n.适应，顺应,改编，改编本,适应性的改变,同化"
+    ],
+    "ukphone": "ˌædæpˈteɪʃn",
+    "usphone": "ˌædæpˈteʃən"
+  },
+  {
+    "name": "adaptive",
+    "trans": [
+      "adj.适应的,有适应能力的"
+    ],
+    "ukphone": "əˈdæptɪv",
+    "usphone": "əˈdæptɪv"
+  },
+  {
+    "name": "adjacent",
+    "trans": [
+      "adj.邻近的，毗邻的,（时间上）紧接着的,相邻"
+    ],
+    "ukphone": "əˈdʒeɪsnt",
+    "usphone": "əˈdʒesənt"
+  },
+  {
+    "name": "admission",
+    "trans": [
+      "n.准许进入,承认,坦白,入场费"
+    ],
+    "ukphone": "ədˈmɪʃn",
+    "usphone": "ædˈmɪʃən"
+  },
+  {
+    "name": "adolescent",
+    "trans": [
+      "n.少年，少女adj.青春期的,青少年的,未成熟的"
+    ],
+    "ukphone": "ˌædəˈlesnt",
+    "usphone": "ˌædə'lesnt"
+  },
+  {
+    "name": "adverse",
+    "trans": [
+      "adj.不利的,有害的,逆的,相反的"
+    ],
+    "ukphone": "ˈædvɜ:s",
+    "usphone": "ˈædvɜ:rs"
+  },
+  {
+    "name": "aerosol",
+    "trans": [
+      "n.化气溶胶,喷雾剂,悬浮微粒,喷雾器adj.喷雾的,喷雾器的"
+    ],
+    "ukphone": "ˈeərəsɒl",
+    "usphone": "ˈerəsɔ:l"
+  },
+  {
+    "name": "aesthetic",
+    "trans": [
+      "adj.美的，美学的,有关美的,审美的,具有审美趣味的n.美学标准，美感,审美观"
+    ],
+    "ukphone": "i:sˈθetɪk",
+    "usphone": "ɛsˈθɛtɪk"
+  },
+  {
+    "name": "affirm",
+    "trans": [
+      "vt.& vi.断言，肯定,证实，确实,法不经宣誓而庄严宣布,承认"
+    ],
+    "ukphone": "əˈfɜ:m",
+    "usphone": "əˈfɜ:rm"
+  },
+  {
+    "name": "afterward",
+    "trans": [
+      "adv.<美>以后，过后"
+    ],
+    "ukphone": "'ɑ:ftəwəd",
+    "usphone": "ˈæftəwəd"
+  },
+  {
+    "name": "aggregate",
+    "trans": [
+      "n.合计,聚集体,骨料,集料（可成混凝土或修路等用的）adj.总数的，总计的,聚合的,地聚成岩的vt.使聚集，使积聚,总计达"
+    ],
+    "ukphone": "ˈægrɪgət",
+    "usphone": "ˈæɡrɪɡɪt"
+  },
+  {
+    "name": "agriculture",
+    "trans": [
+      "n.农业,农耕,农业生产,农学"
+    ],
+    "ukphone": "ˈægrɪkʌltʃə(r)",
+    "usphone": "ˈæɡrɪˌkʌltʃɚ"
+  },
+  {
+    "name": "airplane",
+    "trans": [
+      "n.<美>飞机"
+    ],
+    "ukphone": "ˈeəpleɪn",
+    "usphone": "ˈerpleɪn"
+  },
+  {
+    "name": "algebra",
+    "trans": [
+      "n.代数学，代数"
+    ],
+    "ukphone": "ˈældʒɪbrə",
+    "usphone": "ˈældʒəbrə"
+  },
+  {
+    "name": "algorithm",
+    "trans": [
+      "n.运算法则,演算法,计算程序"
+    ],
+    "ukphone": "ˈælgərɪðəm",
+    "usphone": "ˈælɡəˌrɪðəm"
+  },
+  {
+    "name": "alien",
+    "trans": [
+      "adj.外国的,相异的,异已的,不相容的n.外国人,外侨,局外人,外星人vt.让渡，转让,疏远,离间"
+    ],
+    "ukphone": "ˈeɪliən",
+    "usphone": "ˈeliən,ˈeljən"
+  },
+  {
+    "name": "alliance",
+    "trans": [
+      "n.（国家、政党等的）结盟，同盟，联盟，联合,联姻,同盟条约,同盟者"
+    ],
+    "ukphone": "əˈlaɪəns",
+    "usphone": "əˈlaɪəns"
+  },
+  {
+    "name": "allocate",
+    "trans": [
+      "vt.分配，分派,把…拨给"
+    ],
+    "ukphone": "ˈæləkeɪt",
+    "usphone": "ˈæləˌket"
+  },
+  {
+    "name": "allocation",
+    "trans": [
+      "n.配给，分配,分配额（或量）,划拨的款项,拨给的场地"
+    ],
+    "ukphone": "ˌæləˈkeɪʃn",
+    "usphone": "ˌæləˈkeɪʃn"
+  },
+  {
+    "name": "altitude",
+    "trans": [
+      "n.高度，海拔高度,高位，高等,天地平纬度,数顶垂线"
+    ],
+    "ukphone": "ˈæltɪtju:d",
+    "usphone": "ˈæltɪtu:d"
+  },
+  {
+    "name": "aluminum",
+    "trans": [
+      "n.<美>铝"
+    ],
+    "ukphone": "ə'lju:minəm",
+    "usphone": "ə'lju:minəm"
+  },
+  {
+    "name": "amino",
+    "trans": [
+      "adj.<化>氨基的"
+    ],
+    "ukphone": "ə'miːnəʊ",
+    "usphone": "ə'miːnəʊ"
+  },
+  {
+    "name": "amongst",
+    "trans": [
+      "prep.（表示位置）处在…中,（表示范围）在…之内,（表示牵涉）经过,（表示所属）为…所特有"
+    ],
+    "ukphone": "ə'mʌŋst",
+    "usphone": "əˈmʌŋst"
+  },
+  {
+    "name": "amplitude",
+    "trans": [
+      "n.振幅,广大，广阔，充足,（思想的）广度,角度距离"
+    ],
+    "ukphone": "ˈæmplɪtju:d",
+    "usphone": "ˈæmplɪtu:d"
+  },
+  {
+    "name": "analogy",
+    "trans": [
+      "n.类似，相似,比拟，类比,类推"
+    ],
+    "ukphone": "əˈnælədʒi",
+    "usphone": "əˈnælədʒi"
+  },
+  {
+    "name": "ancestor",
+    "trans": [
+      "n.祖先，祖宗,被继承人,原型,（动物的）原种，先祖"
+    ],
+    "ukphone": "ˈænsestə(r)",
+    "usphone": "ˈænˌsɛstɚ"
+  },
+  {
+    "name": "anthropology",
+    "trans": [
+      "n.人类学"
+    ],
+    "ukphone": "ˌænθrəˈpɒlədʒi",
+    "usphone": "ˌænθrəˈpɑ:lədʒi"
+  },
+  {
+    "name": "anti",
+    "trans": [
+      "n.& adj.反对者，反对论者反对的"
+    ],
+    "ukphone": "ˈænti",
+    "usphone": "-ti"
+  },
+  {
+    "name": "antibiotic",
+    "trans": [
+      "n.抗生素,抗菌素adj.抗生的,抗菌的,抗菌作用的,抗生素的"
+    ],
+    "ukphone": "ˌæntibaɪˈɒtɪk",
+    "usphone": "ˌæntibaɪˈɑ:tɪk"
+  },
+  {
+    "name": "antibody",
+    "trans": [
+      "n.<医>抗体"
+    ],
+    "ukphone": "ˈæntibɒdi",
+    "usphone": "ˈæntibɑ:di"
+  },
+  {
+    "name": "antiquity",
+    "trans": [
+      "n.古老，古代,古迹，古物,古人,古代的风俗习惯"
+    ],
+    "ukphone": "ænˈtɪkwəti",
+    "usphone": "ænˈtɪkwɪti"
+  },
+  {
+    "name": "appendix",
+    "trans": [
+      "n.附录,阑尾,附加物"
+    ],
+    "ukphone": "əˈpendɪks",
+    "usphone": "əˈpɛndɪks"
+  },
+  {
+    "name": "applause",
+    "trans": [
+      "n.热烈鼓掌,喝彩,掌声"
+    ],
+    "ukphone": "əˈplɔ:z",
+    "usphone": "əˈplɔz"
+  },
+  {
+    "name": "apple",
+    "trans": [
+      "n.苹果,苹果树,苹果公司"
+    ],
+    "ukphone": "ˈæpl",
+    "usphone": "ˈæpəl"
+  },
+  {
+    "name": "approximate",
+    "trans": [
+      "adj.约莫的，大概的,极相似的,植相近但不连接的vi.接近于,近似于vt.靠近,使接近,使结合"
+    ],
+    "ukphone": "əˈprɒksɪmət",
+    "usphone": "əˈprɑ:ksɪmət"
+  },
+  {
+    "name": "approximation",
+    "trans": [
+      "n.接近,<数>近似值,近似额,粗略估计"
+    ],
+    "ukphone": "əˌprɒksɪˈmeɪʃn",
+    "usphone": "əˌprɑ:ksɪˈmeɪʃn"
+  },
+  {
+    "name": "arbitrary",
+    "trans": [
+      "adj.随意的，任性的，随心所欲的,主观的，武断的,霸道的，专制的，专横的，独断独行的,乱"
+    ],
+    "ukphone": "ˈɑ:bɪtrəri",
+    "usphone": "ˈɑ:rbətreri"
+  },
+  {
+    "name": "archaeology",
+    "trans": [
+      "n.考古学,古物,古迹"
+    ],
+    "ukphone": "ˌɑ:kiˈɒlədʒi",
+    "usphone": "ˌɑrkiˈɑlədʒi"
+  },
+  {
+    "name": "architect",
+    "trans": [
+      "n.建筑师，设计师,创造者，缔造者,造物主"
+    ],
+    "ukphone": "ˈɑ:kɪtekt",
+    "usphone": "ˈɑ:rkɪtekt"
+  },
+  {
+    "name": "array",
+    "trans": [
+      "n.队列，阵列,数组,一大批,衣服vt.排列,部署兵力,打扮，装饰"
+    ],
+    "ukphone": "əˈreɪ",
+    "usphone": "ə'reɪ"
+  },
+  {
+    "name": "arrow",
+    "trans": [
+      "n.矢，箭,箭状物,箭头记号,天天箭座"
+    ],
+    "ukphone": "ˈærəʊ",
+    "usphone": "ˈæroʊ"
+  },
+  {
+    "name": "articulate",
+    "trans": [
+      "adj.发音清晰的,善于表达的,有关节的vt.清晰地发（音）,言语表达,（用关节）连接vi.清楚地和清晰地讲,发音,解剖学 连接"
+    ],
+    "ukphone": "ɑ:ˈtɪkjuleɪt",
+    "usphone": "ɑ:rˈtɪkjuleɪt"
+  },
+  {
+    "name": "artifact",
+    "trans": [
+      "n.人工制品，手工艺品，加工品,石器"
+    ],
+    "ukphone": "'ɑ:təˌfækt",
+    "usphone": "ˈɑrtəˌfækt"
+  },
+  {
+    "name": "artificial",
+    "trans": [
+      "adj.人造的,人工的,虚假的，非原产地的,人为的n.人造肥料,<美>假花"
+    ],
+    "ukphone": "ˌɑ:tɪˈfɪʃl",
+    "usphone": "ˌɑ:rtɪˈfɪʃl"
+  },
+  {
+    "name": "artistic",
+    "trans": [
+      "adj.艺术的,有美感的,风雅的,（尤指）有美术才能的"
+    ],
+    "ukphone": "ɑ:ˈtɪstɪk",
+    "usphone": "ɑ:rˈtɪstɪk"
+  },
+  {
+    "name": "artwork",
+    "trans": [
+      "n.艺术品,插图"
+    ],
+    "ukphone": "ˈɑ:twɜ:k",
+    "usphone": "ˈɑ:rtwɜ:rk"
+  },
+  {
+    "name": "aspect",
+    "trans": [
+      "n.方面,面貌,方位，方向,形势"
+    ],
+    "ukphone": "ˈæspekt",
+    "usphone": "ˈæspɛkt"
+  },
+  {
+    "name": "assembly",
+    "trans": [
+      "n.立法机构,议会,集会,装配"
+    ],
+    "ukphone": "əˈsembli",
+    "usphone": "əˈsɛmbli"
+  },
+  {
+    "name": "assert",
+    "trans": [
+      "vt.声称，断言,维护，坚持,坚持自己的主张,生效"
+    ],
+    "ukphone": "əˈsɜ:t",
+    "usphone": "əˈsɜ:rt"
+  },
+  {
+    "name": "assignment",
+    "trans": [
+      "n.分给，分配,任务，工作，（课外）作业,<美>任命,指定，委派"
+    ],
+    "ukphone": "əˈsaɪnmənt",
+    "usphone": "əˈsaɪnmənt"
+  },
+  {
+    "name": "athletic",
+    "trans": [
+      "adj.运动员的,运动的,体格健壮的,行动敏捷的"
+    ],
+    "ukphone": "æθˈletɪk",
+    "usphone": "æθˈlɛtɪk"
+  },
+  {
+    "name": "atom",
+    "trans": [
+      "n.原子,原子能,微粒，微量"
+    ],
+    "ukphone": "ˈætəm",
+    "usphone": "ˈætəm"
+  },
+  {
+    "name": "atomic",
+    "trans": [
+      "adj.原子的,原子能的，原子武器的,极微的"
+    ],
+    "ukphone": "əˈtɒmɪk",
+    "usphone": "əˈtɑ:mɪk"
+  },
+  {
+    "name": "auction",
+    "trans": [
+      "n.拍卖,竞卖,标售,（桥牌）拍卖玩法vt.拍卖,竞卖"
+    ],
+    "ukphone": "ˈɔ:kʃn",
+    "usphone": "ˈɔ:kʃn"
+  },
+  {
+    "name": "audio",
+    "trans": [
+      "adj.听觉的，声音的,音频的n.声音回路,音响,可听到的声音,声音信号"
+    ],
+    "ukphone": "ˈɔ:diəʊ",
+    "usphone": "ˈɔ:dioʊ"
+  },
+  {
+    "name": "audit",
+    "trans": [
+      "n.审计，查账vt.审计，查账,旁听vi.审计"
+    ],
+    "ukphone": "ˈɔ:dɪt",
+    "usphone": "ˈɔdɪt"
+  },
+  {
+    "name": "authority",
+    "trans": [
+      "n.权威,权力,学术权威,复数当权者"
+    ],
+    "ukphone": "ɔ:ˈθɒrəti",
+    "usphone": "əˈθɔ:rəti"
+  },
+  {
+    "name": "autonomy",
+    "trans": [
+      "n.自治，自治权,自主权,自治国，社区，或集团等,人身自由"
+    ],
+    "ukphone": "ɔ:ˈtɒnəmi",
+    "usphone": "ɔ:ˈtɑ:nəmi"
+  },
+  {
+    "name": "availability",
+    "trans": [
+      "n.有效,有益,可利用性,可得到的东西（或人）"
+    ],
+    "ukphone": "əˌveɪlə'bɪlətɪ",
+    "usphone": "əˌveləˈbɪlətɪ"
+  },
+  {
+    "name": "axiom",
+    "trans": [
+      "n.公理,自明之理,原理,格言"
+    ],
+    "ukphone": "ˈæksiəm",
+    "usphone": "ˈæksiəm"
+  },
+  {
+    "name": "axis",
+    "trans": [
+      "n.轴，轴线,政轴心,轴心国,植茎轴"
+    ],
+    "ukphone": "ˈæksɪs",
+    "usphone": "ˈæksɪs"
+  },
+  {
+    "name": "backward",
+    "trans": [
+      "adj.向后的,反向的,怯生生的,落后的adv.向后地,相反地,回溯地"
+    ],
+    "ukphone": "ˈbækwəd",
+    "usphone": "ˈbækwərd"
+  },
+  {
+    "name": "bacteria",
+    "trans": [
+      "n.细菌(bacterium的名词复数)"
+    ],
+    "ukphone": "bækˈtɪəriə",
+    "usphone": "bækˈtɪriə"
+  },
+  {
+    "name": "bacterial",
+    "trans": [
+      "adj.细菌的,细菌性"
+    ],
+    "ukphone": "bæk'tɪərɪəl",
+    "usphone": "bæk'tɪərɪrl"
+  },
+  {
+    "name": "bang",
+    "trans": [
+      "n.猛击,猛撞,巨响,爆炸声vt.猛击，猛撞vi.发出砰的一声，砰砰作响，砰地敲推，扔,男性和（女性）性交adv.正好，完全地"
+    ],
+    "ukphone": "bæŋ",
+    "usphone": "bæŋ"
+  },
+  {
+    "name": "bargain",
+    "trans": [
+      "n.契约，协定,交易,特价商品,便宜货vt.做交易vi.讨价还价,达成协议"
+    ],
+    "ukphone": "ˈbɑ:gən",
+    "usphone": "ˈbɑ:rgən"
+  },
+  {
+    "name": "barrel",
+    "trans": [
+      "n.桶,一桶之量,圆筒，活塞筒，滚筒,圆筒adj.桶状的vt.装进桶里，放进桶里vi.高速行驶"
+    ],
+    "ukphone": "ˈbærəl",
+    "usphone": "ˈbærəl"
+  },
+  {
+    "name": "basin",
+    "trans": [
+      "n.盆,盆地,流域,水坑，池塘"
+    ],
+    "ukphone": "ˈbeɪsn",
+    "usphone": "ˈbesɪn"
+  },
+  {
+    "name": "bat",
+    "trans": [
+      "n.蝙蝠,短棍，（棒球等的）球棒，（网球等的）球拍,白话，口语，成语，俗话,（口）打击，猛击，（海上）导弹vt.& vi.用球板击球，用球棒击球（尤指板球或棒球运动）"
+    ],
+    "ukphone": "bæt",
+    "usphone": "bæt"
+  },
+  {
+    "name": "beam",
+    "trans": [
+      "n.梁，栋梁,束,光线,（电波的）波束vi.发出光与热,面露喜色vt.播送,以梁支撑,用…照射,流露vt.& vi.笑容满面，眉开眼笑,发射电波，播送,放出束状的光（或热）"
+    ],
+    "ukphone": "bi:m",
+    "usphone": "bim"
+  },
+  {
+    "name": "behavioral",
+    "trans": [
+      "adj.动作的"
+    ],
+    "ukphone": "bɪ'heɪvjərəl",
+    "usphone": "bɪ'heɪvjərəl"
+  },
+  {
+    "name": "bilingual",
+    "trans": [
+      "adj.双语的，两种语言的，能说两种语言的n.能说两种语言的人"
+    ],
+    "ukphone": "ˌbaɪˈlɪŋgwəl",
+    "usphone": "baɪˈlɪŋɡwəl"
+  },
+  {
+    "name": "binary",
+    "trans": [
+      "adj.双重的，由两个东西组成的,二态的,二元的,二进制的n.一双,双体,二进制数,双子星"
+    ],
+    "ukphone": "ˈbaɪnəri",
+    "usphone": "ˈbaɪnəri"
+  },
+  {
+    "name": "biodiversity",
+    "trans": [
+      "n.生物多类状态，生物多样性"
+    ],
+    "ukphone": "ˌbaɪəʊdaɪˈvɜ:səti",
+    "usphone": "ˌbaɪoʊdaɪˈvɜ:rsəti"
+  },
+  {
+    "name": "biologist",
+    "trans": [
+      "n.生物学家"
+    ],
+    "ukphone": "baɪˈɒlədʒɪst",
+    "usphone": "baɪˈɑ:lədʒɪst"
+  },
+  {
+    "name": "biology",
+    "trans": [
+      "n.生物学,生物"
+    ],
+    "ukphone": "baɪˈɒlədʒi",
+    "usphone": "baɪˈɑ:lədʒi"
+  },
+  {
+    "name": "bizarre",
+    "trans": [
+      "adj.离奇的,奇特的（指态度，容貌，款式等）,奇怪的,奇幻"
+    ],
+    "ukphone": "bɪˈzɑ:(r)",
+    "usphone": "bɪˈzɑr"
+  },
+  {
+    "name": "blank",
+    "trans": [
+      "adj.空白的,空的，无信息的，未填写的,茫然的,空虚的n.空的空间或地点,填空处，空白表格,坯,无用的东西vt.消失,挡住通路,体育运动 阻止（对手）得分,打孔，盖印vi.走神,逐渐消失"
+    ],
+    "ukphone": "blæŋk",
+    "usphone": "blæŋk"
+  },
+  {
+    "name": "bleed",
+    "trans": [
+      "vt.使出血,勒索，敲诈vi.流血vt.& vi.散开,给（某人）放血,放掉气体或水（以使某物运行正常）,长期榨取（某人的钱）n.印出血版"
+    ],
+    "ukphone": "bli:d",
+    "usphone": "blid"
+  },
+  {
+    "name": "bodily",
+    "trans": [
+      "adj.身体的，肉体的,有实体的,有躯体的adv.亲身地，亲自,以肉体形式,全部，全体"
+    ],
+    "ukphone": "ˈbɒdɪli",
+    "usphone": "ˈbɑ:dɪli"
+  },
+  {
+    "name": "bonus",
+    "trans": [
+      "n.奖金，额外津贴,红利，额外股息,退职金,额外令人高兴的事情"
+    ],
+    "ukphone": "ˈbəʊnəs",
+    "usphone": "ˈboʊnəs"
+  },
+  {
+    "name": "bound",
+    "trans": [
+      "vi.跳，弹跳,限制,接壤vt.给…划界，限制,使弹回，使跳跃,束缚n.界限，限制,跃起,（球等的）反跳adj.用带子绑住的,有义务的,装订的，有封面的,化，物结合的"
+    ],
+    "ukphone": "baʊnd",
+    "usphone": "baʊnd"
+  },
+  {
+    "name": "bracket",
+    "trans": [
+      "n.支架，悬臂,括弧,类别，等级,数同类项vt.为…装托架,把…括在一起,把…分类,排除"
+    ],
+    "ukphone": "ˈbrækɪt",
+    "usphone": "ˈbrækɪt"
+  },
+  {
+    "name": "breakdown",
+    "trans": [
+      "n.崩溃，倒塌,损坏，故障,分解,垮，衰竭"
+    ],
+    "ukphone": "ˈbreɪkdaʊn",
+    "usphone": "ˈbrekˌdaʊn"
+  },
+  {
+    "name": "broadly",
+    "trans": [
+      "adv.宽广地,完全地,大体上"
+    ],
+    "ukphone": "ˈbrɔ:dli",
+    "usphone": "ˈbrɔdlɪ"
+  },
+  {
+    "name": "bubble",
+    "trans": [
+      "n.泡，水泡,冒泡，起泡,泡影，妄想,（欲表达的）一点感情vt.& vi.起泡，使冒气泡vi.使冒泡，发出冒泡的声音,洋溢着（某种感情）,滔滔不绝地讲,兴奋，欢闹"
+    ],
+    "ukphone": "ˈbʌbl",
+    "usphone": "ˈbʌbəl"
+  },
+  {
+    "name": "bucket",
+    "trans": [
+      "n.水桶,一桶（的量）,大量,〈俚〉交通工具v.用桶装，用桶运,倾盆而下,〈美俚〉骗,猛开车，猛划船"
+    ],
+    "ukphone": "ˈbʌkɪt",
+    "usphone": "ˈbʌkɪt"
+  },
+  {
+    "name": "bulk",
+    "trans": [
+      "n.（大）体积,大块，大量,大多数，大部分,主体vt.& vi.变得越来越大（或重要）vi.显得庞大,形成大块,堆积起来vt.使凝聚成一团或形成一堆adj.大批的，大量的,散装的"
+    ],
+    "ukphone": "bʌlk",
+    "usphone": "bʌlk"
+  },
+  {
+    "name": "bullet",
+    "trans": [
+      "n.子弹，弹药,弹丸,印着重号"
+    ],
+    "ukphone": "ˈbʊlɪt",
+    "usphone": "ˈbʊlɪt"
+  },
+  {
+    "name": "bundle",
+    "trans": [
+      "n.捆,一批（同类事物或出售的货品）,一大笔钱,风趣的人vt.& vi.收集，归拢，把…塞入vt.额外免费提供（设备等），（尤指出售计算机时）赠送软件vi.匆匆送走,推搡,赶,（成群地）匆忙赶往"
+    ],
+    "ukphone": "ˈbʌndl",
+    "usphone": "ˈbʌndl"
+  },
+  {
+    "name": "calcium",
+    "trans": [
+      "n.<化>钙"
+    ],
+    "ukphone": "ˈkælsiəm",
+    "usphone": "ˈkælsiəm"
+  },
+  {
+    "name": "calculation",
+    "trans": [
+      "n.计算，盘算,估计,计算的结果,深思熟虑，慎重的计划"
+    ],
+    "ukphone": "ˌkælkjuˈleɪʃn",
+    "usphone": "ˌkælkjəˈleʃən"
+  },
+  {
+    "name": "calculator",
+    "trans": [
+      "n.计算器,计算者,计算图表"
+    ],
+    "ukphone": "ˈkælkjuleɪtə(r)",
+    "usphone": "ˈkælkjəˌletɚ"
+  },
+  {
+    "name": "calculus",
+    "trans": [
+      "n.医结石，石，积石，牙垢,数运算，演算，微积分（学）"
+    ],
+    "ukphone": "ˈkælkjələs",
+    "usphone": "ˈkælkjələs"
+  },
+  {
+    "name": "campus",
+    "trans": [
+      "n.校园,校区"
+    ],
+    "ukphone": "ˈkæmpəs",
+    "usphone": "ˈkæmpəs"
+  },
+  {
+    "name": "candidate",
+    "trans": [
+      "n.报考者,申请求职者,攻读学位者,最后命运或结局如何已显然可见者"
+    ],
+    "ukphone": "ˈkændɪdət",
+    "usphone": "-dɪt"
+  },
+  {
+    "name": "capillary"
+  },
+  {
+    "name": "capitalism",
+    "trans": [
+      "n.资本主义（制度）,资本（或财富）的拥有,资本（私人占有和生产盈利）的支配地位"
+    ],
+    "ukphone": "ˈkæpɪtəlɪzəm",
+    "usphone": "ˈkæpɪtlˌɪzəm"
+  },
+  {
+    "name": "capitalist",
+    "trans": [
+      "n.资本家,资本主义者,<口>有钱人，财主adj.资本主义的,有资本的,资本家的"
+    ],
+    "ukphone": "ˈkæpɪtəlɪst",
+    "usphone": "ˈkæpɪtlɪst"
+  },
+  {
+    "name": "carrier",
+    "trans": [
+      "n.搬运人,运输公司,搬运器,医学带菌者"
+    ],
+    "ukphone": "ˈkæriə(r)",
+    "usphone": "ˈkæriɚ"
+  },
+  {
+    "name": "cattle",
+    "trans": [
+      "n.（总称）牛，牲口,畜生,无价值的人,〈美俚〉女学生"
+    ],
+    "ukphone": "ˈkætl",
+    "usphone": "ˈkætl"
+  },
+  {
+    "name": "censor",
+    "trans": [
+      "n.监察官，检查员,（牛津大学等的）学监,心理潜意识压抑力,心抑制性潜意识vt.审查，检查,审查（书刊等）,检查（信件等）,删改"
+    ],
+    "ukphone": "ˈsensə(r)",
+    "usphone": "'sensər"
+  },
+  {
+    "name": "characterization",
+    "trans": [
+      "n.特性描述,（对书或戏剧中人物的）刻画，塑造,<正>描述方法,界定方法"
+    ],
+    "ukphone": "ˌkærəktəraɪˈzeɪʃn",
+    "usphone": "ˌkærəktəraɪ'zeɪʃn"
+  },
+  {
+    "name": "cheat",
+    "trans": [
+      "vt.欺骗，诈骗,误导，愚弄,躲避，逃脱vi.作弊，行骗,犯规,俚〉不忠,消磨，解（闷），消除（疲劳）n.欺骗（行为）,骗子,雀麦,〈美俚〉反光镜"
+    ],
+    "ukphone": "tʃi:t",
+    "usphone": "tʃit"
+  },
+  {
+    "name": "cheer",
+    "trans": [
+      "vt.欢呼,使高兴,为…喝彩,为…加油n.欢呼，喝彩,兴致勃勃，愉快,心情,令人愉快的事vi.欢呼,感到高兴"
+    ],
+    "ukphone": "tʃɪə(r)",
+    "usphone": "tʃɪr"
+  },
+  {
+    "name": "chemistry",
+    "trans": [
+      "n.化学,物质的化学组成（或性质），化学作用（现象）,（常指有强烈性吸引力的）两人间的关系,〈比喻〉神秘的变化（过程）"
+    ],
+    "ukphone": "ˈkemɪstri",
+    "usphone": "ˈkɛmɪstri"
+  },
+  {
+    "name": "chemotherapy",
+    "trans": [
+      "n.<医>化学疗法,化疗"
+    ],
+    "ukphone": "ˌki:məʊˈθerəpi",
+    "usphone": "ˌki:moʊˈθerəpi"
+  },
+  {
+    "name": "chess",
+    "trans": [
+      "n.棋，国际象棋"
+    ],
+    "ukphone": "tʃes",
+    "usphone": "tʃɛs"
+  },
+  {
+    "name": "chloride",
+    "trans": [
+      "n.氯化物,〈口〉漂白粉"
+    ],
+    "ukphone": "ˈklɔ:raɪd",
+    "usphone": "ˈklor-"
+  },
+  {
+    "name": "chromosome",
+    "trans": [
+      "n.<生>染色体"
+    ],
+    "ukphone": "ˈkrəʊməsəʊm",
+    "usphone": "ˈkroʊməsoʊm"
+  },
+  {
+    "name": "chronic",
+    "trans": [
+      "adj.慢性的,长期的,习惯性的,痼"
+    ],
+    "ukphone": "ˈkrɒnɪk",
+    "usphone": "ˈkrɑ:nɪk"
+  },
+  {
+    "name": "chunk",
+    "trans": [
+      "n.厚厚的一块,（某物）相当大的数量或部分,强壮、结实的马"
+    ],
+    "ukphone": "tʃʌŋk",
+    "usphone": "tʃʌŋk"
+  },
+  {
+    "name": "cinema",
+    "trans": [
+      "n.电影院,电影艺术,电影业,电影"
+    ],
+    "ukphone": "ˈsɪnəmə",
+    "usphone": "ˈsɪnəmə"
+  },
+  {
+    "name": "circa"
+  },
+  {
+    "name": "circulate",
+    "trans": [
+      "vt.& vi.（使）循环,（使）流通,（使）流传,散布vi.传送，传递，传阅"
+    ],
+    "ukphone": "ˈsɜ:kjəleɪt",
+    "usphone": "ˈsɜ:rkjəleɪt"
+  },
+  {
+    "name": "circulation",
+    "trans": [
+      "n.流通，传播,血液循环,发行量,（某段时间的）社交活动"
+    ],
+    "ukphone": "ˌsɜ:kjəˈleɪʃn",
+    "usphone": "ˌsɜ:rkjəˈleɪʃn"
+  },
+  {
+    "name": "civilization",
+    "trans": [
+      "n.文明，文化,开化，教化,修养,文明社会"
+    ],
+    "ukphone": "ˌsɪvəlaɪˈzeɪʃn",
+    "usphone": "ˌsɪvələˈzeɪʃn"
+  },
+  {
+    "name": "clarify",
+    "trans": [
+      "vt.& vi.使清楚，澄清vt.（尤指通过加热使黄油）纯净,说明,使（头脑、神智等）清醒vi.（液体）变得澄清,净化,变得清楚"
+    ],
+    "ukphone": "ˈklærəfaɪ",
+    "usphone": "ˈklærəˌfaɪ"
+  },
+  {
+    "name": "classification",
+    "trans": [
+      "n.分类,分级,类别,（动植物等的）分类学"
+    ],
+    "ukphone": "ˌklæsɪfɪˈkeɪʃn",
+    "usphone": "ˌklæsəfɪˈkeʃən"
+  },
+  {
+    "name": "classify",
+    "trans": [
+      "vt.分类，归类,把…列为密件"
+    ],
+    "ukphone": "ˈklæsɪfaɪ",
+    "usphone": "ˈklæsəˌfaɪ"
+  },
+  {
+    "name": "classroom",
+    "trans": [
+      "n.教室，课堂,教学活动，教学方法"
+    ],
+    "ukphone": "ˈklɑ:sru:m",
+    "usphone": "ˈklæsru:m"
+  },
+  {
+    "name": "clay",
+    "trans": [
+      "n.黏土，泥土,（相对于灵魂而言的）人体，肉体,似黏土的东西,克莱（男子名， Clayton 的昵称）vt.用黏土处理"
+    ],
+    "ukphone": "kleɪ",
+    "usphone": "kle"
+  },
+  {
+    "name": "clever",
+    "trans": [
+      "adj.聪明的，灵巧的,英俊的，风采优雅的,性情温良的,油腔滑调的"
+    ],
+    "ukphone": "ˈklevə(r)",
+    "usphone": "ˈklɛvɚ"
+  },
+  {
+    "name": "click",
+    "trans": [
+      "n.喀哒声,爪，掣子,计（鼠标）点击,语言学吸气音vt.使发出喀哒声vi.发出喀哒声,极成功,合得来，一见如,计鼠击"
+    ],
+    "ukphone": "klɪk",
+    "usphone": "klɪk"
+  },
+  {
+    "name": "client",
+    "trans": [
+      "n.顾客,当事人,诉讼委托人,计算机客户端"
+    ],
+    "ukphone": "ˈklaɪənt",
+    "usphone": "ˈklaɪənt"
+  },
+  {
+    "name": "clinic",
+    "trans": [
+      "n.诊所，门诊部,特殊病例分析,临床讲授,临床实习课"
+    ],
+    "ukphone": "ˈklɪnɪk",
+    "usphone": "ˈklɪnɪk"
+  },
+  {
+    "name": "clip",
+    "trans": [
+      "n.（塑料或金属的）夹子,回纹针,修剪,剪报vt.& vi.用别针别在某物上，用夹子夹在某物上vt.剪,剪掉,缩短,给…剪毛（或发）vi.剪,修剪,剪下报刊上的文章（或新闻、图片等）,迅速行动"
+    ],
+    "ukphone": "klɪp",
+    "usphone": "klɪp"
+  },
+  {
+    "name": "clone",
+    "trans": [
+      "n.（动植物的）克隆,无性繁殖系,复制人（或动植物）,（不动脑筋）机械行事的人，机器人vt.& vi.克隆，（使某物）无性繁殖,把…培养为纯种细胞,复制"
+    ],
+    "ukphone": "kləʊn",
+    "usphone": "kloʊn"
+  },
+  {
+    "name": "closure",
+    "trans": [
+      "n.（永久的）停业，关闭,结束,电闭合,数闭包vt.使结束，使终止,使停止辩论"
+    ],
+    "ukphone": "ˈkləʊʒə(r)",
+    "usphone": "ˈkloʊʒə(r)"
+  },
+  {
+    "name": "clue",
+    "trans": [
+      "n.线索,提示,（帮助警方破案的）线索,（纵横填字谜、游戏或问题的）提示词语vt.<非正>为…提供最新情况（消息等）"
+    ],
+    "ukphone": "klu:",
+    "usphone": "klu"
+  },
+  {
+    "name": "coefficient",
+    "trans": [
+      "n.系数,（测定某种质量或变化过程的）率,程度,协同因素adj.共同作用的,合作的"
+    ],
+    "ukphone": "ˌkəʊɪˈfɪʃnt",
+    "usphone": "ˌkoʊɪˈfɪʃnt"
+  },
+  {
+    "name": "cognitive",
+    "trans": [
+      "adj.认知的,认识的"
+    ],
+    "ukphone": "ˈkɒgnətɪv",
+    "usphone": "ˈkɑ:gnətɪv"
+  },
+  {
+    "name": "coherent",
+    "trans": [
+      "adj.一致的,连贯的,条理分明的,清楚明白的"
+    ],
+    "ukphone": "kəʊˈhɪərənt",
+    "usphone": "koʊˈhɪrənt"
+  },
+  {
+    "name": "collective",
+    "trans": [
+      "adj.集体的,共同的,集合的,集体主义的n.统集体,语集合名词,集团"
+    ],
+    "ukphone": "kəˈlektɪv",
+    "usphone": "kəˈlɛktɪv"
+  },
+  {
+    "name": "colonial",
+    "trans": [
+      "adj.殖民地的,殖民地化的,生群体的，集群的,英领殖民地时期的n.殖民地居民,殖民时代建筑"
+    ],
+    "ukphone": "kəˈləʊniəl",
+    "usphone": "kəˈloʊniəl"
+  },
+  {
+    "name": "colony",
+    "trans": [
+      "n.殖民地,聚居地,群体,聚居人群"
+    ],
+    "ukphone": "ˈkɒləni",
+    "usphone": "ˈkɑ:ləni"
+  },
+  {
+    "name": "comma",
+    "trans": [
+      "n.逗号"
+    ],
+    "ukphone": "ˈkɒmə",
+    "usphone": "ˈkɑ:mə"
+  },
+  {
+    "name": "commentary",
+    "trans": [
+      "n.解说词,评论，评注,注释，注解,个人生平传记"
+    ],
+    "ukphone": "ˈkɒməntri",
+    "usphone": "ˈkɑ:mənteri"
+  },
+  {
+    "name": "commodity",
+    "trans": [
+      "n.商品,日用品,有价值的物品,有利，有益"
+    ],
+    "ukphone": "kəˈmɒdəti",
+    "usphone": "kəˈmɑ:dəti"
+  },
+  {
+    "name": "commonly",
+    "trans": [
+      "adv.通常地,一般地,平凡地,粗俗地"
+    ],
+    "ukphone": "ˈkɒmənli",
+    "usphone": "ˈkɑ:mənli"
+  },
+  {
+    "name": "communicative",
+    "trans": [
+      "adj.爱说话的，好社交的"
+    ],
+    "ukphone": "kəˈmju:nɪkətɪv",
+    "usphone": "kəˈmju:nɪkeɪtɪv"
+  },
+  {
+    "name": "communist",
+    "trans": [
+      "n.共产主义者，共产主义的支持者,共产党党员,巴黎公社社员adj.共产主义者的,共产党的"
+    ],
+    "ukphone": "ˈkɒmjənɪst",
+    "usphone": "ˈkɑ:mjənɪst"
+  },
+  {
+    "name": "compact",
+    "trans": [
+      "vt.& vi.压紧，（使）坚实,把…弄紧密，把…弄结实,使（文体）简洁，简化,变紧密，变结实adj.紧凑的,简洁的，（文体等）紧凑的,小巧易携带的,（物质）致密的，（体格）结实的"
+    ],
+    "ukphone": "kəmˈpækt",
+    "usphone": "ˈkɑ:mˈpækt"
+  },
+  {
+    "name": "comparable",
+    "trans": [
+      "adj.可比较的,比得上的"
+    ],
+    "ukphone": "ˈkɒmpərəbl",
+    "usphone": "ˈkɑ:mpərəbl"
+  },
+  {
+    "name": "comparative",
+    "trans": [
+      "adj.比较（上）的,按比较估计的,相当的，还可以的n.语（形容词或副词的）比较级形式,可匹敌者，可比拟物"
+    ],
+    "ukphone": "kəmˈpærətɪv",
+    "usphone": "kəmˈpærətɪv"
+  },
+  {
+    "name": "compensate",
+    "trans": [
+      "vt.补偿，赔偿,报酬,抵消vi.补偿，弥补"
+    ],
+    "ukphone": "ˈkɒmpenseɪt",
+    "usphone": "ˈkɑ:mpenseɪt"
+  },
+  {
+    "name": "competence",
+    "trans": [
+      "n.能力,技能,相当的资产"
+    ],
+    "ukphone": "ˈkɒmpɪtəns",
+    "usphone": "ˈkɑ:mpɪtəns"
+  },
+  {
+    "name": "competent",
+    "trans": [
+      "adj.有能力的，能胜任的,能干的，称职的,足够的，充足的,有决定权的"
+    ],
+    "ukphone": "ˈkɒmpɪtənt",
+    "usphone": "ˈkɑ:mpɪtənt"
+  },
+  {
+    "name": "complement",
+    "trans": [
+      "n.补充,补足语,补充物,补集（数）vt.补足，补充,补助"
+    ],
+    "ukphone": "ˈkɒmplɪment",
+    "usphone": "ˈkɑ:mplɪment"
+  },
+  {
+    "name": "complication",
+    "trans": [
+      "n.医并发症,错杂，纠纷,混乱，精神错乱"
+    ],
+    "ukphone": "ˌkɒmplɪˈkeɪʃn",
+    "usphone": "ˌkɑ:mplɪˈkeɪʃn"
+  },
+  {
+    "name": "comply",
+    "trans": [
+      "vi.遵从,依从，顺从,应允，同意"
+    ],
+    "ukphone": "kəmˈplaɪ",
+    "usphone": "kəmˈplaɪ"
+  },
+  {
+    "name": "composer",
+    "trans": [
+      "n.（尤指古典音乐）作曲家,调停人,设计者"
+    ],
+    "ukphone": "kəmˈpəʊzə(r)",
+    "usphone": "kəmˈpoʊzə(r)"
+  },
+  {
+    "name": "composite",
+    "trans": [
+      "adj.混合成的，综合成的,建综合式的,数可分解的,植菊科的n.合成物，混合物，复合材料,植菊科植物"
+    ],
+    "ukphone": "ˈkɒmpəzɪt",
+    "usphone": "kəmˈpɑ:zət"
+  },
+  {
+    "name": "comprehension",
+    "trans": [
+      "n.理解，理解力,包含的能力,逻辑学内涵"
+    ],
+    "ukphone": "ˌkɒmprɪˈhenʃn",
+    "usphone": "ˌkɑ:mprɪˈhenʃn"
+  },
+  {
+    "name": "computation",
+    "trans": [
+      "n.计算，估计"
+    ],
+    "ukphone": "ˌkɒmpjuˈteɪʃn",
+    "usphone": "ˌkɑ:mpjuˈteɪʃn"
+  },
+  {
+    "name": "conceive",
+    "trans": [
+      "vt.& vi.怀孕,构思,想像，设想,持有vi.怀孕,设想,考虑"
+    ],
+    "ukphone": "kənˈsi:v",
+    "usphone": "kənˈsiv"
+  },
+  {
+    "name": "conception",
+    "trans": [
+      "n.受精，怀孕,胚胎,概念,设想，构想"
+    ],
+    "ukphone": "kənˈsepʃn",
+    "usphone": "kənˈsɛpʃən"
+  },
+  {
+    "name": "conceptual",
+    "trans": [
+      "adj.观念的，概念的"
+    ],
+    "ukphone": "kənˈseptʃuəl",
+    "usphone": "kənˈsɛptʃuəl"
+  },
+  {
+    "name": "conditional",
+    "trans": [
+      "adj.视…而定的,语条件的，假定的,心有条件的，由一定条件诱发的n.条件（从句），条件语"
+    ],
+    "ukphone": "kənˈdɪʃənl",
+    "usphone": "kənˈdɪʃənəl"
+  },
+  {
+    "name": "conduction"
+  },
+  {
+    "name": "cone",
+    "trans": [
+      "n.圆锥体,球果,圆锥形东西vt.使成锥形"
+    ],
+    "ukphone": "kəʊn",
+    "usphone": "koʊn"
+  },
+  {
+    "name": "conference",
+    "trans": [
+      "n.会议,讨论,（正式）讨论会,工会、工党用语（每年的）大会vi.举行或参加（系列）会议"
+    ],
+    "ukphone": "ˈkɒnfərəns",
+    "usphone": "ˈkɑ:nfərəns"
+  },
+  {
+    "name": "configuration",
+    "trans": [
+      "n.布局，构造,配置,化（分子中原子的）组态，排列,物位形，组态"
+    ],
+    "ukphone": "kənˌfɪgəˈreɪʃn",
+    "usphone": "kənˌfɪgjəˈreɪʃn"
+  },
+  {
+    "name": "confine",
+    "trans": [
+      "vt.限制,局限于,禁闭,管制n.界限，范围,国界"
+    ],
+    "ukphone": "kənˈfaɪn",
+    "usphone": "kənˈfaɪn"
+  },
+  {
+    "name": "confound",
+    "trans": [
+      "vt.使混淆，使混乱,挫败,诅咒"
+    ],
+    "ukphone": "kənˈfaʊnd",
+    "usphone": "kɑn-"
+  },
+  {
+    "name": "congruent",
+    "trans": [
+      "adj.<数>叠合的, 全等的,符合的, 一致的"
+    ],
+    "ukphone": "ˈkɒŋgruənt",
+    "usphone": "ˈkɑ:ŋgruənt"
+  },
+  {
+    "name": "connector",
+    "trans": [
+      "n.连接器，连接体"
+    ],
+    "ukphone": "kəˈnektə(r)",
+    "usphone": "kəˈnektər"
+  },
+  {
+    "name": "connotation",
+    "trans": [
+      "n.内涵，含义,言外之意,逻辑学内涵"
+    ],
+    "ukphone": "ˌkɒnəˈteɪʃn",
+    "usphone": "ˌkɑ:nəˈteɪʃn"
+  },
+  {
+    "name": "conscious",
+    "trans": [
+      "adj.有意识的，神志清醒的,自觉的，有意的,（痛苦，感情，冷气等）感觉得到的,同“self-conscious“"
+    ],
+    "ukphone": "ˈkɒnʃəs",
+    "usphone": "ˈkɑ:nʃəs"
+  },
+  {
+    "name": "consciousness",
+    "trans": [
+      "n.意识，观念,知觉,觉悟,感觉"
+    ],
+    "ukphone": "ˈkɒnʃəsnəs",
+    "usphone": "ˈkɑ:nʃəsnəs"
+  },
+  {
+    "name": "consensus",
+    "trans": [
+      "n.一致,舆论,一致同意，合意"
+    ],
+    "ukphone": "kənˈsensəs",
+    "usphone": "kənˈsɛnsəs"
+  },
+  {
+    "name": "consent",
+    "trans": [
+      "n.准许，赞同,同意,（意见等的）一致vi.同意,赞成，赞同,允许"
+    ],
+    "ukphone": "kənˈsent",
+    "usphone": "kənˈsɛnt"
+  },
+  {
+    "name": "conservation",
+    "trans": [
+      "n.保存,保护,避免浪费,对自然环境的保护"
+    ],
+    "ukphone": "ˌkɒnsəˈveɪʃn",
+    "usphone": "ˌkɑ:nsərˈveɪʃn"
+  },
+  {
+    "name": "conserve",
+    "trans": [
+      "vt.保护，保藏，保存,化，物使守恒,将…做成蜜饯n.果酱，蜜饯"
+    ],
+    "ukphone": "kənˈsɜ:v",
+    "usphone": "kənˈsɜ:rv"
+  },
+  {
+    "name": "consonant",
+    "trans": [
+      "n.辅音，子音,辅音字母adj.一致的,符合的,协和音的,和音的"
+    ],
+    "ukphone": "ˈkɒnsənənt",
+    "usphone": "ˈkɑ:nsənənt"
+  },
+  {
+    "name": "constitution",
+    "trans": [
+      "n.建立，组成,体格,构成方式,宪法"
+    ],
+    "ukphone": "ˌkɒnstɪˈtju:ʃn",
+    "usphone": "ˌkɑ:nstəˈtu:ʃn"
+  },
+  {
+    "name": "constrain",
+    "trans": [
+      "vt.强迫,强使,限制,约束"
+    ],
+    "ukphone": "kənˈstreɪn",
+    "usphone": "kənˈstren"
+  },
+  {
+    "name": "consultation",
+    "trans": [
+      "n.商议，磋商,商讨会,医会诊,请教，咨询"
+    ],
+    "ukphone": "ˌkɒnslˈteɪʃn",
+    "usphone": "ˌkɑ:nslˈteɪʃn"
+  },
+  {
+    "name": "consumption",
+    "trans": [
+      "n.消费,肺病,耗尽,医学消耗性疾病"
+    ],
+    "ukphone": "kənˈsʌmpʃn",
+    "usphone": "kənˈsʌmpʃən"
+  },
+  {
+    "name": "container",
+    "trans": [
+      "n.容器,箱，匣,集装箱，货柜"
+    ],
+    "ukphone": "kənˈteɪnə(r)",
+    "usphone": "kənˈtenɚ"
+  },
+  {
+    "name": "continent",
+    "trans": [
+      "n.大陆，陆地,欧洲大陆,<美>北美洲大陆adj.自制的，克制的,节欲的,贞洁的,禁欲的"
+    ],
+    "ukphone": "ˈkɒntɪnənt",
+    "usphone": "ˈkɑ:ntɪnənt"
+  },
+  {
+    "name": "continuity",
+    "trans": [
+      "n.连续性，继续,分镜头电影剧本,串联，衔接,影视剪辑"
+    ],
+    "ukphone": "ˌkɒntɪˈnju:əti",
+    "usphone": "ˌkɑ:ntəˈnu:əti"
+  },
+  {
+    "name": "contour",
+    "trans": [
+      "n.外形，轮廓,（地图上表示相同海拔各点的）等高线,概要,电路vt.画轮廓（等高线）adj.显示轮廓的"
+    ],
+    "ukphone": "ˈkɒntʊə(r)",
+    "usphone": "ˈkɑ:ntʊr"
+  },
+  {
+    "name": "contradict",
+    "trans": [
+      "vt.反驳，驳斥,否认,与…矛盾，与…抵触vi.反驳,否认,发生矛盾"
+    ],
+    "ukphone": "ˌkɒntrəˈdɪkt",
+    "usphone": "ˌkɑ:ntrəˈdɪkt"
+  },
+  {
+    "name": "contradiction",
+    "trans": [
+      "n.矛盾,否认，反驳"
+    ],
+    "ukphone": "ˌkɒntrəˈdɪkʃn",
+    "usphone": "ˌkɑ:ntrəˈdɪkʃn"
+  },
+  {
+    "name": "contradictory",
+    "trans": [
+      "adj.矛盾的,反驳的,抗辩的n.对立物,矛盾因素"
+    ],
+    "ukphone": "ˌkɒntrəˈdɪktəri",
+    "usphone": "ˌkɑ:ntrəˈdɪktəri"
+  },
+  {
+    "name": "contrary",
+    "trans": [
+      "adj.相反的,违反的，反对的,对立的,顽固的，任性的n.对立或相反的事物,对立方,逻反对命题adv.相反地，矛盾地"
+    ],
+    "ukphone": "ˈkɒntrəri",
+    "usphone": "ˈkɑ:ntreri"
+  },
+  {
+    "name": "controversy",
+    "trans": [
+      "n.公开辩论,论战"
+    ],
+    "ukphone": "ˈkɒntrəvɜ:si",
+    "usphone": "ˈkɑ:ntrəvɜ:rsi"
+  },
+  {
+    "name": "converge",
+    "trans": [
+      "vi.（线条、运动的物体等）会于一点,聚集,人或车辆汇集vt.使聚集"
+    ],
+    "ukphone": "kənˈvɜ:dʒ",
+    "usphone": "kənˈvɜ:rdʒ"
+  },
+  {
+    "name": "convergence",
+    "trans": [
+      "n.集收敛,集合,会聚,气辐合"
+    ],
+    "ukphone": "kən'vɜ:dʒəns",
+    "usphone": "kənˈvɚdʒəns"
+  },
+  {
+    "name": "coordinate",
+    "trans": [
+      "vt.使协调，使调和,整合,使（身体各部份）动作协调,（衣服、布料等）搭配vi.协调,协同,成为同等,被归入同一类别"
+    ],
+    "ukphone": "kəʊ'ɔ:dɪneɪt",
+    "usphone": "ko'ɔrdəˈnet"
+  },
+  {
+    "name": "coordination",
+    "trans": [
+      "n.协调,和谐"
+    ],
+    "ukphone": "kəʊˌɔ:dɪˈneɪʃn",
+    "usphone": "koʊˌɔ:rdɪˈneɪʃn"
+  },
+  {
+    "name": "cord",
+    "trans": [
+      "n.（细）绳,灯心绒裤vt.用绳子捆绑,堆积（柴薪）"
+    ],
+    "ukphone": "kɔ:d",
+    "usphone": "kɔ:rd"
+  },
+  {
+    "name": "coronary",
+    "trans": [
+      "adj.冠的，花冠的，冠状的,冠状动脉或静脉的n.冠状动脉,（病理学）冠状动脉血栓形成"
+    ],
+    "ukphone": "ˈkɒrənri",
+    "usphone": "ˈkɔ:rəneri"
+  },
+  {
+    "name": "corpus",
+    "trans": [
+      "n.全集，文集,资金，本金,计语料库,器官"
+    ],
+    "ukphone": "ˈkɔ:pəs",
+    "usphone": "ˈkɔ:rpəs"
+  },
+  {
+    "name": "correction",
+    "trans": [
+      "n.修改,改纠正,惩罚,有待改正adj.改正的，纠正的"
+    ],
+    "ukphone": "kəˈrekʃn",
+    "usphone": "kəˈrɛkʃən"
+  },
+  {
+    "name": "correctly",
+    "trans": [
+      "adv.正确地，得体地,实事求是"
+    ],
+    "ukphone": "kə'rektlɪ",
+    "usphone": "kəˈrɛktlɪ"
+  },
+  {
+    "name": "correlate",
+    "trans": [
+      "v.使互相关联,联系n.相关物,相关联的人adj.相关的,相应特点的"
+    ],
+    "ukphone": "ˈkɒrəleɪt",
+    "usphone": "ˈkɔ:rəleɪt"
+  },
+  {
+    "name": "correlation",
+    "trans": [
+      "n.相互关系,相关性"
+    ],
+    "ukphone": "ˌkɒrəˈleɪʃn",
+    "usphone": "ˌkɔ:rəˈleɪʃn"
+  },
+  {
+    "name": "correspondence",
+    "trans": [
+      "n.一致，符合,对应,通信，信件,艺通感"
+    ],
+    "ukphone": "ˌkɒrəˈspɒndəns",
+    "usphone": "ˌkɔ:rəˈspɑ:ndəns"
+  },
+  {
+    "name": "corruption",
+    "trans": [
+      "n.腐败,贪污,贿赂,变体"
+    ],
+    "ukphone": "kəˈrʌpʃn",
+    "usphone": "kəˈrʌpʃən"
+  },
+  {
+    "name": "cortex",
+    "trans": [
+      "n.皮质,树皮,果皮"
+    ],
+    "ukphone": "ˈkɔ:teks",
+    "usphone": "ˈkɔ:rteks"
+  },
+  {
+    "name": "credibility",
+    "trans": [
+      "n.可靠性，可信性,确实性"
+    ],
+    "ukphone": "ˌkredəˈbɪləti",
+    "usphone": "ˌkrɛdəˈbɪlɪti"
+  },
+  {
+    "name": "criteria",
+    "trans": [
+      "n.（批评、判断等的）标准，准则( criterion的名词复数 ),(criterion的复数)"
+    ],
+    "ukphone": "kraɪ'tɪərɪə",
+    "usphone": "kraɪˈtɪrɪə"
+  },
+  {
+    "name": "critically",
+    "trans": [
+      "adv.批判性地,苛求地,危急地,严重地"
+    ],
+    "ukphone": "'krɪtɪklɪ",
+    "usphone": "ˈkrɪtɪklɪ"
+  },
+  {
+    "name": "critique",
+    "trans": [
+      "n.评论文章，评论,批评，批判vt.发表评论,批判"
+    ],
+    "ukphone": "krɪˈti:k",
+    "usphone": "krɪˈtik"
+  },
+  {
+    "name": "crude",
+    "trans": [
+      "adj.粗糙的，粗杂的,粗鲁的,天然的，未加工的,简陋的n.原生材料，天然物质,原油"
+    ],
+    "ukphone": "kru:d",
+    "usphone": "krud"
+  },
+  {
+    "name": "crystal",
+    "trans": [
+      "n.结晶（体）,晶体,水晶,水晶饰品adj.水晶的,水晶般的,透明的,清楚的"
+    ],
+    "ukphone": "ˈkrɪstl",
+    "usphone": "ˈkrɪstəl"
+  },
+  {
+    "name": "cue",
+    "trans": [
+      "n.暗示，提示,线索,台球杆,情绪，心情vt.把…插入演出,给…暗示"
+    ],
+    "ukphone": "kju:",
+    "usphone": "kju"
+  },
+  {
+    "name": "cure",
+    "trans": [
+      "vt.治愈,矫正,解决,消除vi.受治疗,被加工处理n.治愈,药物,疗法,措施"
+    ],
+    "ukphone": "kjʊə(r)",
+    "usphone": "kjʊr"
+  },
+  {
+    "name": "curriculum",
+    "trans": [
+      "n.全部课程，课程"
+    ],
+    "ukphone": "kəˈrɪkjələm",
+    "usphone": "kəˈrɪkjələm"
+  },
+  {
+    "name": "cyclic"
+  },
+  {
+    "name": "cylinder",
+    "trans": [
+      "n.圆筒，圆柱,汽缸,（尤指用作容器的）圆筒状物"
+    ],
+    "ukphone": "ˈsɪlɪndə(r)",
+    "usphone": "ˈsɪləndɚ"
+  },
+  {
+    "name": "damp",
+    "trans": [
+      "adj.微湿的，潮湿的,消沉的，沮丧的,沉闷的,情绪低落的n.潮湿,消沉，失望,矿井瓦斯,有毒气体vt.使潮湿,使泄气，使沮丧,抑制，阻抑,使减弱vi.物阻尼,减幅"
+    ],
+    "ukphone": "dæmp",
+    "usphone": "dæmp"
+  },
+  {
+    "name": "deadline",
+    "trans": [
+      "n.最后期限,截止期限,死线,原稿截止时间vt.通过设定一时间期限来统治"
+    ],
+    "ukphone": "ˈdedlaɪn",
+    "usphone": "ˈdɛdˌlaɪn"
+  },
+  {
+    "name": "decay",
+    "trans": [
+      "vt.& vi.（使）腐烂，腐朽vi.衰败，衰退，衰落n.腐败、衰退的状态"
+    ],
+    "ukphone": "dɪˈkeɪ",
+    "usphone": "dɪˈke"
+  },
+  {
+    "name": "deceive",
+    "trans": [
+      "v.欺诈,误导"
+    ],
+    "ukphone": "dɪˈsi:v",
+    "usphone": "dɪˈsiv"
+  },
+  {
+    "name": "defect",
+    "trans": [
+      "n.瑕疵，毛病,欠缺，缺点vi.叛逃,背叛"
+    ],
+    "ukphone": "ˈdi:fekt",
+    "usphone": "dɪˈfɛkt"
+  },
+  {
+    "name": "deficiency",
+    "trans": [
+      "n.缺乏，不足,缺点，缺陷,不足额"
+    ],
+    "ukphone": "dɪˈfɪʃnsi",
+    "usphone": "dɪˈfɪʃənsi"
+  },
+  {
+    "name": "definite",
+    "trans": [
+      "adj.明确的,一定的,肯定,有把握"
+    ],
+    "ukphone": "ˈdefɪnət",
+    "usphone": "ˈdɛfənɪt"
+  },
+  {
+    "name": "deflection"
+  },
+  {
+    "name": "degrade",
+    "trans": [
+      "vt.降低，贬低,使降级,降低…身分,使丢脸vt.& vi.（使）退化，降解，分解,降解,撤职，免职,降低品格身价，价值（等）"
+    ],
+    "ukphone": "dɪˈgreɪd",
+    "usphone": "dɪˈɡred"
+  },
+  {
+    "name": "deliberately",
+    "trans": [
+      "adv.故意地,深思熟虑地,从容不迫地"
+    ],
+    "ukphone": "dɪˈlɪbərətli",
+    "usphone": "dɪˈlɪbərɪtlɪ"
+  },
+  {
+    "name": "delta",
+    "trans": [
+      "n.希腊语字母表第四字母δ,（河流的）三角洲,数变量增量"
+    ],
+    "ukphone": "ˈdeltə",
+    "usphone": "ˈdɛltə"
+  },
+  {
+    "name": "demonstrator",
+    "trans": [
+      "n.游行示威者,证明者，示范者,实物说明者"
+    ],
+    "ukphone": "ˈdemənstreɪtə(r)",
+    "usphone": "ˈdɛmənˌstretɚ"
+  },
+  {
+    "name": "denominator",
+    "trans": [
+      "n.<术>分母,共同特性"
+    ],
+    "ukphone": "dɪˈnɒmɪneɪtə(r)",
+    "usphone": "dɪˈnɑ:mɪneɪtə(r)"
+  },
+  {
+    "name": "denote",
+    "trans": [
+      "vt.指代,预示,代表,意思是"
+    ],
+    "ukphone": "dɪˈnəʊt",
+    "usphone": "dɪˈnoʊt"
+  },
+  {
+    "name": "dense",
+    "trans": [
+      "adj.密集的，稠密的,浓密的，浓厚的,愚钝的"
+    ],
+    "ukphone": "dens",
+    "usphone": "dɛns"
+  },
+  {
+    "name": "dependence",
+    "trans": [
+      "n.依赖，依靠,信任，信赖,物依存关系,依靠之物"
+    ],
+    "ukphone": "dɪˈpendəns",
+    "usphone": "dɪˈpɛndəns"
+  },
+  {
+    "name": "depict",
+    "trans": [
+      "vt.描绘，描画,描述"
+    ],
+    "ukphone": "dɪˈpɪkt",
+    "usphone": "dɪˈpɪkt"
+  },
+  {
+    "name": "derivative",
+    "trans": [
+      "n.数导数，微商,化 衍生物，派生物,语派生词adj.衍生的,导出的,拷贝的"
+    ],
+    "ukphone": "dɪˈrɪvətɪv",
+    "usphone": "dɪˈrɪvətɪv"
+  },
+  {
+    "name": "descendent"
+  },
+  {
+    "name": "descriptor",
+    "trans": [
+      "n.描述符"
+    ],
+    "ukphone": "dɪˈskrɪptə(r)",
+    "usphone": "dɪˈskrɪptɚ"
+  },
+  {
+    "name": "destination",
+    "trans": [
+      "n.目的，目标,目的地，终点,罕用语预定，指定"
+    ],
+    "ukphone": "ˌdestɪˈneɪʃn",
+    "usphone": "ˌdɛstəˈneʃən"
+  },
+  {
+    "name": "detection",
+    "trans": [
+      "n.侦查,察觉,发觉,检查"
+    ],
+    "ukphone": "dɪˈtekʃn",
+    "usphone": "dɪˈtɛkʃən"
+  },
+  {
+    "name": "developmental",
+    "trans": [
+      "adj.发展的,促使成长的,进化的"
+    ],
+    "ukphone": "dɪˌveləpˈmentl",
+    "usphone": "dɪˌveləpˈmentl"
+  },
+  {
+    "name": "deviation",
+    "trans": [
+      "n.背离，偏离,离经叛道的行为,航偏航,数绝对偏差"
+    ],
+    "ukphone": "ˌdi:viˈeɪʃn",
+    "usphone": "ˌdiviˈeʃən"
+  },
+  {
+    "name": "diagnose",
+    "trans": [
+      "vt.诊断,判断vi.做出诊断"
+    ],
+    "ukphone": "ˈdaɪəgnəʊz",
+    "usphone": "ˌdaɪəgˈnoʊs"
+  },
+  {
+    "name": "diagnosis",
+    "trans": [
+      "n.诊断,诊断结论,判断,结论"
+    ],
+    "ukphone": "ˌdaɪəgˈnəʊsɪs",
+    "usphone": "ˌdaɪəgˈnoʊsɪs"
+  },
+  {
+    "name": "diagnostic",
+    "trans": [
+      "adj.诊断的，判断的,特征的n.诊断法，诊断程式,诊断结论"
+    ],
+    "ukphone": "ˌdaɪəgˈnɒstɪk",
+    "usphone": "ˌdaɪəgˈnɑ:stɪk"
+  },
+  {
+    "name": "diagram",
+    "trans": [
+      "n.图表,图解,示意图,数线图vt.用图表示,图解"
+    ],
+    "ukphone": "ˈdaɪəgræm",
+    "usphone": "ˈdaɪəˌɡræm"
+  },
+  {
+    "name": "dialect",
+    "trans": [
+      "n.方言，土语,语调,语语支,专业用语"
+    ],
+    "ukphone": "ˈdaɪəlekt",
+    "usphone": "ˈdaɪəˌlɛkt"
+  },
+  {
+    "name": "diameter",
+    "trans": [
+      "n.直径，直径长,放大率"
+    ],
+    "ukphone": "daɪˈæmɪtə(r)",
+    "usphone": "daɪˈæmɪtɚ"
+  },
+  {
+    "name": "diary",
+    "trans": [
+      "n.日记，日志,日记簿"
+    ],
+    "ukphone": "ˈdaɪəri",
+    "usphone": "ˈdaɪəri"
+  },
+  {
+    "name": "dictate",
+    "trans": [
+      "vt.口述,命令，指示,使听写,控制，支配vi.口述,命令"
+    ],
+    "ukphone": "dɪkˈteɪt",
+    "usphone": "ˈdɪkteɪt"
+  },
+  {
+    "name": "dictionary",
+    "trans": [
+      "n.词典，字典,自代码字典"
+    ],
+    "ukphone": "ˈdɪkʃənri",
+    "usphone": "ˈdɪkʃəneri"
+  },
+  {
+    "name": "differential",
+    "trans": [
+      "adj.差别的,特意的,数微分的,机，物差动的n.数微分,差别,工资级差,机差动器"
+    ],
+    "ukphone": "ˌdɪfəˈrenʃl",
+    "usphone": "ˌdɪfəˈrɛnʃəl"
+  },
+  {
+    "name": "differentiate",
+    "trans": [
+      "vt.& vi.区分，区别，辨别vi.区别对待vt.表明…间的差别，构成…间差别的特征,数学 求…的微分：计算导数或（函数的）微分"
+    ],
+    "ukphone": "ˌdɪfəˈrenʃieɪt",
+    "usphone": "ˌdɪfəˈrɛnʃiˌet"
+  },
+  {
+    "name": "differentiation",
+    "trans": [
+      "n.区别，分化,分异,衍进,求导数"
+    ],
+    "ukphone": "ˌdɪfəˌrenʃɪ'eɪʃn",
+    "usphone": "ˌdɪfəˌrɛnʃiˈeʃən"
+  },
+  {
+    "name": "diffusion",
+    "trans": [
+      "n.扩散,<物，化>扩散,传播,<人>（文化等的）传流"
+    ],
+    "ukphone": "dɪ'fju:ʒn",
+    "usphone": "dɪˈfjuʒən"
+  },
+  {
+    "name": "dilemma",
+    "trans": [
+      "n.窘境，困境,进退两难"
+    ],
+    "ukphone": "dɪˈlemə",
+    "usphone": "dɪˈlɛmə"
+  },
+  {
+    "name": "dilute",
+    "trans": [
+      "vt.稀释，冲淡adj.稀释的，冲淡的"
+    ],
+    "ukphone": "daɪˈlu:t",
+    "usphone": "dɪ-"
+  },
+  {
+    "name": "dimensional",
+    "trans": [
+      "adj.尺寸的,<物>量纲的,<数>因次的,维的"
+    ],
+    "ukphone": "dɪ'menʃənəl",
+    "usphone": "dɪˈmɛnʃənl:"
+  },
+  {
+    "name": "dioxide",
+    "trans": [
+      "n.化二氧化物"
+    ],
+    "ukphone": "daɪˈɒksaɪd",
+    "usphone": "daɪˈɑ:ksaɪd"
+  },
+  {
+    "name": "directive",
+    "trans": [
+      "n.指令,<美>命令，训令，指令,方针adj.指示性的，指导性的，指挥的,管理的,无线指向定向式的"
+    ],
+    "ukphone": "dəˈrektɪv",
+    "usphone": "daɪ-"
+  },
+  {
+    "name": "disability",
+    "trans": [
+      "n.无力，无能,残疾,法无能力，无资格"
+    ],
+    "ukphone": "ˌdɪsəˈbɪləti",
+    "usphone": "ˌdɪsəˈbɪlɪti"
+  },
+  {
+    "name": "disadvantage",
+    "trans": [
+      "n.不利，劣势，短处,损失"
+    ],
+    "ukphone": "ˌdɪsədˈvɑ:ntɪdʒ",
+    "usphone": "ˌdɪsədˈvæntɪdʒ"
+  },
+  {
+    "name": "discharge",
+    "trans": [
+      "vt.下（客）,卸船,免除（自己的义务、负担等）,执行vt.& vi.放出,流出,开枪,发射n.（气体、液体如水从管子里）流出,排放出的物体vi.（船、飞机等）卸货,（颜料、墨水或染料等）化开,卸掉负担（或负载）,下客"
+    ],
+    "ukphone": "dɪsˈtʃɑ:dʒ",
+    "usphone": "dɪsˈtʃɑ:rdʒ"
+  },
+  {
+    "name": "discourse",
+    "trans": [
+      "n.论述，交谈,正式的讨论vi.演说,谈论vt.叙述,讨论"
+    ],
+    "ukphone": "ˈdɪskɔ:s",
+    "usphone": "ˈdɪskɔ:rs"
+  },
+  {
+    "name": "discrete",
+    "trans": [
+      "adj.分离的，不相关联的,分立式,非连续"
+    ],
+    "ukphone": "dɪˈskri:t",
+    "usphone": "dɪˈskrit"
+  },
+  {
+    "name": "discrimination",
+    "trans": [
+      "n.歧视,辨别，区别,辨别力，识别力,不公平的待遇"
+    ],
+    "ukphone": "dɪˌskrɪmɪˈneɪʃn",
+    "usphone": "dɪˌskrɪməˈneʃən"
+  },
+  {
+    "name": "displacement",
+    "trans": [
+      "n.取代，替代,免职，停职,船 排水量,化置换"
+    ],
+    "ukphone": "dɪsˈpleɪsmənt",
+    "usphone": "dɪsˈplesmənt"
+  },
+  {
+    "name": "dissection",
+    "trans": [
+      "n.解剖，切开，剥离,剖割,切割,切段"
+    ],
+    "ukphone": "daɪ'sekʃn",
+    "usphone": "daɪ-"
+  },
+  {
+    "name": "dissertation",
+    "trans": [
+      "n.专题论文，学位论文,学术演讲"
+    ],
+    "ukphone": "ˌdɪsəˈteɪʃn",
+    "usphone": "ˌdɪsərˈteɪʃn"
+  },
+  {
+    "name": "dissolve",
+    "trans": [
+      "vt.使溶解,使（固态物）溶解为液体，使液化,使消失，使消逝，消除,使终止vi.溶解,融化，液化,解散，散去,分裂，分解"
+    ],
+    "ukphone": "dɪˈzɒlv",
+    "usphone": "dɪˈzɑ:lv"
+  },
+  {
+    "name": "distribution",
+    "trans": [
+      "n.分配，分布,法（无遗嘱死亡者的）财产分配,无线频率分布,电配电"
+    ],
+    "ukphone": "ˌdɪstrɪˈbju:ʃn",
+    "usphone": "ˌdɪstrəˈbjuʃən"
+  },
+  {
+    "name": "disturbance",
+    "trans": [
+      "n.打扰,骚乱，变乱,困扰,烦闷"
+    ],
+    "ukphone": "dɪˈstɜ:bəns",
+    "usphone": "dɪˈstɜ:rbəns"
+  },
+  {
+    "name": "diverse",
+    "trans": [
+      "adj.不同的，多种多样的,变化多的,形形色色的"
+    ],
+    "ukphone": "daɪˈvɜ:s",
+    "usphone": "daɪˈvɜ:rs"
+  },
+  {
+    "name": "domain",
+    "trans": [
+      "n.范围，领域,领土，疆土,管辖范围,计域名"
+    ],
+    "ukphone": "dəˈmeɪn",
+    "usphone": "doʊˈmeɪn"
+  },
+  {
+    "name": "dominance",
+    "trans": [
+      "n.优势,支配,统治,优性"
+    ],
+    "ukphone": "'dɒmɪnəns",
+    "usphone": "ˈdɑmənəns"
+  },
+  {
+    "name": "dominant",
+    "trans": [
+      "adj.占优势的,统治的，支配的,生显性的,高耸的n.生显性性状，显性基因,优势物种,乐全阶第五音,主因，要素"
+    ],
+    "ukphone": "ˈdɒmɪnənt",
+    "usphone": "ˈdɑ:mɪnənt"
+  },
+  {
+    "name": "domination",
+    "trans": [
+      "n.控制，统治"
+    ],
+    "ukphone": "ˌdɒmɪ'neɪʃn",
+    "usphone": "ˌdɑməˈneʃən"
+  },
+  {
+    "name": "donor",
+    "trans": [
+      "n.捐赠者，医供血者，输血者,医供血者，输血者,物施主"
+    ],
+    "ukphone": "ˈdəʊnə(r)",
+    "usphone": "ˈdoʊnə(r)"
+  },
+  {
+    "name": "dose",
+    "trans": [
+      "n.剂量，药量,（药的）一服，一剂,（处罚等）一回，一次，一番,（酒中的）配料，增味剂vi.服药vt.给药,给…服药,把（药等）配分剂量,在（酒）中加料"
+    ],
+    "ukphone": "dəʊs",
+    "usphone": "doʊs"
+  },
+  {
+    "name": "drain",
+    "trans": [
+      "vi.排水,流干vt.喝光，喝干,使（精力、金钱等）耗尽,使流出,排掉水n.排水,下水道,排水系统,医引流"
+    ],
+    "ukphone": "dreɪn",
+    "usphone": "dren"
+  },
+  {
+    "name": "drift",
+    "trans": [
+      "vi.流动,随意移动,漂泊,浮现vt.漂流,堆积成堆n.漂移，偏移,趋势，动向,大意,放任自流"
+    ],
+    "ukphone": "drɪft",
+    "usphone": "drɪft"
+  },
+  {
+    "name": "duration",
+    "trans": [
+      "n.持续，持续的时间，期间,（时间的）持续，持久，连续,语音学音长，音延"
+    ],
+    "ukphone": "djuˈreɪʃn",
+    "usphone": "duˈreɪʃn"
+  },
+  {
+    "name": "dye",
+    "trans": [
+      "n.染料，染色,颜色vt.染色,给…染色vi.染上或粘上（颜色）"
+    ],
+    "ukphone": "daɪ",
+    "usphone": "daɪ"
+  },
+  {
+    "name": "dynamic",
+    "trans": [
+      "adj.动态的,动力的，动力学的,充满活力的，精力充沛的,不断变化的，充满变数的n.动态,动力，推动变化的力量,动力学,活力"
+    ],
+    "ukphone": "daɪˈnæmɪk",
+    "usphone": "daiˈnæmik"
+  },
+  {
+    "name": "ecological",
+    "trans": [
+      "adj.生态（学）的"
+    ],
+    "ukphone": "ˌi:kəˈlɒdʒɪkl",
+    "usphone": "ˌi:kəˈlɑ:dʒɪkl"
+  },
+  {
+    "name": "ecology",
+    "trans": [
+      "n.生态学,社会生态学,个体生态学"
+    ],
+    "ukphone": "iˈkɒlədʒi",
+    "usphone": "iˈkɑ:lədʒi"
+  },
+  {
+    "name": "economically",
+    "trans": [
+      "adv.节约地,节省地,经济地,在经济上"
+    ],
+    "ukphone": "ˌi:kəˈnɒmɪkli",
+    "usphone": "ˌi:kəˈnɑ:mɪkli"
+  },
+  {
+    "name": "economist",
+    "trans": [
+      "n.经济学家，经济专家"
+    ],
+    "ukphone": "ɪˈkɒnəmɪst",
+    "usphone": "ɪˈkɑ:nəmɪst"
+  },
+  {
+    "name": "effectiveness",
+    "trans": [
+      "n.有效，有力,有效性,效益,效用"
+    ],
+    "ukphone": "ɪˌfek'tɪvnɪs",
+    "usphone": "əˈfɛktɪvnɪs"
+  },
+  {
+    "name": "elaborate",
+    "trans": [
+      "vi.详尽说明,变得复杂vt.详细制定,详尽阐述,生理学加工,尽心竭力地做"
+    ],
+    "ukphone": "ɪˈlæbərət",
+    "usphone": "ɪˈlæbəret"
+  },
+  {
+    "name": "elastic",
+    "trans": [
+      "adj.有弹力的,可伸缩的,灵活的n.松紧带，橡皮圈"
+    ],
+    "ukphone": "ɪˈlæstɪk",
+    "usphone": "ɪˈlæstɪk"
+  },
+  {
+    "name": "elasticity",
+    "trans": [
+      "n.弹性,弹力,灵活性,伸缩性"
+    ],
+    "ukphone": "ˌi:læˈstɪsəti",
+    "usphone": "ˌilæ-"
+  },
+  {
+    "name": "electron",
+    "trans": [
+      "n.电子"
+    ],
+    "ukphone": "ɪˈlektrɒn",
+    "usphone": "ɪˈlektrɑ:n"
+  },
+  {
+    "name": "elementary",
+    "trans": [
+      "adj.基本的,初级的,化元素的,初等"
+    ],
+    "ukphone": "ˌelɪˈmentri",
+    "usphone": "-tri"
+  },
+  {
+    "name": "elevate",
+    "trans": [
+      "vt.举起,提高,提升,鼓舞"
+    ],
+    "ukphone": "ˈelɪveɪt",
+    "usphone": "ˈɛləˌvet"
+  },
+  {
+    "name": "elevation",
+    "trans": [
+      "n.高处，高地，高度，海拔，（枪炮的）仰角，射角,升级，上进，向上,高尚,建正视图，立视图"
+    ],
+    "ukphone": "ˌelɪˈveɪʃn",
+    "usphone": "ˌɛləˈveʃən"
+  },
+  {
+    "name": "elimination",
+    "trans": [
+      "n.排除,除去,根除,淘汰"
+    ],
+    "ukphone": "ɪˌlɪmɪ'neɪʃn",
+    "usphone": "ɪˌlɪməˈneʃən"
+  },
+  {
+    "name": "elite",
+    "trans": [
+      "n.<法>精华,精锐，精英,上层集团,（统称）掌权人物"
+    ],
+    "ukphone": "eɪˈli:t",
+    "usphone": "eˈlit"
+  },
+  {
+    "name": "embed",
+    "trans": [
+      "vt.&vi.把…嵌入,栽种,深留（记忆中）"
+    ],
+    "ukphone": "ɪm'bed",
+    "usphone": "ɛmˈbɛd"
+  },
+  {
+    "name": "emergence",
+    "trans": [
+      "n.出现，发生,暴露,植突出体，（柑果的）瓤胞"
+    ],
+    "ukphone": "ɪ'mɜ:dʒəns",
+    "usphone": "ɪˈmə:dʒəns"
+  },
+  {
+    "name": "emission",
+    "trans": [
+      "n.排放，辐射,排放物，散发物（尤指气体）,（书刊）发行，发布（通知）"
+    ],
+    "ukphone": "iˈmɪʃn",
+    "usphone": "ɪˈmɪʃən"
+  },
+  {
+    "name": "emit",
+    "trans": [
+      "vt.发出,发射,颁布,发表"
+    ],
+    "ukphone": "iˈmɪt",
+    "usphone": "ɪˈmɪt"
+  },
+  {
+    "name": "emperor",
+    "trans": [
+      "n.皇帝，君主"
+    ],
+    "ukphone": "ˈempərə(r)",
+    "usphone": "ˈɛmpəɚ"
+  },
+  {
+    "name": "empirical",
+    "trans": [
+      "adj.凭经验的,经验主义的,以观察或实验为依据的"
+    ],
+    "ukphone": "ɪmˈpɪrɪkl",
+    "usphone": "ɛmˈpɪrɪkəl"
+  },
+  {
+    "name": "encode",
+    "trans": [
+      "vt.（将文字材料）译成密码,编码，编制成计算机语言"
+    ],
+    "ukphone": "ɪnˈkəʊd",
+    "usphone": "ɪnˈkoʊd"
+  },
+  {
+    "name": "enforcement",
+    "trans": [
+      "n.强制，实施，执行"
+    ],
+    "ukphone": "ɪn'fɔ:smənt",
+    "usphone": "ɪn'fɔ:smənt"
+  },
+  {
+    "name": "enormously",
+    "trans": [
+      "adv.巨大地，庞大地,大大"
+    ],
+    "ukphone": "ɪˈnɔ:məsli",
+    "usphone": "ɪˈnɔ:rməsli"
+  },
+  {
+    "name": "entity",
+    "trans": [
+      "n.实体,实际存在物,本质"
+    ],
+    "ukphone": "ˈentəti",
+    "usphone": "ˈɛntɪti"
+  },
+  {
+    "name": "entrant",
+    "trans": [
+      "n.参加者，新加入的,参加竞赛者,新生，新工作者"
+    ],
+    "ukphone": "ˈentrənt",
+    "usphone": "ˈɛntrənt"
+  },
+  {
+    "name": "enzyme",
+    "trans": [
+      "n.生化酶"
+    ],
+    "ukphone": "ˈenzaɪm",
+    "usphone": "ˈɛnzaɪm"
+  },
+  {
+    "name": "epidemic",
+    "trans": [
+      "n.流行病,迅速的传播、生长或发展,风尚等的流行adj.流行性的,极为盛行的"
+    ],
+    "ukphone": "ˌepɪˈdemɪk",
+    "usphone": "ˌɛpɪˈdɛmɪk"
+  },
+  {
+    "name": "epidemiology",
+    "trans": [
+      "n.流行病学"
+    ],
+    "ukphone": "ˌepɪˌdi:miˈɒlədʒi",
+    "usphone": "ˌepɪˌdi:miˈɑ:lədʒi"
+  },
+  {
+    "name": "equality",
+    "trans": [
+      "n.同等，平等,数相等，等式"
+    ],
+    "ukphone": "iˈkwɒləti",
+    "usphone": "iˈkwɑ:ləti"
+  },
+  {
+    "name": "equilibrium",
+    "trans": [
+      "n.平衡，均势,平静"
+    ],
+    "ukphone": "ˌi:kwɪˈlɪbriəm",
+    "usphone": "ˌɛkwə-"
+  },
+  {
+    "name": "equivalence",
+    "trans": [
+      "n.（力量等的）均等,相等,相当,等价"
+    ],
+    "ukphone": "ɪ'kwɪvələns",
+    "usphone": "ɪˈkwɪvələns"
+  },
+  {
+    "name": "erase",
+    "trans": [
+      "vt.擦掉,抹去,清除"
+    ],
+    "ukphone": "ɪˈreɪz",
+    "usphone": "ɪˈreɪs"
+  },
+  {
+    "name": "essence",
+    "trans": [
+      "n.本质，实质,精华，精髓,香精"
+    ],
+    "ukphone": "ˈesns",
+    "usphone": "ˈɛsəns"
+  },
+  {
+    "name": "essentially",
+    "trans": [
+      "adv.本质上，根本上,本来,“essential“的派生"
+    ],
+    "ukphone": "ɪˈsenʃəli",
+    "usphone": "ɪˈsenʃəli"
+  },
+  {
+    "name": "estimation",
+    "trans": [
+      "n.估计, 评价, 判断,尊敬"
+    ],
+    "ukphone": "ˌestɪˈmeɪʃn",
+    "usphone": "ˌɛstəˈmeʃən"
+  },
+  {
+    "name": "ethical",
+    "trans": [
+      "adj.伦理学的,道德的，伦理的,凭处方出售的n.凭医师处方出售的药品"
+    ],
+    "ukphone": "ˈeθɪkl",
+    "usphone": "ˈɛθɪkəl"
+  },
+  {
+    "name": "ethics",
+    "trans": [
+      "n.伦理学,道德规范,伦理学著作,道德规范( ethic的名词复数 ),道德体系,行为准则,伦理学"
+    ],
+    "ukphone": "'eθɪks",
+    "usphone": "'eθɪks"
+  },
+  {
+    "name": "evident",
+    "trans": [
+      "adj.明显的，明白的,昭著,彰"
+    ],
+    "ukphone": "ˈevɪdənt",
+    "usphone": "ˈɛvɪdənt"
+  },
+  {
+    "name": "evolutionary",
+    "trans": [
+      "adj.进化的"
+    ],
+    "ukphone": "ˌi:vəˈlu:ʃənri",
+    "usphone": "ˌi:vəˈlu:ʃəneri"
+  },
+  {
+    "name": "ex"
+  },
+  {
+    "name": "execute",
+    "trans": [
+      "vt.执行,处死，处决,履行,完成"
+    ],
+    "ukphone": "ˈeksɪkju:t",
+    "usphone": "ˈɛksɪˌkjut"
+  },
+  {
+    "name": "execution",
+    "trans": [
+      "n.依法处决,实行，执行,演奏"
+    ],
+    "ukphone": "ˌeksɪˈkju:ʃn",
+    "usphone": "ˌɛksɪˈkjuʃən"
+  },
+  {
+    "name": "exit",
+    "trans": [
+      "n.出口，通道,退场,退去，退出,死亡vi.离开,退出,退场,去世"
+    ],
+    "ukphone": "ˈeksɪt",
+    "usphone": "ˈɛksɪt"
+  },
+  {
+    "name": "expertise",
+    "trans": [
+      "n.专门知识或技能,专家的意见,专家评价，鉴定"
+    ],
+    "ukphone": "ˌekspɜ:ˈti:z",
+    "usphone": "ˌekspɜ:rˈti:z"
+  },
+  {
+    "name": "explicit",
+    "trans": [
+      "adj.明确的，清楚的,直言的,详述的,不隐瞒的"
+    ],
+    "ukphone": "ɪkˈsplɪsɪt",
+    "usphone": "ɪkˈsplɪsɪt"
+  },
+  {
+    "name": "explicitly",
+    "trans": [
+      "adv.明白地，明确地"
+    ],
+    "ukphone": "ɪk'splɪsɪtlɪ",
+    "usphone": "ɪk'splɪsɪtlɪ"
+  },
+  {
+    "name": "exploit",
+    "trans": [
+      "vt.开采,开拓,利用（…为自己谋利）,剥削n.功绩,功劳,勋绩"
+    ],
+    "ukphone": "ɪkˈsplɔɪt",
+    "usphone": "ɪkˈsplɔɪt"
+  },
+  {
+    "name": "exponential",
+    "trans": [
+      "n.指数,倡导者,演奏者,例子adj.指数的，幂数的,越来越快的"
+    ],
+    "ukphone": "ˌekspəˈnenʃl",
+    "usphone": "ˌɛkspəˈnɛnʃəl"
+  },
+  {
+    "name": "fabric",
+    "trans": [
+      "n.织物,布,构造,（建筑物的）结构（如墙、地面、屋顶）：质地"
+    ],
+    "ukphone": "ˈfæbrɪk",
+    "usphone": "ˈfæbrɪk"
+  },
+  {
+    "name": "facet",
+    "trans": [
+      "n.小平面,侧面，方面,（昆虫的）小眼面,建柱槽筋vt.在…上琢面"
+    ],
+    "ukphone": "ˈfæsɪt",
+    "usphone": "ˈfæsɪt"
+  },
+  {
+    "name": "facilitate",
+    "trans": [
+      "vt.促进，助长,使容易,帮助"
+    ],
+    "ukphone": "fəˈsɪlɪteɪt",
+    "usphone": "fəˈsɪlɪˌtet"
+  },
+  {
+    "name": "factorial"
+  },
+  {
+    "name": "faculty",
+    "trans": [
+      "n.能力，才能,全体教职员,<英>（大学的）专科，系,特权，特许"
+    ],
+    "ukphone": "ˈfæklti",
+    "usphone": "ˈfækəlti"
+  },
+  {
+    "name": "fatigue",
+    "trans": [
+      "n.疲劳，疲乏,劳务杂役,（士兵穿的）工作服vt.使疲劳,使疲乏vi.疲劳"
+    ],
+    "ukphone": "fəˈti:g",
+    "usphone": "fəˈtiɡ"
+  },
+  {
+    "name": "feedback",
+    "trans": [
+      "n.反馈,反应,反馈噪音"
+    ],
+    "ukphone": "ˈfi:dbæk",
+    "usphone": "ˈfidˌbæk"
+  },
+  {
+    "name": "fertility",
+    "trans": [
+      "n.（土地的）肥沃,肥力,丰产,<生>繁殖力"
+    ],
+    "ukphone": "fəˈtɪləti",
+    "usphone": "fərˈtɪləti"
+  },
+  {
+    "name": "fetal",
+    "trans": [
+      "adj.胎儿的，胎的"
+    ],
+    "ukphone": "'fi:tl",
+    "usphone": "ˈfitl:"
+  },
+  {
+    "name": "fever",
+    "trans": [
+      "n.发热，发烧,热病,一时的狂热,激动不安vt.引起发热,使狂热,使患热病vi.发热或变得发热,狂热,患热病"
+    ],
+    "ukphone": "ˈfi:və(r)",
+    "usphone": "ˈfivɚ"
+  },
+  {
+    "name": "fiber",
+    "trans": [
+      "n.光纤,（织物的）质地,纤维，纤维物质"
+    ],
+    "ukphone": "'faɪbə",
+    "usphone": "'faɪbə"
+  },
+  {
+    "name": "fin",
+    "trans": [
+      "n.鱼鳍,鳍状物,（汽车、飞机、炸弹上的）尾翅,散热片vt.给…装上翅片,切除鳍vi.潜泳,（猛烈地）拍动（鳍）"
+    ],
+    "ukphone": "fɪn",
+    "usphone": "fɪn"
+  },
+  {
+    "name": "finite",
+    "trans": [
+      "adj.有限的,语限定的,数有穷的，有限的n.有限性,有限的事物"
+    ],
+    "ukphone": "ˈfaɪnaɪt",
+    "usphone": "ˈfaɪˌnaɪt"
+  },
+  {
+    "name": "flesh",
+    "trans": [
+      "n.肉,肉体,果肉,皮肤v.用肉喂养,长胖"
+    ],
+    "ukphone": "fleʃ",
+    "usphone": "flɛʃ"
+  },
+  {
+    "name": "flexibility",
+    "trans": [
+      "n.柔韧性，机动性，灵活性,伸缩性,可塑度,柔度"
+    ],
+    "ukphone": "ˌfleksə'bɪlətɪ",
+    "usphone": "ˌflɛksəˈbɪlətɪ"
+  },
+  {
+    "name": "flip",
+    "trans": [
+      "vt.轻弹，轻击,按（开关）,快速翻转,急挥vi.发疯,急动,捻,蹦蹦跳跳n.浏览,空翻,（射击时枪管的）跳跃,轻抛adj.口语无礼的，轻率的，油腔滑调的,冒失的，鲁莽的"
+    ],
+    "ukphone": "flɪp",
+    "usphone": "flɪp"
+  },
+  {
+    "name": "fluid",
+    "trans": [
+      "n.液体，流体adj.流体的，流动的，流体的，液体的,易变的，不固定的,（动作、设计、音乐等）流畅优美的"
+    ],
+    "ukphone": "ˈflu:ɪd",
+    "usphone": "ˈfluɪd"
+  },
+  {
+    "name": "flux",
+    "trans": [
+      "n.物流量,流出,熔解,不断的变动v.熔化,熔解,流出"
+    ],
+    "ukphone": "flʌks",
+    "usphone": "flʌks"
+  },
+  {
+    "name": "footnote",
+    "trans": [
+      "n.脚注,补充说明vt.给…作脚注"
+    ],
+    "ukphone": "ˈfʊtnəʊt",
+    "usphone": "ˈfʊtnoʊt"
+  },
+  {
+    "name": "formally",
+    "trans": [
+      "adv.正式地,正规地,拘泥形式地,形式上"
+    ],
+    "ukphone": "'fɔ:məlɪ",
+    "usphone": "ˈfɔrml:ɪ"
+  },
+  {
+    "name": "formulation",
+    "trans": [
+      "n.配方,构想，规划,公式化"
+    ],
+    "ukphone": "ˌfɔ:mjʊ'leɪʃn",
+    "usphone": "ˌfɔrmjəˈleʃən"
+  },
+  {
+    "name": "forum",
+    "trans": [
+      "n.论坛，讨论会，专题讨论节目,集会的公共场所,提供公开讨论的媒体,法庭"
+    ],
+    "ukphone": "ˈfɔ:rəm",
+    "usphone": "ˈfɔrəm"
+  },
+  {
+    "name": "fossil",
+    "trans": [
+      "n.化石,僵化的事物,老顽固，食古不化的人,习语中保存的旧词adj.化石的,陈腐的，守旧的"
+    ],
+    "ukphone": "ˈfɒsl",
+    "usphone": "ˈfɑ:sl"
+  },
+  {
+    "name": "founds"
+  },
+  {
+    "name": "fraction",
+    "trans": [
+      "n.数分数,一小部分，些微,不相连的一块，片段,化分馏"
+    ],
+    "ukphone": "ˈfrækʃn",
+    "usphone": "ˈfrækʃən"
+  },
+  {
+    "name": "fracture",
+    "trans": [
+      "vt.& vi.（使）折断，破碎n.破裂，断裂,骨折"
+    ],
+    "ukphone": "ˈfræktʃə(r)",
+    "usphone": "ˈfræktʃɚ"
+  },
+  {
+    "name": "freely",
+    "trans": [
+      "adv.自由地，随意地，免费地,直率地,免费地,慷慨地"
+    ],
+    "ukphone": "ˈfri:li",
+    "usphone": "ˈfrili"
+  },
+  {
+    "name": "friction",
+    "trans": [
+      "n.摩擦,冲突，不和,摩擦力"
+    ],
+    "ukphone": "ˈfrɪkʃn",
+    "usphone": "ˈfrɪkʃən"
+  },
+  {
+    "name": "fringe",
+    "trans": [
+      "n.穗,边缘,刘海,次要vt.作为…的边缘，围绕着,给…加穗饰adj.边缘的，外围的,次要的，附加的"
+    ],
+    "ukphone": "frɪndʒ",
+    "usphone": "frɪndʒ"
+  },
+  {
+    "name": "fundamentally",
+    "trans": [
+      "adv.基础地,根本地,从根本上"
+    ],
+    "ukphone": "ˌfʌndəˈmentəli",
+    "usphone": "ˌfʌndəˈmentəli"
+  },
+  {
+    "name": "fungus",
+    "trans": [
+      "n.真菌,霉，霉菌,医海绵肿"
+    ],
+    "ukphone": "ˈfʌŋgəs",
+    "usphone": "ˈfʌŋɡəs"
+  },
+  {
+    "name": "fusion",
+    "trans": [
+      "n.融合,熔解，熔化,融合物,物核聚变"
+    ],
+    "ukphone": "ˈfju:ʒn",
+    "usphone": "ˈfjuʒən"
+  },
+  {
+    "name": "gauge",
+    "trans": [
+      "n.测量的标准或范围,尺度，标准,测量仪器,评估vt.（用仪器）测量,确定容量，体积或内容,评估，判断,采用"
+    ],
+    "ukphone": "ɡeɪdʒ",
+    "usphone": "ɡedʒ"
+  },
+  {
+    "name": "generalization",
+    "trans": [
+      "n.一般化,普通化,归纳,概论"
+    ],
+    "ukphone": "ˌdʒenrəlaɪˈzeɪʃn",
+    "usphone": "ˌdʒenrələˈzeɪʃn"
+  },
+  {
+    "name": "generalize",
+    "trans": [
+      "vt.& vi.概括，归纳,推广，普及,使一般化,形成概念vt.推广，普及,使一般化,概括vi.形成概念"
+    ],
+    "ukphone": "ˈdʒenrəlaɪz",
+    "usphone": "ˈdʒɛnərəˌlaɪz"
+  },
+  {
+    "name": "genetically",
+    "trans": [
+      "adv.创始,遗传学,生殖,基因"
+    ],
+    "ukphone": "dʒə'netɪklɪ",
+    "usphone": "dʒə'netɪklɪ"
+  },
+  {
+    "name": "genetics",
+    "trans": [
+      "n.遗传学"
+    ],
+    "ukphone": "dʒəˈnetɪks",
+    "usphone": "dʒəˈnɛtɪks"
+  },
+  {
+    "name": "ghost",
+    "trans": [
+      "n.鬼，幽灵,（尤指可怕事物的）记忆,隐约的一点点,（电视屏幕上的）重影vt.悄悄地行进vi.替人代笔"
+    ],
+    "ukphone": "gəʊst",
+    "usphone": "goʊst"
+  },
+  {
+    "name": "globalization",
+    "trans": [
+      "n.全球化，全球性"
+    ],
+    "ukphone": "ˌgləʊbəlaɪˈzeɪʃn",
+    "usphone": "ˌgloʊbələˈzeɪʃn"
+  },
+  {
+    "name": "goat",
+    "trans": [
+      "n.山羊,色鬼,替罪羊"
+    ],
+    "ukphone": "gəʊt",
+    "usphone": "goʊt"
+  },
+  {
+    "name": "goodness",
+    "trans": [
+      "n.良好,善良,精华,上帝int.天哪，哎呀"
+    ],
+    "ukphone": "ˈgʊdnəs",
+    "usphone": "ˈɡʊdnɪs"
+  },
+  {
+    "name": "goods"
+  },
+  {
+    "name": "gradient",
+    "trans": [
+      "n.物梯度，陡度,（温度、气压等）变化率，梯度变化曲线,<英>（道路的）倾斜度，坡度adj.倾斜的,动步行的，能步行的"
+    ],
+    "ukphone": "ˈgreɪdiənt",
+    "usphone": "ˈɡrediənt"
+  },
+  {
+    "name": "gram"
+  },
+  {
+    "name": "grammatical",
+    "trans": [
+      "adj.语法上的，符合语法规则的"
+    ],
+    "ukphone": "grəˈmætɪkl",
+    "usphone": "ɡrəˈmætɪkəl"
+  },
+  {
+    "name": "graph",
+    "trans": [
+      "n.图表，曲线图,词的拼法vt.用曲线图表示，把…绘入图表,用胶版印刷"
+    ],
+    "ukphone": "græf",
+    "usphone": "ɡræf"
+  },
+  {
+    "name": "grasp",
+    "trans": [
+      "vt.抓住,了解,急忙抓住,急切（或贪婪）地抓住n.控制,控制力,能力所及vi.攫取（常与 at 连用）,急于接受,急切地寻求（常与 for 连用）"
+    ],
+    "ukphone": "grɑ:sp",
+    "usphone": "græsp"
+  },
+  {
+    "name": "gravity",
+    "trans": [
+      "n.重力,万有引力，地心引力,重要性，严重性,严肃，庄重"
+    ],
+    "ukphone": "ˈgrævəti",
+    "usphone": "ˈɡrævɪti"
+  },
+  {
+    "name": "grid",
+    "trans": [
+      "n.格子，非实质的,地图上的坐标方格,（输电线路、天然气管道等的）系统网络"
+    ],
+    "ukphone": "grɪd",
+    "usphone": "ɡrɪd"
+  },
+  {
+    "name": "gross",
+    "trans": [
+      "adj.总的,粗俗的,显而易见的,恶劣的n.总额vt.总共收入"
+    ],
+    "ukphone": "grəʊs",
+    "usphone": "groʊs"
+  },
+  {
+    "name": "gut",
+    "trans": [
+      "n.勇气,内脏,直觉,肠adj.本能的，直觉的vt.毁坏（建筑物等）的内部,取出…的内脏"
+    ],
+    "ukphone": "gʌt",
+    "usphone": "ɡʌt"
+  },
+  {
+    "name": "habitat",
+    "trans": [
+      "n.（动物的）栖息地，住处,产地,经常发现某种事物的地方"
+    ],
+    "ukphone": "ˈhæbɪtæt",
+    "usphone": "ˈhæbɪˌtæt"
+  },
+  {
+    "name": "halfway",
+    "trans": [
+      "adv.在中途,到一半,在中间,大致上"
+    ],
+    "ukphone": "ˌhɑ:fˈweɪ",
+    "usphone": "ˌhæfˈweɪ"
+  },
+  {
+    "name": "handout",
+    "trans": [
+      "n.救济品,施舍物,印刷品,讲义"
+    ],
+    "ukphone": "ˈhændaʊt",
+    "usphone": "ˈhændˌaʊt"
+  },
+  {
+    "name": "harvest",
+    "trans": [
+      "n.收割,收获季节,收成,结果vt.& vi.收割，收成vt.收到,收割（庄稼），捕猎（动物、鱼）"
+    ],
+    "ukphone": "ˈhɑ:vɪst",
+    "usphone": "ˈhɑ:rvɪst"
+  },
+  {
+    "name": "hawk",
+    "trans": [
+      "n.霍克,鹰,鹰派人物，主战派,掠夺别人的人，骗子vt.通过叫卖主动兜售（货物）,清除嗓子中的（痰）vi.清嗓，咳痰,用训练好的鹰狩猎,象鹰一样俯冲攻击,叫卖"
+    ],
+    "ukphone": "hɔ:k",
+    "usphone": "hɔk"
+  },
+  {
+    "name": "headquarter"
+  },
+  {
+    "name": "hedge",
+    "trans": [
+      "n.树篱,保护手段,防止损失（尤指金钱）的手段vt.用树篱围起,受…的束缚vt.& vi.回避，避免adj.树篱下的，树篱旁的,偷偷摸摸的，名声不好的，低劣的"
+    ],
+    "ukphone": "hedʒ",
+    "usphone": "hɛdʒ"
+  },
+  {
+    "name": "helix"
+  },
+  {
+    "name": "hepatitis",
+    "trans": [
+      "n.肝炎"
+    ],
+    "ukphone": "ˌhepəˈtaɪtɪs",
+    "usphone": "ˌhɛpəˈtaɪtɪs"
+  },
+  {
+    "name": "herbicide",
+    "trans": [
+      "n.除草剂"
+    ],
+    "ukphone": "ˈhɜ:bɪsaɪd",
+    "usphone": "ˈɜ:rbɪsaɪd"
+  },
+  {
+    "name": "hierarchy",
+    "trans": [
+      "n.计分层，层次,等级制度,统治集团,天使的级别或等级"
+    ],
+    "ukphone": "ˈhaɪərɑ:ki",
+    "usphone": "ˈhaɪərɑ:rki"
+  },
+  {
+    "name": "hip",
+    "trans": [
+      "n.臀部,建筑学屋脊,臀围（尺寸）,臀部…的adj.（衣服、音乐等方面）时髦的，赶时髦的vt.使…的髋关节脱臼，损伤…的髋部,建筑学给（房屋）建屋脊,使知晓，使了解，告诉,使消息灵通"
+    ],
+    "ukphone": "hɪp",
+    "usphone": "hɪp"
+  },
+  {
+    "name": "historically",
+    "trans": [
+      "adv.从历史角度,在历史上,以历史观点,根据历史事实"
+    ],
+    "ukphone": "hɪ'stɒrɪklɪ",
+    "usphone": "hɪsˈtɔrɪkl:ɪ"
+  },
+  {
+    "name": "homework",
+    "trans": [
+      "n.家庭作业,功课"
+    ],
+    "ukphone": "ˈhəʊmwɜ:k",
+    "usphone": "ˈhoʊmwɜ:rk"
+  },
+  {
+    "name": "horizon",
+    "trans": [
+      "n.地平线,范围,界限,眼界"
+    ],
+    "ukphone": "həˈraɪzn",
+    "usphone": "həˈraɪzn"
+  },
+  {
+    "name": "horizontal",
+    "trans": [
+      "adj.水平的，卧式的,地平线的,植（枝条）平层的,同一行业的，同阶层的n.水平线,水平面,水平位置,水平的物体"
+    ],
+    "ukphone": "ˌhɒrɪˈzɒntl",
+    "usphone": "ˌhɔ:rəˈzɑ:ntl"
+  },
+  {
+    "name": "hormone",
+    "trans": [
+      "n.荷尔蒙,激素"
+    ],
+    "ukphone": "ˈhɔ:məʊn",
+    "usphone": "ˈhɔ:rmoʊn"
+  },
+  {
+    "name": "hydrogen",
+    "trans": [
+      "n.<化>氢"
+    ],
+    "ukphone": "ˈhaɪdrədʒən",
+    "usphone": "ˈhaɪdrədʒən"
+  },
+  {
+    "name": "identical",
+    "trans": [
+      "adj.同一的,完全同样的，相同的,恒等的,同卵的n.完全相同的事物,同卵双胞"
+    ],
+    "ukphone": "aɪˈdentɪkl",
+    "usphone": "aɪˈdɛntɪkəl"
+  },
+  {
+    "name": "identification",
+    "trans": [
+      "n.鉴定，识别,验明,身份证明,认同"
+    ],
+    "ukphone": "aɪˌdentɪfɪˈkeɪʃn",
+    "usphone": "aɪˌdɛntəfɪˈkeʃən"
+  },
+  {
+    "name": "ideology",
+    "trans": [
+      "n.思想（体系），思想意识,意识形态,观念学,空想，空论"
+    ],
+    "ukphone": "ˌaɪdiˈɒlədʒi",
+    "usphone": "ˌaɪdiˈɑ:lədʒi"
+  },
+  {
+    "name": "illusion",
+    "trans": [
+      "n.错觉,幻想,错误观念,假象"
+    ],
+    "ukphone": "ɪˈlu:ʒn",
+    "usphone": "ɪˈluʒən"
+  },
+  {
+    "name": "immune",
+    "trans": [
+      "adj.免疫的,有免疫力的,不受影响的,免除…的"
+    ],
+    "ukphone": "ɪˈmju:n",
+    "usphone": "ɪˈmjoon"
+  },
+  {
+    "name": "impact",
+    "trans": [
+      "n.碰撞，冲击，撞击,影响,冲击力vt.挤入，压紧,撞击,对…产生影响vi.冲撞，冲击,产生影响"
+    ],
+    "ukphone": "ˈɪmpækt",
+    "usphone": "ˈɪmˌpækt"
+  },
+  {
+    "name": "implicit",
+    "trans": [
+      "adj.不言明含蓄的,无疑问的，绝对的,成为一部份的,内含的"
+    ],
+    "ukphone": "ɪmˈplɪsɪt",
+    "usphone": "ɪmˈplɪsɪt"
+  },
+  {
+    "name": "importantly",
+    "trans": [
+      "adv.重要地"
+    ],
+    "ukphone": "ɪm'pɔːtntli"
+  },
+  {
+    "name": "impulse",
+    "trans": [
+      "n.凭冲动行事,突如其来的念头,电子脉冲,医冲动，搏动adj.冲动的v.推动"
+    ],
+    "ukphone": "ˈɪmpʌls",
+    "usphone": "ˈɪmˌpʌls"
+  },
+  {
+    "name": "incidence",
+    "trans": [
+      "n.发生率,影响范围,数关联，接合,物入射，入射角"
+    ],
+    "ukphone": "ˈɪnsɪdəns",
+    "usphone": "ˈɪnsɪdəns"
+  },
+  {
+    "name": "incline",
+    "trans": [
+      "vt.& vi.（使）倾斜，弄斜,（使）偏向，倾向于,（使）认为,点（头）（以示同意、打招呼等）n.斜坡,斜面,坡度,倾斜"
+    ],
+    "ukphone": "ɪnˈklaɪn",
+    "usphone": "ɪnˈklaɪn"
+  },
+  {
+    "name": "inclusion",
+    "trans": [
+      "n.包含,内含物"
+    ],
+    "ukphone": "ɪnˈklu:ʒn",
+    "usphone": "ɪnˈkluʒən"
+  },
+  {
+    "name": "incredible",
+    "trans": [
+      "adj.不可思议的,惊人的,难以置信的,未必可能的"
+    ],
+    "ukphone": "ɪnˈkredəbl",
+    "usphone": "ɪnˈkrɛdəbəl"
+  },
+  {
+    "name": "incredibly",
+    "trans": [
+      "adv.难以置信地，很，极为"
+    ],
+    "ukphone": "ɪnˈkredəbli",
+    "usphone": "ɪnˈkrɛdəblɪ"
+  },
+  {
+    "name": "incumbent",
+    "trans": [
+      "adj.在职的,义不容辞的,靠在压在上面的,弯垂下来的n.在职者,教会中的任职者,〈英〉教区牧师"
+    ],
+    "ukphone": "ɪnˈkʌmbənt",
+    "usphone": "ɪnˈkʌmbənt"
+  },
+  {
+    "name": "independently",
+    "trans": [
+      "adv.独立地，自立地，无关地"
+    ],
+    "ukphone": "ˌɪndɪ'pendəntlɪ",
+    "usphone": "ˌɪndɪˈpɛndəntlɪ"
+  },
+  {
+    "name": "indicator",
+    "trans": [
+      "n.指示器,化指示剂,指示者"
+    ],
+    "ukphone": "ˈɪndɪkeɪtə(r)",
+    "usphone": "ˈɪndɪˌketɚ"
+  },
+  {
+    "name": "indifference",
+    "trans": [
+      "n.不重视，不在乎，漠不关心,中立，中性,冷淡,无差"
+    ],
+    "ukphone": "ɪnˈdɪfrəns",
+    "usphone": "-ˈdɪfrəns"
+  },
+  {
+    "name": "indigenous",
+    "trans": [
+      "adj.土生土长的,生来的，固有的,本地的,根生土长"
+    ],
+    "ukphone": "ɪnˈdɪdʒənəs",
+    "usphone": "ɪnˈdɪdʒənəs"
+  },
+  {
+    "name": "indirect",
+    "trans": [
+      "adj.间接的,不直截了当的,闪烁其词的,不坦率的"
+    ],
+    "ukphone": "ˌɪndəˈrekt",
+    "usphone": "-daɪ-"
+  },
+  {
+    "name": "individually",
+    "trans": [
+      "adv.分别地,各个地,各自地,独特地"
+    ],
+    "ukphone": "ˌɪndɪˈvɪdʒuəli",
+    "usphone": "ˌɪndɪˈvɪdʒuəli"
+  },
+  {
+    "name": "induce",
+    "trans": [
+      "vt.引诱,引起,电感应,归纳"
+    ],
+    "ukphone": "ɪnˈdju:s",
+    "usphone": "ɪnˈdu:s"
+  },
+  {
+    "name": "induction",
+    "trans": [
+      "n.归纳（法）,（电或磁的）感应,诱发,就职，就职典礼"
+    ],
+    "ukphone": "ɪnˈdʌkʃn",
+    "usphone": "ɪnˈdʌkʃən"
+  },
+  {
+    "name": "industrialization",
+    "trans": [
+      "n.工业化"
+    ],
+    "ukphone": "ɪnˌdʌstrɪəlaɪ'zeɪʃn",
+    "usphone": "ɪnˌdʌstrɪələˈzeʃən"
+  },
+  {
+    "name": "industrialize"
+  },
+  {
+    "name": "inequality",
+    "trans": [
+      "n.不平等，不均等,数不等式,变动，变化,不相同"
+    ],
+    "ukphone": "ˌɪnɪˈkwɒləti",
+    "usphone": "ˌɪnɪˈkwɑ:ləti"
+  },
+  {
+    "name": "inevitably",
+    "trans": [
+      "adv.不可避免地，自然而然地,必然地，无疑的,难免,终于只好"
+    ],
+    "ukphone": "ɪnˈevɪtəbli",
+    "usphone": "ɪnˈevɪtəbli"
+  },
+  {
+    "name": "infect",
+    "trans": [
+      "vt.使受影响，感染,传染，散布病毒，侵染,（电脑病毒）使（电脑的）存储器数据受到感染"
+    ],
+    "ukphone": "ɪnˈfekt",
+    "usphone": "ɪnˈfɛkt"
+  },
+  {
+    "name": "infectious",
+    "trans": [
+      "adj.传染的,有传染性的,易传染的,有感染力的"
+    ],
+    "ukphone": "ɪnˈfekʃəs",
+    "usphone": "ɪnˈfɛkʃəs"
+  },
+  {
+    "name": "inference",
+    "trans": [
+      "n.推理,推断,推论"
+    ],
+    "ukphone": "ˈɪnfərəns",
+    "usphone": "ˈɪnfərəns"
+  },
+  {
+    "name": "inferior",
+    "trans": [
+      "adj.（质量等）低劣的,下级的，下等的,（位置在）下面的,植下位的n.部下，下属,次品,晚辈,印下角码"
+    ],
+    "ukphone": "ɪnˈfɪəriə(r)",
+    "usphone": "ɪnˈfɪriə(r)"
+  },
+  {
+    "name": "infinite",
+    "trans": [
+      "adj.无限的，无穷的,无数的，许许多多的,极大的n.无限，无穷,数 无穷大,<宗>造物主，神,无限的事物"
+    ],
+    "ukphone": "ˈɪnfɪnət",
+    "usphone": "ˈɪnfənɪt"
+  },
+  {
+    "name": "infinity",
+    "trans": [
+      "n.<数>无穷大,无限的时间或空间"
+    ],
+    "ukphone": "ɪnˈfɪnəti",
+    "usphone": "ɪnˈfɪnɪti"
+  },
+  {
+    "name": "influential",
+    "trans": [
+      "adj.有影响的,有权势的n.有影响力的人物"
+    ],
+    "ukphone": "ˌɪnfluˈenʃl",
+    "usphone": "ˌɪnfluˈɛnʃəl"
+  },
+  {
+    "name": "informal",
+    "trans": [
+      "adj.（语言） 非正式的,口语体的,不拘礼节的,友好随便的"
+    ],
+    "ukphone": "ɪnˈfɔ:ml",
+    "usphone": "ɪnˈfɔ:rml"
+  },
+  {
+    "name": "inhibit",
+    "trans": [
+      "v.抑制,禁止"
+    ],
+    "ukphone": "ɪnˈhɪbɪt",
+    "usphone": "ɪnˈhɪbɪt"
+  },
+  {
+    "name": "inhibition",
+    "trans": [
+      "n.抑制,压抑,禁止"
+    ],
+    "ukphone": "ˌɪnhɪˈbɪʃn",
+    "usphone": "ˌɪnə-"
+  },
+  {
+    "name": "initiate",
+    "trans": [
+      "vt.开始，发起,传授,创始，开辟,接纳新成员n.新加入某组织（或机构、宗教）的人，新入会的人,被传授初步知识的人adj.被传授初步知识的,新入会的"
+    ],
+    "ukphone": "ɪˈnɪʃieɪt",
+    "usphone": "ɪˈnɪʃieɪt"
+  },
+  {
+    "name": "initiation",
+    "trans": [
+      "n.开始,启蒙,入会仪式"
+    ],
+    "ukphone": "ɪˌnɪʃiˈeɪʃn",
+    "usphone": "ɪˌnɪʃiˈeʃən"
+  },
+  {
+    "name": "inject",
+    "trans": [
+      "vt.（给…）注射（药物等）,（给…）注射（液体）,（给…）添加,（给…）投入（资金）"
+    ],
+    "ukphone": "ɪnˈdʒekt",
+    "usphone": "ɪnˈdʒɛkt"
+  },
+  {
+    "name": "injection",
+    "trans": [
+      "n.注射,注射剂,医充血,（卫星等的）入轨"
+    ],
+    "ukphone": "ɪnˈdʒekʃn",
+    "usphone": "ɪnˈdʒɛkʃən"
+  },
+  {
+    "name": "innate",
+    "trans": [
+      "adj.天生的,特有的，固有的,内在的，直觉的"
+    ],
+    "ukphone": "ɪˈneɪt",
+    "usphone": "ˈɪnˌet"
+  },
+  {
+    "name": "insect",
+    "trans": [
+      "n.虫，昆虫,卑鄙的人,微贱的人，小人adj.昆虫的,卑劣的"
+    ],
+    "ukphone": "ˈɪnsekt",
+    "usphone": "ˈɪnˌsɛkt"
+  },
+  {
+    "name": "insert",
+    "trans": [
+      "vt.插入,嵌入,（在文章中）添加,加插n.添入物（尤指一页印刷品图中插入或套印的小图）,（书报的）插页,插入物,添加物"
+    ],
+    "ukphone": "ɪnˈsɜ:t",
+    "usphone": "ɪnˈsɜ:rt"
+  },
+  {
+    "name": "instability",
+    "trans": [
+      "n.不稳定，不稳固,不坚决，反复无常,基础薄弱"
+    ],
+    "ukphone": "ˌɪnstəˈbɪləti",
+    "usphone": "ˌɪnstəˈbɪlɪti"
+  },
+  {
+    "name": "instinct",
+    "trans": [
+      "n.本能，天性,冲动,天资，天才adj.深深地充满着"
+    ],
+    "ukphone": "ˈɪnstɪŋkt",
+    "usphone": "ˈɪnˌstɪŋkt"
+  },
+  {
+    "name": "integral",
+    "trans": [
+      "adj.完整的,积分的,必须的n.整体,积分"
+    ],
+    "ukphone": "ˈɪntɪgrəl",
+    "usphone": "ɪnˈtɛɡrəl"
+  },
+  {
+    "name": "integration",
+    "trans": [
+      "n.结合,整合,一体化,（不同肤色、种族、宗教信仰等的人的）混合"
+    ],
+    "ukphone": "ˌɪntɪˈgreɪʃn",
+    "usphone": "ˌɪntɪˈɡreʃən"
+  },
+  {
+    "name": "intensity",
+    "trans": [
+      "n.强烈,（感情的）强烈程度,强度,烈度"
+    ],
+    "ukphone": "ɪnˈtensəti",
+    "usphone": "ɪnˈtɛnsɪti"
+  },
+  {
+    "name": "intensive",
+    "trans": [
+      "adj.加强的，强烈的,农精耕细作的,语加强语意的,（农业方法）集约的n.加强器,语强义词，强调成份"
+    ],
+    "ukphone": "ɪnˈtensɪv",
+    "usphone": "ɪnˈtɛnsɪv"
+  },
+  {
+    "name": "interact",
+    "trans": [
+      "v.相互作用,互相影响,互动"
+    ],
+    "ukphone": "ˌɪntərˈækt",
+    "usphone": "ˌɪntɚˈækt"
+  },
+  {
+    "name": "interestingly",
+    "trans": [
+      "adv.有趣地"
+    ],
+    "ukphone": "'ɪntrəstɪŋlɪ",
+    "usphone": "'ɪntrəstɪŋlɪ"
+  },
+  {
+    "name": "interface",
+    "trans": [
+      "n.界面,<计>接口,交界面v.（使通过界面或接口）接合，连接,计算机使联系vi.相互作用（或影响）,交流，交谈"
+    ],
+    "ukphone": "ˈɪntəfeɪs",
+    "usphone": "ˈɪntərfeɪs"
+  },
+  {
+    "name": "interfere",
+    "trans": [
+      "vi.干预，干涉,调停，排解,妨碍，打扰"
+    ],
+    "ukphone": "ˌɪntəˈfɪə(r)",
+    "usphone": "ˌɪntərˈfɪr"
+  },
+  {
+    "name": "intermediate",
+    "trans": [
+      "adj.中间的，中级的n.中间物，中间分子，中间人vi.调解：充当调解人，调解,干涉"
+    ],
+    "ukphone": "ˌɪntəˈmi:diət",
+    "usphone": "ˌɪntərˈmi:diət"
+  },
+  {
+    "name": "interrupt",
+    "trans": [
+      "vt.& vi.打断（别人的话等）,阻止,截断vt.暂停,中断,打扰,妨碍vi.打断n.中断,暂停"
+    ],
+    "ukphone": "ˌɪntəˈrʌpt",
+    "usphone": "ˌɪntəˈrʌpt"
+  },
+  {
+    "name": "interval",
+    "trans": [
+      "n.间隔,幕间休息,（数学）区间"
+    ],
+    "ukphone": "ˈɪntəvl",
+    "usphone": "ˈɪntərvl"
+  },
+  {
+    "name": "intervene",
+    "trans": [
+      "vi.阻碍,出面,插嘴,介于…之间"
+    ],
+    "ukphone": "ˌɪntəˈvi:n",
+    "usphone": "ˌɪntərˈvi:n"
+  },
+  {
+    "name": "interviewer",
+    "trans": [
+      "n.面试者,会见者,采访者"
+    ],
+    "ukphone": "ˈɪntəvju:ə(r)",
+    "usphone": "ˈɪntərvju:ə(r)"
+  },
+  {
+    "name": "invade",
+    "trans": [
+      "vt.& vi.侵入，侵略,进行侵略,蜂拥而入，挤满,（疾病，声音等）袭来，侵袭vt.涌入,侵袭,侵犯,干扰"
+    ],
+    "ukphone": "ɪnˈveɪd",
+    "usphone": "ɪnˈved"
+  },
+  {
+    "name": "invasion",
+    "trans": [
+      "n.入侵，侵略,侵害，侵犯,侵袭,医发病"
+    ],
+    "ukphone": "ɪnˈveɪʒn",
+    "usphone": "ɪnˈveʒən"
+  },
+  {
+    "name": "inversion",
+    "trans": [
+      "n.倒置,（尤指词序）倒装,转化,（染色体的）倒位"
+    ],
+    "ukphone": "ɪnˈvɜ:ʃn",
+    "usphone": "ɪnˈvɜ:rʃn"
+  },
+  {
+    "name": "invert",
+    "trans": [
+      "vt.使…前后倒置,使反转n.颠倒的事物,变性者adj.转化的"
+    ],
+    "ukphone": "ɪnˈvɜ:t",
+    "usphone": "ɪnˈvɜ:rt"
+  },
+  {
+    "name": "ion",
+    "trans": [
+      "n.<物>离子"
+    ],
+    "ukphone": "ˈaɪən",
+    "usphone": "ˈaɪən"
+  },
+  {
+    "name": "irrelevant",
+    "trans": [
+      "adj.不相干的,不恰当,缺乏时代性的，落后于潮流的,牛头不对马嘴"
+    ],
+    "ukphone": "ɪˈreləvənt",
+    "usphone": "ɪˈrɛləvənt"
+  },
+  {
+    "name": "irrigation",
+    "trans": [
+      "n.灌溉,水利,医冲洗,冲注洗剂"
+    ],
+    "ukphone": "ˌɪrɪ'ɡeɪʃn",
+    "usphone": "ˌɪrɪ'ɡeɪʃn"
+  },
+  {
+    "name": "jazz",
+    "trans": [
+      "n.爵士乐，爵士舞（曲）"
+    ],
+    "ukphone": "dʒæz",
+    "usphone": "dʒæz"
+  },
+  {
+    "name": "junior",
+    "trans": [
+      "adj.较年幼的，较年小的,三年级的，低年级的,资历较浅的,后进的n.年少者，青少年,晚辈,三年级生,职位较低者"
+    ],
+    "ukphone": "ˈdʒu:niə(r)",
+    "usphone": "ˈdʒunjɚ"
+  },
+  {
+    "name": "justification",
+    "trans": [
+      "n.辩解,无过失,正当的理由"
+    ],
+    "ukphone": "ˌdʒʌstɪfɪˈkeɪʃn",
+    "usphone": "ˌdʒʌstəfɪˈkeʃən"
+  },
+  {
+    "name": "kidney",
+    "trans": [
+      "n.肾，肾脏,（可食用的动物的）腰子,脾气，性格"
+    ],
+    "ukphone": "ˈkɪdni",
+    "usphone": "ˈkɪdni"
+  },
+  {
+    "name": "kilometer"
+  },
+  {
+    "name": "lab",
+    "trans": [
+      "n.实验室，研究室,Lab,英国政治工党,分析室,暗室"
+    ],
+    "ukphone": "læb",
+    "usphone": "læb"
+  },
+  {
+    "name": "lateral",
+    "trans": [
+      "adj.侧面的,横向的,语边音的n.侧部的东西,边音"
+    ],
+    "ukphone": "ˈlætərəl",
+    "usphone": "ˈlætərəl"
+  },
+  {
+    "name": "layout",
+    "trans": [
+      "n.布局，安排，设计,布置图，规划图"
+    ],
+    "ukphone": "ˈleɪaʊt",
+    "usphone": "ˈleˌaʊt"
+  },
+  {
+    "name": "leaf",
+    "trans": [
+      "n.叶子,页,叶状的结构,金属薄片vt.& vi.翻书（报）vi.生叶"
+    ],
+    "ukphone": "li:f",
+    "usphone": "lif"
+  },
+  {
+    "name": "lecturer",
+    "trans": [
+      "n.（大学或学院中的）讲课者，授课者，（英美大学中的）讲师,演讲者"
+    ],
+    "ukphone": "ˈlektʃərə(r)",
+    "usphone": "ˈlɛktʃəɚ"
+  },
+  {
+    "name": "legend",
+    "trans": [
+      "n.传说,传奇人物,铭文,图例"
+    ],
+    "ukphone": "ˈledʒənd",
+    "usphone": "ˈlɛdʒənd"
+  },
+  {
+    "name": "legitimate",
+    "trans": [
+      "adj.合法的，合理的,正规的,合法婚姻所生的,真正的，真实的vt.使合法,给予合法的地位,通过法律手段给（私生子）以合法地位,正式批准，授权"
+    ],
+    "ukphone": "lɪˈdʒɪtɪmət",
+    "usphone": "ləˈdʒɪtəmɪt"
+  },
+  {
+    "name": "leisure",
+    "trans": [
+      "n.空闲时间,闲暇,悠闲,安逸adj.空闲的,闲暇的"
+    ],
+    "ukphone": "ˈleʒə(r)",
+    "usphone": "ˈli:ʒər"
+  },
+  {
+    "name": "lever",
+    "trans": [
+      "n.杠杆,操作杆,工具vt.用杠杆撬动"
+    ],
+    "ukphone": "ˈli:və(r)",
+    "usphone": "ˈlevər"
+  },
+  {
+    "name": "lexical"
+  },
+  {
+    "name": "liable",
+    "trans": [
+      "adj.有责任的,有义务的,有…倾向的,易…的"
+    ],
+    "ukphone": "ˈlaɪəbl",
+    "usphone": "ˈlaɪəbəl"
+  },
+  {
+    "name": "lifestyle",
+    "trans": [
+      "n.生活方式"
+    ],
+    "ukphone": "ˈlaɪfstaɪl",
+    "usphone": "ˈlaɪfˌstaɪl"
+  },
+  {
+    "name": "lifetime",
+    "trans": [
+      "n.一生，寿命,有生之年,存在期，有效期na.终生,终身保障,核寿命"
+    ],
+    "ukphone": "ˈlaɪftaɪm",
+    "usphone": "ˈlaɪfˌtaɪm"
+  },
+  {
+    "name": "likelihood",
+    "trans": [
+      "n.可能，可能性,数似然，似真"
+    ],
+    "ukphone": "ˈlaɪklihʊd",
+    "usphone": "ˈlaɪkliˌhʊd"
+  },
+  {
+    "name": "likewise",
+    "trans": [
+      "adv.同样地,也，而且"
+    ],
+    "ukphone": "ˈlaɪkwaɪz",
+    "usphone": "ˈlaɪkˌwaɪz"
+  },
+  {
+    "name": "limb",
+    "trans": [
+      "n.肢，翼,大树枝,分支,枝干vt.割断…的四肢，肢解,砍树枝"
+    ],
+    "ukphone": "lɪm",
+    "usphone": "lɪm"
+  },
+  {
+    "name": "linear",
+    "trans": [
+      "adj.直线的，线形的,长度的,<数>一次的，线性的,通过单独的若干阶段来发展"
+    ],
+    "ukphone": "ˈlɪniə(r)",
+    "usphone": "ˈlɪniər"
+  },
+  {
+    "name": "linguistic",
+    "trans": [
+      "adj.语言的,语言学的"
+    ],
+    "ukphone": "lɪŋˈgwɪstɪk",
+    "usphone": "lɪŋˈɡwɪstɪk"
+  },
+  {
+    "name": "linguistics",
+    "trans": [
+      "n.语言学,语言的，语言学的，语言研究的( linguistic的名词复数 )"
+    ],
+    "ukphone": "lɪŋˈgwɪstɪks",
+    "usphone": "lɪŋˈɡwɪstɪks"
+  },
+  {
+    "name": "liter",
+    "trans": [
+      "n.计量 公升（容量单位）"
+    ],
+    "ukphone": "'li:tə(r)",
+    "usphone": "ˈlitɚ"
+  },
+  {
+    "name": "liver",
+    "trans": [
+      "n.肝脏,（食用）肝,深赤褐色,生活者adj.肝味的,深赤褐色的"
+    ],
+    "ukphone": "ˈlɪvə(r)",
+    "usphone": "ˈlɪvɚ"
+  },
+  {
+    "name": "locally",
+    "trans": [
+      "adv.在附近,在本地,当地地,本地地"
+    ],
+    "ukphone": "'ləʊkəlɪ",
+    "usphone": "ˈlokəlɪ"
+  },
+  {
+    "name": "locus",
+    "trans": [
+      "n.所在地，场所,核心,色点,圆图"
+    ],
+    "ukphone": "ˈləʊkəs",
+    "usphone": "ˈloʊkəs"
+  },
+  {
+    "name": "logical",
+    "trans": [
+      "adj.逻辑（上）的,符合逻辑的,推理正确的,合乎常理的"
+    ],
+    "ukphone": "ˈlɒdʒɪkl",
+    "usphone": "ˈlɑ:dʒɪkl"
+  },
+  {
+    "name": "longitudinal",
+    "trans": [
+      "adj.经度的,纵向的,纵的,纵观的"
+    ],
+    "ukphone": "ˌlɒŋgɪˈtju:dɪnl",
+    "usphone": "ˌlɑ:ndʒəˈtu:dnl"
+  },
+  {
+    "name": "loop",
+    "trans": [
+      "n.圈，环,医宫内避孕环,回路,弯曲部分vt.& vi.（使）成环，（使）成圈,以环连结,使翻筋斗"
+    ],
+    "ukphone": "lu:p",
+    "usphone": "lup"
+  },
+  {
+    "name": "lump",
+    "trans": [
+      "n.块，团,肿块,许多，大量,笨拙的人vi.结成块,成团,笨重地行走vt.使成团，使成块,使团结在一起,把…混在一起adj.成团的，成块的adv.很，非常"
+    ],
+    "ukphone": "lʌmp",
+    "usphone": "lʌmp"
+  },
+  {
+    "name": "lung",
+    "trans": [
+      "n.肺,呼吸器官,医辅助呼吸的装置,〈英〉可供呼吸新鲜空气的地方"
+    ],
+    "ukphone": "lʌŋ",
+    "usphone": "lʌŋ"
+  },
+  {
+    "name": "machinery",
+    "trans": [
+      "n.（总称）机器,（政府等的）机关，组织,机器的运转部份,机械装置"
+    ],
+    "ukphone": "məˈʃi:nəri",
+    "usphone": "-ˈʃinri"
+  },
+  {
+    "name": "magnetic",
+    "trans": [
+      "adj.有磁性的，有吸引力的,磁性的,有吸引力的,有魅力的"
+    ],
+    "ukphone": "mægˈnetɪk",
+    "usphone": "mæɡˈnɛtɪk"
+  },
+  {
+    "name": "magnitude",
+    "trans": [
+      "n.巨大，广大,重大，重要,量级,（地震）级数"
+    ],
+    "ukphone": "ˈmægnɪtju:d",
+    "usphone": "ˈmægnɪtu:d"
+  },
+  {
+    "name": "mall",
+    "trans": [
+      "n.购物中心,林荫路,铁圈球场"
+    ],
+    "ukphone": "mɔ:l",
+    "usphone": "mæl"
+  },
+  {
+    "name": "manipulate",
+    "trans": [
+      "vt.操作，处理,巧妙地控制,操纵,医 推拿，调整"
+    ],
+    "ukphone": "məˈnɪpjuleɪt",
+    "usphone": "məˈnɪpjəˌlet"
+  },
+  {
+    "name": "manipulation",
+    "trans": [
+      "n.（熟练的）操作,操纵,控制,（对账目等的）伪造"
+    ],
+    "ukphone": "məˌnɪpjʊ'leɪʃn",
+    "usphone": "məˌnɪpjʊˈleʃən"
+  },
+  {
+    "name": "manual",
+    "trans": [
+      "adj.用手的,手制的，手工的,法占有的,体力的n.手册,指南,乐键盘,军刀枪操练"
+    ],
+    "ukphone": "ˈmænjuəl",
+    "usphone": "ˈmænjuəl"
+  },
+  {
+    "name": "manuscript",
+    "trans": [
+      "n.手稿,原稿,底稿,手写本adj.手写的，手抄的"
+    ],
+    "ukphone": "ˈmænjuskrɪpt",
+    "usphone": "ˈmænjəˌskrɪpt"
+  },
+  {
+    "name": "marble",
+    "trans": [
+      "n.大理石,大理石制品,弹子游戏,理智，常识adj.大理石的,冷酷无情的,有大理石花纹的v.把（书边）弄上大理石花纹"
+    ],
+    "ukphone": "ˈmɑ:bl",
+    "usphone": "ˈmɑ:rbl"
+  },
+  {
+    "name": "marginal",
+    "trans": [
+      "adj.边的，边缘的,旁注的,临界的，最低限度的,收入仅敷支出的"
+    ],
+    "ukphone": "ˈmɑ:dʒɪnl",
+    "usphone": "ˈmɑ:rdʒɪnl"
+  },
+  {
+    "name": "marker",
+    "trans": [
+      "n.标识，标记,记号笔，阅卷人,防守队员,特征"
+    ],
+    "ukphone": "ˈmɑ:kə(r)",
+    "usphone": "ˈmɑ:rkə(r)"
+  },
+  {
+    "name": "marrow",
+    "trans": [
+      "n.骨髓,脊髓,滋养品,〈英〉食用葫芦"
+    ],
+    "ukphone": "ˈmærəʊ",
+    "usphone": "ˈmæroʊ"
+  },
+  {
+    "name": "maternal",
+    "trans": [
+      "adj.母亲的,母亲般的,母系的,母亲方面的"
+    ],
+    "ukphone": "məˈtɜ:nl",
+    "usphone": "məˈtɜ:rnl"
+  },
+  {
+    "name": "mathematical",
+    "trans": [
+      "adj.数学的,精确的,绝对的,可能性极小的"
+    ],
+    "ukphone": "ˌmæθə'mætɪkl",
+    "usphone": "ˌmæθəˈmætɪkəl"
+  },
+  {
+    "name": "matrix",
+    "trans": [
+      "n.<数>矩阵,模型,基质,母体，子宫"
+    ],
+    "ukphone": "ˈmeɪtrɪks",
+    "usphone": "ˈmetrɪks"
+  },
+  {
+    "name": "maximize",
+    "trans": [
+      "vt.最大化，使（某事物）增至最大限度,极为重视,数学解函数的最大值,最大限度利用（某事物）vi.尽可能广义地解释,达到最大值"
+    ],
+    "ukphone": "ˈmæksɪmaɪz",
+    "usphone": "ˈmæksəˌmaɪz"
+  },
+  {
+    "name": "meaningful",
+    "trans": [
+      "adj.意味深长的,有意义的,有意图的,隽"
+    ],
+    "ukphone": "ˈmi:nɪŋfl",
+    "usphone": "ˈminɪŋfəl"
+  },
+  {
+    "name": "mechanic",
+    "trans": [
+      "n.技工，机修工"
+    ],
+    "ukphone": "məˈkænɪk",
+    "usphone": "mɪˈkænɪk"
+  },
+  {
+    "name": "mechanical",
+    "trans": [
+      "adj.机械的，机械学的,呆板的,体力的,手工操作的"
+    ],
+    "ukphone": "məˈkænɪkl",
+    "usphone": "mɪˈkænɪkəl"
+  },
+  {
+    "name": "media",
+    "trans": [
+      "n.媒体,解剖学血管中层,语音学 浊塞音,介质,医培养基"
+    ],
+    "ukphone": "ˈmi:diə",
+    "usphone": "ˈmidiə"
+  },
+  {
+    "name": "mediate",
+    "trans": [
+      "vt.经调解解决,斡旋促成vi.调停，调解，斡旋adj.居间的，间接的"
+    ],
+    "ukphone": "ˈmi:dieɪt",
+    "usphone": "ˈmidiˌet"
+  },
+  {
+    "name": "membrane",
+    "trans": [
+      "n.（动物或植物体内的）薄膜,隔膜,（可起防水、防风等作用的）膜状物"
+    ],
+    "ukphone": "ˈmembreɪn",
+    "usphone": "ˈmɛmˌbren"
+  },
+  {
+    "name": "memorize",
+    "trans": [
+      "vt.记住，熟记,计算机科学 存储，记忆"
+    ],
+    "ukphone": "ˈmeməraɪz",
+    "usphone": "ˈmɛməˌraɪz"
+  },
+  {
+    "name": "mentor",
+    "trans": [
+      "n.（无经验之人的）有经验可信赖的顾问vt.做…的良师；指导"
+    ],
+    "ukphone": "ˈmentɔ:(r)",
+    "usphone": "'mentɔ:r"
+  },
+  {
+    "name": "mercury",
+    "trans": [
+      "n.化汞，水银,天水星,温度表,精神，元气"
+    ],
+    "ukphone": "ˈmɜ:kjəri",
+    "usphone": "ˈmɜ:rkjəri"
+  },
+  {
+    "name": "merge",
+    "trans": [
+      "vt.& vi.（使）混合,相融,融入,渐渐消失在某物中"
+    ],
+    "ukphone": "mɜ:dʒ",
+    "usphone": "mɜ:rdʒ"
+  },
+  {
+    "name": "messenger",
+    "trans": [
+      "n.信使，信差,先驱,军通信兵，传令兵"
+    ],
+    "ukphone": "ˈmesɪndʒə(r)",
+    "usphone": "ˈmɛsəndʒɚ"
+  },
+  {
+    "name": "metabolism",
+    "trans": [
+      "n.新陈代谢,代谢作用"
+    ],
+    "ukphone": "məˈtæbəlɪzəm",
+    "usphone": "mɪˈtæbəˌlɪzəm"
+  },
+  {
+    "name": "metaphor",
+    "trans": [
+      "n.隐喻，暗喻,象征"
+    ],
+    "ukphone": "ˈmetəfə(r)",
+    "usphone": "-fɚ"
+  },
+  {
+    "name": "methodology",
+    "trans": [
+      "n.（从事某一活动的）一套方法,方法学,方法论"
+    ],
+    "ukphone": "ˌmeθəˈdɒlədʒi",
+    "usphone": "ˌmeθəˈdɑ:lədʒi"
+  },
+  {
+    "name": "micro",
+    "trans": [
+      "n.<口>微型计算机,微处理器adj.极小的"
+    ],
+    "ukphone": "ˈmaɪkrəʊ",
+    "usphone": "ˈmaɪkroʊ"
+  },
+  {
+    "name": "mid",
+    "trans": [
+      "adj.中间的,居中的,（用于复合词中）中prep.在…中间,中天adv.在船身中部n.年中，学年中期"
+    ],
+    "ukphone": "mɪd",
+    "usphone": "mɪd"
+  },
+  {
+    "name": "migrate",
+    "trans": [
+      "vi.迁移，移往,移动,随季节而移居vt.使移居,使移植"
+    ],
+    "ukphone": "maɪˈgreɪt",
+    "usphone": "ˈmaɪgreɪt"
+  },
+  {
+    "name": "migration",
+    "trans": [
+      "n.迁移，移居"
+    ],
+    "ukphone": "maɪˈgreɪʃn",
+    "usphone": "maɪˈɡreʃən"
+  },
+  {
+    "name": "millimeter",
+    "trans": [
+      "n.毫米"
+    ],
+    "ukphone": "'mɪlɪˌmi:tə",
+    "usphone": "'mɪləˌmi:tə"
+  },
+  {
+    "name": "mineral",
+    "trans": [
+      "n.矿物,矿石,矿物质,汽水adj.矿物的，似矿物的"
+    ],
+    "ukphone": "ˈmɪnərəl",
+    "usphone": "ˈmɪnərəl"
+  },
+  {
+    "name": "minimal",
+    "trans": [
+      "adj.<正式>最小的，极少的,极小的n.最简单派艺术作品"
+    ],
+    "ukphone": "ˈmɪnɪməl",
+    "usphone": "ˈmɪnəməl"
+  },
+  {
+    "name": "minimize",
+    "trans": [
+      "vt.把…减至最低数量程度,对（某事物）作最低估计，极力贬低（某事物）的价值重要性,极度轻视"
+    ],
+    "ukphone": "ˈmɪnɪmaɪz",
+    "usphone": "ˈmɪnəˌmaɪz"
+  },
+  {
+    "name": "minus",
+    "trans": [
+      "prep.（表示否定）没有,缺少,（表示运算）减去,（表示数目）在零度以下n.减号,负号,不利,不足adj.负的,不利的,略低于某标准的"
+    ],
+    "ukphone": "ˈmaɪnəs",
+    "usphone": "ˈmaɪnəs"
+  },
+  {
+    "name": "missile",
+    "trans": [
+      "n.导弹,投射物adj.导弹的,可投掷的,用以发射导弹的"
+    ],
+    "ukphone": "ˈmɪsaɪl",
+    "usphone": "ˈmɪsl"
+  },
+  {
+    "name": "mobility",
+    "trans": [
+      "n.流动性,移动性,<社>流动,机动性"
+    ],
+    "ukphone": "məʊˈbɪləti",
+    "usphone": "moʊˈbɪləti"
+  },
+  {
+    "name": "modification",
+    "trans": [
+      "n.修改，修正，变更，改良，改进，缓和，减轻，限制,语修饰，（用变音符号的）母音改变,生诱发变异，变态，变体，变型"
+    ],
+    "ukphone": "ˌmɒdɪfɪˈkeɪʃn",
+    "usphone": "ˌmɑ:dɪfɪˈkeɪʃn"
+  },
+  {
+    "name": "mole",
+    "trans": [
+      "n.鼹鼠,防波堤,痣,间谍"
+    ],
+    "ukphone": "məʊl",
+    "usphone": "moʊl"
+  },
+  {
+    "name": "molecular",
+    "trans": [
+      "adj.分子的，由分子组成的"
+    ],
+    "ukphone": "mə'lekjələ(r)",
+    "usphone": "məˈlɛkjəlɚ"
+  },
+  {
+    "name": "molecule",
+    "trans": [
+      "n.分子,微小颗粒"
+    ],
+    "ukphone": "ˈmɒlɪkju:l",
+    "usphone": "ˈmɑ:lɪkju:l"
+  },
+  {
+    "name": "momentum",
+    "trans": [
+      "n.物动量,势头,动力,要素，契机"
+    ],
+    "ukphone": "məˈmentəm",
+    "usphone": "moʊˈmentəm"
+  },
+  {
+    "name": "monetary",
+    "trans": [
+      "adj.货币的，金钱的,钱的（尤指一国的金融）,金融的,财政的，财政（上）的"
+    ],
+    "ukphone": "ˈmʌnɪtri",
+    "usphone": "ˈmʌnɪteri"
+  },
+  {
+    "name": "monkey",
+    "trans": [
+      "n.猴,猿,淘气鬼,小淘气vi.胡闹,捣蛋vt.嘲弄"
+    ],
+    "ukphone": "ˈmʌŋki",
+    "usphone": "ˈmʌŋki"
+  },
+  {
+    "name": "monopoly",
+    "trans": [
+      "n.垄断,专卖,垄断者,专利品"
+    ],
+    "ukphone": "məˈnɒpəli",
+    "usphone": "məˈnɑ:pəli"
+  },
+  {
+    "name": "morality",
+    "trans": [
+      "n.道德,道德准则,品德高尚的行为,道德观"
+    ],
+    "ukphone": "məˈræləti",
+    "usphone": "mɔ-"
+  },
+  {
+    "name": "morphological"
+  },
+  {
+    "name": "morphology",
+    "trans": [
+      "n.形态学（尤指动植物形态学或词语形态学）"
+    ],
+    "ukphone": "mɔ:ˈfɒlədʒi",
+    "usphone": "mɔ:rˈfɑ:lədʒi"
+  },
+  {
+    "name": "mortality",
+    "trans": [
+      "n.死亡数，死亡率,必死性，必死的命运"
+    ],
+    "ukphone": "mɔ:ˈtæləti",
+    "usphone": "mɔ:rˈtæləti"
+  },
+  {
+    "name": "motif",
+    "trans": [
+      "n.（文艺作品等的）主题,（音乐的）乐旨，动机,基本图案"
+    ],
+    "ukphone": "məʊˈti:f",
+    "usphone": "moʊˈti:f"
+  },
+  {
+    "name": "motive",
+    "trans": [
+      "n.动机，主旨,（艺术作品的）主题，题材adj.运动的,动机的,发动的vt.促使"
+    ],
+    "ukphone": "ˈməʊtɪv",
+    "usphone": "ˈmoʊtɪv"
+  },
+  {
+    "name": "multi"
+  },
+  {
+    "name": "multinational",
+    "trans": [
+      "adj.多国的,跨国的n.跨国公司"
+    ],
+    "ukphone": "ˌmʌltiˈnæʃnəl",
+    "usphone": "-taɪ-"
+  },
+  {
+    "name": "multiply",
+    "trans": [
+      "vt.& vi.乘,（使）相乘,（使）增加,（使）繁殖adv.多样地,复合地,多倍地,电学并联地，多路地adj.多层的,多样的,多股的"
+    ],
+    "ukphone": "ˈmʌltɪplaɪ",
+    "usphone": "ˈmʌltəˌplaɪ"
+  },
+  {
+    "name": "mutation",
+    "trans": [
+      "n.变化,转变,突变,变异"
+    ],
+    "ukphone": "mju:ˈteɪʃn",
+    "usphone": "mjuˈteʃən"
+  },
+  {
+    "name": "myth",
+    "trans": [
+      "n.神话,神怪故事,奇人，奇事,虚构的人，虚构的事v.使神话化"
+    ],
+    "ukphone": "mɪθ",
+    "usphone": "mɪθ"
+  },
+  {
+    "name": "naked",
+    "trans": [
+      "adj.裸体的，裸露的,率直的，赤裸裸的,缺乏保护,不加掩饰的"
+    ],
+    "ukphone": "ˈneɪkɪd",
+    "usphone": "ˈnekɪd"
+  },
+  {
+    "name": "namely",
+    "trans": [
+      "adv.即，也就是,换句话说,亦即,就是说"
+    ],
+    "ukphone": "ˈneɪmli",
+    "usphone": "ˈnemli"
+  },
+  {
+    "name": "nasty",
+    "trans": [
+      "adj.肮脏的,下流的，令人讨厌的,恶劣的，艰险的,严重的n.令人不愉快的事物"
+    ],
+    "ukphone": "ˈnɑ:sti",
+    "usphone": "ˈnæsti"
+  },
+  {
+    "name": "nationalism",
+    "trans": [
+      "n.爱国主义，爱国心,民族主义,国家主义,民族特性"
+    ],
+    "ukphone": "ˈnæʃnəlɪzəm",
+    "usphone": "ˈnæʃnə-"
+  },
+  {
+    "name": "neat",
+    "trans": [
+      "adj.整洁的，干净的,灵巧的,匀整的,未搀水的"
+    ],
+    "ukphone": "ni:t",
+    "usphone": "nit"
+  },
+  {
+    "name": "necessity",
+    "trans": [
+      "n.必要（性）,（迫切）需要,必需品,自然规律"
+    ],
+    "ukphone": "nəˈsesəti",
+    "usphone": "nəˈsɛsɪti"
+  },
+  {
+    "name": "neo"
+  },
+  {
+    "name": "nest",
+    "trans": [
+      "n.（鸟）窝,温床,（套叠在一起的）一套物件,藏匿处vt.筑巢,嵌套vi.筑巢"
+    ],
+    "ukphone": "nest",
+    "usphone": "nɛst"
+  },
+  {
+    "name": "neural",
+    "trans": [
+      "adj.神经的,背的，背侧的"
+    ],
+    "ukphone": "ˈnjʊərəl",
+    "usphone": "ˈnʊrəl"
+  },
+  {
+    "name": "neuron",
+    "trans": [
+      "n.神经元,神经细胞"
+    ],
+    "ukphone": "ˈnjʊərɒn",
+    "usphone": "ˈnʊrɑ:n"
+  },
+  {
+    "name": "neutral",
+    "trans": [
+      "adj.中立的,（化学中）中性的,暗淡的,不带电的n.（汽车或其他机器的）空挡位置,中立人士,中立国,素净色"
+    ],
+    "ukphone": "ˈnju:trəl",
+    "usphone": "ˈnu:trəl"
+  },
+  {
+    "name": "nicely",
+    "trans": [
+      "adv.漂亮地,恰当地，规规矩矩地,精密地,非常讲究地adj.<口>健康的，强健的"
+    ],
+    "ukphone": "ˈnaɪsli",
+    "usphone": "'naɪslɪ"
+  },
+  {
+    "name": "niche",
+    "trans": [
+      "n.壁龛,合适的位置（工作等）,有利可图的缺口，商机"
+    ],
+    "ukphone": "nɪtʃ",
+    "usphone": "ni:ʃ"
+  },
+  {
+    "name": "nitrogen",
+    "trans": [
+      "n.化氮，氮气"
+    ],
+    "ukphone": "ˈnaɪtrədʒən",
+    "usphone": "ˈnaɪtrədʒən"
+  },
+  {
+    "name": "noble",
+    "trans": [
+      "adj.高尚的,贵族的,外表庄严和庄重的,表现出崇高的n.尊贵的人,旧时在英国使用的金币"
+    ],
+    "ukphone": "ˈnəʊbl",
+    "usphone": "ˈnoʊbl"
+  },
+  {
+    "name": "node",
+    "trans": [
+      "n.节点,（计算机网络的）节点,医结节,植物的节"
+    ],
+    "ukphone": "nəʊd",
+    "usphone": "noʊd"
+  },
+  {
+    "name": "noisy",
+    "trans": [
+      "adj.嘈杂的,喧闹的,充满噪音的,吵吵闹闹的n.响声,嘈杂声"
+    ],
+    "ukphone": "ˈnɔɪzi",
+    "usphone": "ˈnɔɪzi"
+  },
+  {
+    "name": "nominal",
+    "trans": [
+      "adj.名义上的,微不足道的,票面上的,名字的，列名的n.名词性词"
+    ],
+    "ukphone": "ˈnɒmɪnl",
+    "usphone": "ˈnɑ:mɪnl"
+  },
+  {
+    "name": "non"
+  },
+  {
+    "name": "nonetheless",
+    "trans": [
+      "adv.虽然如此，但是"
+    ],
+    "ukphone": "ˌnʌnðəˈles",
+    "usphone": "ˌnʌnðəˈlɛs"
+  },
+  {
+    "name": "nonlinear",
+    "trans": [
+      "adj.非线性的"
+    ],
+    "ukphone": "'nɒn'lɪnɪəl",
+    "usphone": "nɑnˈlɪniɚ"
+  },
+  {
+    "name": "norm",
+    "trans": [
+      "n.标准,规范,准则,（劳动）定额"
+    ],
+    "ukphone": "nɔ:m",
+    "usphone": "nɔ:rm"
+  },
+  {
+    "name": "notation",
+    "trans": [
+      "n.记号，标记法"
+    ],
+    "ukphone": "nəʊˈteɪʃn",
+    "usphone": "noʊˈteɪʃn"
+  },
+  {
+    "name": "novice",
+    "trans": [
+      "n.初学者，新手,新信徒,尚未赢过大赛的赛马"
+    ],
+    "ukphone": "ˈnɒvɪs",
+    "usphone": "ˈnɑ:vɪs"
+  },
+  {
+    "name": "nucleus",
+    "trans": [
+      "n.中心，核心,（原子）核,起点，开始,微细胞核"
+    ],
+    "ukphone": "ˈnju:kliəs",
+    "usphone": "ˈnu:kliəs"
+  },
+  {
+    "name": "null"
+  },
+  {
+    "name": "numerical",
+    "trans": [
+      "adj.数字的，用数字表示的，数值的"
+    ],
+    "ukphone": "nju:ˈmerɪkl",
+    "usphone": "nu:ˈmerɪkl"
+  },
+  {
+    "name": "nutrient",
+    "trans": [
+      "n.营养物，营养品，养分，养料,滋养物adj.营养的，滋养的"
+    ],
+    "ukphone": "ˈnju:triənt",
+    "usphone": "ˈnu:triənt"
+  },
+  {
+    "name": "objection",
+    "trans": [
+      "n.反对,反对的话，异议,反对的理由"
+    ],
+    "ukphone": "əbˈdʒekʃn",
+    "usphone": "əbˈdʒɛkʃən"
+  },
+  {
+    "name": "obscure",
+    "trans": [
+      "adj.昏暗的，朦胧的,晦涩的，不清楚的,隐蔽的,不著名的，无名的vt.使…模糊不清，掩盖,隐藏,使难理解n.某种模糊的或不清楚的东西"
+    ],
+    "ukphone": "əbˈskjʊə(r)",
+    "usphone": "əbˈskjʊr"
+  },
+  {
+    "name": "observer",
+    "trans": [
+      "n.遵守者，观察者,观察团,观察员"
+    ],
+    "ukphone": "əbˈzɜ:və(r)",
+    "usphone": "əbˈzɜ:rvə(r)"
+  },
+  {
+    "name": "obtain",
+    "trans": [
+      "vt.获得，得到,流行,买到，达到（目的）vi.通行，通用,流行,存在"
+    ],
+    "ukphone": "əbˈteɪn",
+    "usphone": "əbˈtein"
+  },
+  {
+    "name": "occupation",
+    "trans": [
+      "n.职业，工作,占有，占领,（土地、房屋、建筑等的）使用"
+    ],
+    "ukphone": "ˌɒkjuˈpeɪʃn",
+    "usphone": "ˌɑ:kjuˈpeɪʃn"
+  },
+  {
+    "name": "occurrence",
+    "trans": [
+      "n.发生，出现,遭遇，事件"
+    ],
+    "ukphone": "əˈkʌrəns",
+    "usphone": "əˈkɜ:rəns"
+  },
+  {
+    "name": "offspring",
+    "trans": [
+      "n.后代，子孙,产物，结果,（动物的）崽,幼苗"
+    ],
+    "ukphone": "ˈɒfsprɪŋ",
+    "usphone": "ˈɔ:fsprɪŋ"
+  },
+  {
+    "name": "onset",
+    "trans": [
+      "n.攻击，袭击,开始，动手,医发病"
+    ],
+    "ukphone": "ˈɒnset",
+    "usphone": "ˈɑ:nset"
+  },
+  {
+    "name": "onwards"
+  },
+  {
+    "name": "optical",
+    "trans": [
+      "adj.视觉的，视力的,眼睛的,光学的"
+    ],
+    "ukphone": "ˈɒptɪkl",
+    "usphone": "ˈɑ:ptɪkl"
+  },
+  {
+    "name": "optimal",
+    "trans": [
+      "adj.最佳的，最优的,最理想的"
+    ],
+    "ukphone": "ˈɒptɪməl",
+    "usphone": "ˈɑ:ptɪməl"
+  },
+  {
+    "name": "optimum",
+    "trans": [
+      "adj.最适宜的n.最佳效果,最适宜条件,生物学 最适度"
+    ],
+    "ukphone": "ˈɒptɪməm",
+    "usphone": "ˈɑ:ptɪməm"
+  },
+  {
+    "name": "oral",
+    "trans": [
+      "adj.口头的，口述的,口服的,属于或关于嘴的,构成或使用言语的n.（尤指外语考试中的）口试"
+    ],
+    "ukphone": "ˈɔ:rəl",
+    "usphone": "ˈɔrəl"
+  },
+  {
+    "name": "organ",
+    "trans": [
+      "n.机构,器官,风琴,元件"
+    ],
+    "ukphone": "ˈɔ:gən",
+    "usphone": "ˈɔ:rgən"
+  },
+  {
+    "name": "organism",
+    "trans": [
+      "n.有机体,生物体,微生物,有机体系，有机组织"
+    ],
+    "ukphone": "ˈɔ:gənɪzəm",
+    "usphone": "ˈɔ:rgənɪzəm"
+  },
+  {
+    "name": "orient",
+    "trans": [
+      "vt.标定方向,使…向东方,以…为参照,使熟悉或适应adj.东方的,（太阳等）上升的，新生的,闪闪发光的vi.转向东方,使调整或者成为一条直线n.东亚各国,珍珠光泽,好的珍珠,日出之处，东方"
+    ],
+    "ukphone": "ˈɔ:rient",
+    "usphone": "ˈor-"
+  },
+  {
+    "name": "orientation",
+    "trans": [
+      "n.方向，定位，取向，排列方向,任职培训,（外交等的）方针态度的确定,环境判定"
+    ],
+    "ukphone": "ˌɔ:riənˈteɪʃn",
+    "usphone": "ˌor-"
+  },
+  {
+    "name": "oscillation",
+    "trans": [
+      "n.振动,动摇,波动,<物>振荡"
+    ],
+    "ukphone": "ˌɒsɪˈleɪʃn",
+    "usphone": "ˌɑ:sɪˈleɪʃn"
+  },
+  {
+    "name": "outer",
+    "trans": [
+      "adj.外面的，外部的,远离内部（中心）的,哲客观外界的，物质的n.环外命中"
+    ],
+    "ukphone": "ˈaʊtə(r)",
+    "usphone": "ˈaʊtɚ"
+  },
+  {
+    "name": "outlet",
+    "trans": [
+      "n.出口，出路,批发商店,排水口，通风口,发泄（情感）的方法"
+    ],
+    "ukphone": "ˈaʊtlet",
+    "usphone": "-lɪt"
+  },
+  {
+    "name": "overhead",
+    "trans": [
+      "adj.上面的，高架的,头顶上的,（费用等）经常的，管理的n.天花板,管理费用，经常费用,船舱的顶板,体（网球等的）扣杀adv.在头顶上,在空中,在楼上,向上"
+    ],
+    "ukphone": "ˌəʊvəˈhed",
+    "usphone": "ˌoʊvərˈhed"
+  },
+  {
+    "name": "overlap",
+    "trans": [
+      "n.重叠部分,覆盖物，涂盖层,数交叠，相交vt.重叠,与…部分相同vi.互搭，重叠,部分相同,数有与…共同的某物"
+    ],
+    "ukphone": "ˌəʊvəˈlæp",
+    "usphone": "ˌoʊvərˈlæp"
+  },
+  {
+    "name": "overview",
+    "trans": [
+      "n.概观,总的看法,回顾，复习"
+    ],
+    "ukphone": "ˈəʊvəvju:",
+    "usphone": "ˈoʊvərvju:"
+  },
+  {
+    "name": "oxidize"
+  },
+  {
+    "name": "oxygen",
+    "trans": [
+      "n.化氧，氧气"
+    ],
+    "ukphone": "ˈɒksɪdʒən",
+    "usphone": "ˈɑ:ksɪdʒən"
+  },
+  {
+    "name": "painful",
+    "trans": [
+      "adj.痛苦的,（肉体）疼的,费力的，（工作）困难的,讨厌的，使人厌烦的"
+    ],
+    "ukphone": "ˈpeɪnfl",
+    "usphone": "ˈpenfəl"
+  },
+  {
+    "name": "par",
+    "trans": [
+      "n.标准，常规,同等,票面价值,体标准杆数adj.平价的,平均的，正常的,票面的vt.标准杆数得分"
+    ],
+    "ukphone": "pɑ:(r)",
+    "usphone": "pɑr"
+  },
+  {
+    "name": "paradigm",
+    "trans": [
+      "n.范例，样式，模范,词形变化表"
+    ],
+    "ukphone": "ˈpærədaɪm",
+    "usphone": "-ˌdɪm"
+  },
+  {
+    "name": "paradox",
+    "trans": [
+      "n.反论，悖论,似非而是的论点,自相矛盾的人或事,物佯谬"
+    ],
+    "ukphone": "ˈpærədɒks",
+    "usphone": "ˈpærədɑ:ks"
+  },
+  {
+    "name": "parameter",
+    "trans": [
+      "n.数参数,<物><数>参量,限制因素,决定因素"
+    ],
+    "ukphone": "pəˈræmɪtə(r)",
+    "usphone": "pəˈræmɪtɚ"
+  },
+  {
+    "name": "parcel",
+    "trans": [
+      "n.包袱，包裹,（土地的）一块,一批，一群,（货物的）一宗vt.分，区分,把…划成部分后分配,给…打成包裹,把…拼在一起"
+    ],
+    "ukphone": "ˈpɑ:sl",
+    "usphone": "ˈpɑ:rsl"
+  },
+  {
+    "name": "pardon",
+    "trans": [
+      "vt.宽恕,原谅,赦免,劳驾n.饶恕，原谅,赦免,宗免罪符int.（用于请求别人重复某事）什么，请再说一遍"
+    ],
+    "ukphone": "ˈpɑ:dn",
+    "usphone": "ˈpɑ:rdn"
+  },
+  {
+    "name": "parental",
+    "trans": [
+      "adj.父母的,亲代的,生（杂种）亲本的,作为来源渊源的"
+    ],
+    "ukphone": "pəˈrentl",
+    "usphone": "pəˈrɛntl:"
+  },
+  {
+    "name": "parenthesis",
+    "trans": [
+      "n.插入语,插入成分,圆括号,间歇"
+    ],
+    "ukphone": "pəˈrenθəsɪs",
+    "usphone": "pəˈrɛnθɪsɪs"
+  },
+  {
+    "name": "partial",
+    "trans": [
+      "adj.部分的,偏爱的,偏袒的,钟爱的n.数学偏微商"
+    ],
+    "ukphone": "ˈpɑ:ʃl",
+    "usphone": "ˈpɑ:rʃl"
+  },
+  {
+    "name": "partially",
+    "trans": [
+      "adv.部分地,<古>偏袒地，偏爱地,一部分"
+    ],
+    "ukphone": "ˈpɑ:ʃəli",
+    "usphone": "ˈpɑ:rʃəli"
+  },
+  {
+    "name": "particle",
+    "trans": [
+      "n.微粒，颗粒,数，物粒子，质点,极小量,小品词"
+    ],
+    "ukphone": "ˈpɑ:tɪkl",
+    "usphone": "ˈpɑ:rtɪkl"
+  },
+  {
+    "name": "partition",
+    "trans": [
+      "n.划分，分开,分割,隔离物,隔墙vt.分开，隔开,区分,分割"
+    ],
+    "ukphone": "pɑ:ˈtɪʃn",
+    "usphone": "pɑ:rˈtɪʃn"
+  },
+  {
+    "name": "pathway",
+    "trans": [
+      "n.路，道,途径，路径"
+    ],
+    "ukphone": "ˈpɑ:θweɪ",
+    "usphone": "ˈpæθweɪ"
+  },
+  {
+    "name": "peasant",
+    "trans": [
+      "n.农民,农夫,佃农,粗俗的人"
+    ],
+    "ukphone": "ˈpeznt",
+    "usphone": "ˈpɛzənt"
+  },
+  {
+    "name": "periodic",
+    "trans": [
+      "adj.周期的,定期的,回归的,间歇的，时而发生的"
+    ],
+    "ukphone": "ˌpɪəriˈɒdɪk",
+    "usphone": "ˌpɪriˈɑ:dɪk"
+  },
+  {
+    "name": "peripheral",
+    "trans": [
+      "adj.外围的,次要的,（神经）末梢区域的n.外部设备"
+    ],
+    "ukphone": "pəˈrɪfərəl",
+    "usphone": "pəˈrɪfərəl"
+  },
+  {
+    "name": "pest",
+    "trans": [
+      "n.讨厌的人或事,有害动植物,瘟疫"
+    ],
+    "ukphone": "pest",
+    "usphone": "pɛst"
+  },
+  {
+    "name": "pesticide",
+    "trans": [
+      "n.杀虫剂，农药"
+    ],
+    "ukphone": "ˈpestɪsaɪd",
+    "usphone": "ˈpɛstɪˌsaɪd"
+  },
+  {
+    "name": "phenomenal",
+    "trans": [
+      "adj.现象的,显著的,异常的,能知觉的"
+    ],
+    "ukphone": "fəˈnɒmɪnl",
+    "usphone": "fəˈnɑ:mɪnl"
+  },
+  {
+    "name": "philosopher",
+    "trans": [
+      "n.哲学家，哲人,思想家，学者,豁达的人,爱卖弄大道理者"
+    ],
+    "ukphone": "fəˈlɒsəfə(r)",
+    "usphone": "fəˈlɑ:səfə(r)"
+  },
+  {
+    "name": "philosophical",
+    "trans": [
+      "adj.哲学上的，哲学（家）的,冷静的，沉着的,明达的,达观的"
+    ],
+    "ukphone": "ˌfɪləˈsɒfɪkl",
+    "usphone": "ˌfɪləˈsɑ:fɪkl"
+  },
+  {
+    "name": "phonological",
+    "trans": [
+      "adj.音系学的； （一种语言的）语音（或音位）体系的"
+    ],
+    "ukphone": "ˌfɒnə'lɒdʒɪkl",
+    "usphone": "ˌfɒnə'lɒdʒɪkl"
+  },
+  {
+    "name": "phosphate",
+    "trans": [
+      "n.磷酸盐,（含有少量磷酸的）汽水"
+    ],
+    "ukphone": "ˈfɒsfeɪt",
+    "usphone": "ˈfɑ:sfeɪt"
+  },
+  {
+    "name": "photographic",
+    "trans": [
+      "adj.摄影（术）的,摄影用的,逼真的,（尤指记忆）记得详细准确的"
+    ],
+    "ukphone": "ˌfəʊtəˈgræfɪk",
+    "usphone": "ˌfoʊtəˈgræfɪk"
+  },
+  {
+    "name": "physically",
+    "trans": [
+      "adv.体格上，身体上,物理上,<非正>完全地"
+    ],
+    "ukphone": "ˈfɪzɪkli",
+    "usphone": "ˈfɪzɪkəlɪ"
+  },
+  {
+    "name": "physician",
+    "trans": [
+      "n.医生，内科医生,<口>医学博士,（精神创伤的）医治者，抚慰者"
+    ],
+    "ukphone": "fɪˈzɪʃn",
+    "usphone": "fɪˈzɪʃən"
+  },
+  {
+    "name": "physics",
+    "trans": [
+      "n.物理学,物理现象,物理成分"
+    ],
+    "ukphone": "ˈfɪzɪks",
+    "usphone": "ˈfɪzɪks"
+  },
+  {
+    "name": "physiological",
+    "trans": [
+      "adj.生理学的,生理的"
+    ],
+    "ukphone": "ˌfɪzɪə'lɒdʒɪkl",
+    "usphone": "ˌfɪziəˈlɑdʒɪkəl"
+  },
+  {
+    "name": "pi"
+  },
+  {
+    "name": "planner",
+    "trans": [
+      "n.计划者,规划者，策划人,设计者"
+    ],
+    "ukphone": "ˈplænə(r)",
+    "usphone": "'plænər"
+  },
+  {
+    "name": "plantation",
+    "trans": [
+      "n.种植园，大农场,栽植,<史>殖民，殖民地"
+    ],
+    "ukphone": "plɑ:nˈteɪʃn",
+    "usphone": "plænˈteɪʃn"
+  },
+  {
+    "name": "plausible",
+    "trans": [
+      "adj.貌似真实的,貌似有理的,花言巧语的,有眉有眼"
+    ],
+    "ukphone": "ˈplɔ:zəbl",
+    "usphone": "ˈplɔzəbəl"
+  },
+  {
+    "name": "plug",
+    "trans": [
+      "n.塞子,插头,消防栓,（内燃机的）火花塞vt.& vi.插上插头vt.以（塞子）塞住,插入,〈俚〉枪击，殴打vi.填塞，堵,〈俚〉勤苦工作，用功"
+    ],
+    "ukphone": "plʌg",
+    "usphone": "plʌɡ"
+  },
+  {
+    "name": "plural",
+    "trans": [
+      "adj.复数的n.复数,复数形式,复数词"
+    ],
+    "ukphone": "ˈplʊərəl",
+    "usphone": "ˈplʊrəl"
+  },
+  {
+    "name": "polar",
+    "trans": [
+      "adj.极地的，两极的,正好相反的,化，物磁极的，有磁性的n.几极线，极面"
+    ],
+    "ukphone": "ˈpəʊlə(r)",
+    "usphone": "ˈpoʊlə(r)"
+  },
+  {
+    "name": "pole",
+    "trans": [
+      "n.物极点，顶点,地极,杆,两极端vt.& vi.用篙撑船，摆船vt.航海 用一根杆来推动,以杆推进,以杆支撑（植物）,用杆子击打、戳、或搅拌vi.用滑雪杖加速"
+    ],
+    "ukphone": "pəʊl",
+    "usphone": "poʊl"
+  },
+  {
+    "name": "politically",
+    "trans": [
+      "adv.政治地，政党地"
+    ],
+    "ukphone": "pəˈlɪtɪkli",
+    "usphone": "pəˈlɪtɪkl:ɪ"
+  },
+  {
+    "name": "portfolio",
+    "trans": [
+      "n.公文包,代表作品集,证券投资组合,部长大臣的职位"
+    ],
+    "ukphone": "pɔ:tˈfəʊliəʊ",
+    "usphone": "pɔ:rtˈfoʊlioʊ"
+  },
+  {
+    "name": "portray",
+    "trans": [
+      "vt.画像,描述,描绘,描画"
+    ],
+    "ukphone": "pɔ:ˈtreɪ",
+    "usphone": "pɔ:rˈtreɪ"
+  },
+  {
+    "name": "portrayal",
+    "trans": [
+      "n.画像，肖像,描述，描写,叙述"
+    ],
+    "ukphone": "pɔ:ˈtreɪəl",
+    "usphone": "pɔ:rˈtreɪəl"
+  },
+  {
+    "name": "positively",
+    "trans": [
+      "adv.明确地,断然地,肯定地"
+    ],
+    "ukphone": "ˈpɒzətɪvli",
+    "usphone": "ˈpɑ:zətɪvli"
+  },
+  {
+    "name": "poster",
+    "trans": [
+      "n.海报，招贴，公告,招贴画,张贴者,古语急行的人，匆忙赶路的人"
+    ],
+    "ukphone": "ˈpəʊstə(r)",
+    "usphone": "ˈpoʊstə(r)"
+  },
+  {
+    "name": "postgraduate"
+  },
+  {
+    "name": "potassium",
+    "trans": [
+      "n.<化>钾"
+    ],
+    "ukphone": "pəˈtæsiəm",
+    "usphone": "pəˈtæsiəm"
+  },
+  {
+    "name": "powder",
+    "trans": [
+      "n.粉，粉末,粉状物质vt.在…搽粉vi.涂粉，变成粉末"
+    ],
+    "ukphone": "ˈpaʊdə(r)",
+    "usphone": "ˈpaʊdɚ"
+  },
+  {
+    "name": "practitioner",
+    "trans": [
+      "n.从业者,执业医生,习艺者,专门人才"
+    ],
+    "ukphone": "prækˈtɪʃənə(r)",
+    "usphone": "prækˈtɪʃənɚ"
+  },
+  {
+    "name": "pragmatic",
+    "trans": [
+      "adj.实际的,实用主义的,好管闲事的,国事的n.爱管闲事的人,专断的人,国事诏书,实务家"
+    ],
+    "ukphone": "prægˈmætɪk",
+    "usphone": "præɡˈmætɪk"
+  },
+  {
+    "name": "pre"
+  },
+  {
+    "name": "precede",
+    "trans": [
+      "vt.& vi.在…之前发生或出现，先于,在…之上，优于,给…作序,处于…前面的位置"
+    ],
+    "ukphone": "prɪˈsi:d",
+    "usphone": "prɪˈsid"
+  },
+  {
+    "name": "precipitate",
+    "trans": [
+      "vt.下掷，由高处抛下,使提前或突然发生,气象 使凝结而下降,化使沉淀vi.气象凝结,化沉淀,倒落，一头栽下adj.仓促行进的，匆促的,轻率的，冲动行事的水蒸气，降水,突然发生的n.化沉淀物,结果，产物"
+    ],
+    "ukphone": "prɪˈsɪpɪteɪt",
+    "usphone": "prɪˈsɪpɪˌtet"
+  },
+  {
+    "name": "precipitation",
+    "trans": [
+      "n.匆促,沉淀,（雨等）降落,某地区降雨等的量"
+    ],
+    "ukphone": "prɪˌsɪpɪˈteɪʃn",
+    "usphone": "prɪˌsɪpɪˈteʃən"
+  },
+  {
+    "name": "predator",
+    "trans": [
+      "n.以掠夺为生的人,捕食其他动物的动物，食肉动物"
+    ],
+    "ukphone": "ˈpredətə(r)",
+    "usphone": "-ˌtɔr"
+  },
+  {
+    "name": "prediction",
+    "trans": [
+      "n.气预测，预报,预言,预言的事物"
+    ],
+    "ukphone": "prɪˈdɪkʃn",
+    "usphone": "prɪˈdɪkʃən"
+  },
+  {
+    "name": "predominantly",
+    "trans": [
+      "adv.占主导地位地,显著地,占优势地"
+    ],
+    "ukphone": "prɪˈdɒmɪnəntli",
+    "usphone": "prɪˈdɑ:mɪnəntli"
+  },
+  {
+    "name": "prejudice",
+    "trans": [
+      "n.成见，偏见，歧视,侵害,伤害vt.使有偏见,不利于，损害"
+    ],
+    "ukphone": "ˈpredʒudɪs",
+    "usphone": "ˈprɛdʒədɪs"
+  },
+  {
+    "name": "preliminary",
+    "trans": [
+      "adj.初步的，初级的,预备的,开端的,序言的n.准备工作,预赛,初步措施,（对学生等的）预考"
+    ],
+    "ukphone": "prɪˈlɪmɪnəri",
+    "usphone": "prɪˈlɪmɪneri"
+  },
+  {
+    "name": "presume",
+    "trans": [
+      "vt.以为，认为,假定，假设,推测,意味着vi.擅自行动,相信,敢于,放肆"
+    ],
+    "ukphone": "prɪˈzju:m",
+    "usphone": "prɪˈzu:m"
+  },
+  {
+    "name": "prevalence",
+    "trans": [
+      "n.流行,盛行,普遍,（疾病等的）流行程度"
+    ],
+    "ukphone": "'prevələns",
+    "usphone": "ˈprɛvələns"
+  },
+  {
+    "name": "prey",
+    "trans": [
+      "n.被捕食的动物,捕食（习性）,受害者,受骗者vi.捕食,（疾病等）使人慢慢衰弱,折磨,（人）靠欺诈为生"
+    ],
+    "ukphone": "preɪ",
+    "usphone": "pre"
+  },
+  {
+    "name": "primer",
+    "trans": [
+      "n.底漆,启蒙读本,入门书"
+    ],
+    "ukphone": "ˈpraɪmə(r)",
+    "usphone": "ˈprɪmɚ"
+  },
+  {
+    "name": "primitive",
+    "trans": [
+      "adj.原始的,发展水平低的,落后的,生物学原生的n.原始人,早期的艺术家（作品）,单纯的人：不世故的人,自学的艺术家"
+    ],
+    "ukphone": "ˈprɪmətɪv",
+    "usphone": "ˈprɪmɪtɪv"
+  },
+  {
+    "name": "probe",
+    "trans": [
+      "n.医（对伤处等的）针探，探查,医探针，取样器,探头,探测仪vt.& vi.探索，调查,用探针（或探测器等）探查，探测vt.盘问,（用试探性袭击等）侦察（敌情）,用尖物刺穿（物件）,用力使向前推进"
+    ],
+    "ukphone": "prəʊb",
+    "usphone": "proʊb"
+  },
+  {
+    "name": "problematic",
+    "trans": [
+      "adj.成问题的，有疑问的，不确定的"
+    ],
+    "ukphone": "ˌprɒbləˈmætɪk",
+    "usphone": "ˌprɑ:bləˈmætɪk"
+  },
+  {
+    "name": "processor",
+    "trans": [
+      "n.加工,数据处理机,（计算机的）中央处理器,加工机（或工人）"
+    ],
+    "ukphone": "ˈprəʊsesə(r)",
+    "usphone": "ˈprɑ:sesə"
+  },
+  {
+    "name": "productive",
+    "trans": [
+      "adj.富有成效的,多产的,生产性的,具有创造性的"
+    ],
+    "ukphone": "prəˈdʌktɪv",
+    "usphone": "pro-"
+  },
+  {
+    "name": "productivity",
+    "trans": [
+      "n.生产率，生产力,经济学 生产率,生态学生产率"
+    ],
+    "ukphone": "ˌprɒdʌkˈtɪvəti",
+    "usphone": "ˌprɑ:dʌkˈtɪvəti"
+  },
+  {
+    "name": "profound",
+    "trans": [
+      "adj.深厚的,意义深远的,严重的,知识渊博的n.〈诗〉深海，大洋,深渊,（灵魂）深处"
+    ],
+    "ukphone": "prəˈfaʊnd",
+    "usphone": "pro-"
+  },
+  {
+    "name": "progression",
+    "trans": [
+      "n.（事件的）连续,一系列,发展，进展,<数>级数"
+    ],
+    "ukphone": "prəˈgreʃn",
+    "usphone": "prəˈɡrɛʃən"
+  },
+  {
+    "name": "progressive",
+    "trans": [
+      "adj.不断前进的,进步的,进行的n.改革论者,进步分子"
+    ],
+    "ukphone": "prəˈgresɪv",
+    "usphone": "prəˈɡrɛsɪv"
+  },
+  {
+    "name": "projection",
+    "trans": [
+      "n.预测,规划，设计,心投射,突起物"
+    ],
+    "ukphone": "prəˈdʒekʃn",
+    "usphone": "prəˈdʒɛkʃən"
+  },
+  {
+    "name": "prominent",
+    "trans": [
+      "adj.突出的，杰出的,突起的,著名的"
+    ],
+    "ukphone": "ˈprɒmɪnənt",
+    "usphone": "ˈprɑ:mɪnənt"
+  },
+  {
+    "name": "pronounce",
+    "trans": [
+      "vt.& vi.发音，读vt.宣布，宣称,演讲，讲述vi.宣判"
+    ],
+    "ukphone": "prəˈnaʊns",
+    "usphone": "prəˈnaʊns"
+  },
+  {
+    "name": "proposition",
+    "trans": [
+      "n.命题,建议,主张v.提议,建议"
+    ],
+    "ukphone": "ˌprɒpəˈzɪʃn",
+    "usphone": "ˌprɑ:pəˈzɪʃn"
+  },
+  {
+    "name": "protocol",
+    "trans": [
+      "n.礼仪,（外交条约的）草案,（数据传递的）协议,科学实验报告（或计划）vt.把…写入议定书，在议定书中拟定（或颁布）vi.拟定议定书，拟定草案"
+    ],
+    "ukphone": "ˈprəʊtəkɒl",
+    "usphone": "ˈproʊtəkɔ:l"
+  },
+  {
+    "name": "proton",
+    "trans": [
+      "n.物质子"
+    ],
+    "ukphone": "ˈprəʊtɒn",
+    "usphone": "ˈproʊtɑ:n"
+  },
+  {
+    "name": "psychiatric",
+    "trans": [
+      "adj.精神病学的,精神病治疗的"
+    ],
+    "ukphone": "ˌsaɪkiˈætrɪk",
+    "usphone": ",saɪkɪ'ætrɪk"
+  },
+  {
+    "name": "psychologist",
+    "trans": [
+      "n.心理学研究者，心理学家"
+    ],
+    "ukphone": "saɪˈkɒlədʒɪst",
+    "usphone": "saɪˈkɑ:lədʒɪst"
+  },
+  {
+    "name": "psychology",
+    "trans": [
+      "n.心理学,心理特点,心理状态,心理影响"
+    ],
+    "ukphone": "saɪˈkɒlədʒi",
+    "usphone": "saɪˈkɑ:lədʒi"
+  },
+  {
+    "name": "publish",
+    "trans": [
+      "vt.& vi.出版，发行,发表，宣布（结婚等）,公布，颁布,出版…的著作"
+    ],
+    "ukphone": "ˈpʌblɪʃ",
+    "usphone": "ˈpʌblɪʃ"
+  },
+  {
+    "name": "pulse",
+    "trans": [
+      "n.脉搏,无线电（电磁波等）脉动,活力,有节奏的跳动（或拍打）vi.（心脏）跳动,脉动,搏动,震动vt.使跳动,有节奏地驱动（机器等）,电子学施以脉冲,无线电脉冲地调节（电磁波）"
+    ],
+    "ukphone": "pʌls",
+    "usphone": "pʌls"
+  },
+  {
+    "name": "punch",
+    "trans": [
+      "vt.用拳猛击,打孔,（用压穿器）穿孔，冲孔,用肘推n.冲压机，冲床,打洞器,钻孔机,剪票铗vi.用拳猛击"
+    ],
+    "ukphone": "pʌntʃ",
+    "usphone": "pʌntʃ"
+  },
+  {
+    "name": "punish",
+    "trans": [
+      "v.处罚,严厉对付,贪婪地吃喝"
+    ],
+    "ukphone": "ˈpʌnɪʃ",
+    "usphone": "ˈpʌnɪʃ"
+  },
+  {
+    "name": "punishment",
+    "trans": [
+      "n.刑罚，惩罚,严厉对待,<口>给吃苦头"
+    ],
+    "ukphone": "ˈpʌnɪʃmənt",
+    "usphone": "ˈpʌnɪʃmənt"
+  },
+  {
+    "name": "purely",
+    "trans": [
+      "adv.完全地，十足地,纯粹地,纯洁地，贞淑地"
+    ],
+    "ukphone": "ˈpjʊəli",
+    "usphone": "ˈpjʊrli"
+  },
+  {
+    "name": "puzzle",
+    "trans": [
+      "vt.使迷惑，使难解vt.& vi.为难，伤脑筋n.智力测验，智力玩具,难题,令人费解的事人,谜一般的事物"
+    ],
+    "ukphone": "ˈpʌzl",
+    "usphone": "ˈpʌzəl"
+  },
+  {
+    "name": "qualitative",
+    "trans": [
+      "adj.定性的，定质的,性质上的,质量的"
+    ],
+    "ukphone": "ˈkwɒlɪtətɪv",
+    "usphone": "ˈkwɑ:ləteɪtətɪv"
+  },
+  {
+    "name": "quantitative",
+    "trans": [
+      "adj.定量的,数量（上）的"
+    ],
+    "ukphone": "ˈkwɒntɪtətɪv",
+    "usphone": "ˈkwɑ:ntəteɪtɪv"
+  },
+  {
+    "name": "quantum",
+    "trans": [
+      "n.物量子,定量，总量,美国昆腾公司（世界领先的硬盘生产商）"
+    ],
+    "ukphone": "ˈkwɒntəm",
+    "usphone": "ˈkwɑ:ntəm"
+  },
+  {
+    "name": "questionnaire",
+    "trans": [
+      "n.调查表,调查问卷"
+    ],
+    "ukphone": "ˌkwestʃəˈneə(r)",
+    "usphone": "ˌkwestʃəˈner"
+  },
+  {
+    "name": "quiz",
+    "trans": [
+      "n.提问，询问,小型考试,简单的小测验,恶作剧vt.盘问,挖苦,进行测试,张望"
+    ],
+    "ukphone": "kwɪz",
+    "usphone": "kwɪz"
+  },
+  {
+    "name": "quotation",
+    "trans": [
+      "n.引用，引证,商业行情，行市,行市表，估价单,引用语"
+    ],
+    "ukphone": "kwəʊˈteɪʃn",
+    "usphone": "kwoʊˈteɪʃn"
+  },
+  {
+    "name": "rack",
+    "trans": [
+      "n.行李架,支架,刑架,（羊、猪等带前肋的）颈脊vt.使痛苦，使焦虑,剥削，榨取,用刑拘折磨"
+    ],
+    "ukphone": "ræk",
+    "usphone": "ræk"
+  },
+  {
+    "name": "radar",
+    "trans": [
+      "n.雷达,雷达装置,无线电探测器"
+    ],
+    "ukphone": "ˈreɪdɑ:(r)",
+    "usphone": "ˈredɑr"
+  },
+  {
+    "name": "radiation",
+    "trans": [
+      "n.辐射,放射物,辐射状,分散"
+    ],
+    "ukphone": "ˌreɪdiˈeɪʃn",
+    "usphone": "ˌrediˈeʃən"
+  },
+  {
+    "name": "radius",
+    "trans": [
+      "n.半径（距离）,用半径度量的圆形面积,半径范围,桡骨"
+    ],
+    "ukphone": "ˈreɪdiəs",
+    "usphone": "ˈrediəs"
+  },
+  {
+    "name": "rainfall",
+    "trans": [
+      "n.阵雨，降雨,降雨量"
+    ],
+    "ukphone": "ˈreɪnfɔ:l",
+    "usphone": "ˈrenˌfɔl"
+  },
+  {
+    "name": "randomize"
+  },
+  {
+    "name": "randomly",
+    "trans": [
+      "adv.随便地，未加计划地"
+    ],
+    "ukphone": "'rændəmlɪ",
+    "usphone": "'rændəmlɪ"
+  },
+  {
+    "name": "rational",
+    "trans": [
+      "adj.神智清楚的,理性的,理智的,合理的n.合理的事物,数有理数,懂道理的人，人类,〈英〉合理的服装"
+    ],
+    "ukphone": "ˈræʃnəl",
+    "usphone": "ˈræʃənəl"
+  },
+  {
+    "name": "rationality",
+    "trans": [
+      "n.合理性,（常复数）合理的行动（或见解、措施等）"
+    ],
+    "ukphone": "ˌræʃə'nælətɪ",
+    "usphone": "ˌræʃəˈnælɪti"
+  },
+  {
+    "name": "ray",
+    "trans": [
+      "n.（热或其他能量的）射线,光束，光线,微量,伞形花序柄vt.放射,照射,（思想，希望等）闪现,发光"
+    ],
+    "ukphone": "reɪ",
+    "usphone": "re"
+  },
+  {
+    "name": "reactive",
+    "trans": [
+      "adj.反应的,电抗的,活性的"
+    ],
+    "ukphone": "riˈæktɪv",
+    "usphone": "riˈæktɪv"
+  },
+  {
+    "name": "reactor",
+    "trans": [
+      "n.化工反应器,核反应堆,起反应的人,原子炉"
+    ],
+    "ukphone": "riˈæktə(r)",
+    "usphone": "riˈæktɚ"
+  },
+  {
+    "name": "readily",
+    "trans": [
+      "adv.乐意地,快捷地,轻而易举地,便利地"
+    ],
+    "ukphone": "ˈredɪli",
+    "usphone": "ˈrɛdli"
+  },
+  {
+    "name": "realism",
+    "trans": [
+      "n.（文艺的）现实主义,现实主义的态度和行为,<哲>唯实论,实在论"
+    ],
+    "ukphone": "ˈri:əlɪzəm",
+    "usphone": "ˈriəˌlɪzəm"
+  },
+  {
+    "name": "realistic",
+    "trans": [
+      "adj.现实的,艺 现实主义的，哲实在论（者）的,逼真的,栩栩如生的"
+    ],
+    "ukphone": "ˌri:əˈlɪstɪk",
+    "usphone": "ˌriəˈlɪstɪk"
+  },
+  {
+    "name": "realm",
+    "trans": [
+      "n.领域，范围,王国,（学术的）部门，界,（动植物分布的）圈，带"
+    ],
+    "ukphone": "relm",
+    "usphone": "rɛlm"
+  },
+  {
+    "name": "receptor",
+    "trans": [
+      "n.生感受器，受体,电感受器，接收器,化接受器,感觉器官"
+    ],
+    "ukphone": "rɪˈseptə(r)",
+    "usphone": "rɪ'sɛptɚ"
+  },
+  {
+    "name": "recipe",
+    "trans": [
+      "n.食谱,处方,秘诀"
+    ],
+    "ukphone": "ˈresəpi",
+    "usphone": "ˈresəpi"
+  },
+  {
+    "name": "reconstruct",
+    "trans": [
+      "vt.重建,重现,改造,复兴"
+    ],
+    "ukphone": "ˌri:kənˈstrʌkt",
+    "usphone": "ˌrikənˈstrʌkt"
+  },
+  {
+    "name": "regime",
+    "trans": [
+      "n.政治制度，政权，政体,管理，方法,医养生法,（病人等的）生活规则"
+    ],
+    "ukphone": "reɪˈʒi:m",
+    "usphone": "rɪ-"
+  },
+  {
+    "name": "regression",
+    "trans": [
+      "n.衰退,（尤指因催眠或精神疾患，或为逃避目前忧虑）回到从前,回归,（统计学） 回归"
+    ],
+    "ukphone": "rɪˈgreʃn",
+    "usphone": "rɪˈɡrɛʃən"
+  },
+  {
+    "name": "rehabilitation",
+    "trans": [
+      "n.修复,复兴,复职,恢复名誉"
+    ],
+    "ukphone": "ˌri:əˌbɪlɪ'teɪʃn",
+    "usphone": "ˌrihəˌbɪləˈteʃən"
+  },
+  {
+    "name": "reinforce",
+    "trans": [
+      "vt.加固,强化,增援vi.求援,得到增援,给予更多的支持n.加强,加固物,加固材料"
+    ],
+    "ukphone": "ˌri:ɪnˈfɔ:s",
+    "usphone": "ˌri:ɪnˈfɔ:rs"
+  },
+  {
+    "name": "rejection",
+    "trans": [
+      "n.拒绝,摒弃,剔除物,<医>排斥"
+    ],
+    "ukphone": "rɪ'dʒekʃn",
+    "usphone": "rɪˈdʒɛkʃən"
+  },
+  {
+    "name": "reliability",
+    "trans": [
+      "n.可靠，可信赖"
+    ],
+    "ukphone": "rɪˌlaɪə'bɪlətɪ",
+    "usphone": "rɪˌlaɪəˈbɪlətɪ"
+  },
+  {
+    "name": "render",
+    "trans": [
+      "v.使成为,递交,给予,表达"
+    ],
+    "ukphone": "ˈrendə(r)",
+    "usphone": "ˈrɛndɚ"
+  },
+  {
+    "name": "repertoire",
+    "trans": [
+      "n.全部节目,全部本领,（计算机的）指令表"
+    ],
+    "ukphone": "ˈrepətwɑ:(r)",
+    "usphone": "ˈrepərtwɑ:(r)"
+  },
+  {
+    "name": "replacement",
+    "trans": [
+      "n.代替,归还，，复位,替代者,补充兵员"
+    ],
+    "ukphone": "rɪˈpleɪsmənt",
+    "usphone": "rɪˈplesmənt"
+  },
+  {
+    "name": "replicate",
+    "trans": [
+      "vt.复制，复写,重复，反复,折转,生 复制adj.复制的,折叠的,植折转的n.复制品,八音阶间隔的反覆音"
+    ],
+    "ukphone": "ˈreplɪkeɪt",
+    "usphone": "ˈrɛplɪˌket"
+  },
+  {
+    "name": "replication",
+    "trans": [
+      "n.复制，折叠,回答,反响,植反叠"
+    ],
+    "ukphone": "ˌreplɪ'keɪʃn",
+    "usphone": "ˌrɛplɪˈkeʃən"
+  },
+  {
+    "name": "reproduce",
+    "trans": [
+      "vt.& vi.复制，重现，再版,生殖，繁殖vt.使再次发生,再现"
+    ],
+    "ukphone": "ˌri:prəˈdju:s",
+    "usphone": "ˌri:prəˈdu:s"
+  },
+  {
+    "name": "reproduction",
+    "trans": [
+      "n.繁殖，生殖,再生产，再现，心再生作用,复制品"
+    ],
+    "ukphone": "ˌri:prəˈdʌkʃn",
+    "usphone": "ˌriprəˈdʌkʃən"
+  },
+  {
+    "name": "republic",
+    "trans": [
+      "n.共和国,共和政体,（成员具有平等权利的）团体"
+    ],
+    "ukphone": "rɪˈpʌblɪk",
+    "usphone": "rɪˈpʌblɪk"
+  },
+  {
+    "name": "resemble",
+    "trans": [
+      "vt.与…相像，类似于"
+    ],
+    "ukphone": "rɪˈzembl",
+    "usphone": "rɪˈzɛmbəl"
+  },
+  {
+    "name": "reservoir",
+    "trans": [
+      "n.蓄水池,贮液器,储藏,蓄积"
+    ],
+    "ukphone": "ˈrezəvwɑ:(r)",
+    "usphone": "ˈrezərvwɑ:(r)"
+  },
+  {
+    "name": "residual",
+    "trans": [
+      "adj.残余的,残留的n.剩余,残渣"
+    ],
+    "ukphone": "rɪˈzɪdjuəl",
+    "usphone": "rɪˈzɪdʒuəl"
+  },
+  {
+    "name": "residue",
+    "trans": [
+      "n.残余，残渣,余渣，残余物,法剩余财产,林废材"
+    ],
+    "ukphone": "ˈrezɪdju:",
+    "usphone": "ˈrezɪdu:"
+  },
+  {
+    "name": "resistant",
+    "trans": [
+      "adj.有抵抗力的，抵抗的,顽固的n.抵抗者,有抵抗力的东西,防染剂，防腐剂"
+    ],
+    "ukphone": "rɪˈzɪstənt",
+    "usphone": "rɪˈzɪstənt"
+  },
+  {
+    "name": "respiratory",
+    "trans": [
+      "adj.呼吸的"
+    ],
+    "ukphone": "rəˈspɪrətri",
+    "usphone": "ˈrespərətɔ:ri"
+  },
+  {
+    "name": "retrieve",
+    "trans": [
+      "vt.取回,恢复,计检索,重新得到vi.找回猎物n.恢复，挽回,取回,计检索"
+    ],
+    "ukphone": "rɪˈtri:v",
+    "usphone": "rɪˈtriv"
+  },
+  {
+    "name": "revolutionary",
+    "trans": [
+      "adj.革命的,革命性的，创新的,旋转的n.革命者，革新者"
+    ],
+    "ukphone": "ˌrevəˈlu:ʃənəri",
+    "usphone": "ˌrevəˈlu:ʃəneri"
+  },
+  {
+    "name": "rewrite",
+    "trans": [
+      "vt.书面答复,重写,加工编写,改写，修改n.改写或重写的文稿,改写的作品"
+    ],
+    "ukphone": "ˌri:ˈraɪt",
+    "usphone": "riˈraɪt"
+  },
+  {
+    "name": "rhetoric",
+    "trans": [
+      "n.修辞学,辩论法，雄辩术,华丽的文词,花言巧语"
+    ],
+    "ukphone": "ˈretərɪk",
+    "usphone": "ˈrɛtərɪk"
+  },
+  {
+    "name": "rhythm",
+    "trans": [
+      "n.诗节奏，韵律,医节律，规律,乐节拍,艺调和"
+    ],
+    "ukphone": "ˈrɪðəm",
+    "usphone": "ˈrɪðəm"
+  },
+  {
+    "name": "ridiculous",
+    "trans": [
+      "adj.可笑的，荒谬的,荒唐的，愚蠢的,胡枝扯叶"
+    ],
+    "ukphone": "rɪˈdɪkjələs",
+    "usphone": "rɪˈdɪkjələs"
+  },
+  {
+    "name": "ritual",
+    "trans": [
+      "n.（宗教等的）仪式,例行公事，老规矩,典礼adj.作为仪式的一部分的,礼节性的,例行公事的"
+    ],
+    "ukphone": "ˈrɪtʃuəl",
+    "usphone": "ˈrɪtʃuəl"
+  },
+  {
+    "name": "robot",
+    "trans": [
+      "n.机器人,遥控装置,自动机,机械呆板的人"
+    ],
+    "ukphone": "ˈrəʊbɒt",
+    "usphone": "ˈroʊbɑ:t"
+  },
+  {
+    "name": "rope",
+    "trans": [
+      "n.粗绳,绳索,一串,学会决窍，知道决窍vt.（用绳子）捆,用绳子系牢,捆紧,用套索抓捕（动物）vi.成索状或绳状"
+    ],
+    "ukphone": "rəʊp",
+    "usphone": "roʊp"
+  },
+  {
+    "name": "rotate",
+    "trans": [
+      "vt.& vi.（使某物）旋转,使转动,使轮流，轮换,交替adj.植辐状的,有辐射部分的"
+    ],
+    "ukphone": "rəʊˈteɪt",
+    "usphone": "ˈroʊteɪt"
+  },
+  {
+    "name": "rotation",
+    "trans": [
+      "n.旋转，转动,轮流，循环,农轮作,天自转"
+    ],
+    "ukphone": "rəʊˈteɪʃn",
+    "usphone": "roʊˈteɪʃn"
+  },
+  {
+    "name": "rub",
+    "trans": [
+      "vt.擦，摩擦,用…擦,触怒,（使）相互磨擦vi.接触，摩擦,擦伤,在困境中持续下去n.摩擦的动作,表面不平,阻碍，困难"
+    ],
+    "ukphone": "rʌb",
+    "usphone": "rʌb"
+  },
+  {
+    "name": "ruler",
+    "trans": [
+      "n.尺,直尺,统治者"
+    ],
+    "ukphone": "ˈru:lə(r)",
+    "usphone": "ˈrulɚ"
+  },
+  {
+    "name": "scatter",
+    "trans": [
+      "vt.（使）散开，（使）分散，驱散vi.撒开,分散n.撒布，散播"
+    ],
+    "ukphone": "ˈskætə(r)",
+    "usphone": "ˈskætɚ"
+  },
+  {
+    "name": "scenario",
+    "trans": [
+      "n.（行动的）方案,剧情概要,分镜头剧本"
+    ],
+    "ukphone": "səˈnɑ:riəʊ",
+    "usphone": "səˈnærioʊ"
+  },
+  {
+    "name": "scholarship",
+    "trans": [
+      "n.奖学金,学术,学识"
+    ],
+    "ukphone": "ˈskɒləʃɪp",
+    "usphone": "ˈskɑ:lərʃɪp"
+  },
+  {
+    "name": "scripture",
+    "trans": [
+      "n.经文，圣典,文稿"
+    ],
+    "ukphone": "ˈskrɪptʃə(r)",
+    "usphone": "ˈskrɪptʃɚ"
+  },
+  {
+    "name": "scroll",
+    "trans": [
+      "n.（常用于录写正式文件的）纸卷,书卷，画卷，卷轴,涡卷形（装饰）,〈古〉表，目录vt.使成卷形,（电脑屏幕上）从上到下移动（资料等），卷页vi.（似卷轴般）卷起,（像展开卷轴般地）将文字显示于屏幕"
+    ],
+    "ukphone": "skrəʊl",
+    "usphone": "skroʊl"
+  },
+  {
+    "name": "secrete",
+    "trans": [
+      "vt.生分泌,隐匿，隐藏,私下侵吞"
+    ],
+    "ukphone": "sɪˈkri:t",
+    "usphone": "sɪˈkrit"
+  },
+  {
+    "name": "sediment",
+    "trans": [
+      "n.地沉淀物,沉积物，沉渣"
+    ],
+    "ukphone": "ˈsedɪmənt",
+    "usphone": "ˈsɛdəmənt"
+  },
+  {
+    "name": "selective",
+    "trans": [
+      "adj.精心选择的,选择的，不普遍的,淘汰的"
+    ],
+    "ukphone": "sɪˈlektɪv",
+    "usphone": "sɪˈlɛktɪv"
+  },
+  {
+    "name": "semantic",
+    "trans": [
+      "adj.<语>语义的，语义学的"
+    ],
+    "ukphone": "sɪˈmæntɪk",
+    "usphone": "sɪˈmæntɪk"
+  },
+  {
+    "name": "semester",
+    "trans": [
+      "n.（尤指美国的大专院校的）学期,半学年"
+    ],
+    "ukphone": "sɪˈmestə(r)",
+    "usphone": "səˈmɛstɚ"
+  },
+  {
+    "name": "semi"
+  },
+  {
+    "name": "seminar",
+    "trans": [
+      "n.研讨班，讲习会,研讨小组,研讨会,培训会"
+    ],
+    "ukphone": "ˈsemɪnɑ:(r)",
+    "usphone": "ˈsɛməˌnɑr"
+  },
+  {
+    "name": "sensation",
+    "trans": [
+      "n.感觉,直觉,知觉,轰动"
+    ],
+    "ukphone": "senˈseɪʃn",
+    "usphone": "sɛnˈseʃən"
+  },
+  {
+    "name": "sensible",
+    "trans": [
+      "adj.明智的,合乎情理的,通情达理的,意识到的，能感觉到的n.可感觉到的东西,敏感的人"
+    ],
+    "ukphone": "ˈsensəbl",
+    "usphone": "ˈsɛnsəbəl"
+  },
+  {
+    "name": "sensitivity",
+    "trans": [
+      "n.敏感，感受性,仪器等的)灵敏性,摄感光度"
+    ],
+    "ukphone": "ˌsensəˈtɪvəti",
+    "usphone": "ˌsɛnsɪˈtɪvɪti"
+  },
+  {
+    "name": "sensory",
+    "trans": [
+      "adj.感觉的，感受的，感官的,传递感觉的"
+    ],
+    "ukphone": "ˈsensəri",
+    "usphone": "ˈsɛnsəri"
+  },
+  {
+    "name": "separately",
+    "trans": [
+      "adv.分别地，另行,分开，单独,分离地,个别地"
+    ],
+    "ukphone": "ˈseprətli",
+    "usphone": "ˈsɛpərɪtlɪ"
+  },
+  {
+    "name": "separation",
+    "trans": [
+      "n.分离，分开,间隔，距离,矿分选,（夫妇）分居"
+    ],
+    "ukphone": "ˌsepəˈreɪʃn",
+    "usphone": "ˌsɛpəˈreʃən"
+  },
+  {
+    "name": "sexuality",
+    "trans": [
+      "n.性别，有性状态,性欲,性生活,性兴趣"
+    ],
+    "ukphone": "ˌsekʃuˈæləti",
+    "usphone": "ˌsɛkʃuˈælɪti"
+  },
+  {
+    "name": "shallow",
+    "trans": [
+      "adj.浅的，肤浅的,表面的，皮毛的,（水，器物等）浅的,（呼吸）浅的n.浅处,浅滩v.使变浅,使变浅薄"
+    ],
+    "ukphone": "ˈʃæləʊ",
+    "usphone": "ˈʃæloʊ"
+  },
+  {
+    "name": "shortly",
+    "trans": [
+      "adv.立刻，马上,简单地，扼要地,唐突地，简慢地,在即"
+    ],
+    "ukphone": "ˈʃɔ:tli",
+    "usphone": "ˈʃɔ:rtli"
+  },
+  {
+    "name": "shuttle",
+    "trans": [
+      "n.（织机的）梭子,航天飞机,（缝纫机的）滑梭,短程穿梭运行的飞机（或火车，汽车）vt.& vi.穿梭般来回移动vt.以短程往复方式运送（货物等）vi.以短程往复式运行"
+    ],
+    "ukphone": "ˈʃʌtl",
+    "usphone": "ˈʃʌtl"
+  },
+  {
+    "name": "similarity",
+    "trans": [
+      "n.类似,相像性,相仿性,类似性，相似物"
+    ],
+    "ukphone": "ˌsɪməˈlærəti",
+    "usphone": "ˌsɪməˈlærɪti"
+  },
+  {
+    "name": "simplify",
+    "trans": [
+      "vt.简化,使单纯,使简易"
+    ],
+    "ukphone": "ˈsɪmplɪfaɪ",
+    "usphone": "ˈsɪmpləˌfaɪ"
+  },
+  {
+    "name": "simulate",
+    "trans": [
+      "vt.假装，冒充,模仿,模拟,生拟态adj.模仿的,假装的"
+    ],
+    "ukphone": "ˈsɪmjuleɪt",
+    "usphone": "ˈsɪmjəˌlet"
+  },
+  {
+    "name": "simulation",
+    "trans": [
+      "n.模仿，模拟,生拟态，拟色,假装,装病"
+    ],
+    "ukphone": "ˌsɪmjuˈleɪʃn",
+    "usphone": "ˌsɪmjəˈleʃən"
+  },
+  {
+    "name": "simultaneously",
+    "trans": [
+      "adv.同时地,一壁,齐,一齐"
+    ],
+    "ukphone": "ˌsɪməl'teɪnɪəslɪ",
+    "usphone": "saɪməlˈtenɪəslɪ"
+  },
+  {
+    "name": "sin",
+    "trans": [
+      "n.违背宗教道德原则的恶行,罪恶，罪孽,过错，罪过,愚蠢的事，可耻的事vi.犯罪，犯过错vt.犯罪"
+    ],
+    "ukphone": "sɪn",
+    "usphone": "sɪn"
+  },
+  {
+    "name": "singular",
+    "trans": [
+      "adj.<语>单数的,<正>突出的,奇特的,非凡的n.单数形式（的词）"
+    ],
+    "ukphone": "ˈsɪŋgjələ(r)",
+    "usphone": "ˈsɪŋɡjəlɚ"
+  },
+  {
+    "name": "sketch",
+    "trans": [
+      "n.草图,素描,梗概v.草拟,速写,简述"
+    ],
+    "ukphone": "sketʃ",
+    "usphone": "skɛtʃ"
+  },
+  {
+    "name": "skip",
+    "trans": [
+      "vi.跳,跳绳,悄悄溜走,快速转移vt.略过,跳过,漏过,不做（应做的事等）n.跳，蹦跳,废料桶（装工地废料，由卡车拖走）,跳跃"
+    ],
+    "ukphone": "skɪp",
+    "usphone": "skɪp"
+  },
+  {
+    "name": "slab",
+    "trans": [
+      "n.厚板，平板，厚片,混凝土路面v.把…分成厚片,用石板铺"
+    ],
+    "ukphone": "slæb",
+    "usphone": "slæb"
+  },
+  {
+    "name": "slash",
+    "trans": [
+      "vt.挥砍,鞭打,严厉批评,大幅削减vi.严厉地批评,猛砍n.猛砍,斜线,刀痕，伤痕,沼泽低地"
+    ],
+    "ukphone": "slæʃ",
+    "usphone": "slæʃ"
+  },
+  {
+    "name": "slavery",
+    "trans": [
+      "n.奴隶身份,奴隶制度,苦役，奴隶般的劳动,奴役，束缚，屈从，耽迷（酒色等）"
+    ],
+    "ukphone": "ˈsleɪvəri",
+    "usphone": "ˈslevri"
+  },
+  {
+    "name": "slot",
+    "trans": [
+      "n.位置,狭槽，水沟,人名 斯洛特,硬币投币口vt.跟踪，跟着足迹追赶,开槽于"
+    ],
+    "ukphone": "slɒt",
+    "usphone": "slɑ:t"
+  },
+  {
+    "name": "snake",
+    "trans": [
+      "n.蛇,奸险的人,卑劣的人,蛇形浮动汇率制vt.沿…曲折前进（或延伸）,<美>/<口>拖，拉（木材等）vi.曲折前进（或延伸）,蛇行，悄悄地爬行"
+    ],
+    "ukphone": "sneɪk",
+    "usphone": "snek"
+  },
+  {
+    "name": "sneeze",
+    "trans": [
+      "n.喷嚏,喷嚏声vi.打喷嚏"
+    ],
+    "ukphone": "sni:z",
+    "usphone": "sniz"
+  },
+  {
+    "name": "sniff",
+    "trans": [
+      "vt.鄙视地说,嗅,深深吸入,发现,忿忿不平地说vi.鄙视,嗅，闻,呼哧地吸气,寻找，好奇地查看n.吸气，擤鼻声,一股气味"
+    ],
+    "ukphone": "snɪf",
+    "usphone": "snɪf"
+  },
+  {
+    "name": "socialize",
+    "trans": [
+      "vi.（与…）交往，联谊,参与社交vt.使社会化,使适合于过社会生活,使参加集体学习"
+    ],
+    "ukphone": "ˈsəʊʃəlaɪz",
+    "usphone": "ˈsoʊʃəlaɪz"
+  },
+  {
+    "name": "socially",
+    "trans": [
+      "adv.在社交方面,善于交际地,在社会（地位）上,在全社会中"
+    ],
+    "ukphone": "'səʊʃəlɪ",
+    "usphone": "ˈsoʃəlɪ"
+  },
+  {
+    "name": "sodium",
+    "trans": [
+      "n.<化>钠(11号元素，符号 Na)"
+    ],
+    "ukphone": "ˈsəʊdiəm",
+    "usphone": "ˈsoʊdiəm"
+  },
+  {
+    "name": "solar",
+    "trans": [
+      "adj.太阳的，日光的,利用太阳能的,根据太阳决定或测定的n.日光浴室"
+    ],
+    "ukphone": "ˈsəʊlə(r)",
+    "usphone": "ˈsoʊlə(r)"
+  },
+  {
+    "name": "soluble",
+    "trans": [
+      "adj.化 可溶的,可以解决的,可以解释的,数可解的"
+    ],
+    "ukphone": "ˈsɒljəbl",
+    "usphone": "ˈsɑ:ljəbl"
+  },
+  {
+    "name": "solute"
+  },
+  {
+    "name": "solvent",
+    "trans": [
+      "n.化溶剂，溶媒,解释，说明,解决方法,使瓦解的东西adj.有溶解能力的，可溶解的,有清还债务能力的,起瓦解作用的"
+    ],
+    "ukphone": "ˈsɒlvənt",
+    "usphone": "ˈsɑ:lvənt"
+  },
+  {
+    "name": "sometime",
+    "trans": [
+      "adv.将来某个时候,过去某个时候,改天,来日adj.（指某人曾经是…）从前的，一度的,某一时间的"
+    ],
+    "ukphone": "ˈsʌmtaɪm",
+    "usphone": "ˈsʌmˌtaɪm"
+  },
+  {
+    "name": "sophisticate"
+  },
+  {
+    "name": "span",
+    "trans": [
+      "n.共轭（马、骡）,跨度，墩距,一段时间,航 跨绳vt.缚住或扎牢,跨越时间或空间,以掌测量,以手围绕测量类似测量"
+    ],
+    "ukphone": "spæn",
+    "usphone": "spæn"
+  },
+  {
+    "name": "spatial",
+    "trans": [
+      "adj.空间的,存在于空间的,受空间条件限制的,占大篇幅的"
+    ],
+    "ukphone": "ˈspeɪʃl",
+    "usphone": "ˈspeʃəl"
+  },
+  {
+    "name": "specialty",
+    "trans": [
+      "n.专业，专长,特点，特别事项,特性，特质,<律>盖印的契约adj.特色的,专门的,独立的"
+    ],
+    "ukphone": "ˈspeʃəlti",
+    "usphone": "ˈspɛʃəlti"
+  },
+  {
+    "name": "specification",
+    "trans": [
+      "n.规格,详述,说明书"
+    ],
+    "ukphone": "ˌspesɪfɪˈkeɪʃn",
+    "usphone": "ˌspɛsəfɪˈkeʃən"
+  },
+  {
+    "name": "specimen",
+    "trans": [
+      "n.样品,范例,（化验的）抽样,某种类型的人"
+    ],
+    "ukphone": "ˈspesɪmən",
+    "usphone": "ˈspɛsəmən"
+  },
+  {
+    "name": "spectrum",
+    "trans": [
+      "n.光谱,波谱,范围,系列"
+    ],
+    "ukphone": "ˈspektrəm",
+    "usphone": "ˈspɛktrəm"
+  },
+  {
+    "name": "sperm",
+    "trans": [
+      "n.精子,精液,鲸蜡油"
+    ],
+    "ukphone": "spɜ:m",
+    "usphone": "spɜ:rm"
+  },
+  {
+    "name": "sphere",
+    "trans": [
+      "n.球（体）,（兴趣或活动的）范围,势力范围,天体，如行星或恒星vt.形成球体,包围，围绕,置于球面内部"
+    ],
+    "ukphone": "sfɪə(r)",
+    "usphone": "sfɪr"
+  },
+  {
+    "name": "splice",
+    "trans": [
+      "vt.绞接,捻接（两段绳子）,胶接,粘接（胶片、磁带等）n.胶接处，粘接处，铰接处"
+    ],
+    "ukphone": "splaɪs",
+    "usphone": "splaɪs"
+  },
+  {
+    "name": "sponsorship",
+    "trans": [
+      "n.赞助,发起,倡议,保证人"
+    ],
+    "ukphone": "ˈspɒnsəʃɪp",
+    "usphone": "ˈspɑ:nsərʃɪp"
+  },
+  {
+    "name": "spontaneous",
+    "trans": [
+      "adj.自发的,自然的,天然产生的,无意识的"
+    ],
+    "ukphone": "spɒnˈteɪniəs",
+    "usphone": "spɑ:nˈteɪniəs"
+  },
+  {
+    "name": "spray",
+    "trans": [
+      "vt.& vi.喷,喷射n.喷雾,喷雾器,浪花,（用作装饰的）小树枝"
+    ],
+    "ukphone": "spreɪ",
+    "usphone": "spre"
+  },
+  {
+    "name": "stabilize",
+    "trans": [
+      "vt.（使）稳定，（使）稳固,使稳定平衡：通过平衡装置维持（如，飞机或船）的稳定,防止…的波动，平抑,平抑价格vi.变得稳定、稳固或固定"
+    ],
+    "ukphone": "ˈsteɪbəlaɪz",
+    "usphone": "ˈstebəˌlaɪz"
+  },
+  {
+    "name": "stack",
+    "trans": [
+      "n.垛，干草堆,（一排）烟囱,层积,整个的藏书架排列vt.& vi.堆成堆，垛,堆起来或覆盖住,洗牌作弊,秘密事先运作"
+    ],
+    "ukphone": "stæk",
+    "usphone": "stæk"
+  },
+  {
+    "name": "stadium",
+    "trans": [
+      "n.运动场,体育场,医（疾病的第…）期"
+    ],
+    "ukphone": "ˈsteɪdiəm",
+    "usphone": "ˈstediəm"
+  },
+  {
+    "name": "stance",
+    "trans": [
+      "n.态度，立场,站姿，被放置的姿势,位置,（运动员的）始发姿势"
+    ],
+    "ukphone": "stæns",
+    "usphone": "stæns"
+  },
+  {
+    "name": "standardize",
+    "trans": [
+      "vt.使标准化,用标准校检"
+    ],
+    "ukphone": "ˈstændədaɪz",
+    "usphone": "ˈstændərdaɪz"
+  },
+  {
+    "name": "static",
+    "trans": [
+      "adj.静止的,不变的,静电的,物静力的n.静电,物静电（干扰）,静力学,争吵"
+    ],
+    "ukphone": "ˈstætɪk",
+    "usphone": "ˈstætɪk"
+  },
+  {
+    "name": "statistical",
+    "trans": [
+      "adj.统计的,统计学的"
+    ],
+    "ukphone": "stə'tɪstɪkl",
+    "usphone": "stəˈtɪstɪkəl"
+  },
+  {
+    "name": "statistically",
+    "trans": [
+      "adv.统计上地，统计地"
+    ],
+    "ukphone": "stə'tɪstɪklɪ",
+    "usphone": "stə'tɪstɪklɪ"
+  },
+  {
+    "name": "statistics",
+    "trans": [
+      "n.统计，统计学，统计法，统计资料,统计数字,“statistic”的复数"
+    ],
+    "ukphone": "stə'tɪstɪks",
+    "usphone": "stəˈtɪstɪks"
+  },
+  {
+    "name": "stereotype",
+    "trans": [
+      "n.陈规旧习，旧规矩,固定的形式,铅版,铅版制版法，铅板印刷vt.使成陈规,把…浇铸成铅版,使用铅版,使固定"
+    ],
+    "ukphone": "ˈsteriətaɪp",
+    "usphone": "ˈstɪr-"
+  },
+  {
+    "name": "stimulus",
+    "trans": [
+      "n.刺激物,刺激因素,激法物"
+    ],
+    "ukphone": "ˈstɪmjələs",
+    "usphone": "ˈstɪmjələs"
+  },
+  {
+    "name": "straightforward",
+    "trans": [
+      "adj.直截了当的,坦率的,明确的adv.直截了当地,坦率地"
+    ],
+    "ukphone": "ˌstreɪtˈfɔ:wəd",
+    "usphone": "ˌstreɪtˈfɔ:rwərd"
+  },
+  {
+    "name": "strand",
+    "trans": [
+      "n.（绳子的）股，绞,海滨，河岸,（思想等的）一个组成部分vt.使滞留，使搁浅,使陷于困境vi.搁浅,陷入困境"
+    ],
+    "ukphone": "strænd",
+    "usphone": "strænd"
+  },
+  {
+    "name": "strategic",
+    "trans": [
+      "adj.战略（上）的,战略性的,有战略意义的,至关重要的"
+    ],
+    "ukphone": "strəˈti:dʒɪk",
+    "usphone": "strəˈtidʒɪk"
+  },
+  {
+    "name": "strictly",
+    "trans": [
+      "adv.严格地,完全地"
+    ],
+    "ukphone": "ˈstrɪktli",
+    "usphone": "ˈstrɪktli"
+  },
+  {
+    "name": "stripe",
+    "trans": [
+      "n.条纹,种类,军士军阶,犯人穿的横条囚衣vt.使带有条纹"
+    ],
+    "ukphone": "straɪp",
+    "usphone": "straɪp"
+  },
+  {
+    "name": "sub",
+    "trans": [
+      "n.潜水艇,代用品，代替者，替补队员,地铁,审校员vi.做替身，做替补队员,做替身，审校（文稿）"
+    ],
+    "ukphone": "sʌb",
+    "usphone": "sʌb"
+  },
+  {
+    "name": "subjective",
+    "trans": [
+      "adj.主观的,个人的,内省的"
+    ],
+    "ukphone": "səbˈdʒektɪv",
+    "usphone": "səbˈdʒɛktɪv"
+  },
+  {
+    "name": "subset",
+    "trans": [
+      "n.子集"
+    ],
+    "ukphone": "ˈsʌbset",
+    "usphone": "ˈsʌbˌsɛt"
+  },
+  {
+    "name": "substitution",
+    "trans": [
+      "n.代替,代用,替换,<化>取代（作用）"
+    ],
+    "ukphone": "ˌsʌbstɪ'tju:ʃn",
+    "usphone": "-ˈtju-"
+  },
+  {
+    "name": "substrate",
+    "trans": [
+      "n.底物,底层,基底,基层"
+    ],
+    "ukphone": "ˈsʌbstreɪt",
+    "usphone": "ˈsʌbˌstret"
+  },
+  {
+    "name": "subtle",
+    "trans": [
+      "adj.微妙的,敏感的,狡猾的,巧妙的"
+    ],
+    "ukphone": "ˈsʌtl",
+    "usphone": "ˈsʌtl"
+  },
+  {
+    "name": "subtract",
+    "trans": [
+      "vt.减去,扣除"
+    ],
+    "ukphone": "səbˈtrækt",
+    "usphone": "səbˈtrækt"
+  },
+  {
+    "name": "sufficiently",
+    "trans": [
+      "adv.足够地，充分地,十分，相当"
+    ],
+    "ukphone": "sə'fɪʃntlɪ",
+    "usphone": "səˈfɪʃəntlɪ"
+  },
+  {
+    "name": "suicide",
+    "trans": [
+      "n.自杀,自杀者,自杀行为vt.自杀adj.自杀的"
+    ],
+    "ukphone": "ˈsu:ɪsaɪd",
+    "usphone": "ˈsuɪˌsaɪd"
+  },
+  {
+    "name": "super",
+    "trans": [
+      "adj.超级的，极度的，过分的，超等的，极好的,面积的，平方的n.特级品，特大号商品adv.非常，过分地v.用上浆纱布装（书脊）,担任跑龙套角色"
+    ],
+    "ukphone": "ˈsu:pə(r)",
+    "usphone": "ˈsupɚ"
+  },
+  {
+    "name": "superior",
+    "trans": [
+      "adj.（级别、地位）较高的,（在质量等方面）较好的,（数量）较多的,上等的n.上级,较好的人事物，优胜者,修道院院长,方丈"
+    ],
+    "ukphone": "su:ˈpɪəriə(r)",
+    "usphone": "su:ˈpɪriə(r)"
+  },
+  {
+    "name": "supposedly",
+    "trans": [
+      "adv.据认为,据推测,据称,一般相信"
+    ],
+    "ukphone": "səˈpəʊzɪdli",
+    "usphone": "səˈpoʊzɪdli"
+  },
+  {
+    "name": "surgeon",
+    "trans": [
+      "n.外科医生,军军医"
+    ],
+    "ukphone": "ˈsɜ:dʒən",
+    "usphone": "ˈsɜ:rdʒən"
+  },
+  {
+    "name": "surgical",
+    "trans": [
+      "adj.外科的，外科手术的,（服装）治疗用的"
+    ],
+    "ukphone": "ˈsɜ:dʒɪkl",
+    "usphone": "ˈsɜ:rdʒɪkl"
+  },
+  {
+    "name": "surplus",
+    "trans": [
+      "adj.过剩的,多余的n.剩余额,公积金,顺差,盈余"
+    ],
+    "ukphone": "ˈsɜ:pləs",
+    "usphone": "ˈsɜ:rpləs"
+  },
+  {
+    "name": "susceptible",
+    "trans": [
+      "adj.易受影响的,易受感染的,善感的,可以接受或允许的"
+    ],
+    "ukphone": "səˈseptəbl",
+    "usphone": "səˈsɛptəbəl"
+  },
+  {
+    "name": "sustainable",
+    "trans": [
+      "adj.可持续的,可以忍受的,可支撑的"
+    ],
+    "ukphone": "səˈsteɪnəbl",
+    "usphone": "səˈsteɪnəbl"
+  },
+  {
+    "name": "swap",
+    "trans": [
+      "n.交换,交换物，被掉换者vi.交换（工作）vt.用…替换，把…换成，掉换（过来）"
+    ],
+    "ukphone": "swɒp",
+    "usphone": "swɑp"
+  },
+  {
+    "name": "swell",
+    "trans": [
+      "vt.& vi.增强,肿胀,膨胀,充满（激情）n.汹涌,重要人士,（尤指身体部位）凸起的形状,声音渐强adj.极好的,了不起的,非常棒的"
+    ],
+    "ukphone": "swel",
+    "usphone": "swɛl"
+  },
+  {
+    "name": "sword",
+    "trans": [
+      "n.剑，刀,武力，战争,兵权，权力"
+    ],
+    "ukphone": "sɔ:d",
+    "usphone": "sɔ:rd"
+  },
+  {
+    "name": "syllable",
+    "trans": [
+      "n.音节"
+    ],
+    "ukphone": "ˈsɪləbl",
+    "usphone": "ˈsɪləbəl"
+  },
+  {
+    "name": "syllabus",
+    "trans": [
+      "n.教学大纲，课程提纲,（讲义等的）摘要，提纲,课程表,法（判例前的）判决要旨"
+    ],
+    "ukphone": "ˈsɪləbəs",
+    "usphone": "ˈsɪləbəs"
+  },
+  {
+    "name": "symbolic",
+    "trans": [
+      "adj.象征的，象征性的"
+    ],
+    "ukphone": "sɪmˈbɒlɪk",
+    "usphone": "sɪmˈbɑ:lɪk"
+  },
+  {
+    "name": "syndrome",
+    "trans": [
+      "n.综合征,综合症状,典型表现"
+    ],
+    "ukphone": "ˈsɪndrəʊm",
+    "usphone": "ˈsɪndroʊm"
+  },
+  {
+    "name": "syntactic"
+  },
+  {
+    "name": "syntax",
+    "trans": [
+      "n.句法,句法规则分析,语构,语法"
+    ],
+    "ukphone": "ˈsɪntæks",
+    "usphone": "ˈsɪnˌtæks"
+  },
+  {
+    "name": "synthesis",
+    "trans": [
+      "n.综合,<化>合成,综合体,综合推理"
+    ],
+    "ukphone": "ˈsɪnθəsɪs",
+    "usphone": "ˈsɪnθɪsɪs"
+  },
+  {
+    "name": "synthetic",
+    "trans": [
+      "adj.合成的,人造的,摹拟的，虚构的,语综合的n.合成物,合成纤维,合成剂"
+    ],
+    "ukphone": "sɪnˈθetɪk",
+    "usphone": "sɪnˈθɛtɪk"
+  },
+  {
+    "name": "systematic",
+    "trans": [
+      "adj.有系统的，有规则的,有条不紊的,有步骤的,一贯的，惯常的"
+    ],
+    "ukphone": "ˌsɪstəˈmætɪk",
+    "usphone": "ˌsɪstəˈmætɪk"
+  },
+  {
+    "name": "tech",
+    "trans": [
+      "n.技术,<英>工学院,技术员,技术工作adj.技术的"
+    ],
+    "ukphone": "tek",
+    "usphone": "tɛk"
+  },
+  {
+    "name": "technically",
+    "trans": [
+      "adv.技术上,学术上,专业上,严格说来"
+    ],
+    "ukphone": "ˈteknɪkli",
+    "usphone": "ˈtɛknɪkl:ɪ"
+  },
+  {
+    "name": "temporal",
+    "trans": [
+      "adj.时间的,世俗的,暂存的,<语>表示时间的n.暂存的事物，世间的事物,世俗的权力,一时的事物，俗事"
+    ],
+    "ukphone": "ˈtempərəl",
+    "usphone": "ˈtɛmprəl"
+  },
+  {
+    "name": "tempt",
+    "trans": [
+      "vt.引诱，怂恿,吸引,冒…的风险,使感兴趣vi.有吸引力"
+    ],
+    "ukphone": "tempt",
+    "usphone": "tɛmpt"
+  },
+  {
+    "name": "tense",
+    "trans": [
+      "adj.拉紧的,肌肉绷紧的,神经紧张的,语（语音）紧的n.语时，时态,〈古〉时间v.使或变的紧张"
+    ],
+    "ukphone": "tens",
+    "usphone": "tɛns"
+  },
+  {
+    "name": "terminal",
+    "trans": [
+      "adj.末期的,晚期的,定期的,末端的n.终端,终点站,航空站,（电路的）端子"
+    ],
+    "ukphone": "ˈtɜ:mɪnl",
+    "usphone": "ˈtɜ:rmɪnl"
+  },
+  {
+    "name": "terminology",
+    "trans": [
+      "n.专门名词,术语，术语学,用辞"
+    ],
+    "ukphone": "ˌtɜ:mɪˈnɒlədʒi",
+    "usphone": "ˌtɜ:rməˈnɑ:lədʒi"
+  },
+  {
+    "name": "terribly",
+    "trans": [
+      "adv.很,非常,极,非常糟糕地"
+    ],
+    "ukphone": "ˈterəbli",
+    "usphone": "ˈtɛrəbli"
+  },
+  {
+    "name": "textbook",
+    "trans": [
+      "n.教科书,课本,教材adj.规范的,标准的"
+    ],
+    "ukphone": "ˈtekstbʊk",
+    "usphone": "ˈtɛkstˌbʊk"
+  },
+  {
+    "name": "theorem",
+    "trans": [
+      "n.数 定理,（能证明的）一般原理，公理，定律，法则"
+    ],
+    "ukphone": "ˈθɪərəm",
+    "usphone": "ˈθi:ərəm"
+  },
+  {
+    "name": "theorist",
+    "trans": [
+      "n.理论家,学说创立人,空论家"
+    ],
+    "ukphone": "ˈθɪərɪst",
+    "usphone": "ˈθi:ərɪst"
+  },
+  {
+    "name": "thereby",
+    "trans": [
+      "adv.由此，从而,在那附近"
+    ],
+    "ukphone": "ˌðeəˈbaɪ",
+    "usphone": "ˌðerˈbaɪ"
+  },
+  {
+    "name": "thermal",
+    "trans": [
+      "adj.热的，保热的,温热的n.上升的暖气流"
+    ],
+    "ukphone": "ˈθɜ:ml",
+    "usphone": "ˈθɜ:rml"
+  },
+  {
+    "name": "thesis",
+    "trans": [
+      "n.论文，毕业论文,论点，论题,命题"
+    ],
+    "ukphone": "ˈθi:sɪs",
+    "usphone": "ˈθisɪs"
+  },
+  {
+    "name": "thickness",
+    "trans": [
+      "n.层,浓度,厚（度）,最厚的部分"
+    ],
+    "ukphone": "ˈθɪknəs",
+    "usphone": "ˈθɪknɪs"
+  },
+  {
+    "name": "thread",
+    "trans": [
+      "n.线,线索,线状物,螺纹vt.穿成串,将（针、线等）穿过…,用…线缝,给…装入（胶片、狭带、绳子）"
+    ],
+    "ukphone": "θred",
+    "usphone": "θrɛd"
+  },
+  {
+    "name": "threshold",
+    "trans": [
+      "n.门槛，入口，开始,物理学临界值,<英>级限协定,航空学跑道入口adj.阈值的，临界值的,<英>按物价指数变动工资的，工资极限的，级限的"
+    ],
+    "ukphone": "ˈθreʃhəʊld",
+    "usphone": "ˈθreʃhoʊld"
+  },
+  {
+    "name": "thumb",
+    "trans": [
+      "n.拇指,（手套的）拇指部份vi.翘起拇指请求搭乘（过路汽车），示意请求搭便车,翻阅vt.翻阅,作搭车手势,用拇指翻脏翻坏（书页等）"
+    ],
+    "ukphone": "θʌm",
+    "usphone": "θʌm"
+  },
+  {
+    "name": "tolerance",
+    "trans": [
+      "n.宽容，容忍,限度,公差,耐药量，耐药性"
+    ],
+    "ukphone": "ˈtɒlərəns",
+    "usphone": "ˈtɑ:lərəns"
+  },
+  {
+    "name": "ton"
+  },
+  {
+    "name": "toxic",
+    "trans": [
+      "adj.有毒的,中毒的,因中毒引起的n.毒物,毒剂"
+    ],
+    "ukphone": "ˈtɒksɪk",
+    "usphone": "ˈtɑ:ksɪk"
+  },
+  {
+    "name": "tract",
+    "trans": [
+      "n.大片土地,（神经纤维的）束,小册子,<古>一段时间，长时间"
+    ],
+    "ukphone": "trækt",
+    "usphone": "trækt"
+  },
+  {
+    "name": "traditionally",
+    "trans": [
+      "adv.传统上，传说上"
+    ],
+    "ukphone": "trə'dɪʃənəlɪ",
+    "usphone": "trə'dɪʃənəlɪ"
+  },
+  {
+    "name": "trait",
+    "trans": [
+      "n.特点，特性,少许"
+    ],
+    "ukphone": "treɪt",
+    "usphone": "tret"
+  },
+  {
+    "name": "trajectory",
+    "trans": [
+      "n.物弹道，轨道,几轨线"
+    ],
+    "ukphone": "trəˈdʒektəri",
+    "usphone": "trəˈdʒɛktəri"
+  },
+  {
+    "name": "trans"
+  },
+  {
+    "name": "transaction",
+    "trans": [
+      "n.交易，业务，事务,办理，处理,（一笔）交易，（一项）事务,（学会等的）会议记录，学报"
+    ],
+    "ukphone": "trænˈzækʃn",
+    "usphone": "-ˈzæk-"
+  },
+  {
+    "name": "transcribe",
+    "trans": [
+      "vt.（用不同的录音手段）转录,抄写，誊写,改编（乐曲）（以适应他种乐器或声部）"
+    ],
+    "ukphone": "trænˈskraɪb",
+    "usphone": "trænˈskraɪb"
+  },
+  {
+    "name": "transcription",
+    "trans": [
+      "n.抄本,抄写,录音,翻译"
+    ],
+    "ukphone": "trænˈskrɪpʃn",
+    "usphone": "trænˈskrɪpʃən"
+  },
+  {
+    "name": "transformation",
+    "trans": [
+      "n.变化,<核>转换,<语>转换,<电>变换"
+    ],
+    "ukphone": "ˌtrænsfəˈmeɪʃn",
+    "usphone": "ˌtrænsfərˈmeɪʃn"
+  },
+  {
+    "name": "translation",
+    "trans": [
+      "n.翻译,译本,转变,转化"
+    ],
+    "ukphone": "trænsˈleɪʃn",
+    "usphone": "trænz-"
+  },
+  {
+    "name": "transmission",
+    "trans": [
+      "n.播送,传送,（电台或电视）信息,传动装置"
+    ],
+    "ukphone": "trænsˈmɪʃn",
+    "usphone": "trænz-"
+  },
+  {
+    "name": "transmit",
+    "trans": [
+      "vt.传输,传送，传递,发射,传染vi.发送信号"
+    ],
+    "ukphone": "trænsˈmɪt",
+    "usphone": "trænz-"
+  },
+  {
+    "name": "transparency",
+    "trans": [
+      "n.透明,透明度,透明性,透明的东西"
+    ],
+    "ukphone": "trænsˈpærənsi",
+    "usphone": "-ˈpær-"
+  },
+  {
+    "name": "transplant",
+    "trans": [
+      "vt.移植,移种,移民，迁移,移植（器官、皮肤、头发等）n.（器官、皮肤、头发等的）移植,移植物,移植者vi.迁移,移居,经得起移植"
+    ],
+    "ukphone": "trænsˈplɑ:nt",
+    "usphone": "trænsˈplænt"
+  },
+  {
+    "name": "trauma",
+    "trans": [
+      "n.创伤（由心理创伤造成精神上的异常）,损伤,痛苦经历,挫折"
+    ],
+    "ukphone": "ˈtrɔ:mə",
+    "usphone": "ˈtraʊmə"
+  },
+  {
+    "name": "treaty",
+    "trans": [
+      "n.条约,协议，协商,谈判"
+    ],
+    "ukphone": "ˈtri:ti",
+    "usphone": "ˈtriti"
+  },
+  {
+    "name": "tremendous",
+    "trans": [
+      "adj.极大的，巨大的,可怕的，惊人的,极好的"
+    ],
+    "ukphone": "trəˈmendəs",
+    "usphone": "trɪˈmɛndəs"
+  },
+  {
+    "name": "triangle",
+    "trans": [
+      "n.三角形,三人一组,三角铁,三角板"
+    ],
+    "ukphone": "ˈtraɪæŋgl",
+    "usphone": "ˈtraɪˌæŋɡəl"
+  },
+  {
+    "name": "tribe",
+    "trans": [
+      "n.部落，部族,生族,一帮，一伙,大群"
+    ],
+    "ukphone": "traɪb",
+    "usphone": "traɪb"
+  },
+  {
+    "name": "tricky",
+    "trans": [
+      "adj.狡猾的,（形势、工作等）复杂的,机警的,微妙的"
+    ],
+    "ukphone": "ˈtrɪki",
+    "usphone": "ˈtrɪki"
+  },
+  {
+    "name": "trivial",
+    "trans": [
+      "adj.琐碎的，无价值的,平常的，平凡的,不重要的,生种的"
+    ],
+    "ukphone": "ˈtrɪviəl",
+    "usphone": "ˈtrɪviəl"
+  },
+  {
+    "name": "tropical",
+    "trans": [
+      "adj.热带的,炎热的,热情的"
+    ],
+    "ukphone": "ˈtrɒpɪkl",
+    "usphone": "ˈtrɑ:pɪkl"
+  },
+  {
+    "name": "tumor",
+    "trans": [
+      "n.瘤"
+    ],
+    "ukphone": "'tju:mə",
+    "usphone": "'tju:mə"
+  },
+  {
+    "name": "turbulent",
+    "trans": [
+      "adj.骚乱的，混乱的,激流的，湍流的,吵闹的,强横的"
+    ],
+    "ukphone": "ˈtɜ:bjələnt",
+    "usphone": "ˈtɜ:rbjələnt"
+  },
+  {
+    "name": "tutor",
+    "trans": [
+      "n.家庭教师,导师,（大专院校的）助教,课本vt.& vi.当家庭教师,任大学导师,任课"
+    ],
+    "ukphone": "ˈtju:tə(r)",
+    "usphone": "ˈtu:tə(r)"
+  },
+  {
+    "name": "ultimate",
+    "trans": [
+      "adj.最后的,极限的,首要的,最大的n.终极,顶点,基本原理,基本事实"
+    ],
+    "ukphone": "ˈʌltɪmət",
+    "usphone": "ˈʌltəmɪt"
+  },
+  {
+    "name": "undergraduate",
+    "trans": [
+      "n.（未获学士学位的）大学生，大学肄业生adj.大学生的，大学的"
+    ],
+    "ukphone": "ˌʌndəˈgrædʒuət",
+    "usphone": "ˌʌndərˈgrædʒuət"
+  },
+  {
+    "name": "undermine",
+    "trans": [
+      "v.逐渐削弱,使逐步减少效力,从根基处破坏,挖…的墙脚"
+    ],
+    "ukphone": "ˌʌndəˈmaɪn",
+    "usphone": "ˌʌndərˈmaɪn"
+  },
+  {
+    "name": "underneath",
+    "trans": [
+      "adj.较低的,下面的adv.在下面，在底下,在下面，在下层prep.在…之下,在下面,在…下面,在…领导或控制下n.下部，底部"
+    ],
+    "ukphone": "ˌʌndəˈni:θ",
+    "usphone": "ˌʌndərˈni:θ"
+  },
+  {
+    "name": "unemployed",
+    "trans": [
+      "adj.被解雇的,失业的,不在使用中的,未用的n.失业者"
+    ],
+    "ukphone": "ˌʌnɪmˈplɔɪd",
+    "usphone": "ˌʌnɛmˈplɔɪd"
+  },
+  {
+    "name": "unify",
+    "trans": [
+      "vt.使联合,使相同,使一致,统一"
+    ],
+    "ukphone": "ˈju:nɪfaɪ",
+    "usphone": "ˈjunəˌfaɪ"
+  },
+  {
+    "name": "unintelligible"
+  },
+  {
+    "name": "unity",
+    "trans": [
+      "n.统一体,（艺术等）完整,（文学、戏剧）（情节、时间和地点的）统一性,团结一致"
+    ],
+    "ukphone": "ˈju:nəti",
+    "usphone": "ˈjunɪti"
+  },
+  {
+    "name": "unstable",
+    "trans": [
+      "adj.不稳固的,不坚定的,易变的,反复无常的"
+    ],
+    "ukphone": "ʌnˈsteɪbl",
+    "usphone": "ʌnˈstebəl"
+  },
+  {
+    "name": "uplift",
+    "trans": [
+      "vt.举起,振作,（社会、道德等）发展,使上升vi.上升，升起n.进步,乳罩"
+    ],
+    "ukphone": "ˈʌplɪft",
+    "usphone": "ʌpˈlɪft"
+  },
+  {
+    "name": "upward",
+    "trans": [
+      "adj.向上的，上升的,升高的adv.向上地，上升地"
+    ],
+    "ukphone": "ˈʌpwəd",
+    "usphone": "ˈʌpwərd"
+  },
+  {
+    "name": "urine",
+    "trans": [
+      "n.尿,小便,下泉"
+    ],
+    "ukphone": "ˈjʊərɪn",
+    "usphone": "ˈjʊrən"
+  },
+  {
+    "name": "usage",
+    "trans": [
+      "n.使用,用法,习惯,惯例"
+    ],
+    "ukphone": "ˈju:sɪdʒ",
+    "usphone": "-zɪdʒ"
+  },
+  {
+    "name": "utility",
+    "trans": [
+      "n.功用，效用,有用的物体或器械,公用事业公司,公用事业adj.有多种用途的,各种工作都会做的,能在数个位置作替补的,为获得经济价值而饲养"
+    ],
+    "ukphone": "ju:ˈtɪləti",
+    "usphone": "juˈtɪləti"
+  },
+  {
+    "name": "utilize",
+    "trans": [
+      "vt.利用，使用"
+    ],
+    "ukphone": "ˈju:təlaɪz",
+    "usphone": "ˈjutlˌaɪz"
+  },
+  {
+    "name": "utterance",
+    "trans": [
+      "n.说话方式,表达,说话,发言"
+    ],
+    "ukphone": "ˈʌtərəns",
+    "usphone": "ˈʌtərəns"
+  },
+  {
+    "name": "vague",
+    "trans": [
+      "adj.模糊的,（思想上）不清楚的,（表达或感知）含糊的,暧昧的n.模糊不定状态"
+    ],
+    "ukphone": "veɪg",
+    "usphone": "veɡ"
+  },
+  {
+    "name": "valid",
+    "trans": [
+      "adj.有效的,有法律效力的,正当的,健全的"
+    ],
+    "ukphone": "ˈvælɪd",
+    "usphone": "ˈvælɪd"
+  },
+  {
+    "name": "validity",
+    "trans": [
+      "n.有效，合法性,效力,正确，正当,正确性"
+    ],
+    "ukphone": "vəˈlɪdəti",
+    "usphone": "vəˈlɪdəti"
+  },
+  {
+    "name": "valve",
+    "trans": [
+      "n.阀,真空管,（管乐器的）活栓,（心脏的）瓣膜vt.装阀于,以活门调节"
+    ],
+    "ukphone": "vælv",
+    "usphone": "vælv"
+  },
+  {
+    "name": "variability",
+    "trans": [
+      "n.变化性，易变，变化的倾向,变率"
+    ],
+    "ukphone": "ˌveəriəˈbɪləti",
+    "usphone": "ˌveriəˈbɪləti"
+  },
+  {
+    "name": "variance",
+    "trans": [
+      "n.变化，变动,不一致,分歧,<数>方差"
+    ],
+    "ukphone": "ˈveəriəns",
+    "usphone": "ˈveriəns"
+  },
+  {
+    "name": "variant",
+    "trans": [
+      "n.（词等的）变体，（字音的）转讹,生变种，变异体,变形，变量，转化,统变式adj.不同的，相异的，不一致的,多样的,变异的,易变的，不定的"
+    ],
+    "ukphone": "ˈveəriənt",
+    "usphone": "ˈveriənt"
+  },
+  {
+    "name": "vector",
+    "trans": [
+      "n.矢量,航向,生带菌者,天矢径vt.用无线电引导,为…导航"
+    ],
+    "ukphone": "ˈvektə(r)",
+    "usphone": "ˈvɛktɚ"
+  },
+  {
+    "name": "vegetation",
+    "trans": [
+      "n.植物（总称），草木,医赘生物，增殖体,无所作为的生活，单调的生活,植营养体生长，发育"
+    ],
+    "ukphone": "ˌvedʒəˈteɪʃn",
+    "usphone": "ˌvɛdʒɪˈteʃən"
+  },
+  {
+    "name": "vein",
+    "trans": [
+      "n.静脉,地矿脉，岩脉,植叶脉,气质，倾向v.使有脉络,使有纹理,象脉络般分布于"
+    ],
+    "ukphone": "veɪn",
+    "usphone": "ven"
+  },
+  {
+    "name": "velocity",
+    "trans": [
+      "n.速率，速度,周转率,高速，快速"
+    ],
+    "ukphone": "vəˈlɒsəti",
+    "usphone": "vəˈlɑ:səti"
+  },
+  {
+    "name": "verbal",
+    "trans": [
+      "adj.词语的,言语的,口头的,动词的"
+    ],
+    "ukphone": "ˈvɜ:bl",
+    "usphone": "ˈvɜ:rbl"
+  },
+  {
+    "name": "vertical",
+    "trans": [
+      "adj.垂直的，竖立的,解头顶的,顶点的,植纵长的，直上的n.垂直线，垂直面,建竖杆,垂直位置"
+    ],
+    "ukphone": "ˈvɜ:tɪkl",
+    "usphone": "ˈvɜ:rtɪkl"
+  },
+  {
+    "name": "viable",
+    "trans": [
+      "adj.切实可行的,能养活的,能自行生产发育的,有望实现的"
+    ],
+    "ukphone": "ˈvaɪəbl",
+    "usphone": "ˈvaɪəbəl"
+  },
+  {
+    "name": "virtue",
+    "trans": [
+      "n.美德,德行,价值,长处"
+    ],
+    "ukphone": "ˈvɜ:tʃu:",
+    "usphone": "ˈvɜ:rtʃu:"
+  },
+  {
+    "name": "vitamin",
+    "trans": [
+      "n.维生素,维他命na.“vitamine“的变体"
+    ],
+    "ukphone": "ˈvɪtəmɪn",
+    "usphone": "ˈvaɪtəmɪn"
+  },
+  {
+    "name": "vocabulary",
+    "trans": [
+      "n.（某一语言的）词汇,（尤指外语教科书中附有释义的）词汇表"
+    ],
+    "ukphone": "vəˈkæbjələri",
+    "usphone": "vəˈkæbjəleri"
+  },
+  {
+    "name": "volition"
+  },
+  {
+    "name": "vowel",
+    "trans": [
+      "n.元音,母音adj.元音的,母音的"
+    ],
+    "ukphone": "ˈvaʊəl",
+    "usphone": "ˈvaʊəl"
+  },
+  {
+    "name": "watershed",
+    "trans": [
+      "n.分水岭,集水区,转折点,流域adj.标志转折点的"
+    ],
+    "ukphone": "ˈwɔ:təʃed",
+    "usphone": "ˈwɔ:tərʃed"
+  },
+  {
+    "name": "wavelength",
+    "trans": [
+      "n.<物>波长,波段,完全一致，融洽"
+    ],
+    "ukphone": "ˈweɪvleŋθ",
+    "usphone": "-ˌlɛŋθ"
+  },
+  {
+    "name": "weave",
+    "trans": [
+      "vt.& vi.编，织,迂回行进,穿行（以避开障碍）vt.编排,（把…）编成vi.纺织，织布n.织物,织法，编法,编织式样"
+    ],
+    "ukphone": "wi:v",
+    "usphone": "wiv"
+  },
+  {
+    "name": "wheat",
+    "trans": [
+      "n.小麦"
+    ],
+    "ukphone": "wi:t",
+    "usphone": "wit"
+  },
+  {
+    "name": "whereby",
+    "trans": [
+      "adv.通过…,借以,与…一致"
+    ],
+    "ukphone": "weəˈbaɪ",
+    "usphone": "werˈbaɪ"
+  },
+  {
+    "name": "whichever",
+    "trans": [
+      "pron.任何一个,无论哪个,究竟哪一个adj.究竟哪个，无论哪些,无论哪一个"
+    ],
+    "ukphone": "wɪtʃˈevə(r)",
+    "usphone": "wɪtʃ-"
+  },
+  {
+    "name": "whoever",
+    "trans": [
+      "pron.（引导名词性从句）谁,无论谁，任何人,不管谁…"
+    ],
+    "ukphone": "hu:ˈevə(r)",
+    "usphone": "huˈɛvɚ"
+  },
+  {
+    "name": "widespread",
+    "trans": [
+      "adj.分布广的,普遍的,广泛应用,普及的"
+    ],
+    "ukphone": "ˈwaɪdspred",
+    "usphone": "ˈwaɪdˈsprɛd"
+  },
+  {
+    "name": "wisdom",
+    "trans": [
+      "n.智慧，明智,常识，好的判断力,知识，学问,古训"
+    ],
+    "ukphone": "ˈwɪzdəm",
+    "usphone": "ˈwɪzdəm"
+  },
+  {
+    "name": "workshop",
+    "trans": [
+      "n.车间,专题讨论会，研究会,创作室,实习班，实验班"
+    ],
+    "ukphone": "ˈwɜ:kʃɒp",
+    "usphone": "ˈwɜ:rkʃɑ:p"
+  },
+  {
+    "name": "yeast",
+    "trans": [
+      "n.酵母（菌）,酵母粉，酵母饼，酵母片,泡，泡沫,动乱，激动vi.发酵,起泡沫"
+    ],
+    "ukphone": "ji:st",
+    "usphone": "jist"
+  }
+]

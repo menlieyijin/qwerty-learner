@@ -1,0 +1,4527 @@
+[
+  {
+    "name": "analyse",
+    "trans": [
+      "vt.分析,分解,细察na.“analyze”的变体"
+    ],
+    "ukphone": "ˈænəlaɪz",
+    "usphone": "ˈænəˌlaɪz"
+  },
+  {
+    "name": "approach",
+    "trans": [
+      "vt.& vi.接近，走近，靠近vt.接近,着手处理,使移近,试图贿赂（或影响，疏通）n.方法,途径,接近vi.靠近"
+    ],
+    "ukphone": "əˈprəʊtʃ",
+    "usphone": "əˈproʊtʃ"
+  },
+  {
+    "name": "area",
+    "trans": [
+      "n.地区,区域，范围,面积，平地,领域"
+    ],
+    "ukphone": "ˈeəriə",
+    "usphone": "ˈeriə"
+  },
+  {
+    "name": "assess",
+    "trans": [
+      "vt.评定,估价,对（财产、收入等）进行估价（作为征税根据）,确定（损害赔偿金、税款、罚款等）的金额"
+    ],
+    "ukphone": "əˈses",
+    "usphone": "əˈsɛs"
+  },
+  {
+    "name": "assume",
+    "trans": [
+      "v.假定，认为,承担,装出,呈现"
+    ],
+    "ukphone": "əˈsju:m",
+    "usphone": "əˈsu:m"
+  },
+  {
+    "name": "authority",
+    "trans": [
+      "n.权威,权力,学术权威,复数当权者"
+    ],
+    "ukphone": "ɔ:ˈθɒrəti",
+    "usphone": "əˈθɔ:rəti"
+  },
+  {
+    "name": "available",
+    "trans": [
+      "adj.可获得的,有空的,可购得的,能找到的"
+    ],
+    "ukphone": "əˈveɪləbl",
+    "usphone": "əˈveləbəl"
+  },
+  {
+    "name": "benefit",
+    "trans": [
+      "n.利益，好处,救济金，津贴,义演，义卖,恩惠，恩泽vt.有益于，有助于,使受益,得益，受益"
+    ],
+    "ukphone": "ˈbenɪfɪt",
+    "usphone": "ˈbɛnəfɪt"
+  },
+  {
+    "name": "concept",
+    "trans": [
+      "n.观念，概念,观点,思想，设想，想法,总的印象"
+    ],
+    "ukphone": "ˈkɒnsept",
+    "usphone": "ˈkɑ:nsept"
+  },
+  {
+    "name": "consist",
+    "trans": [
+      "vi.由…组成,在于,符合"
+    ],
+    "ukphone": "kənˈsɪst",
+    "usphone": "kənˈsɪst"
+  },
+  {
+    "name": "constitute",
+    "trans": [
+      "vt.构成，组成,制定，设立,等同于,指派"
+    ],
+    "ukphone": "ˈkɒnstɪtju:t",
+    "usphone": "ˈkɑ:nstətu:t"
+  },
+  {
+    "name": "context",
+    "trans": [
+      "n.上下文,背景,环境,语境"
+    ],
+    "ukphone": "ˈkɒntekst",
+    "usphone": "ˈkɑ:ntekst"
+  },
+  {
+    "name": "contract",
+    "trans": [
+      "n.合同,契约,协议"
+    ],
+    "ukphone": "ˈkɒntrækt",
+    "usphone": "ˈkɑ:ntrækt"
+  },
+  {
+    "name": "create",
+    "trans": [
+      "vt.创造，创作,产生,封爵，把…封为（贵族）vi.英俚大发脾气，大发牢骚"
+    ],
+    "ukphone": "kriˈeɪt",
+    "usphone": "kriˈet"
+  },
+  {
+    "name": "data",
+    "trans": [
+      "n.资料，材料,datum的复数,计算机数据，资料,从科学实验中提取的价值"
+    ],
+    "ukphone": "ˈdeɪtə",
+    "usphone": "ˈdɑtə"
+  },
+  {
+    "name": "define",
+    "trans": [
+      "vt.规定,使明确,精确地解释,画出…的线条vi.（给词、短语等）下定义，构成释义"
+    ],
+    "ukphone": "dɪˈfaɪn",
+    "usphone": "dɪˈfaɪn"
+  },
+  {
+    "name": "derive",
+    "trans": [
+      "vt.& vi.得到，导出,源于，来自,（从…中）提取"
+    ],
+    "ukphone": "dɪˈraɪv",
+    "usphone": "dɪˈraɪv"
+  },
+  {
+    "name": "distribute",
+    "trans": [
+      "vt.分配，散布,散发，分发,把…分类,电配电"
+    ],
+    "ukphone": "dɪˈstrɪbju:t",
+    "usphone": "dɪˈstrɪbjut"
+  },
+  {
+    "name": "economy",
+    "trans": [
+      "n.节约,经济,理财,秩序"
+    ],
+    "ukphone": "ɪˈkɒnəmi",
+    "usphone": "ɪˈkɑ:nəmi"
+  },
+  {
+    "name": "environment",
+    "trans": [
+      "n.环境，外界,周围，围绕,工作平台,（运行）环境"
+    ],
+    "ukphone": "ɪnˈvaɪrənmənt",
+    "usphone": "-ˈvaɪən-"
+  },
+  {
+    "name": "establish",
+    "trans": [
+      "vt.建立，创建,确立或使安全,使被安排好,使成为"
+    ],
+    "ukphone": "ɪˈstæblɪʃ",
+    "usphone": "ɪˈstæblɪʃ"
+  },
+  {
+    "name": "estimate",
+    "trans": [
+      "n.估计，预测,报价，预算书,评价，判断vt.估计，估算,评价，评论,估量，估价"
+    ],
+    "ukphone": "ˈestɪmət",
+    "usphone": "ˈɛstəˌmet"
+  },
+  {
+    "name": "evident",
+    "trans": [
+      "adj.明显的，明白的,昭著,彰"
+    ],
+    "ukphone": "ˈevɪdənt",
+    "usphone": "ˈɛvɪdənt"
+  },
+  {
+    "name": "export",
+    "trans": [
+      "vt.& vi.出口，输出vt.传播，输出（思想或活动）"
+    ],
+    "ukphone": "ˈekspɔ:t",
+    "usphone": "ˈekspɔ:rt"
+  },
+  {
+    "name": "factor",
+    "trans": [
+      "n.因素,<数>因子,代理人vt.把…因素包括进去,数学分解…的因子，将…分解成因子,以代理商（或管家等）的身份行事，做代理商（或管家）vi.做代理商（或管家）"
+    ],
+    "ukphone": "ˈfæktə(r)",
+    "usphone": "ˈfæktɚ"
+  },
+  {
+    "name": "finance",
+    "trans": [
+      "n.财政,金融,财源,资金vt.为…供给资金， 从事金融活动,赊货给…,掌握财政"
+    ],
+    "ukphone": "ˈfaɪnæns",
+    "usphone": "ˈfaɪˌnæns"
+  },
+  {
+    "name": "formula",
+    "trans": [
+      "n.公式，准则,客套话,方案,婴儿食品"
+    ],
+    "ukphone": "ˈfɔ:mjələ",
+    "usphone": "ˈfɔ:rmjələ"
+  },
+  {
+    "name": "function",
+    "trans": [
+      "n.功能，作用,应变量，函数,职务,重大聚会vi.有或起作用,行使职责"
+    ],
+    "ukphone": "ˈfʌŋkʃn",
+    "usphone": "ˈfʌŋkʃən"
+  },
+  {
+    "name": "identify",
+    "trans": [
+      "vt.识别，认出,确定,使参与,把…看成一样vi.确定,认同"
+    ],
+    "ukphone": "aɪˈdentɪfaɪ",
+    "usphone": "aɪˈdɛntəˌfaɪ"
+  },
+  {
+    "name": "income",
+    "trans": [
+      "n.收入，进款,进来的动作,进入"
+    ],
+    "ukphone": "ˈɪnkʌm",
+    "usphone": "ˈɪnˌkʌm"
+  },
+  {
+    "name": "indicate",
+    "trans": [
+      "vt.表明，标示，指示,象征，暗示，预示,医显示需要做…的治疗"
+    ],
+    "ukphone": "ˈɪndɪkeɪt",
+    "usphone": "ˈɪndɪˌket"
+  },
+  {
+    "name": "individual",
+    "trans": [
+      "adj.个人的,独特的,个别的n.个人,个体"
+    ],
+    "ukphone": "ˌɪndɪˈvɪdʒuəl",
+    "usphone": "ˌɪndəˈvɪdʒuəl"
+  },
+  {
+    "name": "interpret",
+    "trans": [
+      "vt.解释,理解,诠释，体现,口译vi.作解释,作口译"
+    ],
+    "ukphone": "ɪnˈtɜ:prɪt",
+    "usphone": "ɪnˈtɜ:rprɪt"
+  },
+  {
+    "name": "involve",
+    "trans": [
+      "vt.包含,使参与，牵涉,围绕，缠绕,使专心于"
+    ],
+    "ukphone": "ɪnˈvɒlv",
+    "usphone": "ɪnˈvɑ:lv"
+  },
+  {
+    "name": "issue",
+    "trans": [
+      "n.问题,（报刊的）期，号,发行物,流出vt.发行,发布,流出vi.发行,造成…结果,在…上挑起争论"
+    ],
+    "ukphone": "ˈɪʃu:",
+    "usphone": "ˈɪʃu"
+  },
+  {
+    "name": "labour",
+    "trans": [
+      "n.劳动,劳工,分娩，临产阵痛,工作，活计vi.劳动，努力,艰难行进,分娩，产前阵痛,使疲倦"
+    ],
+    "ukphone": "'leɪbə(r)",
+    "usphone": "ˈlebɚ"
+  },
+  {
+    "name": "legal",
+    "trans": [
+      "adj.法律的,合法的,法定的,法律（上）的n.法定权利,依法必须登报的声明"
+    ],
+    "ukphone": "ˈli:gl",
+    "usphone": "ˈliɡəl"
+  },
+  {
+    "name": "legislate",
+    "trans": [
+      "vt.& vi.立法，制定法律,〈美〉以立法程序创立"
+    ],
+    "ukphone": "ˈledʒɪsleɪt",
+    "usphone": "ˈlɛdʒɪˌslet"
+  },
+  {
+    "name": "major",
+    "trans": [
+      "adj.主要的,重要的,大调的,主修的（课程）n.主修科目,大调,陆军少校,成年的vi.<美>主修，专攻,美国英语教育学主修(in),专攻"
+    ],
+    "ukphone": "ˈmeɪdʒə(r)",
+    "usphone": "ˈmedʒɚ"
+  },
+  {
+    "name": "method",
+    "trans": [
+      "n.方法,条理"
+    ],
+    "ukphone": "ˈmeθəd",
+    "usphone": "ˈmɛθəd"
+  },
+  {
+    "name": "occur",
+    "trans": [
+      "vi.发生,出现,闪现"
+    ],
+    "ukphone": "əˈkɜ:(r)",
+    "usphone": "əˈkɚ"
+  },
+  {
+    "name": "percent"
+  },
+  {
+    "name": "period",
+    "trans": [
+      "n.时期,（一段）时间,学时,句号adj.具有某个时代特征的,（关于）过去某一特定历史时期的,（家具、服饰、建筑等）某一时代的"
+    ],
+    "ukphone": "ˈpɪəriəd",
+    "usphone": "ˈpɪriəd"
+  },
+  {
+    "name": "policy",
+    "trans": [
+      "n.政策,策略,保险单,策略性"
+    ],
+    "ukphone": "ˈpɒləsi",
+    "usphone": "ˈpɑ:ləsi"
+  },
+  {
+    "name": "principle",
+    "trans": [
+      "n.原则，原理,准则，道义,道德标准,本能"
+    ],
+    "ukphone": "ˈprɪnsəpl",
+    "usphone": "ˈprɪnsəpəl"
+  },
+  {
+    "name": "proceed",
+    "trans": [
+      "vi.进行,前进,（沿特定路线）行进,（尤指打断后）继续说n.收入，获利"
+    ],
+    "ukphone": "prəˈsi:d",
+    "usphone": "proʊˈsi:d"
+  },
+  {
+    "name": "process",
+    "trans": [
+      "n.过程,工序,做事方法,工艺流程vt.加工,处理,审阅,审核vi.列队行进adj.经过特殊加工（或处理）的"
+    ],
+    "ukphone": "ˈprəʊses",
+    "usphone": "ˈproʊses"
+  },
+  {
+    "name": "require",
+    "trans": [
+      "vt.要求,需要,想要,命令vi.要求，规定"
+    ],
+    "ukphone": "rɪˈkwaɪə(r)",
+    "usphone": "rɪˈkwaɪr"
+  },
+  {
+    "name": "research",
+    "trans": [
+      "n.研究，追究,探讨，探测,调查,探索vi.做研究,探究,（从市场调研中）得出所预测的结果vt.从事…的研究，为…而做研究"
+    ],
+    "ukphone": "rɪˈsɜ:tʃ",
+    "usphone": "rɪˈsɜ:rtʃ"
+  },
+  {
+    "name": "respond",
+    "trans": [
+      "vt.& vi.回答，响应vi.作出反应，响应,回报或回复n.建（柱，拱基等的）对称，壁联"
+    ],
+    "ukphone": "rɪˈspɒnd",
+    "usphone": "rɪˈspɑ:nd"
+  },
+  {
+    "name": "role",
+    "trans": [
+      "n.作用,地位,角色"
+    ],
+    "ukphone": "rəʊl",
+    "usphone": "roʊl"
+  },
+  {
+    "name": "section",
+    "trans": [
+      "n.部分,节,部件,部门vi.切开,切断,做（动物或植物组织）切片,把（精神病患者）正式送入精神病院vt.把…切成片（或段）,作…的切片,把…作成截面,制作…的剖面图"
+    ],
+    "ukphone": "ˈsekʃn",
+    "usphone": "ˈsɛkʃən"
+  },
+  {
+    "name": "sector",
+    "trans": [
+      "n.部门,领域,防御地区,扇形"
+    ],
+    "ukphone": "ˈsektə(r)",
+    "usphone": "-ˌtɔr"
+  },
+  {
+    "name": "significant",
+    "trans": [
+      "adj.重要的,有意义的,有重大意义的,值得注意的n.有意义的事物,象征，标志"
+    ],
+    "ukphone": "sɪgˈnɪfɪkənt",
+    "usphone": "sɪɡˈnɪfɪkənt"
+  },
+  {
+    "name": "similar",
+    "trans": [
+      "adj.类似的,同类的,相似的,同样的n.类似物,相像的人,相似物"
+    ],
+    "ukphone": "ˈsɪmələ(r)",
+    "usphone": "ˈsɪməlɚ"
+  },
+  {
+    "name": "source",
+    "trans": [
+      "n.根源，本源,源头，水源,原因,提供消息的人vt.（从…）获得,发起,向…提供消息,寻求（尤指供货）的来源vi.原料来源,起源,寻求来源,寻求生产商（或提供商）"
+    ],
+    "ukphone": "sɔ:s",
+    "usphone": "sɔ:rs"
+  },
+  {
+    "name": "specific",
+    "trans": [
+      "adj.明确的,特种的,具体的,免疫学特效的n.特效药,特性,细节,显著的性质，特性"
+    ],
+    "ukphone": "spəˈsɪfɪk",
+    "usphone": "spɪˈsɪfɪk"
+  },
+  {
+    "name": "structure",
+    "trans": [
+      "n.结构,构造,建筑物,体系vt.构成，排列,安排"
+    ],
+    "ukphone": "ˈstrʌktʃə(r)",
+    "usphone": "ˈstrʌktʃɚ"
+  },
+  {
+    "name": "theory",
+    "trans": [
+      "n.学说,理论,原理,推测"
+    ],
+    "ukphone": "ˈθɪəri",
+    "usphone": "ˈθɪri"
+  },
+  {
+    "name": "vary",
+    "trans": [
+      "vi.变化,不同，偏离,生变异vt.使不同,使多样化,音乐变奏"
+    ],
+    "ukphone": "ˈveəri",
+    "usphone": "ˈveri"
+  },
+  {
+    "name": "achieve",
+    "trans": [
+      "vt.取得,获得,实现,成功vi.达到预期的目的，实现预期的结果，如愿以偿"
+    ],
+    "ukphone": "əˈtʃi:v",
+    "usphone": "əˈtʃiv"
+  },
+  {
+    "name": "acquire",
+    "trans": [
+      "vt.获得，取得,学到"
+    ],
+    "ukphone": "əˈkwaɪə(r)",
+    "usphone": "əˈkwaɪr"
+  },
+  {
+    "name": "administrate"
+  },
+  {
+    "name": "affect",
+    "trans": [
+      "vt.影响,假装,感动,（疾病）侵袭n.感情，情感，心情,精神病学（表露或觉察到的）情绪反应"
+    ],
+    "ukphone": "əˈfekt",
+    "usphone": "əˈfɛkt"
+  },
+  {
+    "name": "appropriate",
+    "trans": [
+      "adj.适当的,恰当的,合适的v.盗用,侵吞,拨（专款等） "
+    ],
+    "ukphone": "əˈprəʊpriət",
+    "usphone": "əˈproʊpriət"
+  },
+  {
+    "name": "aspect",
+    "trans": [
+      "n.方面,面貌,方位，方向,形势"
+    ],
+    "ukphone": "ˈæspekt",
+    "usphone": "ˈæspɛkt"
+  },
+  {
+    "name": "assist",
+    "trans": [
+      "n.帮助,援助,机器助手,辅助装置vt.帮助,援助,帮助某人做某事,搀扶（某人）上下车vi.援助,出席,参加"
+    ],
+    "ukphone": "əˈsɪst",
+    "usphone": "əˈsɪst"
+  },
+  {
+    "name": "category",
+    "trans": [
+      "n.类型，部门，种类，类别，类目,逻，哲范畴,体重等级"
+    ],
+    "ukphone": "ˈkætəgəri",
+    "usphone": "ˈkætəgɔ:ri"
+  },
+  {
+    "name": "chapter",
+    "trans": [
+      "n.章，回,（俱乐部、协会等的）分会,人生或历史上的重要时期vt.把…分成章节"
+    ],
+    "ukphone": "ˈtʃæptə(r)",
+    "usphone": "ˈtʃæptɚ"
+  },
+  {
+    "name": "commission",
+    "trans": [
+      "n.委员会，委员,商佣金，手续费,任命，委任,委任状vt.委任，授予,使服役,使（船）服役"
+    ],
+    "ukphone": "kəˈmɪʃn",
+    "usphone": "kəˈmɪʃən"
+  },
+  {
+    "name": "community",
+    "trans": [
+      "n.社区,社会团体,共同体,生态 群落"
+    ],
+    "ukphone": "kəˈmju:nəti",
+    "usphone": "kəˈmjunɪti"
+  },
+  {
+    "name": "complex",
+    "trans": [
+      "adj.复杂的,难懂的,复合的n.建筑群,相关联的一组事物,情结,不正常的忧虑"
+    ],
+    "ukphone": "ˈkɒmpleks",
+    "usphone": "kəmˈpleks"
+  },
+  {
+    "name": "compute",
+    "trans": [
+      "v.计算，估算,推断,用计算机计算n.计算"
+    ],
+    "ukphone": "kəmˈpju:t",
+    "usphone": "kəmˈpjut"
+  },
+  {
+    "name": "conclude",
+    "trans": [
+      "vt.& vi.结束，终止,推断,议定vt.得出结论,缔结,推断出,决定vi.终了,作出决定或达成协议"
+    ],
+    "ukphone": "kənˈklu:d",
+    "usphone": "kənˈklud"
+  },
+  {
+    "name": "conduct",
+    "trans": [
+      "vt.& vi.引导,带领,控制,传导vt.组织,安排,实施,执行adj.指挥，带领，护送vi.（在乐队里）当指挥,（在公共电汽车或火车上）当售票员,指路"
+    ],
+    "ukphone": "kənˈdʌkt",
+    "usphone": "kənˈdʌkt"
+  },
+  {
+    "name": "consequent",
+    "trans": [
+      "adj.随之发生的,必然的，合乎逻辑的,继起的,地顺向的n.结果,逻后件，结论,数后项,语（条件结构中的）结果子句"
+    ],
+    "ukphone": "ˈkɒnsɪkwənt",
+    "usphone": "ˈkɑnsɪˌkwɛnt"
+  },
+  {
+    "name": "construct",
+    "trans": [
+      "vt.修建，建造,构成,创立,数作图n.结构（物）,构想,概念"
+    ],
+    "ukphone": "kənˈstrʌkt",
+    "usphone": "kənˈstrʌkt"
+  },
+  {
+    "name": "consume",
+    "trans": [
+      "vt.消耗，消费,耗尽，毁灭,吃光，喝光,烧毁"
+    ],
+    "ukphone": "kənˈsju:m",
+    "usphone": "kənˈsu:m"
+  },
+  {
+    "name": "credit",
+    "trans": [
+      "n.信誉，信用,金融贷款,荣誉,学分vt.相信，信任,归功于,会记入贷方,赞颂"
+    ],
+    "ukphone": "ˈkredɪt",
+    "usphone": "ˈkrɛdɪt"
+  },
+  {
+    "name": "culture",
+    "trans": [
+      "n.文化,生物学（微生物等的）培养,修养,养殖vt.培植，培养"
+    ],
+    "ukphone": "ˈkʌltʃə(r)",
+    "usphone": "ˈkʌltʃɚ"
+  },
+  {
+    "name": "design",
+    "trans": [
+      "vt.& vi.设计,绘制vt.设计,计划,企图,决意（做）n.设计,图案,结构,计划vi.设计略图,（为工艺品、装潢项目等）设计,当设计师,构思"
+    ],
+    "ukphone": "dɪˈzaɪn",
+    "usphone": "dɪˈzaɪn"
+  },
+  {
+    "name": "distinct",
+    "trans": [
+      "adj.明显的，清楚的,卓越的，不寻常的,有区别的,确切的"
+    ],
+    "ukphone": "dɪˈstɪŋkt",
+    "usphone": "dɪˈstɪŋkt"
+  },
+  {
+    "name": "element",
+    "trans": [
+      "n.化元素,要素,原理,电电阻丝"
+    ],
+    "ukphone": "ˈelɪmənt",
+    "usphone": "ˈɛləmənt"
+  },
+  {
+    "name": "equate",
+    "trans": [
+      "vt.使相等,相当于,等同"
+    ],
+    "ukphone": "iˈkweɪt",
+    "usphone": "ɪˈkwet"
+  },
+  {
+    "name": "evaluate",
+    "trans": [
+      "vt.评价,求…的值（或数）,对…评价,数学、逻辑学求…的数值vi.评价，估价"
+    ],
+    "ukphone": "ɪˈvæljueɪt",
+    "usphone": "ɪˈvæljuˌet"
+  },
+  {
+    "name": "feature",
+    "trans": [
+      "n.特征，特点,容貌，面貌,（期刊的）特辑,故事片vt.使有特色,描写…的特征,以…为号召物vi.起主要作用,作重要角色"
+    ],
+    "ukphone": "ˈfi:tʃə(r)",
+    "usphone": "ˈfitʃɚ"
+  },
+  {
+    "name": "final",
+    "trans": [
+      "adj.最后的，最终的,决定性的,不可更改的n.结局,决赛,期末考试,〈口〉（报纸的）末版"
+    ],
+    "ukphone": "ˈfaɪnl",
+    "usphone": "ˈfaɪnəl"
+  },
+  {
+    "name": "focus",
+    "trans": [
+      "vt.& vi.（使）集中，（使）聚集,调整（镜头，眼睛）焦点焦距以便看清vt.调整（眼睛或者镜头的）焦距,集中（光束于）,聚焦，注视,集中注意力n.焦点,影象的清晰度,（活动、注意力、兴趣等的）中心,医病灶，病症"
+    ],
+    "ukphone": "ˈfəʊkəs",
+    "usphone": "ˈfoʊkəs"
+  },
+  {
+    "name": "impact",
+    "trans": [
+      "n.碰撞，冲击，撞击,影响,冲击力vt.挤入，压紧,撞击,对…产生影响vi.冲撞，冲击,产生影响"
+    ],
+    "ukphone": "ˈɪmpækt",
+    "usphone": "ˈɪmˌpækt"
+  },
+  {
+    "name": "injure",
+    "trans": [
+      "vt.损害，毁坏,伤害（名誉、自尊等）,（尤指事故中）伤害,伤害（感情，自尊心等）"
+    ],
+    "ukphone": "ˈɪndʒə(r)",
+    "usphone": "ˈɪndʒɚ"
+  },
+  {
+    "name": "institute",
+    "trans": [
+      "vt.建立,制定,开始,着手n.协会,学会,学院,（教育、专业等）机构"
+    ],
+    "ukphone": "ˈɪnstɪtju:t",
+    "usphone": "ˈɪnstɪtu:t"
+  },
+  {
+    "name": "invest",
+    "trans": [
+      "vt.& vi.投资,花费vt.授予，使就职,给…穿衣，装饰,使充满,覆盖"
+    ],
+    "ukphone": "ɪnˈvest",
+    "usphone": "ɪnˈvɛst"
+  },
+  {
+    "name": "item",
+    "trans": [
+      "n.条，条款,项目,一则,一件商品（或物品）adv.又，同上"
+    ],
+    "ukphone": "ˈaɪtəm",
+    "usphone": "ˈaɪtəm"
+  },
+  {
+    "name": "journal",
+    "trans": [
+      "n.日报，日志，日记,定期刊物，期刊，杂志,会计分类账"
+    ],
+    "ukphone": "ˈdʒɜ:nl",
+    "usphone": "ˈdʒɜ:rnl"
+  },
+  {
+    "name": "maintain",
+    "trans": [
+      "vt.保持,保养,坚持,固执己见"
+    ],
+    "ukphone": "meɪnˈteɪn",
+    "usphone": "menˈten"
+  },
+  {
+    "name": "normal",
+    "trans": [
+      "adj.正常的,正规的，标准的,数学正交的,精神健全的n.正常，常态,标准,数学法线"
+    ],
+    "ukphone": "ˈnɔ:ml",
+    "usphone": "ˈnɔ:rml"
+  },
+  {
+    "name": "obtain",
+    "trans": [
+      "vt.获得，得到,流行,买到，达到（目的）vi.通行，通用,流行,存在"
+    ],
+    "ukphone": "əbˈteɪn",
+    "usphone": "əbˈtein"
+  },
+  {
+    "name": "participate",
+    "trans": [
+      "vi.参加某事,分享某事vt.得到或接受某部分东西"
+    ],
+    "ukphone": "pɑ:ˈtɪsɪpeɪt",
+    "usphone": "pɑ:rˈtɪsɪpeɪt"
+  },
+  {
+    "name": "perceive",
+    "trans": [
+      "v.意识到,察觉，发觉,理解"
+    ],
+    "ukphone": "pəˈsi:v",
+    "usphone": "pərˈsi:v"
+  },
+  {
+    "name": "positive",
+    "trans": [
+      "adj.积极的,确实的，肯定的,数正的,医阳性的n.正面,正片,语原级形容词,数正量"
+    ],
+    "ukphone": "ˈpɒzətɪv",
+    "usphone": "ˈpɑ:zətɪv"
+  },
+  {
+    "name": "potential",
+    "trans": [
+      "adj.潜在的，有可能的,语法学可能语气的，表示可能性的,有能力的n.潜力，潜能,物电位，势能,潜能的事物,语可能语气"
+    ],
+    "ukphone": "pəˈtenʃl",
+    "usphone": "pəˈtɛnʃəl"
+  },
+  {
+    "name": "previous",
+    "trans": [
+      "adj.先前的,以前的,过早的,（时间上）稍前的adv.在先，在…以前"
+    ],
+    "ukphone": "ˈpri:viəs",
+    "usphone": "ˈpriviəs"
+  },
+  {
+    "name": "primary",
+    "trans": [
+      "adj.首要的，主要的,最早的，原始的,地质学原生的,基本的n.第一位,最好者,要素,候选人提拔会"
+    ],
+    "ukphone": "ˈpraɪməri",
+    "usphone": "ˈpraɪmeri"
+  },
+  {
+    "name": "purchase",
+    "trans": [
+      "v.购买,采购,换得,依靠机械力移动n.购买,购买行为,购置物,紧握"
+    ],
+    "ukphone": "ˈpɜ:tʃəs",
+    "usphone": "ˈpɜ:rtʃəs"
+  },
+  {
+    "name": "range",
+    "trans": [
+      "n.范围,射程,类别,（山脉，房屋等的）排列vi.搜索,变化,延伸,漫游vt.排列,（按一定位置或顺序）排序,把…分类,徘徊adj.牧场的，放牧区的"
+    ],
+    "ukphone": "reɪndʒ",
+    "usphone": "rendʒ"
+  },
+  {
+    "name": "region",
+    "trans": [
+      "n.地区，地域，地带,行政区，管辖区,（大气，海水等的）层，界，境,（学问等的）范围，领域"
+    ],
+    "ukphone": "ˈri:dʒən",
+    "usphone": "ˈridʒən"
+  },
+  {
+    "name": "regulate",
+    "trans": [
+      "vt.调节，调整,校准,控制，管理"
+    ],
+    "ukphone": "ˈregjuleɪt",
+    "usphone": "ˈrɛɡjəˌlet"
+  },
+  {
+    "name": "relevant",
+    "trans": [
+      "adj.有关的，中肯的,相关联的,确切的,有重大意义作用的，实质性的"
+    ],
+    "ukphone": "ˈreləvənt",
+    "usphone": "ˈrɛləvənt"
+  },
+  {
+    "name": "reside",
+    "trans": [
+      "vi.住，居住，（官吏）留驻，驻在,（性质）存在，具备，（权力，权利等）属于，归于"
+    ],
+    "ukphone": "rɪˈzaɪd",
+    "usphone": "rɪˈzaɪd"
+  },
+  {
+    "name": "resource",
+    "trans": [
+      "n.资源,物力，财力,办法,智谋"
+    ],
+    "ukphone": "rɪˈsɔ:s",
+    "usphone": "ˈri:sɔ:rs"
+  },
+  {
+    "name": "restrict",
+    "trans": [
+      "vt.限制，限定,约束，束缚"
+    ],
+    "ukphone": "rɪˈstrɪkt",
+    "usphone": "rɪˈstrɪkt"
+  },
+  {
+    "name": "secure",
+    "trans": [
+      "adj.安全的,牢固的,有把握的,安心的vt.保护,（使）获得,使安全,担保vi.获得安全，变得安全,安全，保险,承保，担保,航海学停止工作"
+    ],
+    "ukphone": "sɪˈkjʊə(r)",
+    "usphone": "səˈkjʊr"
+  },
+  {
+    "name": "seek",
+    "trans": [
+      "vt.寻找，探寻,追求，谋求,往或朝…而去,废语考察vi.查找，查寻,找一找"
+    ],
+    "ukphone": "si:k",
+    "usphone": "sik"
+  },
+  {
+    "name": "select",
+    "trans": [
+      "vt.选择,挑选,选拔adj.精选的,挑选出来的,苛择的,〈口〉爱挑三拣四的，挑剔的"
+    ],
+    "ukphone": "sɪˈlekt",
+    "usphone": "sɪˈlɛkt"
+  },
+  {
+    "name": "site",
+    "trans": [
+      "n.地点，位置，场所,计算机网站,遗址,地皮vt.使坐落在,安放，设置,给…造址,为…提供场所"
+    ],
+    "ukphone": "saɪt",
+    "usphone": "saɪt"
+  },
+  {
+    "name": "strategy",
+    "trans": [
+      "n.策略，战略,战略学"
+    ],
+    "ukphone": "ˈstrætədʒi",
+    "usphone": "ˈstrætədʒi"
+  },
+  {
+    "name": "survey",
+    "trans": [
+      "vi.测量土地vt.调查,勘测,俯瞰n.调查（表），调查所，测量，测量部，测量图,概观，检查，鉴定书,环顾"
+    ],
+    "ukphone": "ˈsɜ:veɪ",
+    "usphone": "ˈsɜ:rveɪ"
+  },
+  {
+    "name": "text",
+    "trans": [
+      "n.文本，原文,课文，教科书,主题,版本v.发短信"
+    ],
+    "ukphone": "tekst",
+    "usphone": "tɛkst"
+  },
+  {
+    "name": "tradition",
+    "trans": [
+      "n.传统,惯例,宗经外传说,法移交，引渡"
+    ],
+    "ukphone": "trəˈdɪʃn",
+    "usphone": "trəˈdɪʃən"
+  },
+  {
+    "name": "transfer",
+    "trans": [
+      "vt.使转移,使调动,转让（权利等）,让与vi.转让,转学,转乘,转会（尤指职业足球队）n.转移,调动,换乘,（运动员）转会"
+    ],
+    "ukphone": "trænsˈfɜ:(r)",
+    "usphone": "trænsˈfɚ"
+  },
+  {
+    "name": "alternative",
+    "trans": [
+      "adj.替代的,备选的,其他的,另类的n.可供选择的事物"
+    ],
+    "ukphone": "ɔ:lˈtɜ:nətɪv",
+    "usphone": "ɔ:lˈtɜ:rnətɪv"
+  },
+  {
+    "name": "circumstance",
+    "trans": [
+      "n.环境，境遇,事实，细节,典礼，仪式vt.使处于某种特定的情况之下"
+    ],
+    "ukphone": "ˈsɜ:kəmstəns",
+    "usphone": "ˈsɜ:rkəmstæns"
+  },
+  {
+    "name": "comment",
+    "trans": [
+      "n.评论,注释,意见,说明vt.& vi.评论，谈论vt.表达意见,解释，注释vi.作注释,作注解,作解释,作评语"
+    ],
+    "ukphone": "ˈkɒment",
+    "usphone": "ˈkɑ:ment"
+  },
+  {
+    "name": "compensate",
+    "trans": [
+      "vt.补偿，赔偿,报酬,抵消vi.补偿，弥补"
+    ],
+    "ukphone": "ˈkɒmpenseɪt",
+    "usphone": "ˈkɑ:mpenseɪt"
+  },
+  {
+    "name": "component",
+    "trans": [
+      "n.成分,零件,数要素,组分adj.组成的,合成的,构成的,成分的"
+    ],
+    "ukphone": "kəmˈpəʊnənt",
+    "usphone": "kəmˈpoʊnənt"
+  },
+  {
+    "name": "consent",
+    "trans": [
+      "n.准许，赞同,同意,（意见等的）一致vi.同意,赞成，赞同,允许"
+    ],
+    "ukphone": "kənˈsent",
+    "usphone": "kənˈsɛnt"
+  },
+  {
+    "name": "considerable",
+    "trans": [
+      "adj.相当大（或多）的,该注意的，应考虑的"
+    ],
+    "ukphone": "kənˈsɪdərəbl",
+    "usphone": "kənˈsɪdərəbəl"
+  },
+  {
+    "name": "constant",
+    "trans": [
+      "adj.不断的，持续的,永恒的，始终如一的,坚定,忠实的n.数常数，常量,不变的事物,永恒值"
+    ],
+    "ukphone": "ˈkɒnstənt",
+    "usphone": "ˈkɑ:nstənt"
+  },
+  {
+    "name": "constrain",
+    "trans": [
+      "vt.强迫,强使,限制,约束"
+    ],
+    "ukphone": "kənˈstreɪn",
+    "usphone": "kənˈstren"
+  },
+  {
+    "name": "contribute",
+    "trans": [
+      "vt.& vi.贡献出,捐赠（款项）,投稿（给杂志等）,出力"
+    ],
+    "ukphone": "kənˈtrɪbju:t",
+    "usphone": "kənˈtrɪbjut"
+  },
+  {
+    "name": "convene",
+    "trans": [
+      "vt.召集,聚集,传唤vi.集合"
+    ],
+    "ukphone": "kənˈvi:n",
+    "usphone": "kənˈvin"
+  },
+  {
+    "name": "coordinate",
+    "trans": [
+      "vt.使协调，使调和,整合,使（身体各部份）动作协调,（衣服、布料等）搭配vi.协调,协同,成为同等,被归入同一类别"
+    ],
+    "ukphone": "kəʊ'ɔ:dɪneɪt",
+    "usphone": "ko'ɔrdəˈnet"
+  },
+  {
+    "name": "core",
+    "trans": [
+      "n.中心，核心，精髓,果心，果核,地质学地核,计 磁心vt.去（果）核，挖去…的果心,提取岩芯（样品）"
+    ],
+    "ukphone": "kɔ:(r)",
+    "usphone": "kor"
+  },
+  {
+    "name": "corporate",
+    "trans": [
+      "adj.法人的，团体的，社团的,公司的，总体国家的,〈古〉团结的,共同的，全体的"
+    ],
+    "ukphone": "ˈkɔ:pərət",
+    "usphone": "ˈkɔ:rpərət"
+  },
+  {
+    "name": "correspond",
+    "trans": [
+      "vi.符合，一致,相应,通信"
+    ],
+    "ukphone": "ˌkɒrəˈspɒnd",
+    "usphone": "ˌkɔ:rəˈspɑ:nd"
+  },
+  {
+    "name": "criteria",
+    "trans": [
+      "n.（批评、判断等的）标准，准则( criterion的名词复数 ),(criterion的复数)"
+    ],
+    "ukphone": "kraɪ'tɪərɪə",
+    "usphone": "kraɪˈtɪrɪə"
+  },
+  {
+    "name": "deduce",
+    "trans": [
+      "vt.推论，推断,演绎,追溯根源"
+    ],
+    "ukphone": "dɪˈdju:s",
+    "usphone": "dɪˈdu:s"
+  },
+  {
+    "name": "demonstrate",
+    "trans": [
+      "vt.证明，证实,论证,显示，展示,演示，说明vi.示威游行"
+    ],
+    "ukphone": "ˈdemənstreɪt",
+    "usphone": "ˈdɛmənˌstret"
+  },
+  {
+    "name": "document",
+    "trans": [
+      "n.（计算机）文档，证件,公文vt.证明,记录,为…提供证明"
+    ],
+    "ukphone": "ˈdɒkjumənt",
+    "usphone": "ˈdɑ:kjumənt"
+  },
+  {
+    "name": "dominate",
+    "trans": [
+      "v.支配，影响,占有优势,在…中具有最重要的特色,在…中拥有最重要的位置"
+    ],
+    "ukphone": "ˈdɒmɪneɪt",
+    "usphone": "ˈdɑ:mɪneɪt"
+  },
+  {
+    "name": "emphasis",
+    "trans": [
+      "n.强调,着重,（轮廓、图形等的）鲜明,突出，重读"
+    ],
+    "ukphone": "ˈemfəsɪs",
+    "usphone": "ˈɛmfəsɪs"
+  },
+  {
+    "name": "ensure",
+    "trans": [
+      "vt.确保,担保获得避免,使（某人）获得,使安全"
+    ],
+    "ukphone": "ɪn'ʃʊə(r)",
+    "usphone": "ɛnˈʃʊr"
+  },
+  {
+    "name": "exclude",
+    "trans": [
+      "vt.排除，不包括,排斥,驱除，赶出"
+    ],
+    "ukphone": "ɪkˈsklu:d",
+    "usphone": "ɪk'sklu:d"
+  },
+  {
+    "name": "framework",
+    "trans": [
+      "n.构架,框架,（体系的）结构,机构，组织"
+    ],
+    "ukphone": "ˈfreɪmwɜ:k",
+    "usphone": "ˈfreɪmwɜ:rk"
+  },
+  {
+    "name": "fund",
+    "trans": [
+      "n.基金,储备,现款,特别基金管理机构vt.积存,为…提供资金,提供资金偿付（债款等）的本息,把（短期借款）转为有固定利息的长期借款"
+    ],
+    "ukphone": "fʌnd",
+    "usphone": "fʌnd"
+  },
+  {
+    "name": "illustrate",
+    "trans": [
+      "vt.说明,表明,给…加插图,（用示例、图画等）说明vi.举例说明"
+    ],
+    "ukphone": "ˈɪləstreɪt",
+    "usphone": "ɪˈlʌsˌtret"
+  },
+  {
+    "name": "immigrate",
+    "trans": [
+      "vi.移入vt.移民,移居外国，迁移"
+    ],
+    "ukphone": "ˈɪmɪgreɪt",
+    "usphone": "ˈɪmɪˌɡret"
+  },
+  {
+    "name": "imply",
+    "trans": [
+      "vt.& vi.暗示,意味,隐含,说明，表明"
+    ],
+    "ukphone": "ɪmˈplaɪ",
+    "usphone": "ɪmˈplaɪ"
+  },
+  {
+    "name": "initial",
+    "trans": [
+      "adj.最初的,开始的,首字母的n.首字母,语音学声母,特大的大写字母vt.用姓名的首字母签名"
+    ],
+    "ukphone": "ɪˈnɪʃl",
+    "usphone": "ɪˈnɪʃəl"
+  },
+  {
+    "name": "instance",
+    "trans": [
+      "n.例子，实例,情况,要求，建议,法诉讼手续vt.举…为例"
+    ],
+    "ukphone": "ˈɪnstəns",
+    "usphone": "ˈɪnstəns"
+  },
+  {
+    "name": "interact",
+    "trans": [
+      "v.相互作用,互相影响,互动"
+    ],
+    "ukphone": "ˌɪntərˈækt",
+    "usphone": "ˌɪntɚˈækt"
+  },
+  {
+    "name": "justify",
+    "trans": [
+      "vt.证明…有理,为…辩护,对…作出解释vi.整理版面,证明合法"
+    ],
+    "ukphone": "ˈdʒʌstɪfaɪ",
+    "usphone": "ˈdʒʌstəˌfaɪ"
+  },
+  {
+    "name": "layer",
+    "trans": [
+      "n.层，层次,膜,植压条,放置者，计划者vt.把…分层堆放,借助压条法,生根繁殖,将（头发）剪成不同层次vi.形成或分成层次,植通过压条法而生根"
+    ],
+    "ukphone": "ˈleɪə(r)",
+    "usphone": "ˈler"
+  },
+  {
+    "name": "link",
+    "trans": [
+      "n.环，节,计算机链接,关联，关系vt.连结,挽住，勾住vi.用环连接,联系在一起"
+    ],
+    "ukphone": "lɪŋk",
+    "usphone": "lɪŋk"
+  },
+  {
+    "name": "locate",
+    "trans": [
+      "vt.位于,说出来源,查找…的地点,确定…的位置vi.定位,定居"
+    ],
+    "ukphone": "ləʊˈkeɪt",
+    "usphone": "ˈloʊkeɪt"
+  },
+  {
+    "name": "maximise"
+  },
+  {
+    "name": "minor",
+    "trans": [
+      "adj.较小的，少数的，小…,未成年的,乐小调的，小音阶的,（两同姓男孩中）年幼的n.未成年人,副修科目,小公司,逻辑学小前提vi.主美国英语副修，选修，兼修"
+    ],
+    "ukphone": "ˈmaɪnə(r)",
+    "usphone": "ˈmaɪnɚ"
+  },
+  {
+    "name": "negate",
+    "trans": [
+      "vt.取消，使无效,否定，否认,使作废vi.否定，否认,无效n.反面，对立面"
+    ],
+    "ukphone": "nɪˈgeɪt",
+    "usphone": "nɪˈɡet"
+  },
+  {
+    "name": "outcome",
+    "trans": [
+      "n.结果,成果,出路"
+    ],
+    "ukphone": "ˈaʊtkʌm",
+    "usphone": "ˈaʊtˌkʌm"
+  },
+  {
+    "name": "partner",
+    "trans": [
+      "n.伙伴,同伙,同伴,配偶vt.使合作,与…合伙vi.合伙,合股,成为搭档"
+    ],
+    "ukphone": "ˈpɑ:tnə(r)",
+    "usphone": "ˈpɑ:rtnə(r)"
+  },
+  {
+    "name": "philosophy",
+    "trans": [
+      "n.哲学,哲学体系，哲学思想,生活信条,哲理"
+    ],
+    "ukphone": "fəˈlɒsəfi",
+    "usphone": "fəˈlɑ:səfi"
+  },
+  {
+    "name": "physical",
+    "trans": [
+      "adj.自然（界）的,身体的,物质的,自然规律的n.身体检查，体格检查"
+    ],
+    "ukphone": "ˈfɪzɪkl",
+    "usphone": "ˈfɪzɪkəl"
+  },
+  {
+    "name": "proportion",
+    "trans": [
+      "n.比，比率,数学比例（法）,面积,相称，平衡vt.使成比例,使相称,使均衡"
+    ],
+    "ukphone": "prəˈpɔ:ʃn",
+    "usphone": "prəˈpɔ:rʃn"
+  },
+  {
+    "name": "publish",
+    "trans": [
+      "vt.& vi.出版，发行,发表，宣布（结婚等）,公布，颁布,出版…的著作"
+    ],
+    "ukphone": "ˈpʌblɪʃ",
+    "usphone": "ˈpʌblɪʃ"
+  },
+  {
+    "name": "react",
+    "trans": [
+      "vi.反应，作出反应,影响,起反作用vt.使发生相互作用,使起化学反应,反抗,再演，重演"
+    ],
+    "ukphone": "riˈækt",
+    "usphone": "riˈækt"
+  },
+  {
+    "name": "register",
+    "trans": [
+      "n.登记，注册,记录,登记簿,自动记录器vt.登记，注册,（仪表等）指示,表示，表达,（感情）流露vi.登记，注册,留下印象,完全符合,印刷对齐"
+    ],
+    "ukphone": "ˈredʒɪstə(r)",
+    "usphone": "ˈrɛdʒɪstɚ"
+  },
+  {
+    "name": "rely",
+    "trans": [
+      "vi.依靠，倚赖，仗恃,信任，信赖"
+    ],
+    "ukphone": "rɪˈlaɪ",
+    "usphone": "rɪˈlaɪ"
+  },
+  {
+    "name": "remove",
+    "trans": [
+      "vt.开除,去除,脱掉，拿下,迁移vi.迁移，移居,离开n.距离，差距,移动"
+    ],
+    "ukphone": "rɪˈmu:v",
+    "usphone": "rɪˈmuv"
+  },
+  {
+    "name": "scheme",
+    "trans": [
+      "vt.& vi.策划，图谋n.计划,体系,阴谋vt.设计，计划,谋划，图谋vi.密谋，制定计划"
+    ],
+    "ukphone": "ski:m",
+    "usphone": "skim"
+  },
+  {
+    "name": "sequence",
+    "trans": [
+      "n.数数列，序列,顺序,连续,片断插曲vt.使按顺序排列，安排顺序,生化确定…的顺序，确定…的化学结构序列"
+    ],
+    "ukphone": "ˈsi:kwəns",
+    "usphone": "-ˌkwɛns"
+  },
+  {
+    "name": "sex",
+    "trans": [
+      "n.性别,两性之一,性，性特征,性活动vt.辨识性别,引起性欲,吸引"
+    ],
+    "ukphone": "seks",
+    "usphone": "sɛks"
+  },
+  {
+    "name": "shift",
+    "trans": [
+      "vt.& vi.改变,去掉,摆脱掉,换挡vt.换…的衣服，更（衣）,卖，出售,计算机使（数据）位移vi.（汽车）换挡,换衣服,蒙混,自己谋生n.移动，转移，转换,变迁，变化，变换，替换，更换，掉换，更易，代用,（汽车等的）变速"
+    ],
+    "ukphone": "ʃɪft",
+    "usphone": "ʃɪft"
+  },
+  {
+    "name": "specify",
+    "trans": [
+      "vt.指定,详述,提出…的条件,使具有特性vi.明确提出，详细说明"
+    ],
+    "ukphone": "ˈspesɪfaɪ",
+    "usphone": "ˈspɛsəˌfaɪ"
+  },
+  {
+    "name": "sufficient",
+    "trans": [
+      "adj.足够的,充足的,充分的"
+    ],
+    "ukphone": "səˈfɪʃnt",
+    "usphone": "səˈfɪʃənt"
+  },
+  {
+    "name": "task",
+    "trans": [
+      "n.工作，任务,作业,苦差事vt.交给某人（任务）,使过于劳累"
+    ],
+    "ukphone": "tɑ:sk",
+    "usphone": "tæsk"
+  },
+  {
+    "name": "technical",
+    "trans": [
+      "adj.技术（性）的，工艺的，学术（上）的，专门（技术）的，艺术的,法根据法律的，法律上的,商人造的，用工业方法制造的，由市场内部因素（如投机等）引起的,〈美俚〉外表的，表面上的，浅薄的"
+    ],
+    "ukphone": "ˈteknɪkl",
+    "usphone": "ˈtɛknɪkəl"
+  },
+  {
+    "name": "technique",
+    "trans": [
+      "n.技巧,技能,技术,技艺"
+    ],
+    "ukphone": "tekˈni:k",
+    "usphone": "tɛkˈnik"
+  },
+  {
+    "name": "technology",
+    "trans": [
+      "n.科技（总称）,工业技术,工艺学,总称术语"
+    ],
+    "ukphone": "tekˈnɒlədʒi",
+    "usphone": "tekˈnɑ:lədʒi"
+  },
+  {
+    "name": "valid",
+    "trans": [
+      "adj.有效的,有法律效力的,正当的,健全的"
+    ],
+    "ukphone": "ˈvælɪd",
+    "usphone": "ˈvælɪd"
+  },
+  {
+    "name": "volume",
+    "trans": [
+      "n.量，大量,体积,音量,卷adj.大量的vi.成团卷起vt.把…收集成卷"
+    ],
+    "ukphone": "ˈvɒlju:m",
+    "usphone": "ˈvɑ:lju:m"
+  },
+  {
+    "name": "access",
+    "trans": [
+      "n.入口，出口,接近，进入,增长,爆发vt.接近，进入,使用，接近，获取"
+    ],
+    "ukphone": "ˈækses",
+    "usphone": "ˈæksɛs"
+  },
+  {
+    "name": "adequate",
+    "trans": [
+      "adj.足够的,适当的，恰当的,差强人意的,胜任的"
+    ],
+    "ukphone": "ˈædɪkwət",
+    "usphone": "ˈædɪkwɪt"
+  },
+  {
+    "name": "annual",
+    "trans": [
+      "adj.每年的,一年的,植物一年生的n.年刊,一年生植物"
+    ],
+    "ukphone": "ˈænjuəl",
+    "usphone": "ˈænjuəl"
+  },
+  {
+    "name": "apparent",
+    "trans": [
+      "adj.易看见的，可看见的,显然的，明明白白的,貌似的，表面的,显见"
+    ],
+    "ukphone": "əˈpærənt",
+    "usphone": "əˈpɛr-"
+  },
+  {
+    "name": "approximate",
+    "trans": [
+      "adj.约莫的，大概的,极相似的,植相近但不连接的vi.接近于,近似于vt.靠近,使接近,使结合"
+    ],
+    "ukphone": "əˈprɒksɪmət",
+    "usphone": "əˈprɑ:ksɪmət"
+  },
+  {
+    "name": "attitude",
+    "trans": [
+      "n.态度,看法,姿势,个人风格"
+    ],
+    "ukphone": "ˈætɪtju:d",
+    "usphone": "ˈætɪtu:d"
+  },
+  {
+    "name": "attribute",
+    "trans": [
+      "vt.认为…是,把…归于,把…品质归于某人,认为某事物属于某人物"
+    ],
+    "ukphone": "əˈtrɪbju:t",
+    "usphone": "əˈtrɪbjut"
+  },
+  {
+    "name": "civil",
+    "trans": [
+      "adj.公民的，市民的,文明的，有礼貌的,民用的，国民间的,法民事的，根据民法的"
+    ],
+    "ukphone": "ˈsɪvl",
+    "usphone": "ˈsɪvəl"
+  },
+  {
+    "name": "code",
+    "trans": [
+      "n.行为准则,代码，密码,法典,信号vt.将…译成电码,编码，加密vi.为…编码,指定遗传密码"
+    ],
+    "ukphone": "kəʊd",
+    "usphone": "koʊd"
+  },
+  {
+    "name": "commit",
+    "trans": [
+      "vt.犯罪，做错事,把…托付给,保证（做某事、遵守协议或遵从安排等）,承诺，使…承担义务"
+    ],
+    "ukphone": "kəˈmɪt",
+    "usphone": "kəˈmɪt"
+  },
+  {
+    "name": "communicate",
+    "trans": [
+      "vt.传达，表达,显示：清晰地揭示,表明,传染：扩散vi.通讯,交际,相连,相通"
+    ],
+    "ukphone": "kəˈmju:nɪkeɪt",
+    "usphone": "kəˈmjunɪˌket"
+  },
+  {
+    "name": "concentrate",
+    "trans": [
+      "vt.& vi.专心于,注意,集中,聚集vt.浓缩，（使）浓缩,采矿汰选,选矿，精选，富集vi.凝缩，浓缩，提纯n.浓缩物adj.集中起来的，经过浓缩的"
+    ],
+    "ukphone": "ˈkɒnsntreɪt",
+    "usphone": "ˈkɑ:nsntreɪt"
+  },
+  {
+    "name": "confer",
+    "trans": [
+      "vt.授予，颁与,比较，对照vi.商议，磋商"
+    ],
+    "ukphone": "kənˈfɜ:(r)",
+    "usphone": "kənˈfɚ"
+  },
+  {
+    "name": "contrast",
+    "trans": [
+      "n.对比，对照,差异,对照物，对立面,摄反差"
+    ],
+    "ukphone": "ˈkɒntrɑ:st",
+    "usphone": "ˈkɑ:ntræst"
+  },
+  {
+    "name": "cycle",
+    "trans": [
+      "n.循环，周期,自行车,时代，一段时间,整套vi.周而复始，循环,骑自行车,轮转vt.运转，循环,使轮转"
+    ],
+    "ukphone": "ˈsaɪkl",
+    "usphone": "ˈsaɪkəl"
+  },
+  {
+    "name": "debate",
+    "trans": [
+      "n.讨论,辩论,争论,辩论vt.& vi.辩论,仔细考虑,思考,盘算"
+    ],
+    "ukphone": "dɪˈbeɪt",
+    "usphone": "dɪˈbet"
+  },
+  {
+    "name": "despite",
+    "trans": [
+      "prep.不管,尽管（自己）不愿意,不在乎,虽有n.侮辱,憎恨,怨恨,轻蔑的拒绝或不承认"
+    ],
+    "ukphone": "dɪˈspaɪt",
+    "usphone": "dɪˈspaɪt"
+  },
+  {
+    "name": "dimension",
+    "trans": [
+      "n.尺寸,复面积，范围,物量纲,数次元，度，维adj.（石料，木材）切成特定尺寸的vt.把…刨成（或削成）所需尺寸,标出尺寸"
+    ],
+    "ukphone": "daɪˈmenʃn",
+    "usphone": "daɪ-"
+  },
+  {
+    "name": "domestic",
+    "trans": [
+      "adj.家庭的，家的,国内的,驯养的,热心家务的n.佣人,国货"
+    ],
+    "ukphone": "dəˈmestɪk",
+    "usphone": "dəˈmɛstɪk"
+  },
+  {
+    "name": "emerge",
+    "trans": [
+      "vi.出现，浮现,暴露,摆脱"
+    ],
+    "ukphone": "iˈmɜ:dʒ",
+    "usphone": "iˈmɜ:rdʒ"
+  },
+  {
+    "name": "error",
+    "trans": [
+      "n.错误，过失,法误审，违法,数误差"
+    ],
+    "ukphone": "ˈerə(r)",
+    "usphone": "ˈɛrɚ"
+  },
+  {
+    "name": "ethnic",
+    "trans": [
+      "adj.种族的，部落的,某文化群体的n.少数民族的成员"
+    ],
+    "ukphone": "ˈeθnɪk",
+    "usphone": "ˈɛθnɪk"
+  },
+  {
+    "name": "goal",
+    "trans": [
+      "n.目标，目的,球门,终点,得分"
+    ],
+    "ukphone": "gəʊl",
+    "usphone": "goʊl"
+  },
+  {
+    "name": "grant",
+    "trans": [
+      "vt.承认,同意,准许,授予n.拨款,补助金,授给物（如财产、授地、专有权、补助、拨款等）vi.同意"
+    ],
+    "ukphone": "grɑ:nt",
+    "usphone": "grænt"
+  },
+  {
+    "name": "hence",
+    "trans": [
+      "adv.因此，所以,从此,从此处int.<诗>去"
+    ],
+    "ukphone": "hens",
+    "usphone": "hɛns"
+  },
+  {
+    "name": "hypothesis",
+    "trans": [
+      "n.假设，假说,逻前提"
+    ],
+    "ukphone": "haɪˈpɒθəsɪs",
+    "usphone": "haɪˈpɑ:θəsɪs"
+  },
+  {
+    "name": "implement",
+    "trans": [
+      "vt.实施，执行,使生效，实现,落实（政策）,把…填满n.工具，器械,家具,手段,法履行（契约等）"
+    ],
+    "ukphone": "ˈɪmplɪment",
+    "usphone": "ˈɪmpləmənt"
+  },
+  {
+    "name": "implicate",
+    "trans": [
+      "vt.牵涉，涉及（某人）,表明（或意指）…是起因,暗示n.包含的东西"
+    ],
+    "ukphone": "ˈɪmplɪkeɪt",
+    "usphone": "ˈɪmplɪˌket"
+  },
+  {
+    "name": "impose",
+    "trans": [
+      "vt.强加,征税,以…欺骗vi.利用,欺骗,施加影响"
+    ],
+    "ukphone": "ɪmˈpəʊz",
+    "usphone": "ɪmˈpoʊz"
+  },
+  {
+    "name": "integrate",
+    "trans": [
+      "vt.使一体化,使整合,使完整,使结合成为整体vi.成为一体,结合在一起,合并,数学作积分运算adj.整体的,完整的,完全的,综合的"
+    ],
+    "ukphone": "ˈɪntɪgreɪt",
+    "usphone": "ˈɪntɪˌɡret"
+  },
+  {
+    "name": "internal",
+    "trans": [
+      "adj.国内的,内部的,体内的,内心的prep.（机构）内部的n.内脏，内部器官,本质，本性"
+    ],
+    "ukphone": "ɪnˈtɜ:nl",
+    "usphone": "ɪnˈtɜ:rnl"
+  },
+  {
+    "name": "investigate",
+    "trans": [
+      "vt.调查,审查,研究vi.作调查"
+    ],
+    "ukphone": "ɪnˈvestɪgeɪt",
+    "usphone": "ɪnˈvɛstɪˌɡet"
+  },
+  {
+    "name": "job",
+    "trans": [
+      "n.（一件）工作,职责,职业,（作为一个单元处理的）作业vt.承包,代客买卖vi.做零工,作包工,打杂"
+    ],
+    "ukphone": "dʒɒb",
+    "usphone": "dʒɑ:b"
+  },
+  {
+    "name": "label",
+    "trans": [
+      "n.标签,称标记，符号,建 门或窗户上面的线脚vt.贴标签于,把…称为,把…列为,化用放射性元素使（元素或原子等）示踪"
+    ],
+    "ukphone": "ˈleɪbl",
+    "usphone": "ˈleɪbl"
+  },
+  {
+    "name": "mechanism",
+    "trans": [
+      "n.生机制，机能，乐机理,（机械）结构，机械装置作用，（故事的）结构,艺手法，技巧，途径,机械作用"
+    ],
+    "ukphone": "ˈmekənɪzəm",
+    "usphone": "ˈmɛkəˌnɪzəm"
+  },
+  {
+    "name": "obvious",
+    "trans": [
+      "adj.明显的,显著的,平淡无奇的,自明"
+    ],
+    "ukphone": "ˈɒbviəs",
+    "usphone": "ˈɑ:bviəs"
+  },
+  {
+    "name": "occupy",
+    "trans": [
+      "vt.占领,使用，住在…,使从事，使忙碌,任职"
+    ],
+    "ukphone": "ˈɒkjupaɪ",
+    "usphone": "ˈɑ:kjupaɪ"
+  },
+  {
+    "name": "option",
+    "trans": [
+      "n.选择（的自由）,选项,选择权,选择能力vt.得到或获准进行选择,调动球员"
+    ],
+    "ukphone": "ˈɒpʃn",
+    "usphone": "ˈɑ:pʃn"
+  },
+  {
+    "name": "output",
+    "trans": [
+      "n.产量,输出,作品,计输出信号vt.输出"
+    ],
+    "ukphone": "ˈaʊtpʊt",
+    "usphone": "ˈaʊtˌpʊt"
+  },
+  {
+    "name": "overall",
+    "trans": [
+      "adj.全部的,全体的,一切在内的,综合的adv.全面地,总地,总的说来n.工装裤,罩衫,〈英〉（军官的）紧身军裤"
+    ],
+    "ukphone": "ˌəʊvərˈɔ:l",
+    "usphone": "ˌoʊvərˈɔ:l"
+  },
+  {
+    "name": "parallel",
+    "trans": [
+      "adj.平行的,相同的，类似的,电并联的,计并行的adv.平行地，并列地n.平行线（面）,相似物,类比,纬线vt.使平行,与…媲美,与…相比,与…相似"
+    ],
+    "ukphone": "ˈpærəlel",
+    "usphone": "ˈpærəˌlɛl"
+  },
+  {
+    "name": "parameter",
+    "trans": [
+      "n.数参数,<物><数>参量,限制因素,决定因素"
+    ],
+    "ukphone": "pəˈræmɪtə(r)",
+    "usphone": "pəˈræmɪtɚ"
+  },
+  {
+    "name": "phase",
+    "trans": [
+      "n.相，周相,阶段,物理学相位,方面，侧面vt.分阶段实行,调整相位vi.分阶段进行"
+    ],
+    "ukphone": "feɪz",
+    "usphone": "fez"
+  },
+  {
+    "name": "predict",
+    "trans": [
+      "vt.预言，预测,预示，预告vi.预言，预示：预言某事，预言"
+    ],
+    "ukphone": "prɪˈdɪkt",
+    "usphone": "prɪˈdɪkt"
+  },
+  {
+    "name": "principal",
+    "trans": [
+      "adj.最重要的,主要的,资本的,本金的n.首长，负责人,主要演员，主角,法委托人，当事人,本金"
+    ],
+    "ukphone": "ˈprɪnsəpl",
+    "usphone": "ˈprɪnsəpəl"
+  },
+  {
+    "name": "prior",
+    "trans": [
+      "adj.优先的,占先的,在…之前n.小修道院院长，大修道院的副院长,（隐修院）会长,史行政长官,普赖尔adv.在前,居先"
+    ],
+    "ukphone": "ˈpraɪə(r)",
+    "usphone": "ˈpraɪɚ"
+  },
+  {
+    "name": "professional",
+    "trans": [
+      "adj.专业的,专业性的,职业的n.专业人士"
+    ],
+    "ukphone": "prəˈfeʃənl",
+    "usphone": "prəˈfɛʃənəl"
+  },
+  {
+    "name": "project",
+    "trans": [
+      "vt.放映,计划,发射,展现，使突出vi.伸出，突出"
+    ],
+    "ukphone": "ˈprɒdʒekt",
+    "usphone": "ˈprɑ:dʒekt"
+  },
+  {
+    "name": "promote",
+    "trans": [
+      "vt.促进，推进,提升，助长,促销,使（学生）升级vi.成为王后或其他大于卒的子"
+    ],
+    "ukphone": "prəˈməʊt",
+    "usphone": "prəˈmoʊt"
+  },
+  {
+    "name": "regime",
+    "trans": [
+      "n.政治制度，政权，政体,管理，方法,医养生法,（病人等的）生活规则"
+    ],
+    "ukphone": "reɪˈʒi:m",
+    "usphone": "rɪ-"
+  },
+  {
+    "name": "resolve",
+    "trans": [
+      "vt.& vi.决定,决心vt.使消释,使分解，使解体,（指委员会或集会）表决,消退（炎症等）vi.下决定,分解n.决意，决定,（会议等的）决议"
+    ],
+    "ukphone": "rɪˈzɒlv",
+    "usphone": "rɪˈzɑ:lv"
+  },
+  {
+    "name": "retain",
+    "trans": [
+      "vt.保持,留在心中，记住,雇用,付定金保留"
+    ],
+    "ukphone": "rɪˈteɪn",
+    "usphone": "rɪˈten"
+  },
+  {
+    "name": "series",
+    "trans": [
+      "n.系列，连续,串联,（广播或电视上题材或角色相同的）系列节目,级数"
+    ],
+    "ukphone": "ˈsɪəri:z",
+    "usphone": "ˈsɪri:z"
+  },
+  {
+    "name": "statistic",
+    "trans": [
+      "n.统计资料中的一项,（一项）统计数据,统计量,（对总体具有代表性的）典型统计论adj.统计（上）的，统计学（上）的"
+    ],
+    "ukphone": "stəˈtɪstɪk",
+    "usphone": "stəˈtɪstɪk"
+  },
+  {
+    "name": "status",
+    "trans": [
+      "n.地位,情形，状态,身份"
+    ],
+    "ukphone": "ˈsteɪtəs",
+    "usphone": "ˈstætəs"
+  },
+  {
+    "name": "stress",
+    "trans": [
+      "n.强调,重音,压力,重力vt.重读,机械学使承受压力,给…加压力（或应力）"
+    ],
+    "ukphone": "stres",
+    "usphone": "strɛs"
+  },
+  {
+    "name": "subsequent",
+    "trans": [
+      "adj.后来的,随后的,作为结果而发生的,附随的"
+    ],
+    "ukphone": "ˈsʌbsɪkwənt",
+    "usphone": "-kwənt"
+  },
+  {
+    "name": "sum",
+    "trans": [
+      "n.总数,算术,金额,概略，要点vt.& vi.总计,总结，概括,归纳"
+    ],
+    "ukphone": "sʌm",
+    "usphone": "sʌm"
+  },
+  {
+    "name": "summary",
+    "trans": [
+      "n.摘要，概要,总结，一览adj.概括的，总结的,即刻的，立即的"
+    ],
+    "ukphone": "ˈsʌməri",
+    "usphone": "ˈsʌməri"
+  },
+  {
+    "name": "undertake",
+    "trans": [
+      "vt.承担，从事,保证,同意，答应,承诺"
+    ],
+    "ukphone": "ˌʌndəˈteɪk",
+    "usphone": "ˌʌndərˈteɪk"
+  },
+  {
+    "name": "academy",
+    "trans": [
+      "n.专科学校,学会，学院,一般的高等教育,私立学校，学术团体"
+    ],
+    "ukphone": "əˈkædəmi",
+    "usphone": "əˈkædəmi"
+  },
+  {
+    "name": "adjust",
+    "trans": [
+      "vt.& vi.（改变…以）适应，调整，校正,调准（望远镜等），对准，校正，校准（机械等）,核算（盈亏）,保评定（赔偿要求）"
+    ],
+    "ukphone": "əˈdʒʌst",
+    "usphone": "əˈdʒʌst"
+  },
+  {
+    "name": "alter",
+    "trans": [
+      "vt.改变,更改,改建（房屋）,（人）变老vi.改变,修改"
+    ],
+    "ukphone": "ˈɔ:ltə(r)",
+    "usphone": "ˈɔltɚ"
+  },
+  {
+    "name": "amend",
+    "trans": [
+      "vt.& vi.改良，修改,修订"
+    ],
+    "ukphone": "əˈmend",
+    "usphone": "əˈmɛnd"
+  },
+  {
+    "name": "aware",
+    "trans": [
+      "adj.意识到的,知道的,觉察到的"
+    ],
+    "ukphone": "əˈweə(r)",
+    "usphone": "əˈwer"
+  },
+  {
+    "name": "capacity",
+    "trans": [
+      "n.容量,才能,性能,生产能力adj.充其量的，最大限度的"
+    ],
+    "ukphone": "kəˈpæsəti",
+    "usphone": "kəˈpæsɪti"
+  },
+  {
+    "name": "challenge",
+    "trans": [
+      "n.挑战,盘问,质疑,怀疑vt.质疑,向…挑战vi.提出挑战，要求竞赛（或竞争）,驳斥"
+    ],
+    "ukphone": "ˈtʃæləndʒ",
+    "usphone": "ˈtʃæləndʒ"
+  },
+  {
+    "name": "clause",
+    "trans": [
+      "n.从句，分句,条款，款项"
+    ],
+    "ukphone": "klɔ:z",
+    "usphone": "klɔz"
+  },
+  {
+    "name": "compound",
+    "trans": [
+      "n.场地,复合物,（筑有围墙的）院子,复合词"
+    ],
+    "ukphone": "ˈkɒmpaʊnd",
+    "usphone": "ˈkɑ:mpaʊnd"
+  },
+  {
+    "name": "conflict",
+    "trans": [
+      "n.冲突,战斗,相互干扰,矛盾vi.抵触,争斗,战斗,冲突"
+    ],
+    "ukphone": "ˈkɒnflɪkt",
+    "usphone": "ˈkɑ:nflɪkt"
+  },
+  {
+    "name": "consult",
+    "trans": [
+      "vi.商议，商量,医会诊,咨询,充当顾问vt.请教,翻阅,求教于,顾及"
+    ],
+    "ukphone": "kənˈsʌlt",
+    "usphone": "kənˈsʌlt"
+  },
+  {
+    "name": "contact",
+    "trans": [
+      "n.接触,触点,医（传染病）接触人,门路vt.使接触,与…联系,与…通讯（或通话）vi.联系，接触"
+    ],
+    "ukphone": "ˈkɒntækt",
+    "usphone": "ˈkɑ:ntækt"
+  },
+  {
+    "name": "decline",
+    "trans": [
+      "n.下降,（力量、健康、品格、权力、价值等的）衰退,下倾,（人、生命等的）衰退期vt.& vi.辞谢，谢绝（邀请等）vi.（道路、物体等）下倾,（太阳）落下,（在品格、价值上）降低,衰落，谢绝vt.谢绝，婉拒"
+    ],
+    "ukphone": "dɪˈklaɪn",
+    "usphone": "dɪˈklaɪn"
+  },
+  {
+    "name": "discrete",
+    "trans": [
+      "adj.分离的，不相关联的,分立式,非连续"
+    ],
+    "ukphone": "dɪˈskri:t",
+    "usphone": "dɪˈskrit"
+  },
+  {
+    "name": "draft",
+    "trans": [
+      "n.汇票,草稿,选派,（尤指房间、烟囱、炉子等供暖系统中的）（小股）气流vt.起草,制定,征募vi.拟稿,绘样,作草图adj.初步画出或（写出）的,（设计、草图、提纲或版本）正在起草中的，草拟的,以草稿形式的,草图的"
+    ],
+    "ukphone": "drɑ:ft",
+    "usphone": "dræft"
+  },
+  {
+    "name": "enable",
+    "trans": [
+      "vt.使能够，提供做…的权利措施,使可能,授予权利或方法"
+    ],
+    "ukphone": "ɪˈneɪbl",
+    "usphone": "ɛˈnebəl"
+  },
+  {
+    "name": "energy",
+    "trans": [
+      "n.物能量,活力,精力,精神"
+    ],
+    "ukphone": "ˈenədʒi",
+    "usphone": "ˈenərdʒi"
+  },
+  {
+    "name": "enforce",
+    "trans": [
+      "vt.强迫服从,实施，执行,加强"
+    ],
+    "ukphone": "ɪnˈfɔ:s",
+    "usphone": "ɪnˈfɔ:rs"
+  },
+  {
+    "name": "entity",
+    "trans": [
+      "n.实体,实际存在物,本质"
+    ],
+    "ukphone": "ˈentəti",
+    "usphone": "ˈɛntɪti"
+  },
+  {
+    "name": "equivalent",
+    "trans": [
+      "adj.相等的，相当的，等效的,等价的，等积的,化学当量的n.对等物,化学当量"
+    ],
+    "ukphone": "ɪˈkwɪvələnt",
+    "usphone": "ɪˈkwɪvələnt"
+  },
+  {
+    "name": "evolve",
+    "trans": [
+      "vt.使发展,使进化,设计，制订出,发出，散发vi.发展,生通过进化进程发展或发生"
+    ],
+    "ukphone": "iˈvɒlv",
+    "usphone": "iˈvɑ:lv"
+  },
+  {
+    "name": "expand",
+    "trans": [
+      "vt.使…变大,扩张,详述vi.扩展,发展,张开,展开"
+    ],
+    "ukphone": "ɪkˈspænd",
+    "usphone": "ɪkˈspænd"
+  },
+  {
+    "name": "expose",
+    "trans": [
+      "vt.揭露，揭发,使暴露,使遭受,使曝光"
+    ],
+    "ukphone": "ɪk'spəʊz",
+    "usphone": "ɪkˈspoʊz"
+  },
+  {
+    "name": "external",
+    "trans": [
+      "adj.外面的，外部的,表面上的,外用的,外国的n.外部，外面,外观,外部情况"
+    ],
+    "ukphone": "ɪkˈstɜ:nl",
+    "usphone": "ɪkˈstɜ:rnl"
+  },
+  {
+    "name": "facilitate",
+    "trans": [
+      "vt.促进，助长,使容易,帮助"
+    ],
+    "ukphone": "fəˈsɪlɪteɪt",
+    "usphone": "fəˈsɪlɪˌtet"
+  },
+  {
+    "name": "fundamental",
+    "trans": [
+      "adj.基础的，基本的，根本的，重要的，原始的，主要的，十分重大的,物基频的，基谐波的,乐基音的n.原理，原则，基本，根本，基础,乐基音,物基频，基谐波"
+    ],
+    "ukphone": "ˌfʌndəˈmentl",
+    "usphone": "ˌfʌndəˈmɛntl"
+  },
+  {
+    "name": "generate",
+    "trans": [
+      "vt."
+    ],
+    "ukphone": "null",
+    "usphone": "null"
+  },
+  {
+    "name": "generation",
+    "trans": [
+      "n.一代人,代（约30年），时代,生殖,产生"
+    ],
+    "ukphone": "ˌdʒenəˈreɪʃn",
+    "usphone": "ˌdʒɛnəˈreʃən"
+  },
+  {
+    "name": "image",
+    "trans": [
+      "n.影像,肖像,概念，意向,镜像，映像vt.反映,想像,作…的像,象征"
+    ],
+    "ukphone": "ˈɪmɪdʒ",
+    "usphone": "ˈɪmɪdʒ"
+  },
+  {
+    "name": "liberal",
+    "trans": [
+      "n.自由主义者,自由党党员adj.开明的,自由的,慷慨的,不拘泥的"
+    ],
+    "ukphone": "ˈlɪbərəl",
+    "usphone": "ˈlɪbrəl"
+  },
+  {
+    "name": "licence"
+  },
+  {
+    "name": "logic",
+    "trans": [
+      "n.逻辑，逻辑学,（做某事的）道理,推理方法,威力，压力，强制（力）adj.逻辑的"
+    ],
+    "ukphone": "ˈlɒdʒɪk",
+    "usphone": "ˈlɑ:dʒɪk"
+  },
+  {
+    "name": "margin",
+    "trans": [
+      "n.边缘，范围,极限,利润，盈余,（版心外）的空白vt.留边,成为…的边,加边于，围绕,为…加旁注"
+    ],
+    "ukphone": "ˈmɑ:dʒɪn",
+    "usphone": "ˈmɑ:rdʒən"
+  },
+  {
+    "name": "medical",
+    "trans": [
+      "adj.医学的,医药的,医疗的,内科的n.体格检查"
+    ],
+    "ukphone": "ˈmedɪkl",
+    "usphone": "ˈmɛdɪkəl"
+  },
+  {
+    "name": "mental",
+    "trans": [
+      "adj.内心的，精神的，思想的，心理的,智慧的，智脑力的,〈口〉精神病的，意志薄弱的，愚笨的n.精神病患者"
+    ],
+    "ukphone": "ˈmentl",
+    "usphone": "ˈmɛntl"
+  },
+  {
+    "name": "modify",
+    "trans": [
+      "vi.被修饰,修改vt.改变,减轻，减缓,语修饰，（用变音符号）改变"
+    ],
+    "ukphone": "ˈmɒdɪfaɪ",
+    "usphone": "ˈmɑ:dɪfaɪ"
+  },
+  {
+    "name": "monitor",
+    "trans": [
+      "n.显示屏，屏幕,计显示器,监测仪,监控人员，班长vt.监控，监听,搜集，记录,测定,监督vi.监视"
+    ],
+    "ukphone": "ˈmɒnɪtə(r)",
+    "usphone": "ˈmɑ:nɪtə(r)"
+  },
+  {
+    "name": "network",
+    "trans": [
+      "n.网,（电视与计算机）网络,网状物,广播网vt.& vi.将…连接成网络,建立工作关系vt.把（地方节目）编排到广播网（或电视网）联播,使（全国）联播,（如）用网覆盖,广泛分布vi.沟通，互助"
+    ],
+    "ukphone": "ˈnetwɜ:k",
+    "usphone": "ˈnetwɜ:rk"
+  },
+  {
+    "name": "notion",
+    "trans": [
+      "n.概念，观念,意见，见解,奇想,打算"
+    ],
+    "ukphone": "ˈnəʊʃn",
+    "usphone": "ˈnoʊʃn"
+  },
+  {
+    "name": "objective",
+    "trans": [
+      "adj.客观的，实体的,目标的,语宾格的,医他觉的n.目标，任务,光物镜,语宾语，宾格,事出击目标"
+    ],
+    "ukphone": "əbˈdʒektɪv",
+    "usphone": "əbˈdʒɛktɪv"
+  },
+  {
+    "name": "orient",
+    "trans": [
+      "vt.标定方向,使…向东方,以…为参照,使熟悉或适应adj.东方的,（太阳等）上升的，新生的,闪闪发光的vi.转向东方,使调整或者成为一条直线n.东亚各国,珍珠光泽,好的珍珠,日出之处，东方"
+    ],
+    "ukphone": "ˈɔ:rient",
+    "usphone": "ˈor-"
+  },
+  {
+    "name": "perspective",
+    "trans": [
+      "n.透镜，望远镜,观点，看法,远景，景色,洞察力adj.（按照）透视画法的,透视的"
+    ],
+    "ukphone": "pəˈspektɪv",
+    "usphone": "pərˈspektɪv"
+  },
+  {
+    "name": "precise",
+    "trans": [
+      "adj.清晰的,精确的,正规的,精密"
+    ],
+    "ukphone": "prɪˈsaɪs",
+    "usphone": "prɪˈsaɪs"
+  },
+  {
+    "name": "prime",
+    "trans": [
+      "adj.最好的,首要的,最初的,基本的n.精华,初期,全盛时期,青年vt.使准备好,填装,事先指导adv.极好地vi.（为枪炮）装火药,涂底漆,修剪树枝,注水入泵引起"
+    ],
+    "ukphone": "praɪm",
+    "usphone": "praɪm"
+  },
+  {
+    "name": "psychology",
+    "trans": [
+      "n.心理学,心理特点,心理状态,心理影响"
+    ],
+    "ukphone": "saɪˈkɒlədʒi",
+    "usphone": "saɪˈkɑ:lədʒi"
+  },
+  {
+    "name": "pursue",
+    "trans": [
+      "vt.继续,追求,进行,追捕vi.追，追赶,继续进行"
+    ],
+    "ukphone": "pəˈsju:",
+    "usphone": "pərˈsu:"
+  },
+  {
+    "name": "ratio",
+    "trans": [
+      "n.比，比率,比例,系数vt.求出比值，除，使…成比例,将（相片）按比例放大缩小"
+    ],
+    "ukphone": "ˈreɪʃiəʊ",
+    "usphone": "ˈreɪʃioʊ"
+  },
+  {
+    "name": "reject",
+    "trans": [
+      "vt.拒绝,抛弃，扔掉,排斥,吐出或呕吐n.被拒绝或被抛弃的人或事物"
+    ],
+    "ukphone": "rɪˈdʒekt",
+    "usphone": "rɪˈdʒɛkt"
+  },
+  {
+    "name": "revenue",
+    "trans": [
+      "n.（国家的）岁入，税收，（土地，财产等的）收入，收益，所得，（个人的）固定收入,复数总收入,税务署，〈美俚〉税务官,税务局"
+    ],
+    "ukphone": "ˈrevənju:",
+    "usphone": "ˈrevənu:"
+  },
+  {
+    "name": "stable",
+    "trans": [
+      "adj.稳定的,沉稳持重的,物理学稳定平衡的,持久的n.厩，马厩，马棚，牛棚,畜舍,统称某人拥有（或训练的）赛马,在同一地方工作或训练的)一批人vt.使关进畜舍（或马厩、牛棚等），使放入马厩般的室内vi.被关在畜舍内，（人）生活在厩一般的地方"
+    ],
+    "ukphone": "ˈsteɪbl",
+    "usphone": "ˈstebəl"
+  },
+  {
+    "name": "style",
+    "trans": [
+      "n.方式,样式,时髦,仪表，品位vt.设计,称呼,为…造型vi.使符合流行式样,用刻刀作装饰画"
+    ],
+    "ukphone": "staɪl",
+    "usphone": "staɪl"
+  },
+  {
+    "name": "substitute",
+    "trans": [
+      "vt.& vi.代替，替换，代用n.代替者,替补（运动员）,替代物,语法学代用词vi.用…替代"
+    ],
+    "ukphone": "ˈsʌbstɪtju:t",
+    "usphone": "ˈsʌbstɪtu:t"
+  },
+  {
+    "name": "sustain",
+    "trans": [
+      "vt.维持,支撑，支持,遭受，忍受,供养"
+    ],
+    "ukphone": "səˈsteɪn",
+    "usphone": "səˈsten"
+  },
+  {
+    "name": "symbol",
+    "trans": [
+      "n.象征,标志,符号,记号vt.用符号代表"
+    ],
+    "ukphone": "ˈsɪmbl",
+    "usphone": "ˈsɪmbəl"
+  },
+  {
+    "name": "target",
+    "trans": [
+      "n.（服务的）对象,目标,（射击的）靶子,目的vt.瞄准,把…作为攻击目标"
+    ],
+    "ukphone": "ˈtɑ:gɪt",
+    "usphone": "ˈtɑ:rgɪt"
+  },
+  {
+    "name": "transit",
+    "trans": [
+      "n.通过,搬运,转变,运输线vt.通过,横越,运送,使（望远镜）水平横轴回转vi.通过，经过"
+    ],
+    "ukphone": "ˈtrænzɪt",
+    "usphone": "-zɪt"
+  },
+  {
+    "name": "trend",
+    "trans": [
+      "n.走向,趋向,时尚，时髦vi.倾向,趋势"
+    ],
+    "ukphone": "trend",
+    "usphone": "trɛnd"
+  },
+  {
+    "name": "version",
+    "trans": [
+      "n.版本,译文，译本,说法,倒转术"
+    ],
+    "ukphone": "ˈvɜ:ʃn",
+    "usphone": "ˈvɜ:rʒn"
+  },
+  {
+    "name": "welfare",
+    "trans": [
+      "n.福利,幸福,繁荣,安宁"
+    ],
+    "ukphone": "ˈwelfeə(r)",
+    "usphone": "ˈwelfer"
+  },
+  {
+    "name": "whereas",
+    "trans": [
+      "conj.鉴于,然而,反之n.“鉴于…”：正式文件的介绍性陈述，开场白,条件性陈述"
+    ],
+    "ukphone": "ˌweərˈæz",
+    "usphone": "ˌwerˈæz"
+  },
+  {
+    "name": "abstract",
+    "trans": [
+      "adj.抽象的，理论上的,难解的,抽象派的,茫然的n.抽象概念,抽象派艺术作品,摘要,化萃取物vt.提取，分离,转移（注意等）,概括，摘录,<婉辞>剽窃"
+    ],
+    "ukphone": "ˈæbstrækt",
+    "usphone": "ˈæbˌstrækt"
+  },
+  {
+    "name": "accurate",
+    "trans": [
+      "adj.精确的，准确的,正确无误的"
+    ],
+    "ukphone": "ˈækjərət",
+    "usphone": "ˈækjərɪt"
+  },
+  {
+    "name": "acknowledge",
+    "trans": [
+      "vt.承认,鸣谢,对…打招呼,告知已收到"
+    ],
+    "ukphone": "əkˈnɒlɪdʒ",
+    "usphone": "əkˈnɑ:lɪdʒ"
+  },
+  {
+    "name": "aggregate",
+    "trans": [
+      "n.合计,聚集体,骨料,集料（可成混凝土或修路等用的）adj.总数的，总计的,聚合的,地聚成岩的vt.使聚集，使积聚,总计达"
+    ],
+    "ukphone": "ˈægrɪgət",
+    "usphone": "ˈæɡrɪɡɪt"
+  },
+  {
+    "name": "allocate",
+    "trans": [
+      "vt.分配，分派,把…拨给"
+    ],
+    "ukphone": "ˈæləkeɪt",
+    "usphone": "ˈæləˌket"
+  },
+  {
+    "name": "assign",
+    "trans": [
+      "vt.分派，选派，分配,归于，归属,法律 把（财产，权利、利息）从一人转让给另一人,把…编制n.常用复数法律受让人，接受财产等转让的人，受托者"
+    ],
+    "ukphone": "əˈsaɪn",
+    "usphone": "əˈsaɪn"
+  },
+  {
+    "name": "attach",
+    "trans": [
+      "vt.& vi.贴上，系,附上vt.（有时不受欢迎或未受邀请而）参加,把…固定,把…归因于,（使）与…有联系vi.从属,附着,伴随而来,联在一起(to, upon)"
+    ],
+    "ukphone": "əˈtætʃ",
+    "usphone": "əˈtætʃ"
+  },
+  {
+    "name": "author",
+    "trans": [
+      "n.著作家,作者,创造者,发起人vt.创作出版"
+    ],
+    "ukphone": "ˈɔ:θə(r)",
+    "usphone": "ˈɔθɚ"
+  },
+  {
+    "name": "bond",
+    "trans": [
+      "n.纽带,联系,债券,保释金v.使结合,建立互信关系,与…紧密联系,与…黏合"
+    ],
+    "ukphone": "bɒnd",
+    "usphone": "bɑ:nd"
+  },
+  {
+    "name": "brief",
+    "trans": [
+      "adj.短暂的,（衣着）短的,简洁的,简明的vt.向…介绍基本情况,（尤指事前）向…介绍基本情况,向…下达简令,在…事先向…做简要指点n.概要,短文,简短声明,（争议一方的情况或论点）要点摘录"
+    ],
+    "ukphone": "bri:f",
+    "usphone": "brif"
+  },
+  {
+    "name": "capable",
+    "trans": [
+      "adj.能干的,有才能的,有才华的,能胜任的n.有才能的，能干的"
+    ],
+    "ukphone": "ˈkeɪpəbl",
+    "usphone": "ˈkepəbəl"
+  },
+  {
+    "name": "cite",
+    "trans": [
+      "vt.引用，引证,法传讯,表扬,军事传（或通）令嘉奖n.<口>例证，引文"
+    ],
+    "ukphone": "saɪt",
+    "usphone": "saɪt"
+  },
+  {
+    "name": "cooperate",
+    "trans": [
+      "vi.合作，配合，协助v.合群,互助,结合"
+    ],
+    "ukphone": "kəʊ'ɒpəreɪt",
+    "usphone": "koˈɑpəˌret"
+  },
+  {
+    "name": "discriminate",
+    "trans": [
+      "vt.& vi.歧视,区别,辨出"
+    ],
+    "ukphone": "dɪˈskrɪmɪneɪt",
+    "usphone": "dɪˈskrɪməˌnet"
+  },
+  {
+    "name": "display",
+    "trans": [
+      "n.展览，陈列,陈列品，展览品,显示器,炫耀vt.显示,陈列,展开，伸展,夸示，炫耀vi.（计算机屏幕上）显示"
+    ],
+    "ukphone": "dɪˈspleɪ",
+    "usphone": "dɪˈsple"
+  },
+  {
+    "name": "diverse",
+    "trans": [
+      "adj.不同的，多种多样的,变化多的,形形色色的"
+    ],
+    "ukphone": "daɪˈvɜ:s",
+    "usphone": "daɪˈvɜ:rs"
+  },
+  {
+    "name": "domain",
+    "trans": [
+      "n.范围，领域,领土，疆土,管辖范围,计域名"
+    ],
+    "ukphone": "dəˈmeɪn",
+    "usphone": "doʊˈmeɪn"
+  },
+  {
+    "name": "edit",
+    "trans": [
+      "vt.剪辑（影片，录音）,编辑,校订,主编n.编辑"
+    ],
+    "ukphone": "ˈedɪt",
+    "usphone": "ˈɛdɪt"
+  },
+  {
+    "name": "enhance",
+    "trans": [
+      "vt.提高，增加,加强"
+    ],
+    "ukphone": "ɪnˈhɑ:ns",
+    "usphone": "ɪnˈhæns"
+  },
+  {
+    "name": "estate",
+    "trans": [
+      "n.财产，遗产，房地产,个人财产,不动产权,（较高的）社会地位adj.（汽车）连箱的（拥有较长的车身和后门，后座后面有较大的空间）"
+    ],
+    "ukphone": "ɪˈsteɪt",
+    "usphone": "ɪˈstet"
+  },
+  {
+    "name": "exceed",
+    "trans": [
+      "vt.超过,超越,胜过,越过…的界限vi.突出，领先"
+    ],
+    "ukphone": "ɪkˈsi:d",
+    "usphone": "ɪkˈsid"
+  },
+  {
+    "name": "expert",
+    "trans": [
+      "n.专家，能手,权威,行家，高手,熟练者adj.专家的,（技术）熟练的,老手,需要专门知识（或技术）的vt.以专家身份研究（或检查），像专家那样研究（或检查）,由专家审读（书籍等）vi.做专家工作，担任专家，成为高手（或能手）"
+    ],
+    "ukphone": "ˈekspɜ:t",
+    "usphone": "ˈekspɜ:rt"
+  },
+  {
+    "name": "explicit",
+    "trans": [
+      "adj.明确的，清楚的,直言的,详述的,不隐瞒的"
+    ],
+    "ukphone": "ɪkˈsplɪsɪt",
+    "usphone": "ɪkˈsplɪsɪt"
+  },
+  {
+    "name": "federal",
+    "trans": [
+      "adj.联邦（制）的,同盟的n.联邦主义者,同盟盟友"
+    ],
+    "ukphone": "ˈfedərəl",
+    "usphone": "ˈfɛdrəl"
+  },
+  {
+    "name": "fee",
+    "trans": [
+      "n.（加入组织或做某事付的）费,专业服务费，业务报酬,小费，赏钱,法 继承的产业vt.付给报酬，给小费,〈英〉雇用，聘请"
+    ],
+    "ukphone": "fi:",
+    "usphone": "fi"
+  },
+  {
+    "name": "flexible",
+    "trans": [
+      "adj.灵活的,易弯曲的,柔韧的,易被说服的"
+    ],
+    "ukphone": "ˈfleksəbl",
+    "usphone": "ˈflɛksəbəl"
+  },
+  {
+    "name": "furthermore",
+    "trans": [
+      "adv.此外,而且,与此同时,再者"
+    ],
+    "ukphone": "ˌfɜ:ðəˈmɔ:(r)",
+    "usphone": "ˌfɜ:rðərˈmɔ:r"
+  },
+  {
+    "name": "gender",
+    "trans": [
+      "n.<语>性某些语言的（阳性、阴性和中性，不同的性有不同的词尾等）,性别,某些语言的（名词、代词和形容词）性的区分"
+    ],
+    "ukphone": "ˈdʒendə(r)",
+    "usphone": "ˈdʒɛndɚ"
+  },
+  {
+    "name": "ignorant",
+    "trans": [
+      "adj.无知的，愚昧的,由无知引起的,无学识的"
+    ],
+    "ukphone": "ˈɪgnərənt",
+    "usphone": "ˈɪɡnərənt"
+  },
+  {
+    "name": "incentive",
+    "trans": [
+      "n.动机,刺激,诱因,鼓励adj.刺激性的,鼓励性质的"
+    ],
+    "ukphone": "ɪnˈsentɪv",
+    "usphone": "ɪnˈsɛntɪv"
+  },
+  {
+    "name": "incidence",
+    "trans": [
+      "n.发生率,影响范围,数关联，接合,物入射，入射角"
+    ],
+    "ukphone": "ˈɪnsɪdəns",
+    "usphone": "ˈɪnsɪdəns"
+  },
+  {
+    "name": "incorporate",
+    "trans": [
+      "vt.组成公司,包含,使混合,使具体化vi.包含,吸收,合并,混合"
+    ],
+    "ukphone": "ɪnˈkɔ:pəreɪt",
+    "usphone": "ɪnˈkɔ:rpəreɪt"
+  },
+  {
+    "name": "index",
+    "trans": [
+      "n.索引,<数>指数,指示,标志vt.给…编索引,把…编入索引,经济学按生活指数调整（工资、价格等）vi.机械学转位"
+    ],
+    "ukphone": "ˈɪndeks",
+    "usphone": "ˈɪnˌdɛks"
+  },
+  {
+    "name": "inhibit",
+    "trans": [
+      "v.抑制,禁止"
+    ],
+    "ukphone": "ɪnˈhɪbɪt",
+    "usphone": "ɪnˈhɪbɪt"
+  },
+  {
+    "name": "initiate",
+    "trans": [
+      "vt.开始，发起,传授,创始，开辟,接纳新成员n.新加入某组织（或机构、宗教）的人，新入会的人,被传授初步知识的人adj.被传授初步知识的,新入会的"
+    ],
+    "ukphone": "ɪˈnɪʃieɪt",
+    "usphone": "ɪˈnɪʃieɪt"
+  },
+  {
+    "name": "input",
+    "trans": [
+      "n.输入，投入,输入电路,<电>输入端,输入的数据vt.把…输入电脑,自电子 输入,输入，给料"
+    ],
+    "ukphone": "ˈɪnpʊt",
+    "usphone": "ˈɪnˌpʊt"
+  },
+  {
+    "name": "instruct",
+    "trans": [
+      "vt.教，讲授,教导，指导,通知,命令"
+    ],
+    "ukphone": "ɪnˈstrʌkt",
+    "usphone": "ɪnˈstrʌkt"
+  },
+  {
+    "name": "intelligent",
+    "trans": [
+      "adj.聪明的,理解力强的,有智力的,计智能的"
+    ],
+    "ukphone": "ɪnˈtelɪdʒənt",
+    "usphone": "ɪnˈtɛlədʒənt"
+  },
+  {
+    "name": "interval",
+    "trans": [
+      "n.间隔,幕间休息,（数学）区间"
+    ],
+    "ukphone": "ˈɪntəvl",
+    "usphone": "ˈɪntərvl"
+  },
+  {
+    "name": "lecture",
+    "trans": [
+      "n.演讲,训斥，教训vi.作演讲vt.给…作演讲,教训（通常是长篇大论的）"
+    ],
+    "ukphone": "ˈlektʃə(r)",
+    "usphone": "ˈlɛktʃɚ"
+  },
+  {
+    "name": "migrate",
+    "trans": [
+      "vi.迁移，移往,移动,随季节而移居vt.使移居,使移植"
+    ],
+    "ukphone": "maɪˈgreɪt",
+    "usphone": "ˈmaɪgreɪt"
+  },
+  {
+    "name": "minimum",
+    "trans": [
+      "n.最低限度,最小量,最低消费,数极小值adj.最低的,最小的,最少的"
+    ],
+    "ukphone": "ˈmɪnɪməm",
+    "usphone": "ˈmɪnəməm"
+  },
+  {
+    "name": "ministry",
+    "trans": [
+      "n.（政府的）部,神职,牧师职位,神职任期"
+    ],
+    "ukphone": "ˈmɪnɪstri",
+    "usphone": "ˈmɪnɪstri"
+  },
+  {
+    "name": "motive",
+    "trans": [
+      "n.动机，主旨,（艺术作品的）主题，题材adj.运动的,动机的,发动的vt.促使"
+    ],
+    "ukphone": "ˈməʊtɪv",
+    "usphone": "ˈmoʊtɪv"
+  },
+  {
+    "name": "neutral",
+    "trans": [
+      "adj.中立的,（化学中）中性的,暗淡的,不带电的n.（汽车或其他机器的）空挡位置,中立人士,中立国,素净色"
+    ],
+    "ukphone": "ˈnju:trəl",
+    "usphone": "ˈnu:trəl"
+  },
+  {
+    "name": "nevertheless",
+    "trans": [
+      "adv.然而,尽管如此,不过,仍然conj.然而,尽管如此"
+    ],
+    "ukphone": "ˌnevəðəˈles",
+    "usphone": "ˌnevərðəˈles"
+  },
+  {
+    "name": "overseas",
+    "trans": [
+      "adv.在向海外，在向国外adj.（在）海外的，（在）国外的,（向或来自）外国的"
+    ],
+    "ukphone": "ˌəʊvəˈsi:z",
+    "usphone": "ˌoʊvərˈsi:z"
+  },
+  {
+    "name": "precede",
+    "trans": [
+      "vt.& vi.在…之前发生或出现，先于,在…之上，优于,给…作序,处于…前面的位置"
+    ],
+    "ukphone": "prɪˈsi:d",
+    "usphone": "prɪˈsid"
+  },
+  {
+    "name": "presume",
+    "trans": [
+      "vt.以为，认为,假定，假设,推测,意味着vi.擅自行动,相信,敢于,放肆"
+    ],
+    "ukphone": "prɪˈzju:m",
+    "usphone": "prɪˈzu:m"
+  },
+  {
+    "name": "rational",
+    "trans": [
+      "adj.神智清楚的,理性的,理智的,合理的n.合理的事物,数有理数,懂道理的人，人类,〈英〉合理的服装"
+    ],
+    "ukphone": "ˈræʃnəl",
+    "usphone": "ˈræʃənəl"
+  },
+  {
+    "name": "recover",
+    "trans": [
+      "vt.恢复,重新获得,找回,<正>恢复（适当的状态或位置）vi.恢复健康（体力、能力等）n.恢复开始时姿势"
+    ],
+    "ukphone": "rɪˈkʌvə(r)",
+    "usphone": "rɪ'kʌvər"
+  },
+  {
+    "name": "reveal",
+    "trans": [
+      "vt.显露,揭露,泄露,神启示n.揭示，展现,建门侧，窗侧"
+    ],
+    "ukphone": "rɪˈvi:l",
+    "usphone": "rɪˈvil"
+  },
+  {
+    "name": "scope",
+    "trans": [
+      "n.（处理、研究事务的）范围,眼界，见识,（活动或能力的）余地,广袤，地域v.审视，仔细研究"
+    ],
+    "ukphone": "skəʊp",
+    "usphone": "skoʊp"
+  },
+  {
+    "name": "subsidy",
+    "trans": [
+      "n.补贴,津贴,助学金,奖金"
+    ],
+    "ukphone": "ˈsʌbsədi",
+    "usphone": "ˈsʌbsɪdi"
+  },
+  {
+    "name": "tape",
+    "trans": [
+      "n.带子,胶带，磁带,卷尺vt.用带子捆起来,录音vt.& vi.录音"
+    ],
+    "ukphone": "teɪp",
+    "usphone": "tep"
+  },
+  {
+    "name": "trace",
+    "trans": [
+      "vt.跟踪，追踪,追溯，探索,探索,查找vi.沿着一小径或道路前进,可以追溯的n.痕迹，踪迹,微量，极少量,植（脉）迹,痕迹"
+    ],
+    "ukphone": "treɪs",
+    "usphone": "tres"
+  },
+  {
+    "name": "transform",
+    "trans": [
+      "vt.改变,改观,变换vi.改变n.数变换式"
+    ],
+    "ukphone": "trænsˈfɔ:m",
+    "usphone": "trænsˈfɔ:rm"
+  },
+  {
+    "name": "transport",
+    "trans": [
+      "vt.运送，运输,流放,使欣喜若狂n.运输,运输船（机），运输系统,狂喜,流放犯"
+    ],
+    "ukphone": "ˈtrænspɔ:t",
+    "usphone": "ˈtrænspɔ:rt"
+  },
+  {
+    "name": "underlie",
+    "trans": [
+      "vt.位于或存在于（某物）之下,构成…的基础（或起因）,经构成优先于…的财政要求"
+    ],
+    "ukphone": "ˌʌndəˈlaɪ",
+    "usphone": "ˌʌndərˈlaɪ"
+  },
+  {
+    "name": "utilise"
+  },
+  {
+    "name": "adapt",
+    "trans": [
+      "vi.适应于，适应不同情况（或环境）(to)vt.改编，改写,改变…以适合(for)"
+    ],
+    "ukphone": "əˈdæpt",
+    "usphone": "əˈdæpt"
+  },
+  {
+    "name": "adult",
+    "trans": [
+      "adj.成熟的,（智力、思想、行为）成熟的,成年人的,成年的n.成年的人或动物"
+    ],
+    "ukphone": "ˈædʌlt",
+    "usphone": "ˈædʌlt"
+  },
+  {
+    "name": "advocate",
+    "trans": [
+      "vt.提倡,拥护,鼓吹,为…辩护n.（辩护）律师,提倡者,支持者"
+    ],
+    "ukphone": "ˈædvəkeɪt",
+    "usphone": "ˈædvəˌket"
+  },
+  {
+    "name": "aid",
+    "trans": [
+      "n.帮助,助手,外援,辅助设备vt.帮助,资助,救助,促进vi.帮助"
+    ],
+    "ukphone": "eɪd",
+    "usphone": "ed"
+  },
+  {
+    "name": "channel",
+    "trans": [
+      "n.频道，波道,渠道,途径,海峡vt.引导，开导,形成河道"
+    ],
+    "ukphone": "ˈtʃænl",
+    "usphone": "ˈtʃænəl"
+  },
+  {
+    "name": "chemical",
+    "trans": [
+      "adj.化学的,用化学方法制造的，化学作用的n.化学药品，化学制品"
+    ],
+    "ukphone": "ˈkemɪkl",
+    "usphone": "ˈkɛmɪkəl"
+  },
+  {
+    "name": "classic",
+    "trans": [
+      "adj.典型的,传统式样的,著名的,有趣的n.文豪,文学名著,优秀的典范,古希腊与古罗马的文化研究（尤指对其语言与文学的研究）"
+    ],
+    "ukphone": "ˈklæsɪk",
+    "usphone": "ˈklæsɪk"
+  },
+  {
+    "name": "comprehensive",
+    "trans": [
+      "adj.广泛的,综合的,有理解力的，悟性好的,保险业总体担保的n.常用复数专业综合考试,综合学校,综合性中学"
+    ],
+    "ukphone": "ˌkɒmprɪˈhensɪv",
+    "usphone": "ˌkɑ:mprɪˈhensɪv"
+  },
+  {
+    "name": "comprise",
+    "trans": [
+      "vt.包含，包括,由…组成,由…构成"
+    ],
+    "ukphone": "kəmˈpraɪz",
+    "usphone": "kəmˈpraɪz"
+  },
+  {
+    "name": "confirm",
+    "trans": [
+      "vt.法确认，批准,证实,使有效,使巩固"
+    ],
+    "ukphone": "kənˈfɜ:m",
+    "usphone": "kənˈfɜ:rm"
+  },
+  {
+    "name": "contrary",
+    "trans": [
+      "adj.相反的,违反的，反对的,对立的,顽固的，任性的n.对立或相反的事物,对立方,逻反对命题adv.相反地，矛盾地"
+    ],
+    "ukphone": "ˈkɒntrəri",
+    "usphone": "ˈkɑ:ntreri"
+  },
+  {
+    "name": "convert",
+    "trans": [
+      "vt.（使）转变,使皈依,兑换，换算,侵占vi.经过转变,被改变,橄榄球 触地得分后得附加分n.皈依者,改变宗教信仰者"
+    ],
+    "ukphone": "kənˈvɜ:t",
+    "usphone": "kənˈvɜ:rt"
+  },
+  {
+    "name": "couple",
+    "trans": [
+      "n.对，双,配偶，夫妻,<口>几个，两三个vt.&vi.连在一起，连接,成双，结婚,性交，交配"
+    ],
+    "ukphone": "ˈkʌpl",
+    "usphone": "ˈkʌpəl"
+  },
+  {
+    "name": "decade",
+    "trans": [
+      "n.十年，十年间,十个一组,十年期"
+    ],
+    "ukphone": "ˈdekeɪd",
+    "usphone": "dɛˈked"
+  },
+  {
+    "name": "definite",
+    "trans": [
+      "adj.明确的,一定的,肯定,有把握"
+    ],
+    "ukphone": "ˈdefɪnət",
+    "usphone": "ˈdɛfənɪt"
+  },
+  {
+    "name": "deny",
+    "trans": [
+      "vt.拒绝,拒绝承认,拒绝…占有,否认知情"
+    ],
+    "ukphone": "dɪˈnaɪ",
+    "usphone": "dɪˈnaɪ"
+  },
+  {
+    "name": "differentiate",
+    "trans": [
+      "vt.& vi.区分，区别，辨别vi.区别对待vt.表明…间的差别，构成…间差别的特征,数学 求…的微分：计算导数或（函数的）微分"
+    ],
+    "ukphone": "ˌdɪfəˈrenʃieɪt",
+    "usphone": "ˌdɪfəˈrɛnʃiˌet"
+  },
+  {
+    "name": "dispose",
+    "trans": [
+      "vt.& vi.处理，处置,安排vt.排列,布置,使倾向于，使有意于"
+    ],
+    "ukphone": "dɪˈspəʊz",
+    "usphone": "dɪˈspoʊz"
+  },
+  {
+    "name": "dynamic",
+    "trans": [
+      "adj.动态的,动力的，动力学的,充满活力的，精力充沛的,不断变化的，充满变数的n.动态,动力，推动变化的力量,动力学,活力"
+    ],
+    "ukphone": "daɪˈnæmɪk",
+    "usphone": "daiˈnæmik"
+  },
+  {
+    "name": "eliminate",
+    "trans": [
+      "vt.排除，消除,淘汰,除掉,<口>干掉"
+    ],
+    "ukphone": "ɪˈlɪmɪneɪt",
+    "usphone": "ɪˈlɪməˌnet"
+  },
+  {
+    "name": "empirical",
+    "trans": [
+      "adj.凭经验的,经验主义的,以观察或实验为依据的"
+    ],
+    "ukphone": "ɪmˈpɪrɪkl",
+    "usphone": "ɛmˈpɪrɪkəl"
+  },
+  {
+    "name": "equip",
+    "trans": [
+      "vt.装备，配备,使具备，使有准备"
+    ],
+    "ukphone": "ɪˈkwɪp",
+    "usphone": "ɪˈkwɪp"
+  },
+  {
+    "name": "extract",
+    "trans": [
+      "vt.提取,（费力地）拔出,选取,获得"
+    ],
+    "ukphone": "ˈekstrækt",
+    "usphone": "ɪkˈstrækt"
+  },
+  {
+    "name": "file",
+    "trans": [
+      "vt.提出（离婚诉讼或其他讼案）,把…归档,用锉锉,发稿，寄给报社vi.发送（报道给报社）,排成一行行走,提出申请n.文件（夹）,档案,纵列,锉刀"
+    ],
+    "ukphone": "faɪl",
+    "usphone": "faɪl"
+  },
+  {
+    "name": "finite",
+    "trans": [
+      "adj.有限的,语限定的,数有穷的，有限的n.有限性,有限的事物"
+    ],
+    "ukphone": "ˈfaɪnaɪt",
+    "usphone": "ˈfaɪˌnaɪt"
+  },
+  {
+    "name": "foundation",
+    "trans": [
+      "n.地基,基础,基金（会）,粉底"
+    ],
+    "ukphone": "faʊnˈdeɪʃn",
+    "usphone": "faʊnˈdeʃən"
+  },
+  {
+    "name": "globe",
+    "trans": [
+      "n.球，球状物,地球，世界,天体,地球仪v.（使）成球状"
+    ],
+    "ukphone": "gləʊb",
+    "usphone": "gloʊb"
+  },
+  {
+    "name": "grade",
+    "trans": [
+      "n.等级,职别,成绩等级,年级vt.安排,依序排列，依等级排列,评估,评分vi.属于…等级,缓缓地变化或发展"
+    ],
+    "ukphone": "greɪd",
+    "usphone": "ɡred"
+  },
+  {
+    "name": "guarantee",
+    "trans": [
+      "n.保证，担保,保证人，保证书,抵押品vt.保证，担保"
+    ],
+    "ukphone": "ˌgærənˈti:",
+    "usphone": "ˌɡærənˈti"
+  },
+  {
+    "name": "hierarchy",
+    "trans": [
+      "n.计分层，层次,等级制度,统治集团,天使的级别或等级"
+    ],
+    "ukphone": "ˈhaɪərɑ:ki",
+    "usphone": "ˈhaɪərɑ:rki"
+  },
+  {
+    "name": "identical",
+    "trans": [
+      "adj.同一的,完全同样的，相同的,恒等的,同卵的n.完全相同的事物,同卵双胞"
+    ],
+    "ukphone": "aɪˈdentɪkl",
+    "usphone": "aɪˈdɛntɪkəl"
+  },
+  {
+    "name": "ideology",
+    "trans": [
+      "n.思想（体系），思想意识,意识形态,观念学,空想，空论"
+    ],
+    "ukphone": "ˌaɪdiˈɒlədʒi",
+    "usphone": "ˌaɪdiˈɑ:lədʒi"
+  },
+  {
+    "name": "infer",
+    "trans": [
+      "vt.推断,猜想，推理,暗示,意指vi.作出推论"
+    ],
+    "ukphone": "ɪnˈfɜ:(r)",
+    "usphone": "ɪnˈfɚ"
+  },
+  {
+    "name": "innovate",
+    "trans": [
+      "vi.改革，创新vt.引入（新事物、思想或方法），"
+    ],
+    "ukphone": "ˈɪnəveɪt",
+    "usphone": "ˈɪnəˌvet"
+  },
+  {
+    "name": "insert",
+    "trans": [
+      "vt.插入,嵌入,（在文章中）添加,加插n.添入物（尤指一页印刷品图中插入或套印的小图）,（书报的）插页,插入物,添加物"
+    ],
+    "ukphone": "ɪnˈsɜ:t",
+    "usphone": "ɪnˈsɜ:rt"
+  },
+  {
+    "name": "intervene",
+    "trans": [
+      "vi.阻碍,出面,插嘴,介于…之间"
+    ],
+    "ukphone": "ˌɪntəˈvi:n",
+    "usphone": "ˌɪntərˈvi:n"
+  },
+  {
+    "name": "isolate",
+    "trans": [
+      "vt.使隔离，使孤立,电使绝缘,化使离析,微使细菌分离vi.隔离，孤立n.微分离菌,隔离种群adj.隔离的，分离的,孤立的"
+    ],
+    "ukphone": "ˈaɪsəleɪt",
+    "usphone": "ˈaɪsəˌlet"
+  },
+  {
+    "name": "media",
+    "trans": [
+      "n.媒体,解剖学血管中层,语音学 浊塞音,介质,医培养基"
+    ],
+    "ukphone": "ˈmi:diə",
+    "usphone": "ˈmidiə"
+  },
+  {
+    "name": "mode",
+    "trans": [
+      "n.方式,状况,时尚，风尚,调式"
+    ],
+    "ukphone": "məʊd",
+    "usphone": "moʊd"
+  },
+  {
+    "name": "paradigm",
+    "trans": [
+      "n.范例，样式，模范,词形变化表"
+    ],
+    "ukphone": "ˈpærədaɪm",
+    "usphone": "-ˌdɪm"
+  },
+  {
+    "name": "phenomenon",
+    "trans": [
+      "n.现象，事件,奇迹,非凡的人"
+    ],
+    "ukphone": "fəˈnɒmɪnən",
+    "usphone": "fəˈnɑ:mɪnən"
+  },
+  {
+    "name": "priority",
+    "trans": [
+      "n.优先，优先权,（时间，序上的）先，前,优先考虑的事,数优先次序"
+    ],
+    "ukphone": "praɪˈɒrəti",
+    "usphone": "praɪˈɔ:rəti"
+  },
+  {
+    "name": "prohibit",
+    "trans": [
+      "vt.禁止，阻止，防止,不准许"
+    ],
+    "ukphone": "prəˈhɪbɪt",
+    "usphone": "proˈhɪbɪt"
+  },
+  {
+    "name": "publication",
+    "trans": [
+      "n.出版,出版物,公布,发表"
+    ],
+    "ukphone": "ˌpʌblɪˈkeɪʃn",
+    "usphone": "ˌpʌblɪˈkeʃən"
+  },
+  {
+    "name": "quote",
+    "trans": [
+      "vt.& vi.引述，引用vt.报价,引述vi.引用n.引用,报价,引号"
+    ],
+    "ukphone": "kwəʊt",
+    "usphone": "kwoʊt"
+  },
+  {
+    "name": "release",
+    "trans": [
+      "vt.释放,放开,发布,发行n.释放，排放，解除,释放令,公映的新影片，发布的新闻消息"
+    ],
+    "ukphone": "rɪˈli:s",
+    "usphone": "rɪ'li:s"
+  },
+  {
+    "name": "reverse",
+    "trans": [
+      "vt.& vi.（使）反转,（使）颠倒,掉换，交换,法撤消，推翻vi.倒退,桥牌逆叫adj.反面的,颠倒的,倒开的,生倒卷的n.倒转，反向,机回动,倒退,失败"
+    ],
+    "ukphone": "rɪˈvɜ:s",
+    "usphone": "rɪˈvɜ:rs"
+  },
+  {
+    "name": "simulate",
+    "trans": [
+      "vt.假装，冒充,模仿,模拟,生拟态adj.模仿的,假装的"
+    ],
+    "ukphone": "ˈsɪmjuleɪt",
+    "usphone": "ˈsɪmjəˌlet"
+  },
+  {
+    "name": "sole",
+    "trans": [
+      "adj.单独的,惟一的,专有的，独占的n.鞋底,有…底的 -soled,脚底,鳎（可食用比目鱼）vt.给（鞋）换底"
+    ],
+    "ukphone": "səʊl",
+    "usphone": "soʊl"
+  },
+  {
+    "name": "somewhat",
+    "trans": [
+      "adv.稍微,有点,达到某种程度n.少量,某些数量,某种程度"
+    ],
+    "ukphone": "ˈsʌmwɒt",
+    "usphone": "ˈsʌmwʌt"
+  },
+  {
+    "name": "submit",
+    "trans": [
+      "vi.顺从，服从,甘受，忍受vt.使服从，使顺从,提交，呈送,法主张，建议"
+    ],
+    "ukphone": "səbˈmɪt",
+    "usphone": "səbˈmɪt"
+  },
+  {
+    "name": "successor",
+    "trans": [
+      "n.接替的人或事物,继承人，继任者"
+    ],
+    "ukphone": "səkˈsesə(r)",
+    "usphone": "səkˈsɛsɚ"
+  },
+  {
+    "name": "survive",
+    "trans": [
+      "vi.幸存，活下来vt.比…活得长，经历…之后还存在,幸存vt.& vi.幸免于难,挺过,艰难度过"
+    ],
+    "ukphone": "səˈvaɪv",
+    "usphone": "sərˈvaɪv"
+  },
+  {
+    "name": "thesis",
+    "trans": [
+      "n.论文，毕业论文,论点，论题,命题"
+    ],
+    "ukphone": "ˈθi:sɪs",
+    "usphone": "ˈθisɪs"
+  },
+  {
+    "name": "topic",
+    "trans": [
+      "n.主题,话题，论题,标题，细目"
+    ],
+    "ukphone": "ˈtɒpɪk",
+    "usphone": "ˈtɑ:pɪk"
+  },
+  {
+    "name": "transmit",
+    "trans": [
+      "vt.传输,传送，传递,发射,传染vi.发送信号"
+    ],
+    "ukphone": "trænsˈmɪt",
+    "usphone": "trænz-"
+  },
+  {
+    "name": "ultimate",
+    "trans": [
+      "adj.最后的,极限的,首要的,最大的n.终极,顶点,基本原理,基本事实"
+    ],
+    "ukphone": "ˈʌltɪmət",
+    "usphone": "ˈʌltəmɪt"
+  },
+  {
+    "name": "unique",
+    "trans": [
+      "adj.唯一的，仅有的,独一无二的，独特的,不平常的，特别的,超绝"
+    ],
+    "ukphone": "juˈni:k",
+    "usphone": "juˈnik"
+  },
+  {
+    "name": "visible",
+    "trans": [
+      "adj.看得见的,明显的，显然的,手头的，可得到的,可察觉到的"
+    ],
+    "ukphone": "ˈvɪzəbl",
+    "usphone": "ˈvɪzəbəl"
+  },
+  {
+    "name": "voluntary",
+    "trans": [
+      "adj.自愿的，自发的,志愿的,故意的，有意的,法无偿的n.自愿者,自愿行动,即兴演奏，自选节目,自愿地做的工作"
+    ],
+    "ukphone": "ˈvɒləntri",
+    "usphone": "ˈvɑ:lənteri"
+  },
+  {
+    "name": "abandon",
+    "trans": [
+      "vt.放弃，抛弃,离弃，丢弃,使屈从,停止进行，终止n.放任，放纵,完全屈从于压制"
+    ],
+    "ukphone": "əˈbændən",
+    "usphone": "əˈbændən"
+  },
+  {
+    "name": "accompany",
+    "trans": [
+      "vt.陪伴，陪同,附加，补充,与…共存,为…伴奏vi.伴奏"
+    ],
+    "ukphone": "əˈkʌmpəni",
+    "usphone": "əˈkʌmpni"
+  },
+  {
+    "name": "accumulate",
+    "trans": [
+      "vt.& vi.堆积，积累vi.（数量）逐渐增加，（质量）渐渐提高"
+    ],
+    "ukphone": "əˈkju:mjəleɪt",
+    "usphone": "əˈkjumjəˌlet"
+  },
+  {
+    "name": "ambiguous",
+    "trans": [
+      "adj.含糊的，不明确的,引起歧义的,有两种或多种意思的,模棱两可"
+    ],
+    "ukphone": "æmˈbɪgjuəs",
+    "usphone": "æmˈbɪɡjuəs"
+  },
+  {
+    "name": "append"
+  },
+  {
+    "name": "appreciate",
+    "trans": [
+      "vt.感激,欣赏,领会,鉴别vi.（使）增值，涨价"
+    ],
+    "ukphone": "əˈpri:ʃieɪt",
+    "usphone": "əˈpriʃiˌet"
+  },
+  {
+    "name": "arbitrary",
+    "trans": [
+      "adj.随意的，任性的，随心所欲的,主观的，武断的,霸道的，专制的，专横的，独断独行的,乱"
+    ],
+    "ukphone": "ˈɑ:bɪtrəri",
+    "usphone": "ˈɑ:rbətreri"
+  },
+  {
+    "name": "automate",
+    "trans": [
+      "vt.& vi.（使）自动化,使自动操作"
+    ],
+    "ukphone": "ˈɔ:təmeɪt",
+    "usphone": "ˈɔtəˌmet"
+  },
+  {
+    "name": "bias",
+    "trans": [
+      "n.偏见,偏爱，爱好,倾向,斜纹vt.使倾向于,使有偏见,影响,加偏压于adj.斜纹的,斜的，倾斜的,斜裁的adv.偏斜地，倾斜地,对角地"
+    ],
+    "ukphone": "ˈbaɪəs",
+    "usphone": "ˈbaɪəs"
+  },
+  {
+    "name": "chart",
+    "trans": [
+      "n.图表,航海图,排行榜vt.绘制地图,记录,记述,跟踪（进展或发展）"
+    ],
+    "ukphone": "tʃɑ:t",
+    "usphone": "tʃɑ:rt"
+  },
+  {
+    "name": "clarify",
+    "trans": [
+      "vt.& vi.使清楚，澄清vt.（尤指通过加热使黄油）纯净,说明,使（头脑、神智等）清醒vi.（液体）变得澄清,净化,变得清楚"
+    ],
+    "ukphone": "ˈklærəfaɪ",
+    "usphone": "ˈklærəˌfaɪ"
+  },
+  {
+    "name": "commodity",
+    "trans": [
+      "n.商品,日用品,有价值的物品,有利，有益"
+    ],
+    "ukphone": "kəˈmɒdəti",
+    "usphone": "kəˈmɑ:dəti"
+  },
+  {
+    "name": "complement",
+    "trans": [
+      "n.补充,补足语,补充物,补集（数）vt.补足，补充,补助"
+    ],
+    "ukphone": "ˈkɒmplɪment",
+    "usphone": "ˈkɑ:mplɪment"
+  },
+  {
+    "name": "conform",
+    "trans": [
+      "vi.符合,遵照,适应环境vt.使遵守,使一致,使顺从adj.一致的,顺从的"
+    ],
+    "ukphone": "kənˈfɔ:m",
+    "usphone": "kənˈfɔ:rm"
+  },
+  {
+    "name": "contemporary",
+    "trans": [
+      "adj.当代的，现代的,同时代的，同属一个时期的n.同代人,同辈人,同龄人,当代人"
+    ],
+    "ukphone": "kənˈtemprəri",
+    "usphone": "kənˈtempəreri"
+  },
+  {
+    "name": "contradict",
+    "trans": [
+      "vt.反驳，驳斥,否认,与…矛盾，与…抵触vi.反驳,否认,发生矛盾"
+    ],
+    "ukphone": "ˌkɒntrəˈdɪkt",
+    "usphone": "ˌkɑ:ntrəˈdɪkt"
+  },
+  {
+    "name": "crucial",
+    "trans": [
+      "adj.关键性的，极其显要的,决定性的,十字形的"
+    ],
+    "ukphone": "ˈkru:ʃl",
+    "usphone": "ˈkruʃəl"
+  },
+  {
+    "name": "currency",
+    "trans": [
+      "n.货币,通用，流通，流传，传播,市价，行情,流通时间"
+    ],
+    "ukphone": "ˈkʌrənsi",
+    "usphone": "ˈkɜ:rənsi"
+  },
+  {
+    "name": "denote",
+    "trans": [
+      "vt.指代,预示,代表,意思是"
+    ],
+    "ukphone": "dɪˈnəʊt",
+    "usphone": "dɪˈnoʊt"
+  },
+  {
+    "name": "detect",
+    "trans": [
+      "vt.查明，发现,洞察,侦察，侦查,电子学检波"
+    ],
+    "ukphone": "dɪˈtekt",
+    "usphone": "dɪˈtɛkt"
+  },
+  {
+    "name": "deviate",
+    "trans": [
+      "v.脱离，越轨，违背，误入歧途,使脱离常轨n.脱离常轨的人adj.脱离常轨的"
+    ],
+    "ukphone": "ˈdi:vieɪt",
+    "usphone": "ˈdiviˌet"
+  },
+  {
+    "name": "displace",
+    "trans": [
+      "vt.移动，移走,替换，取代,排水,撤职"
+    ],
+    "ukphone": "dɪsˈpleɪs",
+    "usphone": "dɪsˈples"
+  },
+  {
+    "name": "drama",
+    "trans": [
+      "n.戏剧，剧本,戏剧效果,戏剧文学艺术,戏剧性事件场面"
+    ],
+    "ukphone": "ˈdrɑ:mə",
+    "usphone": "ˈdræmə"
+  },
+  {
+    "name": "eventual",
+    "trans": [
+      "adj.（事件）最终发生的，结果的,可能的,终于的"
+    ],
+    "ukphone": "ɪˈventʃuəl",
+    "usphone": "ɪˈvɛntʃuəl"
+  },
+  {
+    "name": "exhibit",
+    "trans": [
+      "vt.陈列，展览,呈现,证明,法提交证据vi.公开展览某物,展出n.展览，陈列,展览品,公开展示,法证据"
+    ],
+    "ukphone": "ɪgˈzɪbɪt",
+    "usphone": "ɛɡ-"
+  },
+  {
+    "name": "exploit",
+    "trans": [
+      "vt.开采,开拓,利用（…为自己谋利）,剥削n.功绩,功劳,勋绩"
+    ],
+    "ukphone": "ɪkˈsplɔɪt",
+    "usphone": "ɪkˈsplɔɪt"
+  },
+  {
+    "name": "fluctuate",
+    "trans": [
+      "vi.波动,涨落vt.使波动,使动摇"
+    ],
+    "ukphone": "ˈflʌktʃueɪt",
+    "usphone": "ˈflʌktʃuˌet"
+  },
+  {
+    "name": "guideline",
+    "trans": [
+      "n.指导方针,指导原则"
+    ],
+    "ukphone": "ˈgaɪdlaɪn",
+    "usphone": "ˈɡaɪdˌlaɪn"
+  },
+  {
+    "name": "highlight",
+    "trans": [
+      "n.（图画或照片的）强光部份,最重要的事情,最精彩的部分vt.强调，突出,把…照亮,标示记号,为…中最突出的事物"
+    ],
+    "ukphone": "ˈhaɪlaɪt",
+    "usphone": "ˈhaɪˌlaɪt"
+  },
+  {
+    "name": "implicit",
+    "trans": [
+      "adj.不言明含蓄的,无疑问的，绝对的,成为一部份的,内含的"
+    ],
+    "ukphone": "ɪmˈplɪsɪt",
+    "usphone": "ɪmˈplɪsɪt"
+  },
+  {
+    "name": "induce",
+    "trans": [
+      "vt.引诱,引起,电感应,归纳"
+    ],
+    "ukphone": "ɪnˈdju:s",
+    "usphone": "ɪnˈdu:s"
+  },
+  {
+    "name": "inevitable",
+    "trans": [
+      "adj.不可避免的,必然发生的,<非正>总会发生的,必然发生的事"
+    ],
+    "ukphone": "ɪnˈevɪtəbl",
+    "usphone": "ɪnˈɛvɪtəbəl"
+  },
+  {
+    "name": "infrastructure",
+    "trans": [
+      "n.基础设施,基础建设"
+    ],
+    "ukphone": "ˈɪnfrəstrʌktʃə(r)",
+    "usphone": "ˈɪnfrəˌstrʌktʃɚ"
+  },
+  {
+    "name": "inspect",
+    "trans": [
+      "vt.检查，检验,视察vi.进行检查,进行视察"
+    ],
+    "ukphone": "ɪnˈspekt",
+    "usphone": "ɪnˈspɛkt"
+  },
+  {
+    "name": "intense",
+    "trans": [
+      "adj.热情的，强烈的，紧张的,热烈的，热情的，认真的,摄（底片）明暗度强的,有强烈感情（或意见、想法）的"
+    ],
+    "ukphone": "ɪnˈtens",
+    "usphone": "ɪnˈtɛns"
+  },
+  {
+    "name": "manipulate",
+    "trans": [
+      "vt.操作，处理,巧妙地控制,操纵,医 推拿，调整"
+    ],
+    "ukphone": "məˈnɪpjuleɪt",
+    "usphone": "məˈnɪpjəˌlet"
+  },
+  {
+    "name": "minimise"
+  },
+  {
+    "name": "nuclear",
+    "trans": [
+      "adj.原子核的，原子能的,细胞细胞核的"
+    ],
+    "ukphone": "ˈnju:kliə(r)",
+    "usphone": "ˈnu:kliə(r)"
+  },
+  {
+    "name": "offset",
+    "trans": [
+      "vt.抵消,补偿,（为了比较的目的而）把…并列（或并置）,为（管道等）装支管vi.形成分支，长出分枝,装支管n.开端,出发,平版印刷,抵消，补偿adj.分支的,偏（离中）心的,抵消的,开端的"
+    ],
+    "ukphone": "ˈɒfset",
+    "usphone": "ˈɔ:fset"
+  },
+  {
+    "name": "paragraph",
+    "trans": [
+      "n.段落,分段符号vt.将…分段,写短文报导"
+    ],
+    "ukphone": "ˈpærəgrɑ:f",
+    "usphone": "ˈpærəgræf"
+  },
+  {
+    "name": "plus",
+    "trans": [
+      "prep.（表示运算）加,（表示包容）外加,口语和,（表示数目）在零（度）以上n.加号,数学正量,好处,附加物adj.加的,正的,附加的,比所示数量多的"
+    ],
+    "ukphone": "plʌs",
+    "usphone": "plʌs"
+  },
+  {
+    "name": "practitioner",
+    "trans": [
+      "n.从业者,执业医生,习艺者,专门人才"
+    ],
+    "ukphone": "prækˈtɪʃənə(r)",
+    "usphone": "prækˈtɪʃənɚ"
+  },
+  {
+    "name": "predominant",
+    "trans": [
+      "adj.主要的，占主导地位的,占优势的，卓越的,有影响的,特优种"
+    ],
+    "ukphone": "prɪˈdɒmɪnənt",
+    "usphone": "prɪˈdɑ:mɪnənt"
+  },
+  {
+    "name": "prospect",
+    "trans": [
+      "n.前景,期望,眺望处,景象vi.勘探,勘察,（矿等）有希望,有前途vt.找矿,对…进行仔细调查"
+    ],
+    "ukphone": "ˈprɒspekt",
+    "usphone": "ˈprɑ:spekt"
+  },
+  {
+    "name": "radical",
+    "trans": [
+      "adj.根本的，基本的,激进的,彻底的,植根生的n.激进分子,根基，原子团,数学根数"
+    ],
+    "ukphone": "ˈrædɪkl",
+    "usphone": "ˈrædɪkəl,'rædɪkḷ"
+  },
+  {
+    "name": "random",
+    "trans": [
+      "adj.任意的,随机的,胡乱的n.随意,偶然的行动"
+    ],
+    "ukphone": "ˈrændəm",
+    "usphone": "ˈrændəm"
+  },
+  {
+    "name": "reinforce",
+    "trans": [
+      "vt.加固,强化,增援vi.求援,得到增援,给予更多的支持n.加强,加固物,加固材料"
+    ],
+    "ukphone": "ˌri:ɪnˈfɔ:s",
+    "usphone": "ˌri:ɪnˈfɔ:rs"
+  },
+  {
+    "name": "restore",
+    "trans": [
+      "vt.归还,交还,使恢复,修复vt.& vi.恢复（某种情况或感受）,使复原,使复位,使复职"
+    ],
+    "ukphone": "rɪˈstɔ:(r)",
+    "usphone": "-ˈstor"
+  },
+  {
+    "name": "revise",
+    "trans": [
+      "vt.修订,改变,修正,主英国英语复习vt.& vi.复习vi.修订，校订n.修订,校订,印刷校样，清样,修订版，修订本"
+    ],
+    "ukphone": "rɪˈvaɪz",
+    "usphone": "rɪˈvaɪz"
+  },
+  {
+    "name": "schedule",
+    "trans": [
+      "n.时刻表，进度表,清单，明细表,预定计划,目录vt.排定，安排,将…列表,为…作目录"
+    ],
+    "ukphone": "ˈʃedju:l",
+    "usphone": "ˈskedʒu:l"
+  },
+  {
+    "name": "tense",
+    "trans": [
+      "adj.拉紧的,肌肉绷紧的,神经紧张的,语（语音）紧的n.语时，时态,〈古〉时间v.使或变的紧张"
+    ],
+    "ukphone": "tens",
+    "usphone": "tɛns"
+  },
+  {
+    "name": "terminate",
+    "trans": [
+      "vt.& vi.结束,使终结,解雇,到达终点站adj.结束的"
+    ],
+    "ukphone": "ˈtɜ:mɪneɪt",
+    "usphone": "ˈtɜ:rmɪneɪt"
+  },
+  {
+    "name": "theme",
+    "trans": [
+      "n.乐主题,主旋律,题目，话题,（学生的）作文adj.以奇想主题布置的"
+    ],
+    "ukphone": "θi:m",
+    "usphone": "θim"
+  },
+  {
+    "name": "thereby",
+    "trans": [
+      "adv.由此，从而,在那附近"
+    ],
+    "ukphone": "ˌðeəˈbaɪ",
+    "usphone": "ˌðerˈbaɪ"
+  },
+  {
+    "name": "uniform",
+    "trans": [
+      "n.制服,军服,通讯中用以代表字母 u 的词adj.（形状，性质等）一样的,规格一致的,始终如一的v.使规格一律,使均一,使穿制服"
+    ],
+    "ukphone": "ˈju:nɪfɔ:m",
+    "usphone": "ˈju:nɪfɔ:rm"
+  },
+  {
+    "name": "vehicle",
+    "trans": [
+      "n.车辆,交通工具,传播媒介，媒介物,药赋形剂"
+    ],
+    "ukphone": "ˈvi:əkl",
+    "usphone": "ˈvi:hɪkl"
+  },
+  {
+    "name": "via",
+    "trans": [
+      "prep.经过,通过，凭借,取道"
+    ],
+    "ukphone": "ˈvaɪə",
+    "usphone": "ˈviə"
+  },
+  {
+    "name": "virtual",
+    "trans": [
+      "adj.实质上的，事实上的,（计算机）虚拟的,<物>有效的，虚像的,（粒子）实际存在的"
+    ],
+    "ukphone": "ˈvɜ:tʃuəl",
+    "usphone": "ˈvɜ:rtʃuəl"
+  },
+  {
+    "name": "visual",
+    "trans": [
+      "adj.视觉的，看得见的,光学的，视力的,形象化的,光学的n.画面，图象"
+    ],
+    "ukphone": "ˈvɪʒuəl",
+    "usphone": "ˈvɪʒuəl"
+  },
+  {
+    "name": "widespread",
+    "trans": [
+      "adj.分布广的,普遍的,广泛应用,普及的"
+    ],
+    "ukphone": "ˈwaɪdspred",
+    "usphone": "ˈwaɪdˈsprɛd"
+  },
+  {
+    "name": "accommodate",
+    "trans": [
+      "vt.容纳,使适应,向…提供住处,帮忙vi.后面省去反身代词适应于,（眼）作调节，调节眼球的晶状体（使其变得适应不同距离的物体）,调解，调停"
+    ],
+    "ukphone": "əˈkɒmədeɪt",
+    "usphone": "əˈkɑ:mədeɪt"
+  },
+  {
+    "name": "analogy",
+    "trans": [
+      "n.类似，相似,比拟，类比,类推"
+    ],
+    "ukphone": "əˈnælədʒi",
+    "usphone": "əˈnælədʒi"
+  },
+  {
+    "name": "anticipate",
+    "trans": [
+      "vt.预感,预见,预料,先于…行动vi.过早地提出,过早地考虑（或说、做）一件事,（在口头或用文字）预言,预测"
+    ],
+    "ukphone": "ænˈtɪsɪpeɪt",
+    "usphone": "ænˈtɪsəˌpet"
+  },
+  {
+    "name": "assure",
+    "trans": [
+      "vt.向…保证,使…确信,<英>给…保险"
+    ],
+    "ukphone": "əˈʃʊə(r)",
+    "usphone": "əˈʃʊr"
+  },
+  {
+    "name": "attain",
+    "trans": [
+      "vt.& vi.达到，获得,遂愿,经过努力到达某事物vt.达到，实现,获得,到达vi.达到,获得,到达"
+    ],
+    "ukphone": "əˈteɪn",
+    "usphone": "əˈten"
+  },
+  {
+    "name": "behalf",
+    "trans": [
+      "n.利益,维护,支持"
+    ],
+    "ukphone": "bɪˈhɑ:f",
+    "usphone": "bɪˈhæf"
+  },
+  {
+    "name": "bulk",
+    "trans": [
+      "n.（大）体积,大块，大量,大多数，大部分,主体vt.& vi.变得越来越大（或重要）vi.显得庞大,形成大块,堆积起来vt.使凝聚成一团或形成一堆adj.大批的，大量的,散装的"
+    ],
+    "ukphone": "bʌlk",
+    "usphone": "bʌlk"
+  },
+  {
+    "name": "cease",
+    "trans": [
+      "vt.停止，终止，结束vi.终止，停止,永不停止的过程,停止行动n.停止"
+    ],
+    "ukphone": "si:s",
+    "usphone": "sis"
+  },
+  {
+    "name": "coherent",
+    "trans": [
+      "adj.一致的,连贯的,条理分明的,清楚明白的"
+    ],
+    "ukphone": "kəʊˈhɪərənt",
+    "usphone": "koʊˈhɪrənt"
+  },
+  {
+    "name": "coincide",
+    "trans": [
+      "vi.与…一致,想法、意见等相同,相符,极为类似"
+    ],
+    "ukphone": "ˌkəʊɪnˈsaɪd",
+    "usphone": "ˌkoʊɪnˈsaɪd"
+  },
+  {
+    "name": "commence",
+    "trans": [
+      "vt.& vi.开始,着手,获得学位"
+    ],
+    "ukphone": "kəˈmens",
+    "usphone": "kəˈmɛns"
+  },
+  {
+    "name": "compatible",
+    "trans": [
+      "adj.兼容的，相容的,和谐的，协调的,生物学亲和的,可以并存的，能共处的"
+    ],
+    "ukphone": "kəmˈpætəbl",
+    "usphone": "kəmˈpætəbəl"
+  },
+  {
+    "name": "concurrent",
+    "trans": [
+      "adj.〈正式〉同时发生的,同时完成的,同时存在的n.数 共点,同时发生的事件"
+    ],
+    "ukphone": "kənˈkʌrənt",
+    "usphone": "kənˈkɜ:rənt"
+  },
+  {
+    "name": "confine",
+    "trans": [
+      "vt.限制,局限于,禁闭,管制n.界限，范围,国界"
+    ],
+    "ukphone": "kənˈfaɪn",
+    "usphone": "kənˈfaɪn"
+  },
+  {
+    "name": "controversy",
+    "trans": [
+      "n.公开辩论,论战"
+    ],
+    "ukphone": "ˈkɒntrəvɜ:si",
+    "usphone": "ˈkɑ:ntrəvɜ:rsi"
+  },
+  {
+    "name": "converse",
+    "trans": [
+      "vi.交谈，谈话,计对话，会话"
+    ],
+    "ukphone": "kənˈvɜ:s",
+    "usphone": "kənˈvɜ:rs"
+  },
+  {
+    "name": "device",
+    "trans": [
+      "n.装置，设备,方法,策略,手段"
+    ],
+    "ukphone": "dɪˈvaɪs",
+    "usphone": "dɪˈvaɪs"
+  },
+  {
+    "name": "devote",
+    "trans": [
+      "vt.把…奉献（给），把…专用（于）,奉献"
+    ],
+    "ukphone": "dɪˈvəʊt",
+    "usphone": "dɪˈvoʊt"
+  },
+  {
+    "name": "diminish",
+    "trans": [
+      "vt.（使）减少，缩小,减弱…的权势,乐减半音vi.变小或减少,逐渐变细"
+    ],
+    "ukphone": "dɪˈmɪnɪʃ",
+    "usphone": "dɪˈmɪnɪʃ"
+  },
+  {
+    "name": "distort",
+    "trans": [
+      "vt.歪曲，扭曲,曲解,使变形vi.扭曲,变形"
+    ],
+    "ukphone": "dɪˈstɔ:t",
+    "usphone": "dɪˈstɔ:rt"
+  },
+  {
+    "name": "duration",
+    "trans": [
+      "n.持续，持续的时间，期间,（时间的）持续，持久，连续,语音学音长，音延"
+    ],
+    "ukphone": "djuˈreɪʃn",
+    "usphone": "duˈreɪʃn"
+  },
+  {
+    "name": "erode",
+    "trans": [
+      "vt.& vi.侵蚀，腐蚀vi.逐渐毁坏,削弱，损害"
+    ],
+    "ukphone": "ɪˈrəʊd",
+    "usphone": "ɪˈroʊd"
+  },
+  {
+    "name": "ethic",
+    "trans": [
+      "n.伦理，伦理观,道德体系,（复数）伦理学，道德学,（复数）行为准则"
+    ],
+    "ukphone": "ˈeθɪk",
+    "usphone": "ˈɛθɪk"
+  },
+  {
+    "name": "format",
+    "trans": [
+      "n.（出版物的）版式,自（数据安排的）形式,电视节目的总安排（或计划）vt.使格式化,安排…的格局,设计…的版面vi.设计一个版式"
+    ],
+    "ukphone": "ˈfɔ:mæt",
+    "usphone": "ˈfɔ:rmæt"
+  },
+  {
+    "name": "found",
+    "trans": [
+      "vt.创办，成立，建立v.发现（ find的过去式）,找到,到达,发觉"
+    ],
+    "ukphone": "faʊnd",
+    "usphone": "faʊnd"
+  },
+  {
+    "name": "inherent",
+    "trans": [
+      "adj.固有的，内在的,天生"
+    ],
+    "ukphone": "ɪnˈhɪərənt",
+    "usphone": "ɪnˈhɪrənt"
+  },
+  {
+    "name": "insight",
+    "trans": [
+      "n.洞察力，洞悉,直觉，眼光,领悟,顿悟"
+    ],
+    "ukphone": "ˈɪnsaɪt",
+    "usphone": "ˈɪnˌsaɪt"
+  },
+  {
+    "name": "integral",
+    "trans": [
+      "adj.完整的,积分的,必须的n.整体,积分"
+    ],
+    "ukphone": "ˈɪntɪgrəl",
+    "usphone": "ɪnˈtɛɡrəl"
+  },
+  {
+    "name": "intermediate",
+    "trans": [
+      "adj.中间的，中级的n.中间物，中间分子，中间人vi.调解：充当调解人，调解,干涉"
+    ],
+    "ukphone": "ˌɪntəˈmi:diət",
+    "usphone": "ˌɪntərˈmi:diət"
+  },
+  {
+    "name": "manual",
+    "trans": [
+      "adj.用手的,手制的，手工的,法占有的,体力的n.手册,指南,乐键盘,军刀枪操练"
+    ],
+    "ukphone": "ˈmænjuəl",
+    "usphone": "ˈmænjuəl"
+  },
+  {
+    "name": "mature",
+    "trans": [
+      "adj.（人、树木、鸟或动物）成熟的,仔细考虑过的,到期（应该支付）的,成年人的vi.成熟，长成,（票据等）到期vt.使…成熟,使…长成,慎重拟定（计划等）"
+    ],
+    "ukphone": "məˈtʃʊə(r)",
+    "usphone": "məˈtʃʊr"
+  },
+  {
+    "name": "mediate",
+    "trans": [
+      "vt.经调解解决,斡旋促成vi.调停，调解，斡旋adj.居间的，间接的"
+    ],
+    "ukphone": "ˈmi:dieɪt",
+    "usphone": "ˈmidiˌet"
+  },
+  {
+    "name": "medium",
+    "trans": [
+      "adj.中等的，中级的,普通的,平均的,半生熟的n.媒介物，媒质,中间，中庸，生培养基，培养液，颜料溶解液，数中数，平均，逻中名辞,手段，方法,中间物"
+    ],
+    "ukphone": "ˈmi:diəm",
+    "usphone": "ˈmidiəm"
+  },
+  {
+    "name": "military",
+    "trans": [
+      "adj.军事的,军用的,讨厌的,好战的n.军人,军队,武装力量"
+    ],
+    "ukphone": "ˈmɪlətri",
+    "usphone": "ˈmɪləteri"
+  },
+  {
+    "name": "minimal",
+    "trans": [
+      "adj.<正式>最小的，极少的,极小的n.最简单派艺术作品"
+    ],
+    "ukphone": "ˈmɪnɪməl",
+    "usphone": "ˈmɪnəməl"
+  },
+  {
+    "name": "mutual",
+    "trans": [
+      "adj.共有的,共同的,相互的,彼此的"
+    ],
+    "ukphone": "ˈmju:tʃuəl",
+    "usphone": "ˈmjutʃuəl"
+  },
+  {
+    "name": "norm",
+    "trans": [
+      "n.标准,规范,准则,（劳动）定额"
+    ],
+    "ukphone": "nɔ:m",
+    "usphone": "nɔ:rm"
+  },
+  {
+    "name": "overlap",
+    "trans": [
+      "n.重叠部分,覆盖物，涂盖层,数交叠，相交vt.重叠,与…部分相同vi.互搭，重叠,部分相同,数有与…共同的某物"
+    ],
+    "ukphone": "ˌəʊvəˈlæp",
+    "usphone": "ˌoʊvərˈlæp"
+  },
+  {
+    "name": "passive",
+    "trans": [
+      "adj.被动的,消极的,不抵抗的,冷漠的n.动词被动形式，被动语态"
+    ],
+    "ukphone": "ˈpæsɪv",
+    "usphone": "ˈpæsɪv"
+  },
+  {
+    "name": "portion",
+    "trans": [
+      "n.一部分,一份遗产（或赠与的财产）,嫁妆,分得的财产vt.把…分成份额,分配,把…分给(to),命运注定"
+    ],
+    "ukphone": "ˈpɔ:ʃn",
+    "usphone": "ˈpɔ:rʃn"
+  },
+  {
+    "name": "preliminary",
+    "trans": [
+      "adj.初步的，初级的,预备的,开端的,序言的n.准备工作,预赛,初步措施,（对学生等的）预考"
+    ],
+    "ukphone": "prɪˈlɪmɪnəri",
+    "usphone": "prɪˈlɪmɪneri"
+  },
+  {
+    "name": "protocol",
+    "trans": [
+      "n.礼仪,（外交条约的）草案,（数据传递的）协议,科学实验报告（或计划）vt.把…写入议定书，在议定书中拟定（或颁布）vi.拟定议定书，拟定草案"
+    ],
+    "ukphone": "ˈprəʊtəkɒl",
+    "usphone": "ˈproʊtəkɔ:l"
+  },
+  {
+    "name": "qualitative",
+    "trans": [
+      "adj.定性的，定质的,性质上的,质量的"
+    ],
+    "ukphone": "ˈkwɒlɪtətɪv",
+    "usphone": "ˈkwɑ:ləteɪtətɪv"
+  },
+  {
+    "name": "refine",
+    "trans": [
+      "vt.提炼,改善,使高雅"
+    ],
+    "ukphone": "rɪˈfaɪn",
+    "usphone": "rɪˈfaɪn"
+  },
+  {
+    "name": "relax",
+    "trans": [
+      "vt.& vi.（使）轻松,（使）松弛,放宽,（使）放松vt.缓和，减轻,（使大便等）通畅vi.变得轻松,变得随和,变得和蔼,通便"
+    ],
+    "ukphone": "rɪˈlæks",
+    "usphone": "rɪˈlæks"
+  },
+  {
+    "name": "restrain",
+    "trans": [
+      "vt.抑制，压抑,限定，限制,制止,监禁"
+    ],
+    "ukphone": "rɪˈstreɪn",
+    "usphone": "rɪˈstren"
+  },
+  {
+    "name": "revolution",
+    "trans": [
+      "n.革命,彻底改变,旋转,运行，公转"
+    ],
+    "ukphone": "ˌrevəˈlu:ʃn",
+    "usphone": "ˌrɛvəˈluʃən"
+  },
+  {
+    "name": "rigid",
+    "trans": [
+      "adj.严格的,僵硬的,（规则、方法等）死板的,刚硬的，顽固的"
+    ],
+    "ukphone": "ˈrɪdʒɪd",
+    "usphone": "ˈrɪdʒɪd"
+  },
+  {
+    "name": "route",
+    "trans": [
+      "n.路,（公共汽车和列车等的）常规路线,航线,渠道，途径vt.按某路线发送,给…规定路线次序，程序"
+    ],
+    "ukphone": "ru:t",
+    "usphone": "raʊt"
+  },
+  {
+    "name": "scenario",
+    "trans": [
+      "n.（行动的）方案,剧情概要,分镜头剧本"
+    ],
+    "ukphone": "səˈnɑ:riəʊ",
+    "usphone": "səˈnærioʊ"
+  },
+  {
+    "name": "sphere",
+    "trans": [
+      "n.球（体）,（兴趣或活动的）范围,势力范围,天体，如行星或恒星vt.形成球体,包围，围绕,置于球面内部"
+    ],
+    "ukphone": "sfɪə(r)",
+    "usphone": "sfɪr"
+  },
+  {
+    "name": "subordinate",
+    "trans": [
+      "adj.级别或职位较低的,下级的,次要的,附属的n.部属,部下，下级vt.使…居下位，使在次级,使服从,使从属"
+    ],
+    "ukphone": "səˈbɔ:dɪnət",
+    "usphone": "səˈbɔ:rdɪnət"
+  },
+  {
+    "name": "supplement",
+    "trans": [
+      "vt.增补，补充n.增补，补充,补充物,增刊，副刊"
+    ],
+    "ukphone": "ˈsʌplɪmənt",
+    "usphone": "ˈsʌpləmənt"
+  },
+  {
+    "name": "suspend",
+    "trans": [
+      "v.暂停,延缓,挂,悬"
+    ],
+    "ukphone": "səˈspend",
+    "usphone": "səˈspɛnd"
+  },
+  {
+    "name": "team",
+    "trans": [
+      "n.队，组,团队,工作组,（野鸭等）群，同胎仔vi.协同工作,合作,把（牛马等）联套在车上"
+    ],
+    "ukphone": "ti:m",
+    "usphone": "tim"
+  },
+  {
+    "name": "temporary",
+    "trans": [
+      "adj.临时的，暂时的,短暂的n.临时工，临时雇员"
+    ],
+    "ukphone": "ˈtemprəri",
+    "usphone": "ˈtempəreri"
+  },
+  {
+    "name": "trigger",
+    "trans": [
+      "n.（枪）扳机,起动装置，扳柄,引发其他事件的一件事,电子学触发器，触发电器vt.引发，触发,扣…的扳机,发射或使爆炸（武器或爆炸性弹药）"
+    ],
+    "ukphone": "ˈtrɪgə(r)",
+    "usphone": "ˈtrɪɡɚ"
+  },
+  {
+    "name": "unify",
+    "trans": [
+      "vt.使联合,使相同,使一致,统一"
+    ],
+    "ukphone": "ˈju:nɪfaɪ",
+    "usphone": "ˈjunəˌfaɪ"
+  },
+  {
+    "name": "violate",
+    "trans": [
+      "vt.违反,妨碍,侵犯,亵渎，强奸"
+    ],
+    "ukphone": "ˈvaɪəleɪt",
+    "usphone": "ˈvaɪəˌlet"
+  },
+  {
+    "name": "vision",
+    "trans": [
+      "n.视力，视觉,美景，绝妙的东西,幻影,想像力vt.在幻觉中看到,幻想，想象,梦见"
+    ],
+    "ukphone": "ˈvɪʒn",
+    "usphone": "ˈvɪʒən"
+  },
+  {
+    "name": "adjacent",
+    "trans": [
+      "adj.邻近的，毗邻的,（时间上）紧接着的,相邻"
+    ],
+    "ukphone": "əˈdʒeɪsnt",
+    "usphone": "əˈdʒesənt"
+  },
+  {
+    "name": "albeit",
+    "trans": [
+      "conj.虽然,即使"
+    ],
+    "ukphone": "ˌɔ:lˈbi:ɪt",
+    "usphone": "æl-"
+  },
+  {
+    "name": "assemble",
+    "trans": [
+      "vt.& vi.集合，收集vt.装配，组合"
+    ],
+    "ukphone": "əˈsembl",
+    "usphone": "əˈsɛmbəl"
+  },
+  {
+    "name": "collapse",
+    "trans": [
+      "vi.折叠,倒塌,崩溃,（尤指工作劳累后）坐下vt.使倒塌,使坍塌,使瓦解n.垮台,（身体的）衰弱"
+    ],
+    "ukphone": "kəˈlæps",
+    "usphone": "kəˈlæps"
+  },
+  {
+    "name": "colleague",
+    "trans": [
+      "n.同事,同僚,同行"
+    ],
+    "ukphone": "ˈkɒli:g",
+    "usphone": "ˈkɑli:g"
+  },
+  {
+    "name": "compile",
+    "trans": [
+      "vt.汇编,编辑,编制,编译"
+    ],
+    "ukphone": "kəmˈpaɪl",
+    "usphone": "kəmˈpaɪl"
+  },
+  {
+    "name": "conceive",
+    "trans": [
+      "vt.& vi.怀孕,构思,想像，设想,持有vi.怀孕,设想,考虑"
+    ],
+    "ukphone": "kənˈsi:v",
+    "usphone": "kənˈsiv"
+  },
+  {
+    "name": "convince",
+    "trans": [
+      "vt.使相信，说服，使承认,使明白,使确信,使悔悟，使认错罪"
+    ],
+    "ukphone": "kənˈvɪns",
+    "usphone": "kənˈvɪns"
+  },
+  {
+    "name": "depress",
+    "trans": [
+      "vt.压下，压低,使沮丧,使萧条,使跌价"
+    ],
+    "ukphone": "dɪˈpres",
+    "usphone": "dɪˈprɛs"
+  },
+  {
+    "name": "encounter",
+    "trans": [
+      "vt.不期而遇,遭遇,对抗n.相遇，碰见,遭遇战,对决，冲突vi.碰见，尤指不期而遇"
+    ],
+    "ukphone": "ɪnˈkaʊntə(r)",
+    "usphone": "ɛnˈkaʊntɚ"
+  },
+  {
+    "name": "enormous",
+    "trans": [
+      "adj.巨大的,庞大的,极恶的,凶暴的"
+    ],
+    "ukphone": "ɪˈnɔ:məs",
+    "usphone": "ɪˈnɔ:rməs"
+  },
+  {
+    "name": "forthcoming",
+    "trans": [
+      "adj.即将到来的,现成的,唾手可得的,乐于助人的n.来临,临近"
+    ],
+    "ukphone": "ˌfɔ:θˈkʌmɪŋ",
+    "usphone": "ˌfɔ:rθˈkʌmɪŋ"
+  },
+  {
+    "name": "incline",
+    "trans": [
+      "vt.& vi.（使）倾斜，弄斜,（使）偏向，倾向于,（使）认为,点（头）（以示同意、打招呼等）n.斜坡,斜面,坡度,倾斜"
+    ],
+    "ukphone": "ɪnˈklaɪn",
+    "usphone": "ɪnˈklaɪn"
+  },
+  {
+    "name": "integrity",
+    "trans": [
+      "n.正直，诚实,完整,计算机保存,健全"
+    ],
+    "ukphone": "ɪnˈtegrəti",
+    "usphone": "ɪnˈtɛɡrɪti"
+  },
+  {
+    "name": "intrinsic",
+    "trans": [
+      "adj.固有的，内在的，本质的,解剖体内的,本征,先天性"
+    ],
+    "ukphone": "ɪnˈtrɪnsɪk",
+    "usphone": "-sɪk"
+  },
+  {
+    "name": "invoke",
+    "trans": [
+      "vt.乞灵，祈求,提出或授引…以支持或证明,召鬼,借助"
+    ],
+    "ukphone": "ɪnˈvəʊk",
+    "usphone": "ɪnˈvoʊk"
+  },
+  {
+    "name": "levy",
+    "trans": [
+      "n.征兵,征税v.征收，索取,征税，征集"
+    ],
+    "ukphone": "ˈlevi",
+    "usphone": "ˈlɛvi"
+  },
+  {
+    "name": "likewise",
+    "trans": [
+      "adv.同样地,也，而且"
+    ],
+    "ukphone": "ˈlaɪkwaɪz",
+    "usphone": "ˈlaɪkˌwaɪz"
+  },
+  {
+    "name": "nonetheless",
+    "trans": [
+      "adv.虽然如此，但是"
+    ],
+    "ukphone": "ˌnʌnðəˈles",
+    "usphone": "ˌnʌnðəˈlɛs"
+  },
+  {
+    "name": "notwithstanding",
+    "trans": [
+      "prep.尽管,虽然adv.尽管如此，仍然,还是conj.虽然，尽管"
+    ],
+    "ukphone": "ˌnɒtwɪθˈstændɪŋ",
+    "usphone": "ˌnɑ:twɪθˈstændɪŋ"
+  },
+  {
+    "name": "odd",
+    "trans": [
+      "adj.古怪的,奇数的,剩余的,临时的n.奇特的事物,怪人,高尔夫球多于对方的一次击球"
+    ],
+    "ukphone": "ɒd",
+    "usphone": "ɑ:d"
+  },
+  {
+    "name": "ongoing",
+    "trans": [
+      "adj.不间断的，进行的,前进的n.前进，发展,行为，举止"
+    ],
+    "ukphone": "ˈɒngəʊɪŋ",
+    "usphone": "ˈɑ:ngoʊɪŋ"
+  },
+  {
+    "name": "panel",
+    "trans": [
+      "n.镶板,面,（门、墙等上面的）嵌板,控制板vt.选定（陪审团）,把…分格,在…上置鞍垫,把…镶入框架内"
+    ],
+    "ukphone": "ˈpænl",
+    "usphone": "ˈpænəl"
+  },
+  {
+    "name": "persist",
+    "trans": [
+      "v.坚持,固执,存留,继续存在"
+    ],
+    "ukphone": "pəˈsɪst",
+    "usphone": "pərˈsɪst"
+  },
+  {
+    "name": "pose",
+    "trans": [
+      "vt.& vi.使摆姿势,以…身份出现,招摇,炫耀vt.提出,造成（威胁、问题等）,引起,产生n.姿势,姿态,装腔作势,伪装"
+    ],
+    "ukphone": "pəʊz",
+    "usphone": "poʊz"
+  },
+  {
+    "name": "reluctance",
+    "trans": [
+      "n.不愿意，勉强,电磁阻,反应式"
+    ],
+    "ukphone": "rɪ'lʌktəns",
+    "usphone": "rɪˈlʌktəns"
+  },
+  {
+    "name": "so-called",
+    "trans": [
+      "adj.所谓的，号称的"
+    ],
+    "ukphone": "səʊ",
+    "usphone": "ˈsoˈkɔld"
+  },
+  {
+    "name": "straightforward",
+    "trans": [
+      "adj.直截了当的,坦率的,明确的adv.直截了当地,坦率地"
+    ],
+    "ukphone": "ˌstreɪtˈfɔ:wəd",
+    "usphone": "ˌstreɪtˈfɔ:rwərd"
+  },
+  {
+    "name": "undergo",
+    "trans": [
+      "vt.经历，经验,遭受，承受"
+    ],
+    "ukphone": "ˌʌndəˈgəʊ",
+    "usphone": "ˌʌndərˈgoʊ"
+  },
+  {
+    "name": "whereby",
+    "trans": [
+      "adv.通过…,借以,与…一致"
+    ],
+    "ukphone": "weəˈbaɪ",
+    "usphone": "werˈbaɪ"
+  }
+]
