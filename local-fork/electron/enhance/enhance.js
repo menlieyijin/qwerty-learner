@@ -40,7 +40,7 @@
   const nowIso = () => new Date().toISOString();
   function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
 
-  let settings = { version: '1.0.0-enhanced-v8.1', dailyGoal: 30, dailyNewWords: 20, memoryReviewCap: 200, memoryAutoPron: false, theme: 'indigo', panelAppearance: 'auto', dictFavorites: [], dictRecent: {}, fontFamily: 'default', opacity: 1, zoom: 1, pomodoroFocus: 25, pomodoroBreak: 5, keySound: false, keySoundVolume: 0.25, clipboardWatch: false, onlineLookup: true, aiExperimental: false, pronCache: false, closeToTray: true, alwaysOnTop: false, miniMode: false, todayStats: {} };
+  let settings = { version: '1.0.0-enhanced-v8.2', dailyGoal: 30, dailyNewWords: 20, memoryReviewCap: 200, memoryAutoPron: false, theme: 'indigo', panelAppearance: 'auto', dictFavorites: [], dictRecent: {}, fontFamily: 'default', opacity: 1, zoom: 1, pomodoroFocus: 25, pomodoroBreak: 5, keySound: false, keySoundVolume: 0.25, clipboardWatch: false, onlineLookup: true, aiExperimental: false, pronCache: false, closeToTray: true, alwaysOnTop: false, miniMode: false, todayStats: {} };
   let appStats = null; // 缓存统计
   let panelOpen = false;
 
@@ -111,9 +111,10 @@
       db = await idbOpen('RecordDB');
       const wordRecords = await idbAll(db, 'wordRecords');
       const chapterRecords = await idbAll(db, 'chapterRecords');
-      return { wordRecords, chapterRecords };
+      const memoryRecords = await idbAll(db, 'memoryRecords');
+      return { wordRecords, chapterRecords, memoryRecords };
     } catch {
-      return { wordRecords: [], chapterRecords: [] };
+      return { wordRecords: [], chapterRecords: [], memoryRecords: [] };
     } finally {
       try { if (db) db.close(); } catch { /* ignore */ }
     }
@@ -347,6 +348,7 @@
     const dbData = await readAppRecords();
     let wordRecords = dbData.wordRecords;
     const chapterRecords = dbData.chapterRecords;
+    const memoryRecords = dbData.memoryRecords || [];
     if (wordRecords.length || chapterRecords.length) stats.source = 'RecordDB';
     // 兼容：若 RecordDB 为空，尝试读 localStorage.state 里的旧记录
     if (!wordRecords.length) {
@@ -441,6 +443,28 @@
       }
     }
     stats.wrongWords = [...wrongMap.values()].sort((a, b) => b.wrongCount - a.wrongCount);
+    // v8.1 学习报告：掌握度分布 + 未来 7 天到期
+    const buckets = { short: 0, mid: 0, long: 0 };
+    const dueDays = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() + i);
+      dueDays.push({ date: dayKey(d.getTime()), count: 0 });
+    }
+    for (const m of memoryRecords) {
+      if (!m) continue;
+      const st = Number(m.stage) || 0;
+      if (st <= 2) buckets.short += 1;
+      else if (st <= 5) buckets.mid += 1;
+      else buckets.long += 1;
+      const due = Number(m.due) || 0;
+      if (due) {
+        const k = dayKey(due);
+        const row = dueDays.find((x) => x.date === k);
+        if (row) row.count += 1;
+      }
+    }
+    stats.memory = { learned: memoryRecords.length, buckets, dueDays };
     return stats;
   }
 
@@ -834,7 +858,7 @@
     <div class="chip" id="qz-chip" title="点击打开增强面板"><span id="qz-chip-text">今日 0/30 · 连续 0 天</span></div>
     <div class="panel" id="qz-panel">
       <div class="ph">
-        <div class="t">增强工具 <small>Qwerty Plus v8.1</small></div>
+        <div class="t">增强工具 <small>Qwerty Plus v8.2</small></div>
         <button class="x" id="qz-close" title="关闭">✕</button>
       </div>
       <div class="tabs">
@@ -993,6 +1017,16 @@
             <h4>近 14 天练习热力</h4>
             <div class="heat" id="heat-box"></div>
             <div class="muted" style="margin-top:6px" id="lbl-source"></div>
+          </div>
+          <div class="sec">
+            <h4>学习报告（记忆曲线）</h4>
+            <div class="grid4">
+              <div class="stat"><div class="n" id="rp-learned">0</div><div class="k">已学单词</div></div>
+              <div class="stat"><div class="n" id="rp-short">0</div><div class="k">短期记忆(≤2档)</div></div>
+              <div class="stat"><div class="n" id="rp-mid">0</div><div class="k">巩固中(3~5档)</div></div>
+              <div class="stat"><div class="n" id="rp-long">0</div><div class="k">长期记忆(≥6档)</div></div>
+            </div>
+            <div class="muted" style="margin-top:12px" id="rp-due">未来 7 天到期：-</div>
           </div>
           <div class="sec">
             <h4>导出 CSV（快速保存，无需手选路径）</h4>
@@ -1173,7 +1207,7 @@
           <div class="sec">
             <h4>Qwerty Learner Plus</h4>
             <div class="muted">
-              版本：<b>1.0.0-enhanced-v8.1（随机出词 + 艾宾浩斯记忆曲线 + 错词当场重现；无章节、无每日上限）</b><br>
+              版本：<b>1.0.0-enhanced-v8.2（随机出词 + 艾宾浩斯记忆曲线 + 错词当场重现 + 数据收口 + 错误分类提示；无章节、无每日上限）</b><br>
               基于官方 Qwerty Learner 源码（commit 1182426）自行构建：练习页不再有章节选择，直接按记忆曲线随机出词；官方打字/默写/音标/音效/错题本/数据统计/词库画廊/设置等功能全部保留；v1~v6 的增强功能收纳到顶栏「工具」全屏页。本地魔改由 dsh 完成，不跟随官方更新。
             </div>
           </div>
@@ -1185,6 +1219,8 @@
               v3 学习层：错词本一键重练（答对自动移出）· 键位热力图 + 慢词榜 + 错误键榜<br>
               v7 记忆曲线：当前词库整本作为词池、无章节；到期复习词与未学词随机混排；艾宾浩斯间隔阶梯（10 分钟 → 1 天 → 4 天 → 15 天 …）；答错回到 10 分钟档；一批练完自动续批、无需重新按键；没有每日新词上限，随时背随时退；旧版学习记录自动导入<br>
               v8 复习增强：答错的词在本次练习内隔 3 个词强制再练一次（同一词最多 2 次），答对只刷新记忆、不延长间隔；随机回顾词会标注「随机回顾」，错词重练会标注「再练一次」<br>
+              v8.1 数据收口：数据页的错词/键位/慢词/时长统一读官方 RecordDB；新增学习报告（掌握度分布 + 未来 7 天到期）<br>
+              v8.2 错误提示：打错时按「漏字 / 重复 / 大小写 / 错字」在单词下方提示正确字母约 1.8 秒<br>
               v5 词库层：内置 385 词库搜索/收藏/最近/分类 + 设为当前 · GitHub 官方词库在线更新（逐个下载、SHA 比对、可回滚）· 当前词库发音预缓存（美/英音、续传、暂停/继续/取消、失败重试）
             </div>
           </div>
@@ -1405,6 +1441,16 @@
       }).join('');
     }
     if ($('#in-goal') && document.activeElement !== $('#in-goal')) $('#in-goal').value = s.goal;
+    // v8.1：学习报告（掌握度分布 + 未来 7 天到期）
+    const mem = s.memory || { learned: 0, buckets: { short: 0, mid: 0, long: 0 }, dueDays: [] };
+    if ($('#rp-learned')) {
+      $('#rp-learned').textContent = fmtNum(mem.learned || 0);
+      $('#rp-short').textContent = fmtNum((mem.buckets && mem.buckets.short) || 0);
+      $('#rp-mid').textContent = fmtNum((mem.buckets && mem.buckets.mid) || 0);
+      $('#rp-long').textContent = fmtNum((mem.buckets && mem.buckets.long) || 0);
+      const dueText = (mem.dueDays || []).map((d) => `${String(d.date).slice(5)} ${d.count}`).join(' · ');
+      $('#rp-due').textContent = '未来 7 天到期：' + (dueText || '-');
+    }
   }
   async function refreshStatsUI() {
     try {
@@ -3022,7 +3068,7 @@
     refreshReviewBadge().catch(() => {});
     renderStatsToPanel(appStats || { today: TODAY(), words: 0, goal: settings.dailyGoal, streak: 0, ratio: 0, totalWords: 0, wrongWords: [], heat: [], source: 'none' });
     pomoRender();
-    console.log('[QZ-ENHANCE] UI injected, version', settings.version || '1.0.0-enhanced-v8.1');
+    console.log('[QZ-ENHANCE] UI injected, version', settings.version || '1.0.0-enhanced-v8.2');
   }
   init();
 

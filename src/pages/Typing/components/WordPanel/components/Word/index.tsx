@@ -50,7 +50,15 @@ export default function WordComponent({ word, onFinish }: { word: Word; onFinish
   const currentChapter = useAtomValue(currentChapterAtom)
 
   const [showTipAlert, setShowTipAlert] = useState(false)
+  const [wrongHint, setWrongHint] = useState('')
   const wordPronunciationIconRef = useRef<WordPronunciationIconRef>(null)
+
+  // v8.1：错误分类提示（漏字/重复/错字/大小写），显示约 1.8 秒
+  useEffect(() => {
+    if (!wrongHint) return
+    const timer = setTimeout(() => setWrongHint(''), 1800)
+    return () => clearTimeout(timer)
+  }, [wrongHint])
 
   useEffect(() => {
     // run only when word changes
@@ -210,6 +218,24 @@ export default function WordComponent({ word, onFinish }: { word: Word; onFinish
     } else {
       // 出错时
       playBeepSound()
+      // v8.1：按「期望字母 / 实际输入」给出错误分类提示
+      const expectedChar = wordState.displayWord[inputLength - 1] || ''
+      const nextChar = wordState.displayWord[inputLength] || ''
+      const prevChar = wordState.displayWord[inputLength - 2] || ''
+      const typedChar = inputChar || ''
+      let hint = ''
+      if (expectedChar) {
+        if (typedChar && nextChar && typedChar.toLowerCase() === nextChar.toLowerCase()) {
+          hint = `漏掉了「${expectedChar}」`
+        } else if (typedChar && prevChar && typedChar.toLowerCase() === prevChar.toLowerCase()) {
+          hint = `重复输入了「${typedChar}」`
+        } else if (typedChar && typedChar.toLowerCase() === expectedChar.toLowerCase()) {
+          hint = `注意大小写：应为「${expectedChar}」`
+        } else {
+          hint = `应为「${expectedChar}」，你输入了「${typedChar}」`
+        }
+      }
+      setWrongHint(hint)
       setWordState((state) => {
         state.letterStates[inputLength - 1] = 'wrong'
         state.hasWrong = true
@@ -314,6 +340,11 @@ export default function WordComponent({ word, onFinish }: { word: Word; onFinish
             </div>
           )}
         </div>
+        {wrongHint && (
+          <div className="mt-3 text-center text-sm font-medium text-red-500 transition-opacity duration-200 dark:text-red-400">
+            {wrongHint}
+          </div>
+        )}
       </div>
       <TipAlert className="fixed bottom-10 right-3" show={showTipAlert} setShow={setShowTipAlert} />
     </>
