@@ -7,12 +7,13 @@ import { useCallback, useMemo } from 'react'
 
 export type TranslationProps = {
   trans: string
+  title?: string
   showTrans?: boolean
   onMouseEnter?: () => void
   onMouseLeave?: () => void
 }
 
-export default function Translation({ trans, showTrans = true, onMouseEnter, onMouseLeave }: TranslationProps) {
+export default function Translation({ trans, title, showTrans = true, onMouseEnter, onMouseLeave }: TranslationProps) {
   const pronunciationConfig = useAtomValue(pronunciationConfigAtom)
   const fontSizeConfig = useAtomValue(fontSizeConfigAtom)
   const isShowTransRead = window.speechSynthesis && pronunciationConfig.isTransRead
@@ -27,7 +28,8 @@ export default function Translation({ trans, showTrans = true, onMouseEnter, onM
   return (
     <div className={`flex items-center justify-center  pb-4 pt-5`} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
       <span
-        className={`max-w-4xl text-center font-sans transition-colors duration-300 dark:text-white dark:text-opacity-80 ${
+        title={title || trans}
+        className={`max-w-[30rem] truncate text-center font-sans transition-colors duration-300 dark:text-white dark:text-opacity-80 ${
           isShowTransRead && 'pl-8'
         } ${isTextSelectable && 'select-text'}`}
         style={{ fontSize: fontSizeConfig.translateFont.toString() + 'px' }}

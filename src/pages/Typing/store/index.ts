@@ -38,6 +38,7 @@ export const initialUserInputLog: UserInputLog = {
 
 export enum TypingStateActionType {
   SETUP_CHAPTER = 'SETUP_CHAPTER',
+  PUSH_WORD = 'PUSH_WORD',
   SET_IS_SKIP = 'SET_IS_SKIP',
   SET_IS_TYPING = 'SET_IS_TYPING',
   TOGGLE_IS_TYPING = 'TOGGLE_IS_TYPING',
@@ -63,6 +64,7 @@ export enum TypingStateActionType {
 
 export type TypingStateAction =
   | { type: TypingStateActionType.SETUP_CHAPTER; payload: { words: WordWithIndex[]; shouldShuffle: boolean; initialIndex?: number } }
+  | { type: TypingStateActionType.PUSH_WORD; payload: WordWithIndex }
   | { type: TypingStateActionType.SET_IS_SKIP; payload: boolean }
   | { type: TypingStateActionType.SET_IS_TYPING; payload: boolean }
   | { type: TypingStateActionType.TOGGLE_IS_TYPING }
@@ -103,6 +105,12 @@ export const typingReducer = (state: TypingState, action: TypingStateAction) => 
       newState.chapterData.userInputLogs = words.map((_, index) => ({ ...structuredClone(initialUserInputLog), index }))
 
       return newState
+    }
+    case TypingStateActionType.PUSH_WORD: {
+      const index = state.chapterData.words.length
+      state.chapterData.words.push({ ...action.payload, index })
+      state.chapterData.userInputLogs.push({ ...structuredClone(initialUserInputLog), index })
+      break
     }
     case TypingStateActionType.SET_IS_SKIP:
       state.isShowSkip = action.payload

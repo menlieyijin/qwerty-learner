@@ -3,11 +3,11 @@ import DictRequest from './DictRequest'
 import { LanguageTabSwitcher } from './LanguageTabSwitcher'
 import Layout from '@/components/Layout'
 import { dictionaries } from '@/resources/dictionary'
-import { currentDictInfoAtom } from '@/store'
+import { currentDictInfoAtom, learningModeAtom } from '@/store'
 import type { Dictionary, LanguageCategoryType } from '@/typings'
 import groupBy, { groupByDictTags } from '@/utils/groupBy'
 import * as ScrollArea from '@radix-ui/react-scroll-area'
-import { useAtomValue } from 'jotai'
+import { useAtomValue, useSetAtom } from 'jotai'
 import { createContext, useCallback, useEffect, useMemo } from 'react'
 import { useHotkeys } from 'react-hotkeys-hook'
 import { useNavigate } from 'react-router-dom'
@@ -50,6 +50,12 @@ export default function GalleryPage() {
     navigate('/')
   }, [navigate])
 
+  const setLearningMode = useSetAtom(learningModeAtom)
+  const goAuto = useCallback(() => {
+    setLearningMode('auto')
+    navigate('/')
+  }, [navigate, setLearningMode])
+
   useHotkeys('enter,esc', onBack, { preventDefault: true })
 
   useEffect(() => {
@@ -65,6 +71,12 @@ export default function GalleryPage() {
       <GalleryContext.Provider value={{ state: galleryState, setState: setGalleryState }}>
         <div className="relative mb-auto mt-auto flex w-full flex-1 flex-col overflow-y-auto pl-20">
           <IconX className="absolute right-20 top-10 mr-2 h-7 w-7 cursor-pointer text-gray-400" onClick={onBack} />
+          <button
+            className="absolute left-20 top-10 rounded-full border border-indigo-300 bg-white px-4 py-1.5 text-sm text-indigo-600 shadow-sm hover:bg-indigo-50 dark:border-indigo-500 dark:bg-gray-800 dark:text-indigo-300"
+            onClick={goAuto}
+          >
+            ← 自动进阶（按词汇水平）
+          </button>
           <div className="mt-20 flex w-full flex-1 flex-col items-center justify-center overflow-y-auto">
             <div className="flex h-full flex-col overflow-y-auto">
               <div className="flex h-20 w-full items-center justify-between pb-6 pr-20">

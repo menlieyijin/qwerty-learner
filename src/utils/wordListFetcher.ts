@@ -1,9 +1,9 @@
 import type { Word } from '@/typings'
 
 export async function wordListFetcher(url: string): Promise<Word[]> {
-  const URL_PREFIX: string = REACT_APP_DEPLOY_ENV === 'pages' ? '/qwerty-learner' : ''
-
-  const response = await fetch(URL_PREFIX + url)
+  // Electron 下页面通过 file:// 加载，词库地址必须使用相对路径
+  const target = url.startsWith('/') ? '.' + url : url
+  const response = await fetch(target)
   const words: Word[] = await response.json()
   return words
 }

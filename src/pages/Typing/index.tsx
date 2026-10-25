@@ -1,11 +1,10 @@
 import Layout from '../../components/Layout'
-import { DictChapterButton } from './components/DictChapterButton'
+import { DictButton } from './components/DictButton'
+import { EnhanceButton } from './components/EnhanceButton'
 import PronunciationSwitcher from './components/PronunciationSwitcher'
 import ResultScreen from './components/ResultScreen'
-import Speed from './components/Speed'
 import StartButton from './components/StartButton'
 import Switcher from './components/Switcher'
-import WordList from './components/WordList'
 import WordPanel from './components/WordPanel'
 import { useConfetti } from './hooks/useConfetti'
 import { useWordList } from './hooks/useWordList'
@@ -14,22 +13,20 @@ import { DonateCard } from '@/components/DonateCard'
 import Header from '@/components/Header'
 import Tooltip from '@/components/Tooltip'
 import { idDictionaryMap } from '@/resources/dictionary'
-import { currentChapterAtom, currentDictIdAtom, isReviewModeAtom, randomConfigAtom, reviewModeInfoAtom } from '@/store'
+import { currentDictIdAtom, isReviewModeAtom, randomConfigAtom, reviewModeInfoAtom } from '@/store'
 import { IsDesktop, isLegal } from '@/utils'
 import { useSaveChapterRecord } from '@/utils/db'
 import { useMixPanelChapterLogUploader } from '@/utils/mixpanel'
-import { useAtom, useAtomValue, useSetAtom } from 'jotai'
+import { useAtom, useAtomValue } from 'jotai'
 import type React from 'react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { useImmerReducer } from 'use-immer'
 
 const App: React.FC = () => {
   const [state, dispatch] = useImmerReducer(typingReducer, structuredClone(initialState))
-  const [isLoading, setIsLoading] = useState<boolean>(true)
-  const { words } = useWordList()
+  const { words, isLoading, nextWord } = useWordList()
 
   const [currentDictId, setCurrentDictId] = useAtom(currentDictIdAtom)
-  const setCurrentChapter = useSetAtom(currentChapterAtom)
   const randomConfig = useAtomValue(randomConfigAtom)
   const chapterLogUploader = useMixPanelChapterLogUploader(state)
   const saveChapterRecord = useSaveChapterRecord()
@@ -48,40 +45,53 @@ const App: React.FC = () => {
     }
   }, [])
 
-  // 在组件挂载和currentDictId改变时，检查当前字典是否存在，如果不存在，则将其重置为默认值
+  // 当前词库不存在时重置为默认词库
   useEffect(() => {
-    const id = currentDictId
-    if (!(id in idDictionaryMap)) {
+    if (!(currentDictId in idDictionaryMap)) {
       setCurrentDictId('cet4')
-      setCurrentChapter(0)
-      return
     }
-  }, [currentDictId, setCurrentChapter, setCurrentDictId])
+  }, [currentDictId, setCurrentDictId])
 
   const skipWord = useCallback(() => {
     dispatch({ type: TypingStateActionType.SKIP_WORD })
   }, [dispatch])
 
+  // 开始/继续时缓存按键，等输入监听挂载后重放，避免「第一下按键」被吞掉
+  const startBufferRef = useRef<string[]>([])
+
+  useEffect(() => {
+    if (!state.isTyping) return
+    const buffer = startBufferRef.current
+    if (!buffer.length) return
+    startBufferRef.current = []
+    const timers = buffer.map((key, i) =>
+      window.setTimeout(() => {
+        window.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }))
+      }, 20 * (i + 1)),
+    )
+    return () => timers.forEach((t) => clearTimeout(t))
+  }, [state.isTyping])
+
   useEffect(() => {
     const onBlur = () => {
-      dispatch({ type: TypingStateActionType.SET_IS_TYPING, payload: false })
+      // 首次打开时窗口可能尚未聚焦，不要立刻暂停；开始练习后再按失焦暂停
+      if (state.chapterData.wordCount > 0) {
+        dispatch({ type: TypingStateActionType.SET_IS_TYPING, payload: false })
+      }
     }
     window.addEventListener('blur', onBlur)
 
     return () => {
       window.removeEventListener('blur', onBlur)
     }
-  }, [dispatch])
+  }, [dispatch, state.chapterData.wordCount])
 
   useEffect(() => {
-    state.chapterData.words?.length > 0 ? setIsLoading(false) : setIsLoading(true)
-  }, [state.chapterData.words])
-
-  useEffect(() => {
-    if (!state.isTyping) {
+    if (!state.isTyping && !isLoading) {
       const onKeyDown = (e: KeyboardEvent) => {
-        if (!isLoading && e.key !== 'Enter' && (isLegal(e.key) || e.key === ' ') && !e.altKey && !e.ctrlKey && !e.metaKey) {
+        if (e.key !== 'Enter' && (isLegal(e.key) || e.key === ' ') && !e.altKey && !e.ctrlKey && !e.metaKey) {
           e.preventDefault()
+          startBufferRef.current.push(e.key)
           dispatch({ type: TypingStateActionType.SET_IS_TYPING, payload: true })
         }
       }
@@ -92,29 +102,25 @@ const App: React.FC = () => {
   }, [state.isTyping, isLoading, dispatch])
 
   useEffect(() => {
-    if (words !== undefined) {
+    if (words.length > 0) {
       const initialIndex = isReviewMode && reviewModeInfo.reviewRecord?.index ? reviewModeInfo.reviewRecord.index : 0
-
       dispatch({
         type: TypingStateActionType.SETUP_CHAPTER,
-        payload: { words, shouldShuffle: randomConfig.isOpen, initialIndex },
+        payload: { words, shouldShuffle: false, initialIndex },
       })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [words])
 
   useEffect(() => {
-    // 当用户完成章节后且完成 word Record 数据保存，记录 chapter Record 数据,
     if (state.isFinished && !state.isSavingRecord) {
       chapterLogUploader()
       saveChapterRecord(state)
     }
-
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.isFinished, state.isSavingRecord])
 
   useEffect(() => {
-    // 启动计时器
     let intervalId: number
     if (state.isTyping) {
       intervalId = window.setInterval(() => {
@@ -124,17 +130,18 @@ const App: React.FC = () => {
     return () => clearInterval(intervalId)
   }, [state.isTyping, dispatch])
 
-  useConfetti(state.isFinished)
+  useConfetti(isReviewMode && state.isFinished)
 
   return (
     <TypingContext.Provider value={{ state: state, dispatch }}>
-      {state.isFinished && <DonateCard />}
-      {state.isFinished && <ResultScreen />}
+      {state.isFinished && isReviewMode && <DonateCard />}
+      {state.isFinished && isReviewMode && <ResultScreen />}
       <Layout>
         <Header>
-          <DictChapterButton />
+          <DictButton />
           <PronunciationSwitcher />
           <Switcher />
+          <EnhanceButton />
           <StartButton isLoading={isLoading} />
           <Tooltip content="跳过该词">
             <button
@@ -148,24 +155,20 @@ const App: React.FC = () => {
           </Tooltip>
         </Header>
         <div className="container mx-auto flex h-full flex-1 flex-col items-center justify-center pb-5">
-          <div className="container relative mx-auto flex h-full flex-col items-center">
-            <div className="container flex flex-grow items-center justify-center">
-              {isLoading ? (
-                <div className="flex flex-col items-center justify-center ">
-                  <div
-                    className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid  border-indigo-400 border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"
-                    role="status"
-                  ></div>
-                </div>
-              ) : (
-                !state.isFinished && <WordPanel />
-              )}
-            </div>
-            <Speed />
+          <div className="container flex flex-grow items-center justify-center">
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center ">
+                <div
+                  className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid  border-indigo-400 border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"
+                  role="status"
+                ></div>
+              </div>
+            ) : (
+              !state.isFinished && <WordPanel onNeedNextWord={isReviewMode ? undefined : nextWord} />
+            )}
           </div>
         </div>
       </Layout>
-      <WordList />
     </TypingContext.Provider>
   )
 }

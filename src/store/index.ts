@@ -17,6 +17,10 @@ import { atom } from 'jotai'
 import { atomWithStorage } from 'jotai/utils'
 
 export const currentDictIdAtom = atomWithStorage('currentDict', 'cet4')
+/** v7：自动进阶（默认）或手动选择词库 */
+export const learningModeAtom = atomWithStorage<'auto' | 'manual'>('learningMode', 'auto')
+export type AutoLevelInfo = { id: string; name: string; index: number; unseen: number; total: number; done: boolean }
+export const autoLevelInfoAtom = atom<AutoLevelInfo | null>(null)
 export const currentDictInfoAtom = atom<Dictionary>((get) => {
   const id = get(currentDictIdAtom)
   let dict = idDictionaryMap[id]

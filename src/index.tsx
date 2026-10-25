@@ -5,7 +5,6 @@ import { FriendLinks } from './pages/FriendLinks'
 import MobilePage from './pages/Mobile'
 import TypingPage from './pages/Typing'
 import { isOpenDarkModeAtom } from '@/store'
-import { Analytics } from '@vercel/analytics/react'
 import 'animate.css'
 import { useAtomValue } from 'jotai'
 import mixpanel from 'mixpanel-browser'
@@ -13,7 +12,7 @@ import process from 'process'
 import React, { Suspense, lazy, useEffect, useState } from 'react'
 import 'react-app-polyfill/stable'
 import { createRoot } from 'react-dom/client'
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 
 const AnalysisPage = lazy(() => import('./pages/Analysis'))
 const GalleryPage = lazy(() => import('./pages/Gallery-N'))
@@ -49,7 +48,7 @@ function Root() {
 
   return (
     <React.StrictMode>
-      <BrowserRouter basename={REACT_APP_DEPLOY_ENV === 'pages' ? '/qwerty-learner' : ''}>
+      <HashRouter>
         <Suspense fallback={<Loading />}>
           <Routes>
             {isMobile ? (
@@ -67,12 +66,27 @@ function Root() {
             <Route path="/mobile" element={<MobilePage />} />
           </Routes>
         </Suspense>
-      </BrowserRouter>
-      <Analytics />
+      </HashRouter>
     </React.StrictMode>
   )
 }
 
 const container = document.getElementById('root')
+
+// v7 简洁布局：首次升级时把旧版过大的字号收敛到合适大小（之后仍可在设置里调整）
+try {
+  if (!localStorage.getItem('v7FontAdjusted')) {
+    const raw = localStorage.getItem('fontsize')
+    if (raw) {
+      const f = JSON.parse(raw)
+      if (f && (Number(f.translateFont) > 30 || Number(f.foreignFont) > 80)) {
+        localStorage.setItem('fontsize', JSON.stringify({ foreignFont: 64, translateFont: 22 }))
+      }
+    }
+    localStorage.setItem('v7FontAdjusted', '1')
+  }
+} catch {
+  /* ignore */
+}
 
 container && createRoot(container).render(<Root />)

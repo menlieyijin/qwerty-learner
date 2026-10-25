@@ -1,90 +1,135 @@
-import { CHAPTER_LENGTH } from '@/constants'
-import { currentChapterAtom, currentDictInfoAtom, reviewModeInfoAtom } from '@/store'
+import { autoLevelInfoAtom, currentDictInfoAtom, learningModeAtom, reviewModeInfoAtom } from '@/store'
 import type { Word, WordWithIndex } from '@/typings/index'
+import { ensureMemoryMigrated, getMemoryRecords, normalizeWordName, pickDynamicWord } from '@/utils/memory'
 import { wordListFetcher } from '@/utils/wordListFetcher'
-import { useAtom, useAtomValue } from 'jotai'
-import { useMemo } from 'react'
-import useSWR from 'swr'
+import { useAtomValue, useSetAtom } from 'jotai'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 export type UseWordListResult = {
   words: WordWithIndex[]
   isLoading: boolean
   error: Error | undefined
+  nextWord: (answered?: Word) => Promise<WordWithIndex | null>
+}
+
+function toIndexWord(word: Word, dict?: string, index = 0): WordWithIndex {
+  let trans: string[]
+  if (Array.isArray(word.trans)) trans = word.trans.filter((item) => typeof item === 'string')
+  else if (word.trans == null) trans = []
+  else trans = [String(word.trans)]
+  return { ...word, trans, dict: dict || word.dict, index }
 }
 
 /**
- * Use word lists from the current selected dictionary.
+ * v7 动态出词：
+ * - 不预生成词表；每次答完当前词后，根据最新记忆曲线数据动态选取下一个词；
+ * - 自动进阶模式下按小学→初中→高中→四六级顺序，挑选当前水平的未学词；
+ * - 跨词库按单词去重；到期词与未到期词随机回顾混合。
  */
 export function useWordList(): UseWordListResult {
   const currentDictInfo = useAtomValue(currentDictInfoAtom)
-  const [currentChapter, setCurrentChapter] = useAtom(currentChapterAtom)
+  const learningMode = useAtomValue(learningModeAtom)
   const { isReviewMode, reviewRecord } = useAtomValue(reviewModeInfoAtom)
+  const setLevelInfo = useSetAtom(autoLevelInfoAtom)
+  const [words, setWords] = useState<WordWithIndex[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error] = useState<Error | undefined>(undefined)
+  const recentRef = useRef<string[]>([])
+  const manualWordsRef = useRef<Word[] | null>(null)
+  const reviewWords = reviewRecord?.words
 
-  // Reset current chapter to 0, when currentChapter is greater than chapterCount.
-  if (currentChapter >= currentDictInfo.chapterCount) {
-    setCurrentChapter(0)
-  }
-
-  const isFirstChapter = !isReviewMode && currentDictInfo.id === 'cet4' && currentChapter === 0
-  const { data: wordList, error, isLoading } = useSWR(currentDictInfo.url, wordListFetcher)
-
-  const words: WordWithIndex[] = useMemo(() => {
-    let newWords: Word[]
-    if (isFirstChapter) {
-      newWords = firstChapter
-    } else if (isReviewMode) {
-      newWords = reviewRecord?.words ?? []
-    } else if (wordList) {
-      newWords = wordList.slice(currentChapter * CHAPTER_LENGTH, (currentChapter + 1) * CHAPTER_LENGTH)
-    } else {
-      newWords = []
+  useEffect(() => {
+    let cancelled = false
+    recentRef.current = []
+    if (isReviewMode) {
+      setWords((reviewWords ?? []).map((w) => toIndexWord(w)))
+      setIsLoading(false)
+      return
     }
-
-    // 记录原始 index, 并对 word.trans 做兜底处理
-    return newWords.map((word, index) => {
-      let trans: string[]
-      if (Array.isArray(word.trans)) {
-        trans = word.trans.filter((item) => typeof item === 'string')
-      } else if (word.trans === null || word.trans === undefined || typeof word.trans === 'object') {
-        trans = []
-      } else {
-        trans = [String(word.trans)]
+    setIsLoading(true)
+    setWords([])
+    setLevelInfo(null)
+    ;(async () => {
+      try {
+        await ensureMemoryMigrated()
+        let manualWords: Word[] | undefined
+        if (learningMode === 'manual') {
+          try {
+            manualWords = (await wordListFetcher(currentDictInfo.url)).map((w) => toIndexWord(w))
+            manualWordsRef.current = manualWords
+          } catch (e) {
+            console.error('load manual dict failed', e)
+          }
+        } else {
+          manualWordsRef.current = null
+        }
+        const records = await getMemoryRecords()
+        const pick = await pickDynamicWord({
+          records,
+          recent: [],
+          mode: learningMode,
+          manualDict: currentDictInfo.id,
+          manualWords,
+        })
+        if (cancelled) return
+        if (pick) {
+          setWords([toIndexWord(pick.word, pick.dict)])
+          setLevelInfo(pick.level)
+        } else {
+          setWords([])
+          setLevelInfo(null)
+        }
+      } catch (e) {
+        console.error('initial word failed', e)
+        if (!cancelled) setWords([])
+      } finally {
+        if (!cancelled) setIsLoading(false)
       }
-      return {
-        ...word,
-        index,
-        trans,
-      }
-    })
-  }, [isFirstChapter, isReviewMode, wordList, reviewRecord?.words, currentChapter])
+    })()
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isReviewMode, reviewWords, learningMode, currentDictInfo.id])
 
-  return { words, isLoading, error }
+  const nextWord = useCallback(
+    async (answered?: Word): Promise<WordWithIndex | null> => {
+      if (answered) {
+        const n = normalizeWordName(answered.name)
+        const list = recentRef.current.filter((x) => x !== n)
+        list.push(n)
+        recentRef.current = list.slice(-12)
+      }
+      try {
+        await ensureMemoryMigrated()
+        const records = await getMemoryRecords()
+        let manualWords = manualWordsRef.current
+        if (learningMode === 'manual' && !manualWords) {
+          try {
+            manualWords = (await wordListFetcher(currentDictInfo.url)).map((w) => toIndexWord(w))
+            manualWordsRef.current = manualWords
+          } catch { /* ignore */ }
+        }
+        const pick = await pickDynamicWord({
+          records,
+          recent: recentRef.current,
+          mode: learningMode,
+          manualDict: currentDictInfo.id,
+          manualWords: manualWords || undefined,
+        })
+        if (!pick) {
+          setLevelInfo(null)
+          return null
+        }
+        setLevelInfo(pick.level)
+        return toIndexWord(pick.word, pick.dict)
+      } catch (e) {
+        console.error('next word failed', e)
+        return null
+      }
+    },
+    [currentDictInfo.id, learningMode, setLevelInfo],
+  )
+
+  return { words, isLoading, error, nextWord }
 }
-
-const firstChapter = [
-  { name: 'cancel', trans: ['取消， 撤销； 删去'], usphone: "'kænsl", ukphone: "'kænsl" },
-  { name: 'explosive', trans: ['爆炸的； 极易引起争论的', '炸药'], usphone: "ɪk'splosɪv; ɪk'splozɪv", ukphone: "ɪk'spləusɪv" },
-  { name: 'numerous', trans: ['众多的'], usphone: "'numərəs", ukphone: "'njuːmərəs" },
-  { name: 'govern', trans: ['居支配地位， 占优势', '统治，治理，支配'], usphone: "'ɡʌvɚn", ukphone: "'gʌvn" },
-  { name: 'analyse', trans: ['分析； 分解； 解析'], usphone: "'æn(ə)laɪz", ukphone: "'ænəlaɪz" },
-  { name: 'discourage', trans: ['使泄气， 使灰心； 阻止， 劝阻'], usphone: "dɪs'kɝɪdʒ", ukphone: "dɪs'kʌrɪdʒ" },
-  { name: 'resemble', trans: ['像， 类似于'], usphone: "rɪ'zɛmbl", ukphone: "rɪ'zembl" },
-  {
-    name: 'remote',
-    trans: ['遥远的； 偏僻的； 关系疏远的； 脱离的； 微乎其微的； 孤高的， 冷淡的； 遥控的'],
-    usphone: "rɪ'mot",
-    ukphone: "rɪ'məut",
-  },
-  { name: 'salary', trans: ['薪金， 薪水'], usphone: "'sæləri", ukphone: "'sæləri" },
-  { name: 'pollution', trans: ['污染， 污染物'], usphone: "pə'luʃən", ukphone: "pə'luːʃn" },
-  { name: 'pretend', trans: ['装作， 假装'], usphone: "prɪ'tɛnd", ukphone: "prɪ'tend" },
-  { name: 'kettle', trans: ['水壶'], usphone: "'kɛtl", ukphone: "'ketl" },
-  { name: 'wreck', trans: ['失事；残骸；精神或身体已垮的人', '破坏'], usphone: 'rɛk', ukphone: 'rek' },
-  { name: 'drunk', trans: ['醉的； 陶醉的'], usphone: 'drʌŋk', ukphone: 'drʌŋk' },
-  { name: 'calculate', trans: ['计算； 估计； 计划'], usphone: "'kælkjulet", ukphone: "'kælkjuleɪt" },
-  { name: 'persistent', trans: ['坚持的， 不屈不挠的； 持续不断的； 反复出现的'], usphone: "pə'zɪstənt", ukphone: "pə'sɪstənt" },
-  { name: 'sake', trans: ['缘故， 理由'], usphone: 'sek', ukphone: 'seɪk' },
-  { name: 'conceal', trans: ['把…隐藏起来， 掩盖， 隐瞒'], usphone: "kən'sil", ukphone: "kən'siːl" },
-  { name: 'audience', trans: ['听众， 观众， 读者'], usphone: "'ɔdɪəns", ukphone: "'ɔːdiəns" },
-  { name: 'meanwhile', trans: ['与此同时'], usphone: "'minwaɪl", ukphone: "'miːnwaɪl" },
-]

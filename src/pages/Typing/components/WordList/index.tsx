@@ -2,7 +2,7 @@ import { TypingContext, TypingStateActionType } from '../../store'
 import WordCard from './WordCard'
 import Drawer from '@/components/Drawer'
 import Tooltip from '@/components/Tooltip'
-import { currentChapterAtom, currentDictInfoAtom, isReviewModeAtom } from '@/store'
+import { currentDictInfoAtom, isReviewModeAtom } from '@/store'
 import { Dialog } from '@headlessui/react'
 import * as ScrollArea from '@radix-ui/react-scroll-area'
 import { atom, useAtomValue } from 'jotai'
@@ -12,12 +12,9 @@ import IconX from '~icons/tabler/x'
 
 const currentDictTitle = atom((get) => {
   const isReviewMode = get(isReviewModeAtom)
-
-  if (isReviewMode) {
-    return `${get(currentDictInfoAtom).name} 错题复习`
-  } else {
-    return `${get(currentDictInfoAtom).name} 第 ${get(currentChapterAtom) + 1} 章`
-  }
+  const dictName = get(currentDictInfoAtom).name
+  // v7：不再按章节，词表展示为「本轮词表」/「错题复习」
+  return isReviewMode ? `${dictName} 错题复习` : `${dictName} 本轮词表`
 })
 
 export default function WordList() {

@@ -264,12 +264,15 @@ export default function WordComponent({ word, onFinish }: { word: Word; onFinish
       // })
       saveWordRecord({
         word: word.name,
+        dict: word.dict,
+        trans: Array.isArray(word.trans) ? word.trans : word.trans ? [String(word.trans)] : [],
+        phone: word.usphone || word.ukphone || '',
         wrongCount: wordState.wrongCount,
         letterTimeArray: wordState.letterTimeArray,
         letterMistake: wordState.letterMistake,
+      }).then(() => {
+        onFinish()
       })
-
-      onFinish()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wordState.isFinished])

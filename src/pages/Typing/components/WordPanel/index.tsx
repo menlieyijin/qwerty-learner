@@ -7,12 +7,16 @@ import Translation from './components/Translation'
 import WordComponent from './components/Word'
 import { usePrefetchPronunciationSound } from '@/hooks/usePronunciation'
 import { isReviewModeAtom, isShowPrevAndNextWordAtom, loopWordConfigAtom, phoneticConfigAtom, reviewModeInfoAtom } from '@/store'
-import type { Word } from '@/typings'
+import type { Word, WordWithIndex } from '@/typings'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { useCallback, useContext, useMemo, useState } from 'react'
 import { useHotkeys } from 'react-hotkeys-hook'
 
-export default function WordPanel() {
+export default function WordPanel({
+  onNeedNextWord,
+}: {
+  onNeedNextWord?: (answered: Word) => Promise<WordWithIndex | null>
+}) {
   // eslint-disable-next-line  @typescript-eslint/no-non-null-assertion
   const { state, dispatch } = useContext(TypingContext)!
   const phoneticConfig = useAtomValue(phoneticConfigAtom)
@@ -51,36 +55,48 @@ export default function WordPanel() {
     [setReviewModeInfo],
   )
 
-  const onFinish = useCallback(() => {
-    if (state.chapterData.index < state.chapterData.words.length - 1 || currentWordExerciseCount < loopWordTimes - 1) {
-      // 用户完成当前单词
-      if (currentWordExerciseCount < loopWordTimes - 1) {
-        setCurrentWordExerciseCount((old) => old + 1)
-        dispatch({ type: TypingStateActionType.LOOP_CURRENT_WORD })
+  const onFinish = useCallback(async () => {
+    // 单曲循环：同一个词重复练习
+    if (currentWordExerciseCount < loopWordTimes - 1) {
+      setCurrentWordExerciseCount((old) => old + 1)
+      dispatch({ type: TypingStateActionType.LOOP_CURRENT_WORD })
+      reloadCurrentWordComponent()
+      return
+    }
+    setCurrentWordExerciseCount(0)
+    const isLast = state.chapterData.index >= state.chapterData.words.length - 1
+    // v7 动态出词：最后一个词练完时，基于最新记忆曲线数据实时取下一个词
+    if (isLast && !isReviewMode && onNeedNextWord && currentWord) {
+      const next = await onNeedNextWord(currentWord)
+      if (next) {
+        dispatch({ type: TypingStateActionType.PUSH_WORD, payload: next })
+        dispatch({ type: TypingStateActionType.NEXT_WORD })
         reloadCurrentWordComponent()
-      } else {
-        setCurrentWordExerciseCount(0)
-        if (isReviewMode) {
-          dispatch({
-            type: TypingStateActionType.NEXT_WORD,
-            payload: {
-              updateReviewRecord,
-            },
-          })
-        } else {
-          dispatch({ type: TypingStateActionType.NEXT_WORD })
-        }
+        return
       }
-    } else {
-      // 用户完成当前章节
-      dispatch({ type: TypingStateActionType.FINISH_CHAPTER })
+    }
+    if (!isLast) {
       if (isReviewMode) {
-        setReviewModeInfo((old) => ({ ...old, reviewRecord: old.reviewRecord ? { ...old.reviewRecord, isFinished: true } : undefined }))
+        dispatch({
+          type: TypingStateActionType.NEXT_WORD,
+          payload: {
+            updateReviewRecord,
+          },
+        })
+      } else {
+        dispatch({ type: TypingStateActionType.NEXT_WORD })
       }
+      return
+    }
+    // 用户完成当前章节（错题复习模式）
+    dispatch({ type: TypingStateActionType.FINISH_CHAPTER })
+    if (isReviewMode) {
+      setReviewModeInfo((old) => ({ ...old, reviewRecord: old.reviewRecord ? { ...old.reviewRecord, isFinished: true } : undefined }))
     }
   }, [
     state.chapterData.index,
     state.chapterData.words.length,
+    currentWord,
     currentWordExerciseCount,
     loopWordTimes,
     dispatch,
@@ -88,6 +104,7 @@ export default function WordPanel() {
     isReviewMode,
     updateReviewRecord,
     setReviewModeInfo,
+    onNeedNextWord,
   ])
 
   const onSkipWord = useCallback(
@@ -148,6 +165,13 @@ export default function WordPanel() {
     return isShowTranslation || state.isTransVisible
   }, [isShowTranslation, state.isTransVisible])
 
+  const fullTrans = useMemo(() => (currentWord?.trans || []).join('；'), [currentWord])
+  // 简洁模式：只显示第一条释义，过长截断（悬停可看完整释义）
+  const conciseTrans = useMemo(() => {
+    const first = String((currentWord?.trans || [])[0] || '').split(/[；;，,]/)[0]?.trim() || ''
+    return first.length > 30 ? first.slice(0, 30) + '…' : first
+  }, [currentWord])
+
   return (
     <div className="container flex h-full w-full flex-col items-center justify-center">
       <div className="container flex h-24 w-full shrink-0 grow-0 justify-between px-12 pt-10">
@@ -173,17 +197,20 @@ export default function WordPanel() {
             <div className="relative">
               <WordComponent word={currentWord} onFinish={onFinish} key={wordComponentKey} />
               {phoneticConfig.isOpen && <Phonetic word={currentWord} />}
-              <Translation
-                trans={currentWord.trans.join('；')}
-                showTrans={shouldShowTranslation}
-                onMouseEnter={() => handleShowTranslation(true)}
-                onMouseLeave={() => handleShowTranslation(false)}
-              />
+              {conciseTrans && (
+                <Translation
+                  trans={conciseTrans}
+                  title={fullTrans}
+                  showTrans={shouldShowTranslation}
+                  onMouseEnter={() => handleShowTranslation(true)}
+                  onMouseLeave={() => handleShowTranslation(false)}
+                />
+              )}
             </div>
           </div>
         )}
       </div>
-      <Progress className={`mb-10 mt-auto ${state.isTyping ? 'opacity-100' : 'opacity-0'}`} />
+      {isReviewMode && <Progress className={`mb-10 mt-auto ${state.isTyping ? 'opacity-100' : 'opacity-0'}`} />}
     </div>
   )
 }

@@ -12,7 +12,8 @@ export default function useGetWord(name: string, dict: Dictionary) {
 
     const word = wordList.find((word) => word.name === name)
     if (word) {
-      return word
+      const trans = Array.isArray(word.trans) ? word.trans : word.trans ? [String(word.trans)] : []
+      return { ...word, trans }
     } else {
       setHasError(true)
       return undefined

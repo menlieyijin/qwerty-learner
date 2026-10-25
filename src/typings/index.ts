@@ -25,6 +25,8 @@ export type Word = {
   usphone: string
   ukphone: string
   notation?: string
+  /** v7 记忆曲线：记录命名空间（自动进阶 auto:<levelId>，手动为词库 id） */
+  dict?: string
 }
 
 export type WordWithIndex = Word & {

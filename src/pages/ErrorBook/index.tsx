@@ -6,10 +6,15 @@ import Pagination, { ITEM_PER_PAGE } from './Pagination'
 import RowDetail from './RowDetail'
 import { currentRowDetailAtom } from './store'
 import type { groupedWordRecords } from './type'
+import { idDictionaryMap } from '@/resources/dictionary'
+import { currentDictIdAtom, reviewModeInfoAtom } from '@/store'
+import type { Word } from '@/typings'
 import { db, useDeleteWordRecord } from '@/utils/db'
 import type { WordRecord } from '@/utils/db/record'
+import { ReviewRecord } from '@/utils/db/record'
+import { wordListFetcher } from '@/utils/wordListFetcher'
 import * as ScrollArea from '@radix-ui/react-scroll-area'
-import { useAtomValue } from 'jotai'
+import { useAtomValue, useSetAtom } from 'jotai'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import IconX from '~icons/tabler/x'
@@ -21,6 +26,8 @@ export function ErrorBook() {
   const [sortType, setSortType] = useState<ISortType>('asc')
   const navigate = useNavigate()
   const currentRowDetail = useAtomValue(currentRowDetailAtom)
+  const currentDictId = useAtomValue(currentDictIdAtom)
+  const setReviewModeInfo = useSetAtom(reviewModeInfoAtom)
   const { deleteWordRecord } = useDeleteWordRecord()
   const [reload, setReload] = useState(false)
 
@@ -94,10 +101,40 @@ export function ErrorBook() {
     setReload((prev) => !prev)
   }
 
+  // v7：保留官方「错题回顾」功能，入口移到错题本（不再依赖词典章节弹窗）
+  const startWrongReview = useCallback(async () => {
+    const dict = idDictionaryMap[currentDictId] ?? idDictionaryMap.cet4
+    const groups = groupedRecords.filter((g) => g.dict === dict.id)
+    if (!groups.length) {
+      alert('当前词典还没有错题')
+      return
+    }
+    let list: Word[] = []
+    try {
+      list = await wordListFetcher(dict.url)
+    } catch {
+      alert('词库读取失败')
+      return
+    }
+    const words = groups.map((g) => list.find((w) => w.name === g.word)).filter(Boolean) as Word[]
+    if (!words.length) {
+      alert('没有可复习的错题')
+      return
+    }
+    setReviewModeInfo({ isReviewMode: true, reviewRecord: new ReviewRecord(dict.id, words) })
+    navigate('/')
+  }, [currentDictId, groupedRecords, navigate, setReviewModeInfo])
+
   return (
     <>
       <div className={`relative flex h-screen w-full flex-col items-center pb-4 ease-in ${currentRowDetail && 'blur-sm'}`}>
         <div className="mr-8 mt-4 flex w-auto items-center justify-center self-end">
+          <button
+            className="my-btn-primary mr-6 rounded-lg bg-indigo-500 px-4 py-1.5 text-sm text-white hover:bg-indigo-400"
+            onClick={startWrongReview}
+          >
+            错题回顾练习
+          </button>
           <h1 className="font-lighter mr-4 w-auto self-end text-gray-500 opacity-70">Tip: 点击错误单词查看详细信息 </h1>
           <IconX className="h-7 w-7 cursor-pointer text-gray-400" onClick={onBack} />
         </div>

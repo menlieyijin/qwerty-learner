@@ -170,6 +170,32 @@ export interface IRevisionWordRecord {
   errorCount: number
 }
 
+/** v7 记忆曲线记录（与官方 wordRecords 独立，不改动原有表结构） */
+export interface IMemoryRecord {
+  /** `${dict}::${word.toLowerCase()}` */
+  key: string
+  word: string
+  dict: string
+  /** 词义与音标（记忆曲线原生流程可直接展示，跨词库复习时无需再取词库） */
+  trans?: string[]
+  phone?: string
+  /** 艾宾浩斯阶梯索引 */
+  stage: number
+  /** 当前间隔（天） */
+  interval: number
+  ease: number
+  /** 下次到期时间（毫秒） */
+  due: number
+  lastSeen: number
+  createdAt: number
+  attempts: number
+  correct: number
+  wrong: number
+  slow: number
+  lapses: number
+  lastResult: 'ok' | 'wrong' | ''
+}
+
 export class RevisionWordRecord implements IRevisionWordRecord {
   word: string
   timeStamp: number

@@ -4155,6 +4155,65 @@ const indonesianDicts: DictionaryResource[] = [
   },
 ]
 
+//英语词典补充（官方最新仓库中已移除，但本地旧版词库仍保留）
+const extraDicts: DictionaryResource[] = [
+  {
+    id: 'google-10000-english',
+    name: 'Google 10000 高频词',
+    description: 'Google 万亿语料库 n-gram 频率分析，最常用的 10000 个英语单词',
+    category: '英语词典',
+    tags: ['高频词'],
+    url: '/dicts/google-10000-english.json',
+    length: 10000,
+    language: 'en',
+    languageCategory: 'en',
+  },
+  {
+    id: 'google-20000-english',
+    name: 'Google 20000 高频词',
+    description: 'Google 万亿语料库 n-gram 频率分析，最常用的 20000 个英语单词',
+    category: '英语词典',
+    tags: ['高频词'],
+    url: '/dicts/google-20000-english.json',
+    length: 20000,
+    language: 'en',
+    languageCategory: 'en',
+  },
+  {
+    id: 'NGSL',
+    name: 'NGSL 通用词表',
+    description: 'New General Service List，2798 个最高频通用英语词汇（覆盖 90% 日常英语）',
+    category: '英语词典',
+    tags: ['高频词'],
+    url: '/dicts/NGSL.json',
+    length: 2798,
+    language: 'en',
+    languageCategory: 'en',
+  },
+  {
+    id: 'NAWL',
+    name: 'NAWL 新学术词表',
+    description: 'New Academic Word List，963 个学术文本高频词汇',
+    category: '英语词典',
+    tags: ['学术'],
+    url: '/dicts/NAWL.json',
+    length: 963,
+    language: 'en',
+    languageCategory: 'en',
+  },
+  {
+    id: 'AWL',
+    name: 'AWL 学术词表',
+    description: 'Academic Word List，570 个学术词族（Coxhead 2000）',
+    category: '英语词典',
+    tags: ['学术'],
+    url: '/dicts/AWL.json',
+    length: 570,
+    language: 'en',
+    languageCategory: 'en',
+  },
+]
+
 /**
  * Built-in dictionaries in an array.
  * Why arrays? Because it keeps the order across browsers.
@@ -4168,6 +4227,7 @@ export const dictionaryResources: DictionaryResource[] = [
   ...germanExam,
   ...kazakhHapinDicts,
   ...indonesianDicts,
+  ...extraDicts,
 
   // {
   //   id: 'zhtest',
