@@ -194,6 +194,11 @@ export interface IMemoryRecord {
   slow: number
   lapses: number
   lastResult: 'ok' | 'wrong' | ''
+  /** v8.3 影子调度：自适应间隔（天），仅记录、暂不启用 */
+  shadowInterval?: number
+  /** v8.3 影子调度：自适应到期时间（毫秒） */
+  shadowDue?: number
+  shadowAt?: number
 }
 
 export class RevisionWordRecord implements IRevisionWordRecord {

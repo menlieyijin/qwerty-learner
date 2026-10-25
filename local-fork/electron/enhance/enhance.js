@@ -40,7 +40,7 @@
   const nowIso = () => new Date().toISOString();
   function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
 
-  let settings = { version: '1.0.0-enhanced-v8.2', dailyGoal: 30, dailyNewWords: 20, memoryReviewCap: 200, memoryAutoPron: false, theme: 'indigo', panelAppearance: 'auto', dictFavorites: [], dictRecent: {}, fontFamily: 'default', opacity: 1, zoom: 1, pomodoroFocus: 25, pomodoroBreak: 5, keySound: false, keySoundVolume: 0.25, clipboardWatch: false, onlineLookup: true, aiExperimental: false, pronCache: false, closeToTray: true, alwaysOnTop: false, miniMode: false, todayStats: {} };
+  let settings = { version: '1.0.0-enhanced-v8.3', dailyGoal: 30, dailyNewWords: 20, memoryReviewCap: 200, memoryAutoPron: false, theme: 'indigo', panelAppearance: 'auto', dictFavorites: [], dictRecent: {}, fontFamily: 'default', opacity: 1, zoom: 1, pomodoroFocus: 25, pomodoroBreak: 5, keySound: false, keySoundVolume: 0.25, clipboardWatch: false, onlineLookup: true, aiExperimental: false, pronCache: false, closeToTray: true, alwaysOnTop: false, miniMode: false, todayStats: {} };
   let appStats = null; // 缓存统计
   let panelOpen = false;
 
@@ -451,6 +451,7 @@
       d.setDate(d.getDate() + i);
       dueDays.push({ date: dayKey(d.getTime()), count: 0 });
     }
+    const shadow = { count: 0, adaptiveSum: 0, actualSum: 0 };
     for (const m of memoryRecords) {
       if (!m) continue;
       const st = Number(m.stage) || 0;
@@ -463,8 +464,16 @@
         const row = dueDays.find((x) => x.date === k);
         if (row) row.count += 1;
       }
+      const shadowDays = Number(m.shadowInterval) || 0;
+      if (shadowDays > 0) {
+        shadow.count += 1;
+        shadow.adaptiveSum += shadowDays;
+        shadow.actualSum += Number(m.interval) || 0;
+      }
     }
-    stats.memory = { learned: memoryRecords.length, buckets, dueDays };
+    shadow.avgAdaptive = shadow.count ? shadow.adaptiveSum / shadow.count : 0;
+    shadow.avgActual = shadow.count ? shadow.actualSum / shadow.count : 0;
+    stats.memory = { learned: memoryRecords.length, buckets, dueDays, shadow };
     return stats;
   }
 
@@ -858,7 +867,7 @@
     <div class="chip" id="qz-chip" title="点击打开增强面板"><span id="qz-chip-text">今日 0/30 · 连续 0 天</span></div>
     <div class="panel" id="qz-panel">
       <div class="ph">
-        <div class="t">增强工具 <small>Qwerty Plus v8.2</small></div>
+        <div class="t">增强工具 <small>Qwerty Plus v8.3</small></div>
         <button class="x" id="qz-close" title="关闭">✕</button>
       </div>
       <div class="tabs">
@@ -1027,6 +1036,7 @@
               <div class="stat"><div class="n" id="rp-long">0</div><div class="k">长期记忆(≥6档)</div></div>
             </div>
             <div class="muted" style="margin-top:12px" id="rp-due">未来 7 天到期：-</div>
+            <div class="muted" style="margin-top:6px" id="rp-shadow">影子调度：尚未记录（自适应算法并行计算中，暂不启用）</div>
           </div>
           <div class="sec">
             <h4>导出 CSV（快速保存，无需手选路径）</h4>
@@ -1207,7 +1217,7 @@
           <div class="sec">
             <h4>Qwerty Learner Plus</h4>
             <div class="muted">
-              版本：<b>1.0.0-enhanced-v8.2（随机出词 + 艾宾浩斯记忆曲线 + 错词当场重现 + 数据收口 + 错误分类提示；无章节、无每日上限）</b><br>
+              版本：<b>1.0.0-enhanced-v8.3（随机出词 + 艾宾浩斯记忆曲线 + 错词当场重现 + 数据收口 + 错误分类提示；无章节、无每日上限）</b><br>
               基于官方 Qwerty Learner 源码（commit 1182426）自行构建：练习页不再有章节选择，直接按记忆曲线随机出词；官方打字/默写/音标/音效/错题本/数据统计/词库画廊/设置等功能全部保留；v1~v6 的增强功能收纳到顶栏「工具」全屏页。本地魔改由 dsh 完成，不跟随官方更新。
             </div>
           </div>
@@ -1221,6 +1231,7 @@
               v8 复习增强：答错的词在本次练习内隔 3 个词强制再练一次（同一词最多 2 次），答对只刷新记忆、不延长间隔；随机回顾词会标注「随机回顾」，错词重练会标注「再练一次」<br>
               v8.1 数据收口：数据页的错词/键位/慢词/时长统一读官方 RecordDB；新增学习报告（掌握度分布 + 未来 7 天到期）<br>
               v8.2 错误提示：打错时按「漏字 / 重复 / 大小写 / 错字」在单词下方提示正确字母约 1.8 秒<br>
+              v8.3 影子调度：按正确率 / ease / 慢词比例并行计算自适应间隔并记录到 memoryRecords（暂不启用，数据页可看对比）<br>
               v5 词库层：内置 385 词库搜索/收藏/最近/分类 + 设为当前 · GitHub 官方词库在线更新（逐个下载、SHA 比对、可回滚）· 当前词库发音预缓存（美/英音、续传、暂停/继续/取消、失败重试）
             </div>
           </div>
@@ -1450,6 +1461,11 @@
       $('#rp-long').textContent = fmtNum((mem.buckets && mem.buckets.long) || 0);
       const dueText = (mem.dueDays || []).map((d) => `${String(d.date).slice(5)} ${d.count}`).join(' · ');
       $('#rp-due').textContent = '未来 7 天到期：' + (dueText || '-');
+      const sh = mem.shadow || { count: 0, avgAdaptive: 0, avgActual: 0 };
+      const fmtDays = (d) => (Number(d) >= 1 ? `${Math.round(Number(d) * 10) / 10} 天` : `${Math.round(Number(d) * 1440)} 分钟`);
+      $('#rp-shadow').textContent = sh.count
+        ? `影子调度：已记录 ${sh.count} 条（自适应平均 ${fmtDays(sh.avgAdaptive)} vs 当前 ${fmtDays(sh.avgActual)}；暂不启用）`
+        : '影子调度：尚未记录（自适应算法并行计算中，暂不启用）';
     }
   }
   async function refreshStatsUI() {
@@ -3068,7 +3084,7 @@
     refreshReviewBadge().catch(() => {});
     renderStatsToPanel(appStats || { today: TODAY(), words: 0, goal: settings.dailyGoal, streak: 0, ratio: 0, totalWords: 0, wrongWords: [], heat: [], source: 'none' });
     pomoRender();
-    console.log('[QZ-ENHANCE] UI injected, version', settings.version || '1.0.0-enhanced-v8.2');
+    console.log('[QZ-ENHANCE] UI injected, version', settings.version || '1.0.0-enhanced-v8.3');
   }
   init();
 

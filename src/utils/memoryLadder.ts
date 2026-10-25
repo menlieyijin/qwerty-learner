@@ -40,3 +40,33 @@ export function ladderText(stage: number): string {
 export function nextStage(prevStage: number | undefined): number {
   return prevStage === undefined ? MEMORY_GRADUATE_STAGE : clampStage(prevStage + 1)
 }
+
+export type AdaptiveInput = {
+  stage: number
+  ease?: number
+  correct?: number
+  wrong?: number
+  slow?: number
+  attempts?: number
+}
+
+/**
+ * v8.3 影子调度：按「当前档位 + 熟练度(ease) + 历史正确率 + 慢词比例」估算自适应间隔（天）。
+ * 只写入 memoryRecords 的 shadow* 字段用于对比，不改变现有固定阶梯的到期时间；
+ * 积累足够样本后再决定是否切换。
+ */
+export function adaptiveDaysFromRecord(rec: AdaptiveInput): number {
+  const base = ladderDays(rec.stage)
+  const attempts = Math.max(0, Number(rec.attempts) || (Number(rec.correct) || 0) + (Number(rec.wrong) || 0))
+  const correct = Math.max(0, Number(rec.correct) || 0)
+  const accuracy = attempts > 0 ? Math.min(1, correct / attempts) : 0.8
+  const ease = Math.min(3.2, Math.max(1.2, Number(rec.ease) || 2.5))
+  let factor = 0.55 + 0.55 * accuracy
+  factor *= ease / 2.5
+  const slowRatio = attempts > 0 ? (Number(rec.slow) || 0) / attempts : 0
+  if (slowRatio > 0.3) factor *= 0.85
+  const days = base * factor
+  const min = MEMORY_LADDER[0]
+  const max = MEMORY_LADDER[MEMORY_LADDER.length - 1]
+  return Math.min(max, Math.max(min, Math.round(days * 1440) / 1440))
+}

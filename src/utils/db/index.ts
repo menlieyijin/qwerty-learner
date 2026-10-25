@@ -3,7 +3,7 @@ import { ChapterRecord, ReviewRecord, WordRecord } from './record'
 import { TypingContext, TypingStateActionType } from '@/pages/Typing/store'
 import type { TypingState } from '@/pages/Typing/store/type'
 import { currentChapterAtom, currentDictIdAtom, isReviewModeAtom } from '@/store'
-import { MEMORY_GRADUATE_STAGE, MEMORY_SLOW_MS, clampStage, ladderDays } from '@/utils/memoryLadder'
+import { MEMORY_GRADUATE_STAGE, MEMORY_SLOW_MS, adaptiveDaysFromRecord, clampStage, ladderDays } from '@/utils/memoryLadder'
 import { consumeRefresh } from '@/utils/refreshMarker'
 import { pushWrongWordRequeue } from '@/utils/sessionRequeue'
 import type { Table } from 'dexie'
@@ -106,6 +106,10 @@ export async function updateMemoryProgress(
         rec.lastResult = 'refresh-wrong'
         if (totalMs > MEMORY_SLOW_MS) rec.slow += 1
       }
+      // v8.3 影子调度：只记录自适应估算，不改变 due
+      rec.shadowInterval = adaptiveDaysFromRecord(rec)
+      rec.shadowDue = now + Math.round(rec.shadowInterval * 24 * 3600 * 1000)
+      rec.shadowAt = now
       await db.memoryRecords.put(rec)
       return
     }
@@ -123,6 +127,10 @@ export async function updateMemoryProgress(
     rec.due = now + rec.interval * 24 * 3600 * 1000
     if (totalMs > MEMORY_SLOW_MS) rec.slow += 1
     rec.lastResult = ok ? 'ok' : 'wrong'
+    // v8.3 影子调度：只记录自适应估算，不改变 due
+    rec.shadowInterval = adaptiveDaysFromRecord(rec)
+    rec.shadowDue = now + Math.round(rec.shadowInterval * 24 * 3600 * 1000)
+    rec.shadowAt = now
     await db.memoryRecords.put(rec)
   } catch (e) {
     console.error('update memory progress failed', e)
