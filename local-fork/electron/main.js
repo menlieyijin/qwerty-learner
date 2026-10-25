@@ -37,7 +37,7 @@ protocol.registerSchemesAsPrivileged([
 // ---------------------------------------------------------------------------
 // 路径与设置
 // ---------------------------------------------------------------------------
-const APP_VERSION = '1.0.0-enhanced-v8';
+const APP_VERSION = '1.0.0-enhanced-v8.1';
 const PLUS_DIR = process.env.QZ_PLUS_DIR
   ? path.resolve(process.env.QZ_PLUS_DIR)
   : path.join(app.getPath('appData'), 'qwerty-learner-plus');

@@ -40,7 +40,7 @@
   const nowIso = () => new Date().toISOString();
   function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
 
-  let settings = { version: '1.0.0-enhanced-v8', dailyGoal: 30, dailyNewWords: 20, memoryReviewCap: 200, memoryAutoPron: false, theme: 'indigo', panelAppearance: 'auto', dictFavorites: [], dictRecent: {}, fontFamily: 'default', opacity: 1, zoom: 1, pomodoroFocus: 25, pomodoroBreak: 5, keySound: false, keySoundVolume: 0.25, clipboardWatch: false, onlineLookup: true, aiExperimental: false, pronCache: false, closeToTray: true, alwaysOnTop: false, miniMode: false, todayStats: {} };
+  let settings = { version: '1.0.0-enhanced-v8.1', dailyGoal: 30, dailyNewWords: 20, memoryReviewCap: 200, memoryAutoPron: false, theme: 'indigo', panelAppearance: 'auto', dictFavorites: [], dictRecent: {}, fontFamily: 'default', opacity: 1, zoom: 1, pomodoroFocus: 25, pomodoroBreak: 5, keySound: false, keySoundVolume: 0.25, clipboardWatch: false, onlineLookup: true, aiExperimental: false, pronCache: false, closeToTray: true, alwaysOnTop: false, miniMode: false, todayStats: {} };
   let appStats = null; // 缓存统计
   let panelOpen = false;
 
@@ -114,6 +114,21 @@
       return { wordRecords, chapterRecords };
     } catch {
       return { wordRecords: [], chapterRecords: [] };
+    } finally {
+      try { if (db) db.close(); } catch { /* ignore */ }
+    }
+  }
+
+  // v8：一次读取官方学习数据（wordRecords + memoryRecords），供数据页统一使用
+  async function readRecordInsights() {
+    let db = null;
+    try {
+      db = await idbOpen('RecordDB');
+      const wordRecords = await idbAll(db, 'wordRecords');
+      const memoryRecords = await idbAll(db, 'memoryRecords');
+      return { wordRecords, memoryRecords };
+    } catch {
+      return { wordRecords: [], memoryRecords: [] };
     } finally {
       try { if (db) db.close(); } catch { /* ignore */ }
     }
@@ -394,6 +409,23 @@
     stats.answeredWords = totalAnsweredWords;
     stats.correctCount = totalCorrect;
     stats.wrongCountTotal = totalWrong;
+    // v8：v7 起练习页不再写 chapterRecords，练习时长 / WPM / 准确率改由 wordRecords 的按键计时估算
+    if (wordRecords.length) {
+      let ms = 0, letters = 0, errs = 0;
+      for (const r of wordRecords) {
+        const timing = Array.isArray(r.timing) ? r.timing : [];
+        for (const t of timing) { if (isFinite(t) && t > 0) ms += t; }
+        letters += String(r.word || '').length;
+        const mis = r.mistakes && typeof r.mistakes === 'object' ? r.mistakes : {};
+        for (const arr of Object.values(mis)) errs += Array.isArray(arr) ? arr.length : 1;
+      }
+      if (ms > 0) {
+        stats.totalMinutes = Math.round((ms / 60000) * 10) / 10;
+        stats.wpm = Math.round(wordRecords.length / (ms / 60000));
+      }
+      if (!stats.totalMinutes) stats.totalMinutes = 0;
+      if (letters > 0) stats.accuracy = Math.round((letters / (letters + errs)) * 1000) / 10;
+    }
     // 错词去重
     const wrongMap = new Map();
     for (const r of wordRecords) {
@@ -802,7 +834,7 @@
     <div class="chip" id="qz-chip" title="点击打开增强面板"><span id="qz-chip-text">今日 0/30 · 连续 0 天</span></div>
     <div class="panel" id="qz-panel">
       <div class="ph">
-        <div class="t">增强工具 <small>Qwerty Plus v7</small></div>
+        <div class="t">增强工具 <small>Qwerty Plus v8.1</small></div>
         <button class="x" id="qz-close" title="关闭">✕</button>
       </div>
       <div class="tabs">
@@ -939,7 +971,7 @@
 
         <!-- 数据 -->
         <div class="tabpane" id="tab-data">
-          <div class="hint">数据源：应用自身 IndexedDB（RecordDB），只读取不修改。首次使用或从未练习时可能显示 0。</div>
+          <div class="hint">数据源：应用自身 IndexedDB（RecordDB），只读不改。错词、键位、慢词、时长均来自官方练习记录；从未练习时显示 0。</div>
           <div class="sec">
             <h4>每日目标与连续打卡</h4>
             <div class="flex" style="margin-bottom:10px">
@@ -970,25 +1002,21 @@
               <button class="btn ghost" id="btn-refresh">刷新统计</button>
               <button class="btn ghost" id="btn-open-exports">打开导出目录</button>
             </div>
-            <div class="muted" style="margin-top:8px">一键保存到「文档\\QwertyLearnerPlus\\exports」。错词表：单词/错误次数/词典/章节/最后练习时间；记录表：词典/章节/时间/词数/正确数/错误数/用时(秒)。</div>
+            <div class="muted" style="margin-top:8px">一键保存到「文档\\QwertyLearnerPlus\\exports」。错词表：单词/错误次数/词库/最后时间；记录表：记忆曲线（单词/词库/阶段/间隔/到期/正确/错误）。</div>
           </div>
           <div class="sec">
-            <h4>本地错词本（L2 · 插件自定义练习）</h4>
-            <div class="muted" id="wb-stat" style="margin-bottom:8px">暂无错词，去「词库」页练习会自动收集。</div>
+            <h4>错词 Top 10（来自 RecordDB）</h4>
+            <div class="muted" id="wb-stat" style="margin-bottom:8px">暂无错词。错题由官方「错题本」统一管理，本页只读展示。</div>
             <div id="wb-list"></div>
             <div class="btns" style="margin-top:8px">
-              <button class="btn sm primary" id="btn-wb-repractice">重练错词（练对移出）</button>
-              <button class="btn sm" id="btn-wb-export">导出本地错词 CSV</button>
-              <button class="btn sm ghost" id="btn-wb-clear">清空本地错词本</button>
+              <button class="btn sm primary" id="btn-wb-open-error">打开官方错题本</button>
+              <button class="btn sm" id="btn-wb-export">导出错词 CSV</button>
             </div>
           </div>
           <div class="sec">
-            <h4>键位热力图（L3 · 练习自动采集）</h4>
+            <h4>键位热力图（来自 RecordDB）</h4>
             <div class="kb-heat" id="kb-heat"></div>
-            <div class="kb-tip" id="kb-tip">颜色越红=错误率越高；悬停查看错误数/平均延迟。仅统计本面板练习，数据只存本机。</div>
-            <div class="btns" style="margin-top:8px">
-              <button class="btn sm ghost" id="btn-kb-clear">清空键位统计</button>
-            </div>
+            <div class="kb-tip" id="kb-tip">颜色越红=该键错误率越高；悬停查看错误数/出现次数/平均用时。数据来自官方练习记录（wordRecords），只读。</div>
           </div>
           <div class="sec">
             <h4>慢词 Top 10 / 错误键 Top 10</h4>
@@ -1145,7 +1173,7 @@
           <div class="sec">
             <h4>Qwerty Learner Plus</h4>
             <div class="muted">
-              版本：<b>1.0.0-enhanced-v8（随机出词 + 艾宾浩斯记忆曲线 + 错词当场重现；无章节、无每日上限）</b><br>
+              版本：<b>1.0.0-enhanced-v8.1（随机出词 + 艾宾浩斯记忆曲线 + 错词当场重现；无章节、无每日上限）</b><br>
               基于官方 Qwerty Learner 源码（commit 1182426）自行构建：练习页不再有章节选择，直接按记忆曲线随机出词；官方打字/默写/音标/音效/错题本/数据统计/词库画廊/设置等功能全部保留；v1~v6 的增强功能收纳到顶栏「工具」全屏页。本地魔改由 dsh 完成，不跟随官方更新。
             </div>
           </div>
@@ -1170,8 +1198,8 @@
               · 发音缓存为实验功能，个别网络环境下可能影响发音，可在"常规"页关闭；<br>
               · 迷你模式依靠 CSS 隐藏页面头部，官方页面结构若大改可能失效；<br>
               · 自定义词库练习为插件独立实现，不进入应用内词库选择列表。<br>
-              · SRS / 记忆曲线与键位统计仅记录本面板练习（记忆曲线/自定义词库/错词重练），不采集官方网页练习的打字数据；数据存本机 QwertyPlusDB，可随时清空；<br>
-              · 慢词判定为单次作答超过 6 秒；键位延迟为相邻按键的近似间隔，仅供参考。<br>
+              · v8 数据收口：错词/键位/慢词/时长均只读官方 RecordDB（wordRecords/memoryRecords），旧插件练习数据不再写入也不迁移显示；<br>
+              · WPM 与练习时长按按键间隔估算（不含读题停顿），仅供参考；键位延迟为相邻按键的近似间隔。<br>
               · 词库「设为当前」依赖官方“词典切换”弹层的 DOM 自动化；官方改版或弹层结构变化时可能失败，失败会打开官方选择器供手动选择（不会直接改应用未知存储）。<br>
               · 在线更新只下载你点击的单个词库文件；更新文件通过请求层覆盖生效，重启应用/切换词库后最可靠；删除 dicts-update 目录即回滚。<br>
               · 发音预缓存会按词库词数下载音频（单条约 14KB），大词库（上万词）请使用「本次上限」或分次进行；仅写入本机缓存，不修改词库/应用数据。
@@ -1408,55 +1436,47 @@
   });
   $('#btn-csv-records').addEventListener('click', async () => {
     try {
-      const s = appStats || await refreshStatsUI();
-      const chapters = (s && s.chapters) || [];
-      if (!chapters.length) return toast('没有练习记录可导出');
-      const rows = chapters.map((c) => [
-        c.dict || '', c.chapter != null ? c.chapter : '', tsText(normTs(c.timeStamp)),
-        c.wordCount != null ? c.wordCount : (c.wordNumber != null ? c.wordNumber : ''),
-        c.correctCount != null ? c.correctCount : '', c.wrongCount != null ? c.wrongCount : '',
-        c.time != null ? c.time : '',
+      const { memoryRecords } = await readRecordInsights();
+      if (!memoryRecords.length) return toast('还没有记忆曲线记录可导出');
+      memoryRecords.sort((a, b) => (Number(b.lastSeen) || 0) - (Number(a.lastSeen) || 0));
+      const rows = memoryRecords.map((r) => [
+        r.word || '', r.dict || '',
+        Array.isArray(r.trans) ? r.trans.join(' / ') : (r.trans || ''),
+        r.stage != null ? r.stage : '', r.interval != null ? r.interval : '',
+        r.due ? tsText(r.due) : '', r.correct || 0, r.wrong || 0, r.slow || 0,
+        r.lastSeen ? tsText(r.lastSeen) : '',
       ]);
-      const csv = toCSV(['词典', '章节', '时间', '词数', '正确数', '错误数', '用时(秒)'], rows);
-      const r = await api.saveCSV('qwerty-练习记录-' + TODAY() + '.csv', csv);
+      const csv = toCSV(['单词', '词库', '释义', '阶段', '间隔(天)', '到期时间', '正确', '错误', '慢词', '最后作答'], rows);
+      const r = await api.saveCSV('qwerty-记忆曲线-' + TODAY() + '.csv', csv);
       if (r && r.ok) toast('已保存：' + r.path + '（无需再选路径）', 4200); else toast('导出失败: ' + ((r && r.error) || '未知'));
     } catch (e) { toast('导出失败: ' + (e.message || e)); }
   });
   $('#btn-open-exports').addEventListener('click', () => api.openExports());
 
-  // L2：本地错词本（插件自定义练习）
+  // v8：错词 Top 10（只读 RecordDB；错题由官方错题本统一管理）
   async function refreshWrongbookUI() {
     const box = $('#wb-list'), stat = $('#wb-stat');
     if (!box || !stat) return;
-    let list = [];
-    try { list = await readWrongBook(); } catch { list = []; }
-    list.sort((a, b) => (b.lastTs || 0) - (a.lastTs || 0));
-    stat.textContent = list.length ? `共 ${list.length} 个错词（按错误次数排序前 10）` : '暂无错词，去「词库」页练习会自动收集。';
-    box.innerHTML = list.slice(0, 10).map((w) => `<div class="wb-item"><span class="nm">${esc(w.word)}</span><span class="c">×${w.count || 1}</span></div>`).join('');
-    const rp = $('#btn-wb-repractice');
-    if (rp) rp.disabled = list.length === 0;
+    try { if (!appStats) appStats = await collectStats(); } catch { /* ignore */ }
+    const all = (appStats && Array.isArray(appStats.wrongWords)) ? appStats.wrongWords : [];
+    stat.textContent = all.length
+      ? `共 ${all.length} 个错词（按错误次数排序前 10）· 全部错词见官方「错题本」`
+      : '暂无错词。错题由官方「错题本」统一管理，本页只读展示。';
+    box.innerHTML = all.slice(0, 10).map((w) => `<div class="wb-item"><span class="nm">${esc(w.word)}</span><span class="c">×${w.wrongCount}</span></div>`).join('');
   }
+  $('#btn-wb-open-error').addEventListener('click', () => {
+    closePanel();
+    location.hash = '#/error-book';
+  });
   $('#btn-wb-export').addEventListener('click', async () => {
     try {
-      const list = await readWrongBook();
-      if (!list.length) return toast('本地错词本为空');
-      list.sort((a, b) => (b.count || 0) - (a.count || 0));
-      const rows = list.map((w) => [w.word, w.count || 1, (w.dicts || []).join('/'), tsText(w.lastTs)]);
-      const csv = toCSV(['单词', '错误次数', '来源词库', '最后错误时间'], rows);
-      const r = await api.saveCSV('qwerty-本地错词本-' + TODAY() + '.csv', csv);
+      const s = appStats && appStats.today === TODAY() ? appStats : await collectStats();
+      if (!s || !s.wrongWords.length) return toast('没有错词数据可导出');
+      const rows = s.wrongWords.map((w) => [w.word, w.wrongCount, w.dict, tsText(w.timeStamp)]);
+      const csv = toCSV(['单词', '错误次数', '词库', '最后练习时间'], rows);
+      const r = await api.saveCSV('qwerty-错词-' + TODAY() + '.csv', csv);
       if (r && r.ok) toast('已保存：' + r.path, 4200); else toast('导出失败: ' + ((r && r.error) || '未知'));
     } catch (e) { toast('导出失败: ' + (e.message || e)); }
-  });
-  $('#btn-wb-clear').addEventListener('click', async () => {
-    if (!confirm('确定清空插件本地错词本？')) return;
-    try {
-      const db = await getPlusDB();
-      if (db) {
-        await new Promise((resolve) => { const tx = db.transaction('wrongbook', 'readwrite'); tx.objectStore('wrongbook').clear(); tx.oncomplete = resolve; tx.onerror = resolve; });
-      }
-      toast('本地错词本已清空');
-      refreshWrongbookUI();
-    } catch (e) { toast('清空失败: ' + (e.message || e)); }
   });
   $('#btn-backup').addEventListener('click', async () => {
     toast('正在备份用户数据…', 4000);
@@ -2445,34 +2465,73 @@
       restart: () => startWrongbookPractice(),
     });
   }
+  // v8：键位热力图 / 慢词 / 错误键全部改由 RecordDB.wordRecords 计算（只读）
   async function refreshKeyboardUI() {
     const heat = $('#kb-heat');
     if (!heat) return;
-    const ks = await readKeyStats();
-    const map = new Map(ks.map((r) => [String(r.key || '').toUpperCase(), r]));
-    const rows = ['1234567890', 'QWERTYUIOP', 'ASDFGHJKL;', 'ZXCVBNM,./'];
-    heat.innerHTML = rows.map((row) => `<div class="kb-row">${[...row].map((ch) => {
-      const rec = map.get(ch) || null;
-      const err = rec ? (rec.errors || 0) : 0;
-      const hits = rec ? (rec.hits || 0) : 0;
-      const rate = hits ? err / hits : 0;
-      const bg = err ? `rgba(129,140,248,${(0.25 + 0.65 * Math.min(1, rate * 2)).toFixed(2)})` : (hits ? 'rgba(148,163,184,.18)' : 'var(--qz-track)');
-      const tip = `${ch} · 错误 ${err}/${hits}${rec && rec.avgDelay ? ` · 平均 ${rec.avgDelay}ms` : ''}`;
-      return `<div class="kb-key${err ? ' has-err' : ''}" style="background:${bg}" title="${esc(tip)}">${esc(ch)}${err ? `<span class="n">${err}</span>` : ''}</div>`;
-    }).join('')}</div>`).join('') + '<div class="kb-row"><div class="kb-key wide" title="空格键（练习中统计）">空格</div></div>';
-    const all = await readSrsAll();
-    const slow = all.filter((r) => (r.attempts || 0) > 0).sort((a, b) => (b.avgMs || 0) - (a.avgMs || 0)).slice(0, 10);
+    const { wordRecords } = await readRecordInsights();
+    const charStats = new Map(); // key -> { hits, errors, delaySum, delayN }
+    const wordStats = new Map(); // word -> { word, totalMs, n }
+    const normKey = (ch) => {
+      const s = String(ch || '');
+      if (!s) return '';
+      if (s === ' ') return ' ';
+      const up = s.toUpperCase();
+      return up.length === 1 ? up : s;
+    };
+    for (const r of wordRecords) {
+      const word = String(r.word || '');
+      const letters = [...word];
+      const timing = Array.isArray(r.timing) ? r.timing : [];
+      let totalMs = 0;
+      letters.forEach((ch, i) => {
+        const k = normKey(ch);
+        if (!k) return;
+        const rec = charStats.get(k) || { hits: 0, errors: 0, delaySum: 0, delayN: 0 };
+        rec.hits += 1;
+        const d = timing[i - 1];
+        if (isFinite(d) && d > 0) { rec.delaySum += d; rec.delayN += 1; totalMs += d; }
+        charStats.set(k, rec);
+      });
+      const mis = r.mistakes && typeof r.mistakes === 'object' ? r.mistakes : {};
+      for (const [idx, wrongs] of Object.entries(mis)) {
+        const ch = letters[Number(idx)];
+        if (!ch) continue;
+        const k = normKey(ch);
+        if (!k) continue;
+        const rec = charStats.get(k) || { hits: 0, errors: 0, delaySum: 0, delayN: 0 };
+        rec.errors += Array.isArray(wrongs) ? wrongs.length : 1;
+        charStats.set(k, rec);
+      }
+      if (word) {
+        const prev = wordStats.get(word) || { word, totalMs: 0, n: 0 };
+        prev.totalMs += totalMs;
+        prev.n += 1;
+        wordStats.set(word, prev);
+      }
+    }
+    const rowDefs = ['1234567890', 'QWERTYUIOP', 'ASDFGHJKL;', 'ZXCVBNM,./'];
+    heat.innerHTML = rowDefs.map((row) => `<div class="kb-row">${[...row].map((ch) => {
+      const rec = charStats.get(ch) || { hits: 0, errors: 0, delaySum: 0, delayN: 0 };
+      const rate = rec.hits ? rec.errors / rec.hits : 0;
+      const avgDelay = rec.delayN ? Math.round(rec.delaySum / rec.delayN) : 0;
+      const bg = rec.errors ? `rgba(129,140,248,${(0.25 + 0.65 * Math.min(1, rate * 2)).toFixed(2)})` : (rec.hits ? 'rgba(148,163,184,.18)' : 'var(--qz-track)');
+      const tip = `${ch} · 错误 ${rec.errors}/${rec.hits}${avgDelay ? ` · 平均 ${avgDelay}ms` : ''}`;
+      return `<div class="kb-key${rec.errors ? ' has-err' : ''}" style="background:${bg}" title="${esc(tip)}">${esc(ch)}${rec.errors ? `<span class="n">${rec.errors}</span>` : ''}</div>`;
+    }).join('')}</div>`).join('') + '<div class="kb-row"><div class="kb-key wide" title="空格键（来自 RecordDB）">空格</div></div>';
+
+    const slow = [...wordStats.values()].filter((w) => w.n > 0 && w.totalMs > 0).sort((a, b) => b.totalMs / b.n - a.totalMs / a.n).slice(0, 10);
     const slowEl = $('#slow-list');
     if (slowEl) {
       slowEl.innerHTML = slow.length
-        ? slow.map((r) => `<div class="list-row"><span class="k">${esc(r.word)}</span><span class="v">${Math.round(r.avgMs || 0)} ms · ${r.attempts} 次${r.slow ? ` · 慢${r.slow}` : ''}</span></div>`).join('')
+        ? slow.map((w) => `<div class="list-row"><span class="k">${esc(w.word)}</span><span class="v">${Math.round(w.totalMs / w.n)} ms · ${w.n} 次</span></div>`).join('')
         : '<div class="muted">暂无数据（先练习）</div>';
     }
-    const errKeys = ks.filter((r) => (r.errors || 0) > 0).sort((a, b) => (b.errors || 0) - (a.errors || 0)).slice(0, 10);
+    const errKeys = [...charStats.entries()].filter(([, rec]) => rec.errors > 0).sort((a, b) => b[1].errors - a[1].errors).slice(0, 10);
     const errEl = $('#errkey-list');
     if (errEl) {
       errEl.innerHTML = errKeys.length
-        ? errKeys.map((r) => `<div class="list-row"><span class="k">${esc(r.key || '')}</span><span class="v">错 ${r.errors || 0} · 错误率 ${r.errRate || 0}%</span></div>`).join('')
+        ? errKeys.map(([k, rec]) => `<div class="list-row"><span class="k">${esc(k)}</span><span class="v">错 ${rec.errors} · 错误率 ${rec.hits ? Math.round((rec.errors / rec.hits) * 100) : 0}%</span></div>`).join('')
         : '<div class="muted">暂无错误键数据</div>';
     }
   }
@@ -2508,13 +2567,7 @@
     await refreshReviewUI();
     toast('记忆曲线记录已清空');
   });
-  $('#btn-kb-clear').addEventListener('click', async () => {
-    if (!confirm('确定清空键位统计与慢词数据？（不影响记忆曲线记录）')) return;
-    await clearStore('keystats');
-    await refreshKeyboardUI();
-    toast('键位统计已清空');
-  });
-  $('#btn-wb-repractice').addEventListener('click', startWrongbookPractice);
+
 
   // ---------------------------------------------------------------- 番茄钟
   const pomo = {
@@ -2969,7 +3022,7 @@
     refreshReviewBadge().catch(() => {});
     renderStatsToPanel(appStats || { today: TODAY(), words: 0, goal: settings.dailyGoal, streak: 0, ratio: 0, totalWords: 0, wrongWords: [], heat: [], source: 'none' });
     pomoRender();
-    console.log('[QZ-ENHANCE] UI injected, version', settings.version || '1.0.0-enhanced-v8');
+    console.log('[QZ-ENHANCE] UI injected, version', settings.version || '1.0.0-enhanced-v8.1');
   }
   init();
 
