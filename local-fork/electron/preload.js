@@ -14,7 +14,7 @@ function onClipboardWord(cb) {
 }
 
 contextBridge.exposeInMainWorld('qwertyEnhance', {
-  version: '1.0.0-enhanced-v8.6',
+  version: '1.0.0-enhanced-v8.7',
   platform: process.platform,
   // —— 设置 ——
   getSettings: () => ipcRenderer.invoke('app:getSettings'),

@@ -34,6 +34,8 @@ export default function WordPanel({
   const isReviewMode = useAtomValue(isReviewModeAtom)
 
   useEffect(() => {
+    // v8.7：只在开始/暂停页需要概览，避免每换一个词就全表扫描 memoryRecords
+    if (state.isTyping) return
     let cancelled = false
     getLearningSummary()
       .then((s) => {
@@ -43,7 +45,7 @@ export default function WordPanel({
     return () => {
       cancelled = true
     }
-  }, [state.chapterData.index, state.isTyping])
+  }, [state.isTyping])
 
   const prevIndex = useMemo(() => {
     const newIndex = state.chapterData.index - 1
@@ -207,8 +209,27 @@ export default function WordPanel({
                     按任意键{state.timerData.time ? '继续' : '开始'}
                   </p>
                   {summary && (
-                    <p className="mt-2 w-full select-none text-center text-xs text-gray-500 dark:text-gray-400">
-                      今日已学 {summary.todayNew} · 到期复习 {summary.due} · 累计 {summary.learned}
+                    <p className="mt-3 flex w-full select-none flex-wrap items-center justify-center gap-x-2.5 gap-y-1 text-sm font-medium leading-5 text-gray-600 dark:text-gray-300">
+                      <span>
+                        今日新学{' '}
+                        <b className="font-semibold tabular-nums text-gray-800 dark:text-gray-100">{summary.todayNew.toLocaleString()}</b>
+                      </span>
+                      <span className="text-gray-300 dark:text-gray-600">·</span>
+                      <span>
+                        到期复习{' '}
+                        <b
+                          className={`font-semibold tabular-nums ${
+                            summary.due > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-800 dark:text-gray-100'
+                          }`}
+                        >
+                          {summary.due.toLocaleString()}
+                        </b>
+                      </span>
+                      <span className="text-gray-300 dark:text-gray-600">·</span>
+                      <span>
+                        累计{' '}
+                        <b className="font-semibold tabular-nums text-gray-800 dark:text-gray-100">{summary.learned.toLocaleString()}</b>
+                      </span>
                     </p>
                   )}
                 </div>
@@ -227,12 +248,16 @@ export default function WordPanel({
                 />
               )}
               {currentWord.hint && (
-                <p
-                  className={`mt-1 text-center text-xs font-medium ${
-                    currentWord.hint === 'retry' ? 'text-amber-500 dark:text-amber-400' : 'text-sky-500 dark:text-sky-400'
-                  }`}
-                >
-                  {currentWord.hint === 'retry' ? '再练一次' : '随机回顾'}
+                <p className="mt-1.5 text-center">
+                  <span
+                    className={`inline-block rounded-md px-2 py-0.5 text-[13px] font-medium leading-5 ${
+                      currentWord.hint === 'retry'
+                        ? 'bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-400'
+                        : 'bg-sky-50 text-sky-600 dark:bg-sky-500/10 dark:text-sky-400'
+                    }`}
+                  >
+                    {currentWord.hint === 'retry' ? '再练一次' : '随机回顾'}
+                  </span>
                 </p>
               )}
             </div>

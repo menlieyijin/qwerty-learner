@@ -341,9 +341,7 @@ export default function WordComponent({ word, onFinish }: { word: Word; onFinish
           )}
         </div>
         {wrongHint && (
-          <div className="mt-3 text-center text-sm font-medium text-red-500 transition-opacity duration-200 dark:text-red-400">
-            {wrongHint}
-          </div>
+          <div className="mt-3 text-center text-[15px] font-medium leading-6 text-red-500 dark:text-red-400">{wrongHint}</div>
         )}
       </div>
       <TipAlert className="fixed bottom-10 right-3" show={showTipAlert} setShow={setShowTipAlert} />
