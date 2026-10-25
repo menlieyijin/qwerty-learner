@@ -1,4 +1,4 @@
-import { autoLevelInfoAtom, currentDictInfoAtom, learningModeAtom, reviewModeInfoAtom } from '@/store'
+import { autoLevelInfoAtom, currentDictInfoAtom, customDictInfoAtom, learningModeAtom, reviewModeInfoAtom } from '@/store'
 import type { Word, WordWithIndex } from '@/typings/index'
 import { ensureMemoryMigrated, getMemoryRecords, normalizeWordName, pickDynamicWord } from '@/utils/memory'
 import { wordListFetcher } from '@/utils/wordListFetcher'
@@ -29,6 +29,7 @@ function toIndexWord(word: Word, dict?: string, index = 0, hint?: Word['hint']):
 export function useWordList(): UseWordListResult {
   const currentDictInfo = useAtomValue(currentDictInfoAtom)
   const learningMode = useAtomValue(learningModeAtom)
+  const customDict = useAtomValue(customDictInfoAtom)
   const { isReviewMode, reviewRecord } = useAtomValue(reviewModeInfoAtom)
   const setLevelInfo = useSetAtom(autoLevelInfoAtom)
   const [words, setWords] = useState<WordWithIndex[]>([])
@@ -37,6 +38,19 @@ export function useWordList(): UseWordListResult {
   const recentRef = useRef<string[]>([])
   const manualWordsRef = useRef<Word[] | null>(null)
   const reviewWords = reviewRecord?.words
+  const customDictKey = customDict ? `${customDict.name}:${(customDict.words || []).length}` : ''
+
+  // v8.4：手动词库 / 自定义词库加载；自定义词库带 `custom:<name>` 命名空间，跨词库去重仍按单词
+  const loadManualWords = useCallback(async (): Promise<Word[] | undefined> => {
+    if (learningMode === 'custom') {
+      const list = (customDict?.words || []).filter((w) => w && w.name)
+      return list.map((w) => toIndexWord({ ...w, dict: `custom:${customDict?.name || '自定义'}` }))
+    }
+    if (learningMode === 'manual') {
+      return (await wordListFetcher(currentDictInfo.url)).map((w) => toIndexWord(w))
+    }
+    return undefined
+  }, [learningMode, customDict, currentDictInfo.url])
 
   useEffect(() => {
     let cancelled = false
@@ -53,10 +67,10 @@ export function useWordList(): UseWordListResult {
       try {
         await ensureMemoryMigrated()
         let manualWords: Word[] | undefined
-        if (learningMode === 'manual') {
+        if (learningMode !== 'auto') {
           try {
-            manualWords = (await wordListFetcher(currentDictInfo.url)).map((w) => toIndexWord(w))
-            manualWordsRef.current = manualWords
+            manualWords = await loadManualWords()
+            manualWordsRef.current = manualWords || []
           } catch (e) {
             console.error('load manual dict failed', e)
           }
@@ -68,7 +82,7 @@ export function useWordList(): UseWordListResult {
           records,
           recent: [],
           mode: learningMode,
-          manualDict: currentDictInfo.id,
+          manualDict: learningMode === 'custom' ? `custom:${customDict?.name || '自定义'}` : currentDictInfo.id,
           manualWords,
         })
         if (cancelled) return
@@ -90,7 +104,7 @@ export function useWordList(): UseWordListResult {
       cancelled = true
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isReviewMode, reviewWords, learningMode, currentDictInfo.id])
+  }, [isReviewMode, reviewWords, learningMode, currentDictInfo.id, customDictKey])
 
   const nextWord = useCallback(
     async (answered?: Word): Promise<WordWithIndex | null> => {
@@ -104,9 +118,9 @@ export function useWordList(): UseWordListResult {
         await ensureMemoryMigrated()
         const records = await getMemoryRecords()
         let manualWords = manualWordsRef.current
-        if (learningMode === 'manual' && !manualWords) {
+        if (learningMode !== 'auto' && !manualWords) {
           try {
-            manualWords = (await wordListFetcher(currentDictInfo.url)).map((w) => toIndexWord(w))
+            manualWords = (await loadManualWords()) || []
             manualWordsRef.current = manualWords
           } catch { /* ignore */ }
         }
@@ -114,7 +128,7 @@ export function useWordList(): UseWordListResult {
           records,
           recent: recentRef.current,
           mode: learningMode,
-          manualDict: currentDictInfo.id,
+          manualDict: learningMode === 'custom' ? `custom:${customDict?.name || '自定义'}` : currentDictInfo.id,
           manualWords: manualWords || undefined,
         })
         if (!pick) {
@@ -128,7 +142,7 @@ export function useWordList(): UseWordListResult {
         return null
       }
     },
-    [currentDictInfo.id, learningMode, setLevelInfo],
+    [currentDictInfo.id, learningMode, customDict, loadManualWords, setLevelInfo],
   )
 
   return { words, isLoading, error, nextWord }

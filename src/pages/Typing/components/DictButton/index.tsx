@@ -1,23 +1,28 @@
 import Tooltip from '@/components/Tooltip'
-import { autoLevelInfoAtom, currentDictInfoAtom, isReviewModeAtom, learningModeAtom } from '@/store'
+import { autoLevelInfoAtom, currentDictInfoAtom, customDictInfoAtom, isReviewModeAtom, learningModeAtom } from '@/store'
 import { useAtomValue } from 'jotai'
 import { NavLink } from 'react-router-dom'
 
 /** 词库/水平入口：默认自动进阶，显示当前水平；点击可打开词库画廊 */
 export const DictButton = () => {
   const currentDictInfo = useAtomValue(currentDictInfoAtom)
+  const customDict = useAtomValue(customDictInfoAtom)
   const isReviewMode = useAtomValue(isReviewModeAtom)
   const learningMode = useAtomValue(learningModeAtom)
   const levelInfo = useAtomValue(autoLevelInfoAtom)
 
   let label = currentDictInfo.name
   if (isReviewMode) label = `${currentDictInfo.name} · 错题复习`
+  else if (learningMode === 'custom' && customDict) label = `自定义 · ${customDict.name}`
   else if (learningMode === 'auto') label = levelInfo ? levelInfo.name : '准备中'
 
-  const tip =
-    learningMode === 'auto' && levelInfo
-      ? `按词汇水平循序渐进（当前 ${levelInfo.name}，本级别剩余 ${levelInfo.unseen}/${levelInfo.total} 词）；点击可切换词库`
-      : '切换词库（点击词库将改为手动选择）'
+  const tip = isReviewMode
+    ? '错题复习模式'
+    : learningMode === 'custom' && customDict
+      ? `自定义词库「${customDict.name}」（${(customDict.words || []).length} 词）· 记忆曲线；点击可切换`
+      : learningMode === 'auto' && levelInfo
+        ? `按词汇水平循序渐进（当前 ${levelInfo.name}，本级别剩余 ${levelInfo.unseen}/${levelInfo.total} 词）；点击可切换词库`
+        : '切换词库（点击词库将改为手动选择）'
 
   return (
     <Tooltip content={tip}>

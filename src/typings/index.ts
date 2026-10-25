@@ -36,6 +36,12 @@ export type WordWithIndex = Word & {
   index: number
 }
 
+/** v8.4 自定义词库（由增强面板导入，存 localStorage 供主练习流程读取） */
+export type CustomDict = {
+  name: string
+  words: Word[]
+}
+
 export type InfoPanelType = 'donate' | 'vsc' | 'community' | 'redBook'
 
 export type InfoPanelState = {

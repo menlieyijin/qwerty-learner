@@ -4,6 +4,7 @@ import { DISMISS_START_CARD_DATE_KEY, defaultFontSizeConfig } from '@/constants'
 import { idDictionaryMap } from '@/resources/dictionary'
 import { correctSoundResources, keySoundResources, wrongSoundResources } from '@/resources/soundResource'
 import type {
+  CustomDict,
   Dictionary,
   InfoPanelState,
   LoopWordTimesOption,
@@ -17,8 +18,10 @@ import { atom } from 'jotai'
 import { atomWithStorage } from 'jotai/utils'
 
 export const currentDictIdAtom = atomWithStorage('currentDict', 'cet4')
-/** v7：自动进阶（默认）或手动选择词库 */
-export const learningModeAtom = atomWithStorage<'auto' | 'manual'>('learningMode', 'auto')
+/** v7：自动进阶（默认）/ 手动选择词库 / v8.4 自定义词库 */
+export const learningModeAtom = atomWithStorage<'auto' | 'manual' | 'custom'>('learningMode', 'auto')
+/** v8.4：增强面板导入的自定义词库（localStorage 桥接，供主练习流程读取） */
+export const customDictInfoAtom = atomWithStorage<CustomDict | null>('qzCustomDict', null)
 export type AutoLevelInfo = { id: string; name: string; index: number; unseen: number; total: number; done: boolean }
 export const autoLevelInfoAtom = atom<AutoLevelInfo | null>(null)
 export const currentDictInfoAtom = atom<Dictionary>((get) => {

@@ -40,7 +40,7 @@
   const nowIso = () => new Date().toISOString();
   function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
 
-  let settings = { version: '1.0.0-enhanced-v8.3', dailyGoal: 30, dailyNewWords: 20, memoryReviewCap: 200, memoryAutoPron: false, theme: 'indigo', panelAppearance: 'auto', dictFavorites: [], dictRecent: {}, fontFamily: 'default', opacity: 1, zoom: 1, pomodoroFocus: 25, pomodoroBreak: 5, keySound: false, keySoundVolume: 0.25, clipboardWatch: false, onlineLookup: true, aiExperimental: false, pronCache: false, closeToTray: true, alwaysOnTop: false, miniMode: false, todayStats: {} };
+  let settings = { version: '1.0.0-enhanced-v8.4', dailyGoal: 30, dailyNewWords: 20, memoryReviewCap: 200, memoryAutoPron: false, theme: 'indigo', panelAppearance: 'auto', dictFavorites: [], dictRecent: {}, fontFamily: 'default', opacity: 1, zoom: 1, pomodoroFocus: 25, pomodoroBreak: 5, keySound: false, keySoundVolume: 0.25, clipboardWatch: false, onlineLookup: true, aiExperimental: false, pronCache: false, closeToTray: true, alwaysOnTop: false, miniMode: false, todayStats: {} };
   let appStats = null; // 缓存统计
   let panelOpen = false;
 
@@ -867,7 +867,7 @@
     <div class="chip" id="qz-chip" title="点击打开增强面板"><span id="qz-chip-text">今日 0/30 · 连续 0 天</span></div>
     <div class="panel" id="qz-panel">
       <div class="ph">
-        <div class="t">增强工具 <small>Qwerty Plus v8.3</small></div>
+        <div class="t">增强工具 <small>Qwerty Plus v8.4</small></div>
         <button class="x" id="qz-close" title="关闭">✕</button>
       </div>
       <div class="tabs">
@@ -1217,7 +1217,7 @@
           <div class="sec">
             <h4>Qwerty Learner Plus</h4>
             <div class="muted">
-              版本：<b>1.0.0-enhanced-v8.3（随机出词 + 艾宾浩斯记忆曲线 + 错词当场重现 + 数据收口 + 错误分类提示；无章节、无每日上限）</b><br>
+              版本：<b>1.0.0-enhanced-v8.4（随机出词 + 艾宾浩斯记忆曲线 + 错词当场重现 + 数据收口 + 错误分类提示；无章节、无每日上限）</b><br>
               基于官方 Qwerty Learner 源码（commit 1182426）自行构建：练习页不再有章节选择，直接按记忆曲线随机出词；官方打字/默写/音标/音效/错题本/数据统计/词库画廊/设置等功能全部保留；v1~v6 的增强功能收纳到顶栏「工具」全屏页。本地魔改由 dsh 完成，不跟随官方更新。
             </div>
           </div>
@@ -1232,6 +1232,7 @@
               v8.1 数据收口：数据页的错词/键位/慢词/时长统一读官方 RecordDB；新增学习报告（掌握度分布 + 未来 7 天到期）<br>
               v8.2 错误提示：打错时按「漏字 / 重复 / 大小写 / 错字」在单词下方提示正确字母约 1.8 秒<br>
               v8.3 影子调度：按正确率 / ease / 慢词比例并行计算自适应间隔并记录到 memoryRecords（暂不启用，数据页可看对比）<br>
+              v8.4 自定义词库进主流程：「工具 → 词库 → 我的自定义词库 → 记忆曲线」即可按记忆曲线练习自己的词表（记录命名空间 custom:名称；官方错题本对自定义词只显示单词与错误次数）<br>
               v5 词库层：内置 385 词库搜索/收藏/最近/分类 + 设为当前 · GitHub 官方词库在线更新（逐个下载、SHA 比对、可回滚）· 当前词库发音预缓存（美/英音、续传、暂停/继续/取消、失败重试）
             </div>
           </div>
@@ -1244,7 +1245,7 @@
               · ECDICT 离线词典为预留功能，当前版本未提供下载；<br>
               · 发音缓存为实验功能，个别网络环境下可能影响发音，可在"常规"页关闭；<br>
               · 迷你模式依靠 CSS 隐藏页面头部，官方页面结构若大改可能失效；<br>
-              · 自定义词库练习为插件独立实现，不进入应用内词库选择列表。<br>
+              · 自定义词库：「记忆曲线」按钮进入主练习流程（记录命名空间 custom:名称），官方错题本/统计对自定义词只显示单词与错误次数，暂无释义；旧「练习」按钮仍为插件独立练习。<br>
               · v8 数据收口：错词/键位/慢词/时长均只读官方 RecordDB（wordRecords/memoryRecords），旧插件练习数据不再写入也不迁移显示；<br>
               · WPM 与练习时长按按键间隔估算（不含读题停顿），仅供参考；键位延迟为相邻按键的近似间隔。<br>
               · 词库「设为当前」依赖官方“词典切换”弹层的 DOM 自动化；官方改版或弹层结构变化时可能失败，失败会打开官方选择器供手动选择（不会直接改应用未知存储）。<br>
@@ -1907,10 +1908,12 @@
     box.innerHTML = dictCache.map((d) => `
       <div class="item">
         <div class="grow"><div class="nm">${esc(d.name)}</div><div class="cnt">${fmtNum((d.words || []).length)} 词 · ${tsText(d.createdAt)}</div></div>
-        <button class="btn sm primary" data-practice="${esc(d.name)}">练习</button>
+        <button class="btn sm primary" data-memory="${esc(d.name)}">记忆曲线</button>
+        <button class="btn sm" data-practice="${esc(d.name)}">练习</button>
         <button class="btn sm ghost" data-export="${esc(d.name)}">导出</button>
         <button class="btn sm ghost" data-del="${esc(d.name)}">删除</button>
       </div>`).join('');
+    box.querySelectorAll('[data-memory]').forEach((b) => b.addEventListener('click', () => startCustomMemory(b.dataset.memory)));
     box.querySelectorAll('[data-practice]').forEach((b) => b.addEventListener('click', () => startPractice(b.dataset.practice)));
     box.querySelectorAll('[data-export]').forEach((b) => b.addEventListener('click', () => exportDict(b.dataset.export)));
     box.querySelectorAll('[data-del]').forEach((b) => b.addEventListener('click', async () => {
@@ -1926,6 +1929,26 @@
     if (!d) return;
     const r = await api.exportJSON(`qwerty-词库-${name}.json`, JSON.stringify(d.words, null, 2));
     if (r && r.ok) toast('已导出到 ' + r.path);
+  }
+  // v8.4：把插件导入的自定义词库交给主练习流程（记忆曲线），通过 localStorage 桥接后重载
+  async function startCustomMemory(name) {
+    const d = dictCache.find((x) => x.name === name);
+    if (!d || !Array.isArray(d.words) || !d.words.length) return toast('词库为空');
+    const words = d.words
+      .filter((w) => w && w.name)
+      .map((w) => ({
+        name: String(w.name),
+        trans: Array.isArray(w.trans) ? w.trans : (w.trans ? [String(w.trans)] : []),
+        usphone: w.usphone || '',
+        ukphone: w.ukphone || '',
+      }));
+    try {
+      localStorage.setItem('qzCustomDict', JSON.stringify({ name, words }));
+      localStorage.setItem('learningMode', JSON.stringify('custom'));
+    } catch (e) { return toast('写入失败：' + (e.message || e)); }
+    toast('已切换为自定义词库「' + name + '」，正在进入记忆曲线…', 3000);
+    closePanel();
+    setTimeout(() => { try { location.reload(); } catch { /* ignore */ } }, 600);
   }
   $('#btn-import').addEventListener('click', async () => {
     const fileInput = $('#file-dict');
@@ -3084,7 +3107,7 @@
     refreshReviewBadge().catch(() => {});
     renderStatsToPanel(appStats || { today: TODAY(), words: 0, goal: settings.dailyGoal, streak: 0, ratio: 0, totalWords: 0, wrongWords: [], heat: [], source: 'none' });
     pomoRender();
-    console.log('[QZ-ENHANCE] UI injected, version', settings.version || '1.0.0-enhanced-v8.3');
+    console.log('[QZ-ENHANCE] UI injected, version', settings.version || '1.0.0-enhanced-v8.4');
   }
   init();
 

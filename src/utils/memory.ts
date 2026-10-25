@@ -8,7 +8,7 @@ import { takeRequeueWord } from './sessionRequeue'
 
 export const MEMORY_MIGRATED_KEY = 'memoryMigratedV1'
 
-export type LearningMode = 'auto' | 'manual'
+export type LearningMode = 'auto' | 'manual' | 'custom'
 
 export type LevelInfo = {
   id: string
