@@ -9,13 +9,15 @@ import WordPanel from './components/WordPanel'
 import { useConfetti } from './hooks/useConfetti'
 import { useWordList } from './hooks/useWordList'
 import { TypingContext, TypingStateActionType, initialState, typingReducer } from './store'
+import type { TypingSettleFn } from './store'
 import { DonateCard } from '@/components/DonateCard'
 import Header from '@/components/Header'
 import Tooltip from '@/components/Tooltip'
 import { idDictionaryMap } from '@/resources/dictionary'
-import { currentDictIdAtom, isReviewModeAtom, randomConfigAtom, reviewModeInfoAtom } from '@/store'
+import { currentDictIdAtom, isReviewModeAtom, reviewModeInfoAtom } from '@/store'
 import { IsDesktop, isLegal } from '@/utils'
 import { recordSkip } from '@/utils/autoLevel'
+import { removeFromRequeue } from '@/utils/sessionRequeue'
 import { deferMemoryDue, useSaveChapterRecord } from '@/utils/db'
 import { useMixPanelChapterLogUploader } from '@/utils/mixpanel'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
@@ -28,7 +30,6 @@ const App: React.FC = () => {
   const { words, isLoading, nextWord } = useWordList()
 
   const [currentDictId, setCurrentDictId] = useAtom(currentDictIdAtom)
-  const randomConfig = useAtomValue(randomConfigAtom)
   const chapterLogUploader = useMixPanelChapterLogUploader(state)
   const saveChapterRecord = useSaveChapterRecord()
 
@@ -37,6 +38,10 @@ const App: React.FC = () => {
   const setReviewModeInfo = useSetAtom(reviewModeInfoAtom)
   // v8.9：词池耗尽提示（全部学会且暂无到期词 / 空词库），避免空白页
   const [noMoreWords, setNoMoreWords] = useState(false)
+
+  // v9.4（TYP-006 / SRS-004）：Word 注册的「当前作答结算」回调 + Skip 在途锁（两条 skip 入口共享）
+  const settleRef = useRef<TypingSettleFn | null>(null)
+  const skipLockRef = useRef(false)
 
   // v9.0：增强面板「到期复习」通过 localStorage 桥接一批到期词；进入复习模式后按每个词自己的 dict 写回记忆曲线
   useEffect(() => {
@@ -76,28 +81,38 @@ const App: React.FC = () => {
   }, [currentDictId, setCurrentDictId])
 
   const skipWord = useCallback(async () => {
-    // v9.3：Skip 也要落状态（skipCount/suspended），否则被跳过的词会永远 unseen、级别静默卡死
-    const word = state.chapterData.words[state.chapterData.index]
-    if (word) {
-      const dict = word.dict || currentDictId
-      try { recordSkip(dict, word.name) } catch { /* ignore */ }
-      if (isReviewMode) {
+    // v9.4（SRS-004）：Skip 在途锁——连点只算一次（WordPanel 的热键跳过共享这把锁）
+    if (skipLockRef.current) return
+    skipLockRef.current = true
+    try {
+      // v9.4（TYP-006）：跳过前先结算当前词（写出未完成的按键统计与词记录）
+      await settleRef.current?.({ persist: true })
+      // v9.3：Skip 也要落状态（skipCount/suspended），否则被跳过的词会永远 unseen、级别静默卡死
+      const word = state.chapterData.words[state.chapterData.index]
+      if (word) {
+        const dict = word.dict || currentDictId
+        try { recordSkip(dict, word.name) } catch { /* ignore */ }
+        // v9.4（SRS-001）：跳过的词不要再从「错词当场重现」队列里回来（否则 Skip 后立刻又看到它）
+        try { removeFromRequeue(dict, word.name) } catch { /* ignore */ }
+        // v9.4（SRS-001）：非复习模式同样要顺延 due，否则「跳过的到期词」下一轮立刻又被抽中（连出 3 次）
         try { await deferMemoryDue(dict, word.name, 1) } catch { /* ignore */ }
       }
-    }
-    // v8.9：动态出词时 Skip 要实时取下一个词；不把被跳过的词计入 recent（避免它更难再出现）
-    if (!isReviewMode && nextWord) {
-      const next = await nextWord()
-      if (next) {
-        setNoMoreWords(false)
-        dispatch({ type: TypingStateActionType.PUSH_WORD, payload: next })
-        dispatch({ type: TypingStateActionType.NEXT_WORD })
+      // v8.9：动态出词时 Skip 要实时取下一个词；不把被跳过的词计入 recent（避免它更难再出现）
+      if (!isReviewMode && nextWord) {
+        const next = await nextWord()
+        if (next) {
+          setNoMoreWords(false)
+          dispatch({ type: TypingStateActionType.PUSH_WORD, payload: next })
+          dispatch({ type: TypingStateActionType.NEXT_WORD })
+          return
+        }
+        setNoMoreWords(true)
         return
       }
-      setNoMoreWords(true)
-      return
+      dispatch({ type: TypingStateActionType.SKIP_WORD, payload: { finishIfLast: isReviewMode } })
+    } finally {
+      skipLockRef.current = false
     }
-    dispatch({ type: TypingStateActionType.SKIP_WORD, payload: { finishIfLast: isReviewMode } })
   }, [currentDictId, dispatch, isReviewMode, nextWord, state.chapterData.index, state.chapterData.words])
 
   // 开始/继续时缓存按键，等输入监听挂载后重放，避免「第一下按键」被吞掉
@@ -130,9 +145,17 @@ const App: React.FC = () => {
     }
   }, [dispatch, state.chapterData.wordCount])
 
+  // v9.4（TYP-006）：暂停/失焦时把当前词的按键统计刷新进 chapterData（词未完成，不写记忆曲线）
+  useEffect(() => {
+    if (state.isTyping) return
+    void settleRef.current?.({ persist: false })
+  }, [state.isTyping])
+
   useEffect(() => {
     if (!state.isTyping && !isLoading) {
       const onKeyDown = (e: KeyboardEvent) => {
+        // v9.4：输入法组词期（isComposing / keyCode 229）与键盘自动重复不触发「按任意键开始」
+        if (e.isComposing || e.keyCode === 229 || e.repeat) return
         if (e.key !== 'Enter' && (isLegal(e.key) || e.key === ' ') && !e.altKey && !e.ctrlKey && !e.metaKey) {
           e.preventDefault()
           startBufferRef.current.push(e.key)
@@ -197,7 +220,7 @@ const App: React.FC = () => {
   useConfetti(isReviewMode && state.isFinished)
 
   return (
-    <TypingContext.Provider value={{ state: state, dispatch }}>
+    <TypingContext.Provider value={{ state: state, dispatch, settleRef, skipLockRef }}>
       {state.isFinished && isReviewMode && <DonateCard />}
       {state.isFinished && isReviewMode && <ResultScreen />}
       <Layout>

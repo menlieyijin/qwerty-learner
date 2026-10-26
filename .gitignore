@@ -28,11 +28,14 @@ package-lock.json
 pnpm-lock.yaml
 .env
 stats.html
+*.tsbuildinfo
 
 .idea
 /test-results/
 /blob-report/
 /playwright/.cache/
 playwright-report
+# local release logs (dsh scripts)
+/logs/
 # local build error log
 /build-error.log

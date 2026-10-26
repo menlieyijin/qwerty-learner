@@ -1,6 +1,6 @@
 // ============================================================================
 // Qwerty Learner Plus — Electron 主进程（增强版壳）
-// 版本: 1.0.0-enhanced-v9.3
+// 版本: 见 local-fork/package.json（v9.4 起版本号单一来源，这里不再硬编码）
 // 说明: A 层外壳增强（置顶/快捷键/迷你模式/托盘/自启/透明度缩放/自动备份/
 //       错误日志/托盘进度）+ B 层桌面增强（AI/剪贴板/发音缓存等 IPC 支撑）。
 //       所有私有数据（设置/日志/备份/缓存）写入 %APPDATA%\qwerty-learner-plus，
@@ -39,11 +39,12 @@ protocol.registerSchemesAsPrivileged([
 // 路径与设置
 // ---------------------------------------------------------------------------
 // v9.2：版本号单一来源——package.json（构建脚本只需改这里）
-let APP_VERSION = '1.0.0-enhanced-v9.3';
+// v9.4（SHELL-010）：去掉硬编码版本兜底，读不到就显示 unknown，避免版本升级后界面/日志出现过期版本号
+let APP_VERSION = 'unknown';
 try {
   const pkg = require(path.join(__dirname, '..', 'package.json'));
   if (pkg && pkg.version) APP_VERSION = String(pkg.version);
-} catch { /* 保持兜底 */ }
+} catch { /* 保持 unknown */ }
 const PLUS_DIR = process.env.QZ_PLUS_DIR
   ? path.resolve(process.env.QZ_PLUS_DIR)
   : path.join(app.getPath('appData'), 'qwerty-learner-plus');
@@ -155,11 +156,34 @@ function pruneLogs() {
     }
   } catch { /* ignore */ }
 }
+// v9.4（SHELL-009）：日志脱敏——绝对路径 → 占位符；URL 查询串（可能含用户查询/发音词）→ 占位
+function redactLogText(value) {
+  let s;
+  try {
+    s = typeof value === 'string' ? value : (value && (value.stack || value.message)) || String(value);
+  } catch { s = ''; }
+  try {
+    const repl = [
+      [USER_DATA, '<userData>'],
+      [PLUS_DIR, '<plusDir>'],
+      [app.getPath('appData'), '<appData>'],
+      [app.getPath('home'), '<home>'],
+      [app.getPath('documents'), '<documents>'],
+    ];
+    for (const [p, tag] of repl) { if (p && p.length > 3) s = s.split(p).join(tag); }
+  } catch { /* ignore */ }
+  // 兜底：残留 Windows 绝对路径 / file:// URL / URL 查询串（可能含用户查询词）
+  s = s.replace(/[A-Za-z]:\\[^\r\n"'<>|]{1,200}/g, '<path>');
+  s = s.replace(/file:\/\/\/[^\s"'<>|)]+/g, 'file:///<path>');
+  s = s.replace(/([?&](?:audio|q|text|word|query)=)[^&\s)"']*/gi, '$1<redacted>');
+  if (s.length > 2000) s = s.slice(0, 2000) + '…';
+  return s;
+}
 function writeLog(kind, tag, message) {
   try {
     const file = logFilePath(kind);
     rotateIfNeeded(file);
-    const line = `[${new Date().toISOString()}] [${tag}] ${typeof message === 'string' ? message : (message && (message.stack || message.message)) || String(message)}\n`;
+    const line = `[${new Date().toISOString()}] [${tag}] ${redactLogText(message)}\n`;
     fs.appendFileSync(file, line, 'utf-8');
     pruneLogs();
   } catch { /* ignore */ }
@@ -277,7 +301,10 @@ function injectEnhance(win) {
       try {
         if (window.__QZ_ENHANCED__) return 'already';
         window.__QZ_ENHANCED__ = true;
+        window.__QZ_ELECTRON__ = true;
         window.__QZ_VERSION__ = ${JSON.stringify(APP_VERSION)};
+        // v9.4（SHELL-008）：测试钩子只在测试/多开环境（QZ_ALLOW_MULTI=1）下开放，生产构建默认关闭
+        window.__QZ_TEST_HOOKS__ = ${process.env.QZ_ALLOW_MULTI === '1' ? 'true' : 'false'};
         var style = document.createElement('style');
         style.id = 'qz-enhance-style';
         style.textContent = ${JSON.stringify(css)};
@@ -377,10 +404,10 @@ function runBackup(reason = 'auto') {
             } catch (e) { logError('backup-copy-' + name, e); }
           }
         }
-        // 写一份说明，方便回滚
+        // 写一份说明，方便回滚（v9.4：不写绝对路径，避免日志/备份泄露本机目录结构）
         try {
           fs.writeFileSync(path.join(dest, 'BACKUP-README.txt'),
-            `Qwerty Learner Plus 自动备份\r\n时间: ${now.toLocaleString()}\r\n原因: ${reason}\r\n源目录: ${USER_DATA}\r\n备份内容: ${copied.join(', ')}${snapshotBytes ? ' + data.json(逻辑快照)' : ''}\r\n逻辑快照: ${snapshotBytes ? `data.json（${snapshotBytes} B）：RecordDB 全 store + QwertyPlusDB.dicts + localStorage + 设置` : '本份备份未能获取（应用未就绪或超时），已由目录副本兜底'}\r\n恢复方法: 退出应用后，将本目录下的 IndexedDB / Local Storage / Preferences 覆盖回源目录即可。\r\n`,
+            `Qwerty Learner Plus 自动备份\r\n时间: ${now.toLocaleString()}\r\n原因: ${reason}\r\n源目录: Electron userData（%APPDATA%\\qwerty-learner）\r\n备份内容: ${copied.join(', ')}${snapshotBytes ? ' + data.json(逻辑快照)' : ''}\r\n逻辑快照: ${snapshotBytes ? `data.json（${snapshotBytes} B）：RecordDB 全 store + QwertyPlusDB.dicts + localStorage + 设置` : '本份备份未能获取（应用未就绪或超时），已由目录副本兜底'}\r\n恢复方法: 退出应用后，将本目录下的 IndexedDB / Local Storage / Preferences 覆盖回 userData 目录；或直接用应用内「数据 → 导入全量数据」导入本目录的 data.json。\r\n`,
             'utf-8');
         } catch { /* ignore */ }
         // 保留最近 7 份
@@ -605,16 +632,17 @@ function registerAudioCache() {
         } catch (e) { logError('dict-override-protocol', e); return new Response('', { status: 500 }); }
       }
       // v8.9 安全：音频缓存只允许有道 dictvoice 的 https 地址，其余（含解析失败）一律 403
+      // v9.4（SHELL-009）：拒绝日志只记 scheme/host/path，不记含被查单词的 query
       let url = '';
       try {
         url = decodeURIComponent(request.url.replace('qzcache://audio/', ''));
         const audioUrl = new URL(url);
         if (audioUrl.protocol !== 'https:' || audioUrl.host !== 'dict.youdao.com' || audioUrl.pathname !== '/dictvoice') {
-          logError('pron-cache-deny', url);
+          logError('pron-cache-deny', `${audioUrl.protocol}//${audioUrl.host}${audioUrl.pathname}`);
           return new Response('', { status: 403 });
         }
       } catch (e) {
-        logError('pron-cache-deny', `${url || request.url} (${(e && e.message) || e})`);
+        logError('pron-cache-deny', `invalid url (${(e && e.message) || e})`);
         return new Response('', { status: 403 });
       }
       const file = audioCachePath(url);
@@ -661,6 +689,35 @@ const DICT_META_FILE = path.join(__dirname, 'enhance/dict-meta.json');
 const DICT_GH_API = 'https://api.github.com/repos/RealKai42/qwerty-learner/contents/public/dicts?ref=master';
 const RAW_BASE = 'https://raw.githubusercontent.com/RealKai42/qwerty-learner/master/public/dicts/';
 const JSDELIVR_BASE = 'https://cdn.jsdelivr.net/gh/RealKai42/qwerty-learner@master/public/dicts/';
+// v9.4 安全（SHELL-003）：词库下载只允许官方受信源（https + .json），并限制体积/结构；
+// 渲染端传入的任意 URL 一律忽略并回退到官方 raw/jsdelivr，防止 SSRF 与远端内容注入。
+const DICT_DOWNLOAD_HOSTS = new Set([
+  'raw.githubusercontent.com',
+  'cdn.jsdelivr.net',
+  'github.com',
+  'objects.githubusercontent.com',
+  'api.github.com',
+]);
+const DICT_MAX_BYTES = 32 * 1024 * 1024; // 32MB 上限（正常词库最大约 8MB）
+function dictUrlAllowed(raw) {
+  try {
+    const u = new URL(String(raw || ''));
+    if (u.protocol !== 'https:') return false;
+    if (u.username || u.password) return false;
+    if (!/\.json$/i.test(u.pathname)) return false;
+    return DICT_DOWNLOAD_HOSTS.has(String(u.hostname || '').toLowerCase());
+  } catch { return false; }
+}
+// 结构校验：JSON 数组、非空、≥80% 条目为「含 name 字符串的对象」或非空字符串
+function validateDictPayload(json) {
+  if (!Array.isArray(json) || json.length === 0) return false;
+  let valid = 0;
+  for (const item of json) {
+    if (typeof item === 'string') { if (item.trim()) valid += 1; continue; }
+    if (item && typeof item === 'object' && typeof item.name === 'string' && item.name.trim() && item.name.length <= 200) valid += 1;
+  }
+  return valid >= Math.ceil(json.length * 0.8);
+}
 let dictMetaCache = null;
 let dictListCache = null;
 const dictShaCache = new Map(); // file -> {size, sha}
@@ -735,6 +792,12 @@ function readDictContent(file) {
   try {
     const updatePath = path.join(UPDATE_DIR, f);
     if (fs.existsSync(updatePath)) {
+      // v9.4（SHELL-003）：更新目录里的词库也做体积上限校验（历史/异常文件不再直接 JSON.parse）
+      const st = fs.statSync(updatePath);
+      if (st.size > DICT_MAX_BYTES) {
+        logError('dict-read', `${f} too large (${st.size}B), ignored`);
+        return { ok: false, error: '词库文件过大（可能已损坏），请在「词库 → 清空已下载更新」后重试' };
+      }
       arr = JSON.parse(fs.readFileSync(updatePath, 'utf-8'));
       source = 'update';
     } else {
@@ -816,12 +879,19 @@ async function checkDictUpdates() {
   }
 }
 async function fetchDictFile(url, timeout = 25000) {
+  // v9.4（SHELL-003）：下载前校验来源（https + 受信 host + .json）
+  if (!dictUrlAllowed(url)) throw new Error('下载源不在白名单内');
   const res = await fetch(url, { headers: { 'user-agent': FREE_UA }, signal: AbortSignal.timeout(timeout) });
   if (!res.ok) throw new Error('HTTP ' + res.status);
+  // 重定向后再校验最终地址，防止受信域名 302 到内网/非受信域
+  if (!dictUrlAllowed(res.url)) throw new Error('下载地址重定向到非受信源');
+  const declared = Number(res.headers.get('content-length') || 0);
+  if (declared > DICT_MAX_BYTES) throw new Error('词库文件过大');
   const buf = Buffer.from(await res.arrayBuffer());
   if (!buf.length) throw new Error('空文件');
+  if (buf.length > DICT_MAX_BYTES) throw new Error('词库文件过大');
   const json = JSON.parse(buf.toString('utf-8'));
-  if (!Array.isArray(json) || !json.length) throw new Error('JSON 不是有效词库数组');
+  if (!validateDictPayload(json)) throw new Error('JSON 不是有效词库数组');
   return buf;
 }
 async function downloadDictUpdate(name, downloadUrl) {
@@ -829,14 +899,20 @@ async function downloadDictUpdate(name, downloadUrl) {
     const file = path.basename(String(name || ''));
     if (!/^[A-Za-z0-9._\-]+\.json$/.test(file)) return { ok: false, error: '非法文件名' };
     fs.mkdirSync(UPDATE_DIR, { recursive: true });
-    const urls = [downloadUrl || RAW_BASE + encodeURIComponent(file), JSDELIVR_BASE + encodeURIComponent(file)];
+    // v9.4（SHELL-003）：只使用受信来源；渲染端传入的非白名单 URL 直接丢弃并回退官方源
+    const requested = [];
+    if (downloadUrl) {
+      if (dictUrlAllowed(downloadUrl)) requested.push(String(downloadUrl));
+      else logRenderer('dict-download', 'ignored untrusted downloadUrl');
+    }
+    const urls = [...requested, RAW_BASE + encodeURIComponent(file), JSDELIVR_BASE + encodeURIComponent(file)];
     let lastErr = null;
     for (const url of urls) {
       try {
         const buf = await fetchDictFile(url);
         const target = path.join(UPDATE_DIR, file);
         fs.writeFileSync(target, buf);
-        logRenderer('dict-download', `${file} <- ${url} (${buf.length} B)`);
+        logRenderer('dict-download', `${file} <- ${String(url).replace(/^https:\/\/([^/]+).*$/, '$1')} (${buf.length} B)`);
         return { ok: true, file, path: target, size: buf.length, url };
       } catch (e) { lastErr = e; }
     }
@@ -853,7 +929,7 @@ function dictOverrideExists(name) {
     const p = path.join(UPDATE_DIR, file);
     if (!fs.existsSync(p)) return false;
     const st = fs.statSync(p);
-    return st.size > 10;
+    return st.size > 10 && st.size <= DICT_MAX_BYTES;
   } catch { return false; }
 }
 function dictUpdateInfo() {
@@ -862,8 +938,12 @@ function dictUpdateInfo() {
     const list = files.map((file) => {
       const p = path.join(UPDATE_DIR, file);
       let count = 0;
-      try { const arr = JSON.parse(fs.readFileSync(p, 'utf-8')); count = Array.isArray(arr) ? arr.length : 0; } catch { /* ignore */ }
-      return { file, size: fs.statSync(p).size, count, mtime: fs.statSync(p).mtimeMs };
+      const st = fs.statSync(p);
+      // v9.4：超大/异常文件不再 JSON.parse（避免卡死）
+      if (st.size <= DICT_MAX_BYTES) {
+        try { const arr = JSON.parse(fs.readFileSync(p, 'utf-8')); count = Array.isArray(arr) ? arr.length : 0; } catch { /* ignore */ }
+      }
+      return { file, size: st.size, count, mtime: st.mtimeMs, invalid: st.size > DICT_MAX_BYTES };
     }).sort((a, b) => b.mtime - a.mtime);
     return { ok: true, dir: UPDATE_DIR, files: list };
   } catch (e) { return { ok: false, error: String(e.message || e), files: [] }; }
@@ -936,6 +1016,8 @@ async function startPrecache(opts) {
     const limit = Math.max(0, Math.min(50000, Number(opts && opts.limit) || 0));
     const p = fs.existsSync(path.join(UPDATE_DIR, dictFile)) ? path.join(UPDATE_DIR, dictFile) : path.join(__dirname, '../build/dicts', dictFile);
     if (!fs.existsSync(p)) return { ok: false, error: '词库文件不存在' };
+    // v9.4（SHELL-003）：预缓存同样受词库体积上限保护
+    if (fs.statSync(p).size > DICT_MAX_BYTES) return { ok: false, error: '词库文件过大，无法预缓存' };
     const arr = JSON.parse(fs.readFileSync(p, 'utf-8'));
     const words = [...new Set((Array.isArray(arr) ? arr : []).map((e) => String((e && e.name) || '').trim()).filter(Boolean))];
     const limited = limit > 0 ? words.slice(0, limit) : words;
@@ -1326,6 +1408,57 @@ function freeCacheClear() {
 //   will-navigate / will-redirect：仅允许 file:// 且真实路径位于 app.getAppPath() 内
 //   setWindowOpenHandler：仅 http:/https: 交给系统浏览器，其余协议只记日志
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// v9.4 安全（SHELL-001）：主窗口 CSP —— file:// 页面无法在构建期改 index.html（构建产物归 scripts 管），
+//   实测 Electron 43 的 session.webRequest.onHeadersReceived 会命中 file:// 文档请求，
+//   因此在这里对「主文档 URL 精确匹配 app.asar/build/index.html」注入响应头；
+//   剪贴板小窗（clipboard.html 自带更严格的 meta CSP）、静态资源、开发服务器都不受影响。
+//   注意：单例监听器——本文件不要重复注册 onHeadersReceived。
+// ---------------------------------------------------------------------------
+const MAIN_WINDOW_CSP = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline'", // Vite 产物的 module chunk + index.html 内联初始化脚本
+  "style-src 'self' 'unsafe-inline'",  // React/Tailwind 行内样式
+  "img-src 'self' data: blob:",
+  "font-src 'self' data:",
+  "media-src 'self' qzcache: https://dict.youdao.com blob: data:",
+  // 允许：本地词库(file:// self)、在线更新词库覆盖(qzcache:)、发音音频、以及现有前端埋点域名（保持行为不变）
+  "connect-src 'self' qzcache: https://dict.youdao.com https://api.dictionaryapi.dev https://api.mymemory.translated.net https://translate.googleapis.com https://api-js.mixpanel.com https://api.mixpanel.com https://*.mixpanel.com https://vitals.vercel-insights.com https://*.vercel-insights.com",
+  "worker-src 'self' blob:",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'none'",
+  "frame-src 'none'",
+  "frame-ancestors 'none'",
+].join('; ');
+function installMainWindowCsp() {
+  try {
+    session.defaultSession.webRequest.onHeadersReceived({ urls: ['<all_urls>'] }, (details, callback) => {
+      try {
+        const u = new URL(String(details.url || ''));
+        // 只给生产主窗口文档加 CSP；开发服务器（VITE_DEV_SERVER_URL / HMR ws）不加，避免误伤
+        if (u.protocol !== 'file:' || !/\/build\/index\.html$/.test(u.pathname)) return callback({});
+        const responseHeaders = { ...(details.responseHeaders || {}) };
+        responseHeaders['Content-Security-Policy'] = [MAIN_WINDOW_CSP];
+        callback({ responseHeaders });
+      } catch { callback({}); }
+    });
+    logRenderer('csp', 'main-window CSP header installed');
+  } catch (e) { logError('csp', e); }
+}
+
+// ---------------------------------------------------------------------------
+// v9.4 安全（SHELL-011）：同步通道 app:version-sync 也走来源白名单（非可信 webContents 返回 null）
+//   必须在 createWindow() 之前注册：沙箱化 preload 在页面脚本前就会 sendSync 取版本。
+// ---------------------------------------------------------------------------
+function registerVersionChannel() {
+  try {
+    ipcMain.on('app:version-sync', (e) => {
+      try { e.returnValue = isTrustedWebContents(e.sender) ? APP_VERSION : null; } catch { e.returnValue = null; }
+    });
+  } catch (e) { logError('version-sync', e); }
+}
+
 function hardenWebContents(wc) {
   if (!wc) return;
   const guard = (event, url) => {
@@ -1403,10 +1536,11 @@ function createWindow() {
       path.join(__dirname, '../build/index.html'),
     ];
     const existsInfo = candidates.map((p) => { try { return fs.existsSync(p); } catch (e) { return 'err:' + e.message; } });
-    logRenderer('paths', `dirname=${__dirname} appPath=${app.getAppPath()} resources=${process.resourcesPath}`);
-    logRenderer('paths', `candidates=${JSON.stringify(candidates)} exists=${JSON.stringify(existsInfo)}`);
+    // v9.4（SHELL-009）：只记文件名/存在性，不记绝对路径（writeLog 也会统一脱敏）
+    logRenderer('paths', `appPath=${path.basename(app.getAppPath())} resourcesSet=${!!process.resourcesPath}`);
+    logRenderer('paths', `candidates=${candidates.map((p) => path.basename(p)).join('|')} exists=${existsInfo.map((v) => v === true).join('|')}`);
     const target = existsInfo[1] === true ? candidates[1] : candidates[0];
-    logRenderer('paths', `target=${target}`);
+    logRenderer('paths', `target=${path.basename(target)}`);
     try {
       mainWindow.loadURL(require('url').pathToFileURL(target).href).catch((e) => logError('loadURL', e));
     } catch (e) {
@@ -1540,9 +1674,7 @@ function setAutoStart(on) {
 
 function registerIpc() {
   // v9.2：沙箱化 preload 无法读 package.json，用同步 IPC 把单一版本号交给 preload
-  try {
-    ipcMain.on('app:version-sync', (e) => { e.returnValue = APP_VERSION; });
-  } catch (e) { logError('version-sync', e); }
+  // v9.4：改由 registerVersionChannel() 在 createWindow() 之前注册（带来源白名单），此处不再重复注册
   handle('app:getSettings', () => publicSettings());
   handle('app:updateSettings', (_e, patch) => {
     if (patch && typeof patch === 'object') {
@@ -1811,13 +1943,17 @@ if (!gotLock) {
       session.defaultSession.setPermissionCheckHandler((_wc, permission) => ALLOWED_PERMISSIONS.has(permission));
     } catch (e) { logError('permission-handler', e); }
     registerAudioCache();
+    // v9.4：主窗口 CSP（SHELL-001）必须在窗口开始加载前挂上；版本同步通道（SHELL-011）必须在 preload 之前注册
+    installMainWindowCsp();
+    registerVersionChannel();
     createWindow();
     createTray();
     registerShortcuts();
     registerIpc();
     startClipboardWatch();
     scheduleDailyBackup();
-    logRenderer('startup', `v${APP_VERSION} started. userData=${USER_DATA} plusDir=${PLUS_DIR} hidden=${startHidden} pronCache=${settings.pronCache}`);
+    // v9.4（SHELL-009）：启动日志不写绝对路径（userData/plusDir 只记目录名）
+    logRenderer('startup', `v${APP_VERSION} started. userData=${path.basename(USER_DATA)} plusDir=${path.basename(PLUS_DIR)} hidden=${startHidden} pronCache=${settings.pronCache}`);
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) createWindow();
       else showMainWindow();

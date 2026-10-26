@@ -14,10 +14,12 @@ export default function Progress({ className }: { className?: string }) {
   }
 
   useEffect(() => {
-    const newProgress = Math.floor((state.chapterData.index / state.chapterData.words.length) * 100)
+    // v9.4（TYP-012）：空词表时 words.length=0 会产生 NaN（width: NaN%），先兜底
+    const total = state.chapterData.words.length || 1
+    const newProgress = Math.min(100, Math.max(0, Math.floor((state.chapterData.index / total) * 100)))
     setProgress(newProgress)
     const colorPhase = Math.floor(newProgress / 33.4)
-    setPhase(colorPhase)
+    setPhase(Number.isFinite(colorPhase) ? colorPhase : 0)
   }, [state.chapterData.index, state.chapterData.words.length])
 
   return (

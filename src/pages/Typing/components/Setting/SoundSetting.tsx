@@ -96,9 +96,12 @@ export default function SoundSetting() {
     [setKeySoundsConfig],
   )
 
-  const onPlayKeySound = useCallback((soundResource: SoundResource) => {
-    playKeySoundResource(soundResource)
-  }, [])
+  const onPlayKeySound = useCallback(
+    (soundResource: SoundResource) => {
+      playKeySoundResource(soundResource, keySoundsConfig.volume)
+    },
+    [keySoundsConfig.volume],
+  )
 
   const onToggleHintSounds = useCallback(
     (checked: boolean) => {
@@ -214,7 +217,7 @@ export default function SoundSetting() {
               <Switch checked={keySoundsConfig.isOpen} onChange={onToggleKeySounds} className="switch-root">
                 <span aria-hidden="true" className="switch-thumb" />
               </Switch>
-              <span className="text-right text-xs font-normal leading-tight text-gray-600">{`发音已${
+              <span className="text-right text-xs font-normal leading-tight text-gray-600">{`按键音已${
                 keySoundsConfig.isOpen ? '开启' : '关闭'
               }`}</span>
             </div>
@@ -286,7 +289,7 @@ export default function SoundSetting() {
               <Switch checked={hintSoundsConfig.isOpen} onChange={onToggleHintSounds} className="switch-root">
                 <span aria-hidden="true" className="switch-thumb" />
               </Switch>
-              <span className="text-right text-xs font-normal leading-tight text-gray-600">{`发音已${
+              <span className="text-right text-xs font-normal leading-tight text-gray-600">{`效果音已${
                 hintSoundsConfig.isOpen ? '开启' : '关闭'
               }`}</span>
             </div>

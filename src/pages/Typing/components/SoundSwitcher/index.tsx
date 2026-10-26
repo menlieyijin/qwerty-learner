@@ -56,7 +56,7 @@ export default function SoundSwitcher() {
                     <Switch checked={keySoundsConfig.isOpen} onChange={onChangeKeySound} className="switch-root">
                       <span aria-hidden="true" className="switch-thumb" />
                     </Switch>
-                    <span className="text-right text-xs font-normal leading-tight text-gray-600">{`发音已${
+                    <span className="text-right text-xs font-normal leading-tight text-gray-600">{`按键音已${
                       keySoundsConfig.isOpen ? '开启' : '关闭'
                     }`}</span>
                   </div>
@@ -67,7 +67,7 @@ export default function SoundSwitcher() {
                     <Switch checked={hintSoundsConfig.isOpen} onChange={onChangeHintSound} className="switch-root">
                       <span aria-hidden="true" className="switch-thumb" />
                     </Switch>
-                    <span className="text-right text-xs font-normal leading-tight text-gray-600">{`发音已${
+                    <span className="text-right text-xs font-normal leading-tight text-gray-600">{`效果音已${
                       hintSoundsConfig.isOpen ? '开启' : '关闭'
                     }`}</span>
                   </div>

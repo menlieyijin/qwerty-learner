@@ -6,11 +6,12 @@ import Phonetic from './components/Phonetic'
 import Translation from './components/Translation'
 import WordComponent from './components/Word'
 import { usePrefetchPronunciationSound } from '@/hooks/usePronunciation'
-import { isReviewModeAtom, isShowPrevAndNextWordAtom, loopWordConfigAtom, phoneticConfigAtom, reviewModeInfoAtom, currentDictIdAtom } from '@/store'
+import { currentDictIdAtom, isReviewModeAtom, isShowPrevAndNextWordAtom, loopWordConfigAtom, phoneticConfigAtom, reviewModeInfoAtom } from '@/store'
 import type { Word, WordWithIndex } from '@/typings'
 import { recordSkip } from '@/utils/autoLevel'
 import { deferMemoryDue } from '@/utils/db'
 import { getLearningSummary } from '@/utils/memory'
+import { removeFromRequeue } from '@/utils/sessionRequeue'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { useHotkeys } from 'react-hotkeys-hook'
@@ -23,7 +24,7 @@ export default function WordPanel({
   onNoMoreWords?: () => void
 }) {
   // eslint-disable-next-line  @typescript-eslint/no-non-null-assertion
-  const { state, dispatch } = useContext(TypingContext)!
+  const { state, dispatch, settleRef, skipLockRef } = useContext(TypingContext)!
   const phoneticConfig = useAtomValue(phoneticConfigAtom)
   const isShowPrevAndNextWord = useAtomValue(isShowPrevAndNextWordAtom)
   const [wordComponentKey, setWordComponentKey] = useState(0)
@@ -46,11 +47,18 @@ export default function WordPanel({
       .then((s) => {
         if (!cancelled) setSummary(s)
       })
-      .catch(() => {})
+      .catch(() => {
+        /* 概览查询失败时保持空概览，不影响开始练习 */
+      })
     return () => {
       cancelled = true
     }
   }, [state.isTyping])
+
+  // v9.4（TYP-008）：换词/重开章节时复位单曲循环计数，避免 Skip/Restart 后新词「少练 N-k 次」
+  useEffect(() => {
+    setCurrentWordExerciseCount(0)
+  }, [state.chapterData.index, state.chapterData.words.length])
 
   const prevIndex = useMemo(() => {
     const newIndex = state.chapterData.index - 1
@@ -135,36 +143,57 @@ export default function WordPanel({
 
   const onSkipWord = useCallback(
     async (type: 'prev' | 'next') => {
-      if (type === 'prev') {
-        dispatch({ type: TypingStateActionType.SKIP_2_WORD_INDEX, newIndex: prevIndex })
-        return
-      }
-      // v8.9：动态出词时「下一个」需要实时取词，不能只在已有词表里移动（末词会直接空白）
-      if (currentWord) {
-        // v9.3：跳过必须落状态（skipCount/suspended），否则该词永远 unseen、级别卡死
-        const dict = currentWord.dict || currentDictId
-        try { recordSkip(dict, currentWord.name) } catch { /* ignore */ }
-        if (isReviewMode) {
-          try { await deferMemoryDue(dict, currentWord.name, 1) } catch { /* ignore */ }
-        }
-      }
-      if (!isReviewMode && onNeedNextWord) {
-        const next = await onNeedNextWord()
-        if (next) {
-          dispatch({ type: TypingStateActionType.PUSH_WORD, payload: next })
-          dispatch({ type: TypingStateActionType.NEXT_WORD })
+      // v9.4（SRS-004）：与 Header Skip 共享在途锁，连点/连按只算一次，避免同一词被重复 recordSkip
+      if (skipLockRef?.current) return
+      if (skipLockRef) skipLockRef.current = true
+      try {
+        // v9.4（TYP-006）：跳过前先结算当前词（按键统计 + 未落库的词记录）
+        await settleRef?.current?.({ persist: true })
+        if (type === 'prev') {
+          dispatch({ type: TypingStateActionType.SKIP_2_WORD_INDEX, newIndex: prevIndex })
           return
         }
-        onNoMoreWords?.()
-        return
+        // v8.9：动态出词时「下一个」需要实时取词，不能只在已有词表里移动（末词会直接空白）
+        if (currentWord) {
+          // v9.3：跳过必须落状态（skipCount/suspended），否则该词永远 unseen、级别卡死
+          const dict = currentWord.dict || currentDictId
+          try { recordSkip(dict, currentWord.name) } catch { /* ignore */ }
+          // v9.4（SRS-001）：跳过的词不要再从「错词当场重现」队列里回来
+          try { removeFromRequeue(dict, currentWord.name) } catch { /* ignore */ }
+          // v9.4（SRS-001）：非复习模式同样顺延 due，否则被跳过的到期词下一轮立刻再出现
+          try { await deferMemoryDue(dict, currentWord.name, 1) } catch { /* ignore */ }
+        }
+        if (!isReviewMode && onNeedNextWord) {
+          const next = await onNeedNextWord()
+          if (next) {
+            dispatch({ type: TypingStateActionType.PUSH_WORD, payload: next })
+            dispatch({ type: TypingStateActionType.NEXT_WORD })
+            return
+          }
+          onNoMoreWords?.()
+          return
+        }
+        dispatch({
+          type: TypingStateActionType.SKIP_2_WORD_INDEX,
+          newIndex: nextIndex,
+          payload: { finishIfLast: isReviewMode },
+        })
+      } finally {
+        if (skipLockRef) skipLockRef.current = false
       }
-      dispatch({
-        type: TypingStateActionType.SKIP_2_WORD_INDEX,
-        newIndex: nextIndex,
-        payload: { finishIfLast: isReviewMode },
-      })
     },
-    [dispatch, prevIndex, nextIndex, isReviewMode, onNeedNextWord, onNoMoreWords, currentWord, currentDictId],
+    [
+      dispatch,
+      prevIndex,
+      nextIndex,
+      isReviewMode,
+      onNeedNextWord,
+      onNoMoreWords,
+      currentWord,
+      currentDictId,
+      settleRef,
+      skipLockRef,
+    ],
   )
 
   useHotkeys(
@@ -224,8 +253,9 @@ export default function WordPanel({
       <div className="container flex h-24 w-full shrink-0 grow-0 justify-between px-12 pt-10">
         {isShowPrevAndNextWord && state.isTyping && (
           <>
-            <PrevAndNextWord type="prev" />
-            <PrevAndNextWord type="next" />
+            {/* v9.4（TYP-007）：点击跳过走与 Skip 相同的落库/顺延/结算语义，不再只切索引 */}
+            <PrevAndNextWord type="prev" onSkip={onSkipWord} />
+            <PrevAndNextWord type="next" onSkip={onSkipWord} />
           </>
         )}
       </div>

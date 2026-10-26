@@ -1,4 +1,4 @@
-import { track } from '@vercel/analytics'
+import { isTelemetryEnabled, trackVercelEvent } from '@/utils/telemetry'
 
 declare global {
   interface Window {
@@ -7,7 +7,10 @@ declare global {
 }
 
 export const trackPromotionEvent = (event: string, properties: Record<string, string>) => {
-  track(event, properties)
+  // PRIV-001 / Batch2：桌面端默认关闭遥测时，推广事件同样不上报（@vercel/analytics + gtag 都跳过）。
+  if (!isTelemetryEnabled()) return
+
+  trackVercelEvent(event, properties)
 
   if (typeof window !== 'undefined' && window?.gtag) {
     try {

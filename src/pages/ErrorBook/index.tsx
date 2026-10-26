@@ -6,6 +6,7 @@ import Pagination, { ITEM_PER_PAGE } from './Pagination'
 import RowDetail from './RowDetail'
 import { currentRowDetailAtom } from './store'
 import type { groupedWordRecords } from './type'
+import { LoadingUI } from '@/components/Loading'
 import { idDictionaryMap } from '@/resources/dictionary'
 import { currentDictIdAtom, reviewModeInfoAtom } from '@/store'
 import type { Word } from '@/typings'
@@ -78,6 +79,15 @@ export function ErrorBook() {
   const setReviewModeInfo = useSetAtom(reviewModeInfoAtom)
   const { deleteWordRecord } = useDeleteWordRecord()
   const [reload, setReload] = useState(false)
+  // PAGES-006/013：区分“加载中 / 加载失败 / 确实没有错题”三种状态，避免数据库异常时永久空白
+  const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
+
+  // PAGES-005：删除或重新加载后总页数可能变小，把 currentPage 收敛到合法范围，
+  // 避免停留在越界页导致列表空白、分页显示「2 / 1」。
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(Math.max(1, page), Math.max(1, totalPages)))
+  }, [totalPages])
 
   const onBack = useCallback(() => {
     navigate('/')
@@ -117,11 +127,16 @@ export function ErrorBook() {
   }, [currentPage, sortedRecords])
 
   useEffect(() => {
+    let cancelled = false
+    setIsLoading(true)
+    setLoadError(false)
+
     db.wordRecords
       .where('wrongCount')
       .above(0)
       .toArray()
       .then((records) => {
+        if (cancelled) return
         const groups: groupedWordRecords[] = []
 
         records.forEach((record) => {
@@ -142,6 +157,20 @@ export function ErrorBook() {
 
         setGroupedRecords(groups)
       })
+      .catch((error) => {
+        if (cancelled) return
+        // PAGES-013：IndexedDB 打不开/查询失败时给出可重试的错误态，而不是静默空白
+        console.error('错题本读取失败：', error)
+        setLoadError(true)
+        setGroupedRecords([])
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
   }, [reload])
 
   const handleDelete = async (word: string, dict: string) => {
@@ -201,21 +230,44 @@ export function ErrorBook() {
             </div>
             <ScrollArea.Root className="flex-1 overflow-y-auto pt-5">
               <ScrollArea.Viewport className="h-full  ">
-                <div className="flex flex-col gap-3">
-                  {renderRecords.map((record) => (
-                    <ErrorRow
-                      key={`${record.dict}-${record.word}`}
-                      record={record}
-                      onDelete={() => handleDelete(record.word, record.dict)}
-                    />
-                  ))}
-                </div>
+                {isLoading ? (
+                  <div className="flex h-56 items-center justify-center">
+                    <LoadingUI />
+                  </div>
+                ) : loadError ? (
+                  <div className="flex h-56 flex-col items-center justify-center gap-3 text-gray-500 dark:text-gray-400">
+                    <span>错题本加载失败，请重试</span>
+                    <button
+                      type="button"
+                      className="rounded-lg bg-indigo-500 px-4 py-1.5 text-sm text-white hover:bg-indigo-400"
+                      onClick={() => setReload((prev) => !prev)}
+                    >
+                      重新加载
+                    </button>
+                  </div>
+                ) : renderRecords.length === 0 ? (
+                  <div className="flex h-56 items-center justify-center text-gray-400">
+                    {groupedRecords.length === 0 ? '暂无错题，快去练习吧！' : '当前页没有记录'}
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    {renderRecords.map((record) => (
+                      <ErrorRow
+                        key={`${record.dict}-${record.word}`}
+                        record={record}
+                        onDelete={() => handleDelete(record.word, record.dict)}
+                      />
+                    ))}
+                  </div>
+                )}
               </ScrollArea.Viewport>
               <ScrollArea.Scrollbar className="flex touch-none select-none bg-transparent" orientation="vertical"></ScrollArea.Scrollbar>
             </ScrollArea.Root>
           </div>
         </div>
-        <Pagination className="pt-3" page={currentPage} setPage={setPage} totalPages={totalPages} />
+        {totalPages > 0 && (
+          <Pagination className="pt-3" page={currentPage} setPage={setPage} totalPages={totalPages} />
+        )}
       </div>
       {currentRowDetail && <RowDetail currentRowDetail={currentRowDetail} allRecords={sortedRecords} />}
     </>

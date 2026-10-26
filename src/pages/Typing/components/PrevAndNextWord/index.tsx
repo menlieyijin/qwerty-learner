@@ -7,7 +7,7 @@ import { useCallback, useContext, useMemo } from 'react'
 import IconPrev from '~icons/tabler/arrow-narrow-left'
 import IconNext from '~icons/tabler/arrow-narrow-right'
 
-export default function PrevAndNextWord({ type }: LastAndNextWordProps) {
+export default function PrevAndNextWord({ type, onSkip }: LastAndNextWordProps) {
   // eslint-disable-next-line  @typescript-eslint/no-non-null-assertion
   const { state, dispatch } = useContext(TypingContext)!
 
@@ -20,9 +20,15 @@ export default function PrevAndNextWord({ type }: LastAndNextWordProps) {
   const onClickWord = useCallback(() => {
     if (!word) return
 
+    // v9.4（TYP-007）：优先走父级的统一跳过路径（含 recordSkip / deferMemoryDue / 未完成结算 / 动态取词）；
+    // 只有父级未提供回调时才退回旧的纯索引切换。
+    if (onSkip) {
+      void Promise.resolve(onSkip(type)).catch((e) => console.error('skip failed', e))
+      return
+    }
     if (type === 'prev') dispatch({ type: TypingStateActionType.SKIP_2_WORD_INDEX, newIndex })
     if (type === 'next') dispatch({ type: TypingStateActionType.SKIP_2_WORD_INDEX, newIndex })
-  }, [type, dispatch, newIndex, word])
+  }, [type, dispatch, newIndex, word, onSkip])
 
   const headWord = useMemo(() => {
     if (!word) return ''
@@ -71,4 +77,6 @@ export default function PrevAndNextWord({ type }: LastAndNextWordProps) {
 export type LastAndNextWordProps = {
   /** 上一个单词还是下一个单词 */
   type: 'prev' | 'next'
+  /** v9.4（TYP-007）：统一跳过入口（落库/顺延/结算语义与 Skip 一致） */
+  onSkip?: (type: 'prev' | 'next') => void | Promise<void>
 }

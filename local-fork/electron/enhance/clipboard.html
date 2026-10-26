@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; media-src https:" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'nonce-qzclip-v1'; media-src https:; base-uri 'none'; form-action 'none'" />
 <title>剪贴板查词</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -59,7 +59,7 @@
     </div>
     <div class="src" id="src"></div>
   </div>
-<script>
+<script nonce="qzclip-v1">
   const api = window.qwertyEnhance;
   const $ = (id) => document.getElementById(id);
   let current = '';
@@ -69,22 +69,32 @@
     if (!url) return;
     try { const a = new Audio(url); a.volume = 1; a.play().catch(() => {}); } catch (e) { /* ignore */ }
   }
+  // v9.4 安全（SHELL-002）：远端字段（pos/def/zhLines/sources）一律用 textContent 写入，禁止 innerHTML 拼接；
+  // 该页 CSP 也已去掉 script-src 'unsafe-inline'（本脚本改用 nonce），双重防护。
   function render(r) {
     if (!r) return;
     last = r;
     $('word').textContent = r.word || current || '—';
     $('ph').textContent = r.phonetic || r.usphone || r.ukphone || '';
-    const zh = (r.zhLines || []).map((x) => x.text).join('；');
+    const zh = (r.zhLines || []).map((x) => (x && x.text != null ? String(x.text) : '')).join('；');
     $('zh').textContent = zh || '（暂无中文释义）';
-    $('en').innerHTML = (r.defs || []).slice(0, 2).map((d) => `<b>${d.pos || ''}</b> ${String(d.def || '').replace(/</g, '&lt;')}`).join('<br>') || '';
-    $('src').textContent = (r.sources || []).length ? '来源：' + r.sources.join(' + ') + (r.cached ? ' · 缓存' : '') : '';
+    const en = $('en');
+    while (en.firstChild) en.removeChild(en.firstChild);
+    (r.defs || []).slice(0, 2).forEach((d, i) => {
+      if (i > 0) en.appendChild(document.createElement('br'));
+      const b = document.createElement('b');
+      b.textContent = d && d.pos != null ? String(d.pos) : '';
+      en.appendChild(b);
+      en.appendChild(document.createTextNode(' ' + (d && d.def != null ? String(d.def) : '')));
+    });
+    $('src').textContent = ((r.sources || []).length ? '来源：' + r.sources.map((s) => String(s)).join(' + ') + (r.cached ? ' · 缓存' : '') : '');
     $('offline').style.display = r.offline ? 'inline-block' : 'none';
     $('out').textContent = '';
   }
   async function lookup(word) {
     current = String(word || '').trim();
     $('word').textContent = current || '—';
-    $('ph').textContent = ''; $('en').innerHTML = ''; $('zh').textContent = '查询中…';
+    $('ph').textContent = ''; $('en').textContent = ''; $('zh').textContent = '查询中…';
     if (!current) { $('zh').textContent = '复制英文单词后自动查词…'; return; }
     try {
       const r = await api.freeLookup(current);

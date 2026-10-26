@@ -1,10 +1,12 @@
 import { TypingContext, TypingStateActionType } from '../../store'
+import { getMistakeChar, normalizeDisplayWord } from '../WordPanel/components/Word/displayWord'
 import ShareButton from '../ShareButton'
 import { AuthorButton } from './AuthorButton'
 import ConclusionBar from './ConclusionBar'
 import RemarkRing from './RemarkRing'
 import WordChip from './WordChip'
 import styles from './index.module.css'
+import InfoPanels from '@/components/InfoPanels'
 import Tooltip from '@/components/Tooltip'
 import {
   currentChapterAtom,
@@ -52,14 +54,17 @@ const ResultScreen = () => {
     const { words, userInputLogs } = state.chapterData
     const exportData = userInputLogs.map((log) => {
       const word = words[log.index]
-      const wordName = word.name
+      const wordName = word?.name ?? ''
+      // v9.5（TYP-012）：letterMistake 的下标是 **displayWord 下标**（空格→␣、`…`→`..`、en dash→`-`、
+      // 连字→多字符等都会改变位置/长度），导出必须与判定层同源，否则错字字母错位或 undefined。
+      const displayWord = normalizeDisplayWord(wordName)
       return {
         ...word,
         trans: word.trans.join(';'),
         correctCount: log.correctCount,
         wrongCount: log.wrongCount,
         wrongLetters: Object.entries(log.LetterMistakes)
-          .map(([key, mistakes]) => `${wordName[Number(key)]}:${mistakes.length}`)
+          .map(([key, mistakes]) => `${getMistakeChar(displayWord, Number(key))}:${mistakes.length}`)
           .join(';'),
       }
     })
@@ -315,7 +320,7 @@ const ResultScreen = () => {
               {!isLastChapter && !isReviewMode && (
                 <Tooltip content="快捷键：enter">
                   <button
-                    className={`{ isLastChapter ? 'cursor-not-allowed opacity-50' : ''} my-btn-primary h-12 text-base font-bold `}
+                    className={`${isLastChapter ? 'cursor-not-allowed opacity-50' : ''} my-btn-primary h-12 text-base font-bold `}
                     type="button"
                     onClick={nextButtonHandler}
                     title="下一章节"
@@ -339,6 +344,9 @@ const ResultScreen = () => {
           </div>
         </div>
       </Transition>
+      {/* v9.4 修复（dsh）：Footer 被移出 Layout 后，全局 InfoPanel 弹层没有渲染点了，
+          这里挂载一次，捐赠/微信/小红书按钮才真正能弹窗（详见 components/InfoPanels） */}
+      <InfoPanels />
     </div>
   )
 }

@@ -1,4 +1,5 @@
 import { idDictionaryMap } from '@/resources/dictionary'
+import type { Word } from '@/typings'
 import { wordListFetcher } from '@/utils/wordListFetcher'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { saveAs } from 'file-saver'
@@ -6,14 +7,21 @@ import type { FC } from 'react'
 import { useState } from 'react'
 import * as XLSX from 'xlsx'
 
+/** 导出只需要这几个字段；与 ErrorBook 里 groupedWordRecords 结构兼容（结构性类型，无需耦合其定义） */
+export type ExportableRecord = {
+  word: string
+  dict: string
+  wrongCount: number
+}
+
 type DropdownProps = {
-  renderRecords: any
+  renderRecords: ExportableRecord[]
 }
 
 const DropdownExport: FC<DropdownProps> = ({ renderRecords }) => {
   const [isExporting, setIsExporting] = useState(false)
 
-  const formatTimestamp = (date: any) => {
+  const formatTimestamp = (date: Date) => {
     const year = date.getFullYear()
     const month = String(date.getMonth() + 1).padStart(2, '0') // 月份从0开始
     const day = String(date.getDate()).padStart(2, '0')
@@ -30,7 +38,7 @@ const DropdownExport: FC<DropdownProps> = ({ renderRecords }) => {
     try {
       // 获取所有需要的词典数据
       const dictUrls: string[] = []
-      renderRecords.forEach((item: any) => {
+      renderRecords.forEach((item) => {
         const dictInfo = idDictionaryMap[item.dict]
         if (dictInfo?.url && !dictUrls.includes(dictInfo.url)) {
           dictUrls.push(dictInfo.url)
@@ -53,14 +61,22 @@ const DropdownExport: FC<DropdownProps> = ({ renderRecords }) => {
 
       const ExportData: Array<{ 单词: string; 释义: string; 错误次数: number; 词典: string }> = []
 
-      renderRecords.forEach((item: any) => {
+      renderRecords.forEach((item) => {
         const dictInfo = idDictionaryMap[item.dict]
         let translation = ''
 
         if (dictInfo?.url && dictDataMap.has(dictInfo.url)) {
-          const wordList = dictDataMap.get(dictInfo.url) || []
-          const word = wordList.find((w: any) => w.name === item.word)
-          translation = word ? word.trans.join('；') : ''
+          const wordList: Word[] = dictDataMap.get(dictInfo.url) || []
+          const word = wordList.find((w) => w && w.name === item.word)
+          // v9.4（数据层 P2 修复，原 DATA-005）：wordListFetcher 已把 trans 归一化为 string[]，
+          // 这里再做一层防御（旧缓存/第三方词库可能仍是字符串或 null），避免整份导出抛 TypeError。
+          const rawTrans: unknown = word?.trans
+          const trans = Array.isArray(rawTrans)
+            ? rawTrans.filter((t): t is string => typeof t === 'string')
+            : rawTrans == null
+            ? []
+            : [String(rawTrans)]
+          translation = trans.join('；')
         }
 
         ExportData.push({
@@ -74,7 +90,7 @@ const DropdownExport: FC<DropdownProps> = ({ renderRecords }) => {
       let blob: Blob
 
       if (bookType === 'txt') {
-        const content = ExportData.map((item: any) => `${item.单词}: ${item.释义}`).join('\n')
+        const content = ExportData.map((item) => `${item.单词}: ${item.释义}`).join('\n')
         blob = new Blob([content], { type: 'text/plain' })
       } else {
         const worksheet = XLSX.utils.json_to_sheet(ExportData)

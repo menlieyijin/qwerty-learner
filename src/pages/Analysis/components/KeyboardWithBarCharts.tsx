@@ -1,5 +1,6 @@
 import Keyboard from './keyboard'
 import purple from './purple.json'
+import type { WrongKeyStat } from '../hooks/useWordStats'
 import useWindowSize from '@/hooks/useWindowSize'
 import { isOpenDarkModeAtom } from '@/store'
 import { BarChart, MapChart } from 'echarts/charts'
@@ -45,9 +46,12 @@ const keyboardData = [
   { name: 'M', value: 0 },
 ]
 
+/** PAGES-008：柱状图最多展示的按键数（含空格/数字/标点等非 A-Z 键） */
+const BAR_TOP_N = 20
+
 interface KeyboardWithBarChartsProps {
   title: string
-  data: { name: string; value: number }[]
+  data: WrongKeyStat[]
   name: string
   suffix?: string
 }
@@ -58,34 +62,46 @@ const KeyboardWithBarCharts: FC<KeyboardWithBarChartsProps> = ({ data, title, su
   const chartRef = useRef<HTMLDivElement>(null)
 
   const { width, height } = useWindowSize()
+  const hasData = data.length > 0
+
+  // PAGES-008：键盘图只能映射 A-Z，其余按键（空格/数字/标点/特殊键）只在柱状图中展示；
+  // 这里统计被排除的键数与次数，渲染在标题下方告知用户，避免“统计漏了”误解。
+  const excludedKeys = data.filter((item) => !item.mappable)
+  const excludedKeyCount = excludedKeys.length
+  const excludedHitCount = excludedKeys.reduce((sum, item) => sum + item.value, 0)
 
   useEffect(() => {
-    if (!chartRef.current || !data.length) return
+    if (!chartRef.current || !hasData) return
 
-    const myData = keyboardData
-      .map((item) => {
-        const find = data.find((_) => _.name === item.name)
-        return { ...item, value: find?.value || 0 }
-      })
-      .sort((a, b) => b.value - a.value)
+    const statsByKey = new Map(data.map((item) => [item.key, item]))
+    const myData = keyboardData.map((item) => ({ ...item, value: statsByKey.get(item.name)?.value ?? 0 }))
+    const mappedMax = myData.reduce((max, item) => Math.max(max, item.value), 0)
+    // PAGES-008：visualMap 的 max 必须 > 0。旧实现取 myData[0].value，若所有错误都不在 A-Z
+    // （例如只错空格/数字/标点），max=0 会让色阶退化、键盘图全灰无法比较。
+    const visualMax = Math.max(1, mappedMax)
+
+    // 柱状图：展示全量按键（字母 + 空格/数字/标点/特殊键）按错误次数排序的 TopN
+    const barData = [...data].sort((a, b) => b.value - a.value || a.label.localeCompare(b.label)).slice(0, BAR_TOP_N)
 
     let chart = echarts.getInstanceByDom(chartRef.current)
     chart?.dispose()
 
     chart = echarts.init(chartRef.current, isOpenDarkMode ? 'purple' : 'light')
+    const instance = chart
 
     const mapOption = {
       tooltip: {
         trigger: 'item',
         showDelay: 0,
         transitionDuration: 0.2,
+        formatter: '{b}: {c} 次',
       },
       toolbox: {
         feature: {
           restore: {},
           myToBarChart: {
             show: true,
-            title: '切换为柱状图',
+            title: `切换为柱状图（Top ${BAR_TOP_N}，含空格/数字/标点）`,
             icon: 'path://M896 928 768 928C732.656 928 704 899.344 704 864L704 416C704 380.656 732.656 352 768 352L896 352C931.344 352 960 380.656 960 416L960 864C960 899.344 931.344 928 896 928ZM896 416 768 416 768 864 896 864 896 416ZM576 928 448 928C412.656 928 384 899.344 384 864L384 160C384 124.656 412.656 96 448 96L576 96C611.344 96 640 124.656 640 160L640 864C640 899.344 611.344 928 576 928ZM576 160 448 160 448 864 576 864 576 160ZM256 928 128 928C92.656 928 64 899.344 64 864L64 544C64 508.656 92.656 480 128 480L256 480C291.344 480 320 508.656 320 544L320 864C320 899.344 291.344 928 256 928ZM256 544 128 544 128 864 256 864 256 544Z',
             onclick: function () {
               chart?.setOption(barOption, true)
@@ -96,7 +112,7 @@ const KeyboardWithBarCharts: FC<KeyboardWithBarChartsProps> = ({ data, title, su
       visualMap: {
         left: 'right',
         min: 0,
-        max: myData[0].value,
+        max: visualMax,
         inRange: {
           color: isOpenDarkMode ? ['hsl(0, 0%, 22%)', '#818cf8'] : ['#f0f0f0', '#6366f1'],
         },
@@ -135,6 +151,13 @@ const KeyboardWithBarCharts: FC<KeyboardWithBarChartsProps> = ({ data, title, su
           },
         },
       },
+      grid: {
+        left: '10%',
+        right: '6%',
+        top: '12%',
+        bottom: '18%',
+        containLabel: true,
+      },
       yAxis: {
         type: 'value',
         minInterval: 1,
@@ -144,25 +167,26 @@ const KeyboardWithBarCharts: FC<KeyboardWithBarChartsProps> = ({ data, title, su
         axisLabel: {
           rotate: 30,
         },
-        data: myData.map(function (item) {
-          return item.name
-        }),
+        data: barData.map((item) => item.label),
       },
       animationDurationUpdate: 1000,
       series: {
         name,
         type: 'bar',
         id: 'population',
-        data: myData.map(function (item) {
-          return item.value
-        }),
+        data: barData.map((item) => item.value),
         color: isOpenDarkMode ? '#818cf8' : '#6366f1',
         universalTransition: true,
       },
     }
 
-    chart.setOption(mapOption)
-  }, [data, title, suffix, name, isOpenDarkMode])
+    instance.setOption(mapOption)
+
+    // PAGES-004：路由卸载/主题切换时释放实例，避免 echarts 实例与 canvas 随进出统计页累积
+    return () => {
+      instance.dispose()
+    }
+  }, [data, hasData, title, suffix, name, isOpenDarkMode])
 
   useEffect(() => {
     if (!chartRef.current) return
@@ -173,7 +197,17 @@ const KeyboardWithBarCharts: FC<KeyboardWithBarChartsProps> = ({ data, title, su
   return (
     <div className="flex h-full flex-col">
       <div className="text-center text-xl font-bold text-gray-600	dark:text-white">{title}</div>
-      <div style={{ width: '100%', height: '100%' }} ref={chartRef} className="line-chart flex-grow"></div>
+      {hasData && excludedKeyCount > 0 && (
+        <div className="mt-1 text-center text-xs text-gray-400 dark:text-gray-500">
+          {`键盘图仅映射 A-Z；另有 ${excludedKeyCount} 个按键（共 ${excludedHitCount} 次，含空格/数字/标点）请在「切换为柱状图」中查看`}
+        </div>
+      )}
+      {hasData ? (
+        <div style={{ width: '100%', height: '100%' }} ref={chartRef} className="line-chart flex-grow"></div>
+      ) : (
+        // PAGES-007：无数据时给出占位文案，避免整块图表区空白
+        <div className="flex flex-grow items-center justify-center text-sm text-gray-400 dark:text-gray-500">暂无数据</div>
+      )}
     </div>
   )
 }

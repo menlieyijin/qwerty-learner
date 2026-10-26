@@ -21,7 +21,12 @@ export default function TextAreaHandler({ updateInput }: { updateInput: (updateO
   const onInput = (e: FormEvent<HTMLTextAreaElement>) => {
     const nativeEvent = e.nativeEvent as InputEvent
     if (!nativeEvent.isComposing && nativeEvent.data !== null) {
-      updateInput({ type: 'add', value: nativeEvent.data, event: e })
+      // v9.4（TYP-003）：一次 input 事件可能带多个字符（粘贴 / 输入法上屏 / 移动端联想 / 语音输入），
+      // 必须逐字符送入判定，不能整串 append（否则只校验最后一个字符，拼错也能过词）。
+      // 逐字符处理同时保证空格 → EXPLICIT_SPACE 的映射不会被绕过。
+      for (const char of nativeEvent.data) {
+        updateInput({ type: 'add', value: char, event: e })
+      }
 
       if (textareaRef.current) {
         textareaRef.current.value = ''

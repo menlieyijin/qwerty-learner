@@ -5,9 +5,9 @@ import type { TypingState } from '@/pages/Typing/store/type'
 import { currentChapterAtom, currentDictIdAtom, isReviewModeAtom } from '@/store'
 import { MEMORY_GRADUATE_STAGE, adaptiveDaysFromRecord, clampStage, ladderDays } from '@/utils/memoryLadder'
 import { removeMemoryCache, upsertMemoryCache } from '@/utils/memoryCache'
-import { memoryKey } from '@/utils/memoryKey'
+import { legacyMemoryKey, memoryKey, memoryKeyCandidates, normalizeWordKeyWord } from '@/utils/memoryKey'
 import { computeDue, evaluateWrong, shouldCountSlow } from '@/utils/srsRules'
-import { removeFromRequeue, pushWrongWordRequeue } from '@/utils/sessionRequeue'
+import { pushWrongWordRequeue, removeFromRequeue } from '@/utils/sessionRequeue'
 import type { Table } from 'dexie'
 import Dexie from 'dexie'
 import { useAtomValue } from 'jotai'
@@ -50,6 +50,57 @@ db.wordRecords.mapToClass(WordRecord)
 db.chapterRecords.mapToClass(ChapterRecord)
 db.reviewRecords.mapToClass(ReviewRecord)
 
+// ---------------------------------------------------------------------------
+// v9.5（数据修复 DATA-003）：记忆记录 key 大小写拆分后的「读写兼容层」
+//
+// v9.4 及之前 memoryKey = `${dict}::${trim+lower(word)}`，导致 March / march、China / china、
+// IT / it 等**不同词条**共用一条 SRS 记录。v9.5 起 key 保留大小写（memoryKey），并对旧记录做一次性
+// 迁移（memory.ts: memoryKeyCaseV2，只复制不删旧记录）。因此所有「按 key 读/写/删」的入口都要兼容
+// legacy key（trim+lower）：读取 miss 时回退；删除时新旧都删（但要避免误删同名不同大小写的兄弟词条）。
+// ---------------------------------------------------------------------------
+
+/**
+ * 读取某个词的记忆记录（兼容 legacy key）。
+ *
+ * - 新 key 命中，且记录的 word 与目标单词**大小写一致** → 直接返回；
+ * - 新 key 命中但 word 大小写不同 → 该 key 被「同名不同大小写的旧记录」占用（旧数据、尚未迁移），
+ *   视为未命中，避免把另一个词的档位/到期时间继承过来（这正是 DATA-003 要修的问题）；
+ * - 新 key miss → 回退 legacy key；仅当 legacy 记录的 word 与目标单词大小写一致时才采用，
+ *   并返回一份改写到新 key 的副本（调用方 put 时会落到新 key，legacy 原记录保留不动）。
+ */
+async function readMemoryRecordForWord(dict: string, word: string): Promise<IMemoryRecord | undefined> {
+  const key = memoryKey(dict, word)
+  const target = normalizeWordKeyWord(word)
+  const direct = await db.memoryRecords.get(key)
+  if (direct) return normalizeWordKeyWord(direct.word) === target ? direct : undefined
+  const legacyKey = legacyMemoryKey(dict, word)
+  if (legacyKey === key) return undefined
+  const legacy = await db.memoryRecords.get(legacyKey)
+  if (!legacy) return undefined
+  if (normalizeWordKeyWord(legacy.word) !== target) return undefined
+  return { ...legacy, key }
+}
+
+/**
+ * v9.5：删除某个词的全部记忆记录（新 key + 可能的 legacy key）。
+ *
+ * legacy key 可能已被「同名不同大小写的另一个词」占用（例如 `dict::march` 现在属于小写 march），
+ * 所以只在「记录里的 word 与待删单词大小写一致」时才删 legacy；返回实际删除条数。
+ */
+async function deleteMemoryRecordForWord(dict: string, word: string): Promise<number> {
+  const target = normalizeWordKeyWord(word)
+  let deleted = 0
+  for (const key of memoryKeyCandidates(dict, word)) {
+    const rec = await db.memoryRecords.get(key)
+    if (!rec) continue
+    if (normalizeWordKeyWord(rec.word) !== target) continue
+    await db.memoryRecords.delete(key)
+    removeMemoryCache(key)
+    deleted += 1
+  }
+  return deleted
+}
+
 /** v7：根据一次作答更新记忆曲线记录（在背单词完成后调用）；v9.3 接入 srsRules 并显式传递 refresh */
 export async function updateMemoryProgress(
   dict: string,
@@ -63,7 +114,8 @@ export async function updateMemoryProgress(
   try {
     const key = memoryKey(dict, word)
     const now = Date.now()
-    const prev = await db.memoryRecords.get(key)
+    // v9.5（DATA-003）：新旧 key 兼容读取；未迁移的旧记录（legacy key）会以副本形式落到新 key
+    const prev = await readMemoryRecordForWord(dict, word)
     const isNew = !prev
     const prevDue = Number(prev?.due) || 0
     const prevLastSeen = Number(prev?.lastSeen) || 0
@@ -285,9 +337,9 @@ export function useDeleteWordRecord() {
       const deletedCount = await db.wordRecords.where({ word, dict }).delete()
       // v8.9：错词本删词时同步删记忆曲线记录，否则删掉的词仍按曲线出现、累计已学不减
       try {
-        const key = memoryKey(dict, word)
-        await db.memoryRecords.delete(key)
-        removeMemoryCache(key)
+        // v9.5（DATA-003）：新旧 key 都删，但只在记录的 word 与待删单词大小写一致时才删，
+        // 避免误删「同名不同大小写」的兄弟词条（如删 March 时删掉 march 的记录）。
+        await deleteMemoryRecordForWord(dict, word)
         removeFromRequeue(dict, word)
         const { clearSkip } = await import('@/utils/autoLevel')
         clearSkip(dict, word)
@@ -306,8 +358,8 @@ export function useDeleteWordRecord() {
 /** v9.3：复习模式跳过时把该词的 due 顺延（至少 N 天），避免立刻再次出现 */
 export async function deferMemoryDue(dict: string, word: string, days = 1): Promise<void> {
   try {
-    const key = memoryKey(dict, word)
-    const rec = await db.memoryRecords.get(key)
+    // v9.5（DATA-003）：兼容 legacy key；副本记录的 key 已是新 key
+    const rec = await readMemoryRecordForWord(dict, word)
     if (!rec) return
     const now = Date.now()
     rec.due = Math.max(Number(rec.due) || 0, computeDue(now, Math.max(0.0208, days)))

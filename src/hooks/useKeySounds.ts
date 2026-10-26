@@ -1,11 +1,26 @@
 import { KEY_SOUND_URL_PREFIX, SOUND_URL_PREFIX, keySoundResources } from '@/resources/soundResource'
 import { hintSoundsConfigAtom, keySoundsConfigAtom } from '@/store'
 import noop from '@/utils/noop'
+import type { Howl } from 'howler'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { useEffect, useState } from 'react'
 import useSound from 'use-sound'
 
 export type PlayFunction = ReturnType<typeof useSound>[0]
+
+/** use-sound@4.0.1 在 src 变化/组件卸载时不会 unload 旧 Howl，这里显式回收（AUDIO-007）。 */
+function useUnloadHowlOnChange(sound: Howl | null | undefined) {
+  useEffect(() => {
+    if (!sound) return
+    return () => {
+      try {
+        sound.unload()
+      } catch {
+        /* ignore */
+      }
+    }
+  }, [sound])
+}
 
 export default function useKeySound(): [PlayFunction, PlayFunction, PlayFunction] {
   const { isOpen: isKeyOpen, isOpenClickSound, volume: keyVolume, resource: keyResource } = useAtomValue(keySoundsConfigAtom)
@@ -29,18 +44,22 @@ export default function useKeySound(): [PlayFunction, PlayFunction, PlayFunction
     }
   }, [keyResource, setKeySoundsConfig])
 
-  const [playClickSound] = useSound(keySoundUrl, {
+  const [playClickSound, { sound: clickSound }] = useSound(keySoundUrl, {
     volume: keyVolume,
     interrupt: true,
   })
-  const [playWrongSound] = useSound(`${SOUND_URL_PREFIX}${wrongResource.filename}`, {
+  const [playWrongSound, { sound: wrongSound }] = useSound(`${SOUND_URL_PREFIX}${wrongResource.filename}`, {
     volume: hintVolume,
     interrupt: true,
   })
-  const [playCorrectSound] = useSound(`${SOUND_URL_PREFIX}${correctResource.filename}`, {
+  const [playCorrectSound, { sound: correctSound }] = useSound(`${SOUND_URL_PREFIX}${correctResource.filename}`, {
     volume: hintVolume,
     interrupt: true,
   })
+
+  useUnloadHowlOnChange(clickSound as Howl | null | undefined)
+  useUnloadHowlOnChange(wrongSound as Howl | null | undefined)
+  useUnloadHowlOnChange(correctSound as Howl | null | undefined)
 
   return [
     isKeyOpen && isOpenClickSound ? playClickSound : noop,

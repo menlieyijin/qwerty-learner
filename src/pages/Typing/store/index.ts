@@ -5,6 +5,7 @@ import '@/utils/db/review-record'
 import { mergeLetterMistake } from '@/utils/db/utils'
 import shuffle from '@/utils/shuffle'
 import { createContext } from 'react'
+import type { MutableRefObject } from 'react'
 
 export const initialState: TypingState = {
   chapterData: {
@@ -72,7 +73,11 @@ export type TypingStateAction =
   | { type: TypingStateActionType.TOGGLE_IS_TYPING }
   | { type: TypingStateActionType.REPORT_WRONG_WORD; payload: { letterMistake: LetterMistakes } }
   | { type: TypingStateActionType.REPORT_CORRECT_WORD }
-  | { type: TypingStateActionType.REPORT_WORD_RESULT; payload: { correctCount: number; wrongCount: number; letterMistake: LetterMistakes } }
+  | {
+      type: TypingStateActionType.REPORT_WORD_RESULT
+      // v9.4：payload.index 显式指定结算的单词下标（未完成结算发生在切词/切库之后，不能再用 state.index）
+      payload: { index?: number; correctCount: number; wrongCount: number; letterMistake: LetterMistakes }
+    }
   | {
       type: TypingStateActionType.NEXT_WORD
       payload?: {
@@ -92,7 +97,7 @@ export type TypingStateAction =
   | { type: TypingStateActionType.SET_IS_LOOP_SINGLE_WORD; payload: boolean }
   | { type: TypingStateActionType.TOGGLE_IS_LOOP_SINGLE_WORD }
 
-type Dispatch = (action: TypingStateAction) => void
+export type Dispatch = (action: TypingStateAction) => void
 
 export const typingReducer = (state: TypingState, action: TypingStateAction) => {
   switch (action.type) {
@@ -143,10 +148,12 @@ export const typingReducer = (state: TypingState, action: TypingStateAction) => 
     }
     case TypingStateActionType.REPORT_WORD_RESULT: {
       // v9.1：一个词完成时一次性累加，避免每敲一个字母就让整个练习页重渲染
+      // v9.4：支持 index 显式指定（未完成结算 / 暂停结算发生在切词之后），并保持「增量」语义以便重复调用幂等
       const { correctCount = 0, wrongCount = 0, letterMistake } = action.payload
+      const targetIndex = action.payload.index ?? state.chapterData.index
       state.chapterData.correctCount += correctCount
       state.chapterData.wrongCount += wrongCount
-      const wordLog = state.chapterData.userInputLogs[state.chapterData.index]
+      const wordLog = state.chapterData.userInputLogs.find((log) => log.index === targetIndex)
       if (wordLog) {
         wordLog.correctCount += correctCount
         wordLog.wrongCount += wrongCount
@@ -252,4 +259,20 @@ export const typingReducer = (state: TypingState, action: TypingStateAction) => 
   }
 }
 
-export const TypingContext = createContext<{ state: TypingState; dispatch: Dispatch } | null>(null)
+/**
+ * v9.4（TYP-006/SRS-004）：当前单词「未完成结算」回调。
+ * Word 组件把当前作答（按键统计 + 未落库的词记录）注册到这里，
+ * 父级在 Skip / 暂停 / 切库 / 卸载时调用，保证不丢按键与错词。
+ */
+export type TypingSettleFn = (options?: { persist?: boolean }) => void | Promise<void>
+
+export type TypingContextValue = {
+  state: TypingState
+  dispatch: Dispatch
+  /** Word 注册的结算函数；persist=true 时同时落库（放弃该词时用） */
+  settleRef?: MutableRefObject<TypingSettleFn | null>
+  /** Skip 在途锁（SRS-004：连点只算一次），两条 skip 入口共享同一把锁 */
+  skipLockRef?: MutableRefObject<boolean>
+}
+
+export const TypingContext = createContext<TypingContextValue | null>(null)

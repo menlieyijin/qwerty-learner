@@ -467,17 +467,6 @@ const chinaExam: DictionaryResource[] = [
     languageCategory: 'en',
   },
   {
-    id: 'Oxford5000',
-    name: '牛津5000词',
-    description: '牛津5000词',
-    category: '中国考试',
-    tags: ['其他'],
-    url: '/dicts/Oxford5000.json',
-    length: 5836,
-    language: 'en',
-    languageCategory: 'en',
-  },
-  {
     id: 'Merriam_Webster_sVocabularyBuilder',
     name: '韦氏词根词典',
     description: '韦氏词根词典',
@@ -546,7 +535,10 @@ const chinaExam: DictionaryResource[] = [
   },
 
   {
-    id: 'frequently_used_words03',
+    // v9.4（数据层 P2 修复，原 DATA-004）：原 id 与 level 3 重复（都是 frequently_used_words03），
+    // 导致 idDictionaryMap 被 level 3 覆盖：选 level 2 实际加载 level 3 词表、两库进度互相污染。
+    // 这里改成与 local-fork/electron/enhance/dict-map.json、dict-meta.json 一致的正确 id。
+    id: 'frequently_used_words02',
     name: '超频单词level 2',
     description: '超频单词level 2',
     category: '中国考试',

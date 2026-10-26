@@ -2,15 +2,24 @@
 <html lang="zh-Hans">
   <head>
     <meta charset="UTF-8" />
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-3FTEQXFKNF"></script>
+    <!-- v9.4（SHELL-001）：Electron 桌面版不加载 Google Analytics（preload 会在页面脚本前设置 window.__QZ_ELECTRON__）；
+         网页版行为保持不变（动态插入 async script，等价于原来的 <script async src=...>） -->
     <script>
+      if (!window.__QZ_ELECTRON__) {
+        ;(function () {
+          var s = document.createElement('script')
+          s.async = true
+          s.src = 'https://www.googletagmanager.com/gtag/js?id=G-3FTEQXFKNF'
+          document.head.appendChild(s)
+        })()
+      }
       window.dataLayer = window.dataLayer || []
       function gtag() {
         dataLayer.push(arguments)
       }
       gtag('js', new Date())
 
-      gtag('config', 'G-3FTEQXFKNF')
+      if (!window.__QZ_ELECTRON__) gtag('config', 'G-3FTEQXFKNF')
     </script>
 
     <script type="text/javascript">

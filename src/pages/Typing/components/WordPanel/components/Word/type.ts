@@ -4,6 +4,8 @@ import type { LetterMistakes } from '@/utils/db/record'
 export type WordState = {
   displayWord: string
   inputWord: string
+  // v9.4：已判定为正确的输入长度（支持一次 input 事件送多个字符时逐个校验，TYP-003）
+  judgedLength: number
   letterStates: LetterState[]
   isFinished: boolean
   // 是否出现输入错误
@@ -25,6 +27,7 @@ export type WordState = {
 export const initialWordState: WordState = {
   displayWord: '',
   inputWord: '',
+  judgedLength: 0,
   letterStates: [],
   isFinished: false,
   hasWrong: false,

@@ -5,7 +5,10 @@ export const LoadingUI: React.FC<{ className?: string }> = ({ className }) => {
     <div
       className={`inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid  border-indigo-400 border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite] ${className}`}
       role="status"
-    ></div>
+      aria-label="加载中"
+    >
+      <span className="sr-only">加载中</span>
+    </div>
   )
 }
 

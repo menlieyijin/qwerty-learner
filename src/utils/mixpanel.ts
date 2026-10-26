@@ -11,8 +11,8 @@ import {
 } from '@/store'
 import type { InfoPanelType } from '@/typings'
 import type { PronunciationType } from '@/typings'
+import { trackMixpanel } from '@/utils/telemetry'
 import { useAtomValue } from 'jotai'
-import mixpanel from 'mixpanel-browser'
 import { useCallback } from 'react'
 
 export type starAction = 'star' | 'dismiss'
@@ -21,7 +21,7 @@ export function recordStarAction(action: starAction) {
   const props = {
     action,
   }
-  mixpanel.track('star', props)
+  trackMixpanel('star', props)
 }
 
 export type openInfoPanelLocation = 'footer' | 'resultScreen'
@@ -30,12 +30,12 @@ export function recordOpenInfoPanelAction(type: InfoPanelType, location: openInf
     type,
     location,
   }
-  mixpanel.track('openInfoPanel', props)
+  trackMixpanel('openInfoPanel', props)
 }
 
 export type shareType = 'open' | 'download'
 export function recordShareAction(type: shareType) {
-  mixpanel.track('share', { type })
+  trackMixpanel('share', { type })
 }
 
 export type analysisType = 'open'
@@ -44,7 +44,7 @@ export function recordAnalysisAction(type: analysisType) {
     type,
   }
 
-  mixpanel.track('analysis', props)
+  trackMixpanel('analysis', props)
 }
 
 export type errorBookType = 'open' | 'detail'
@@ -53,7 +53,7 @@ export function recordErrorBookAction(type: errorBookType) {
     type,
   }
 
-  mixpanel.track('error-book', props)
+  trackMixpanel('error-book', props)
 }
 
 export type donateCardInfo = {
@@ -71,7 +71,7 @@ export function reportDonateCard(info: donateCardInfo) {
     ...info,
   }
 
-  mixpanel.track('donate-card', props)
+  trackMixpanel('donate-card', props)
 }
 
 /**
@@ -138,7 +138,7 @@ export function useMixPanelWordLogUploader(typingState: TypingState) {
         pronunciationAuto: pronunciationConfig.isOpen,
         pronunciationOption: pronunciationConfig.isOpen === false ? 'none' : pronunciationConfig.type,
       }
-      mixpanel.track('Word', props)
+      trackMixpanel('Word', props)
     },
     [
       typingState,
@@ -185,7 +185,7 @@ export function useMixPanelChapterLogUploader(typingState: TypingState) {
       pronunciationAuto: pronunciationConfig.isOpen,
       pronunciationOption: pronunciationConfig.isOpen === false ? 'none' : pronunciationConfig.type,
     }
-    mixpanel.track('Chapter', props)
+    trackMixpanel('Chapter', props)
   }, [
     typingState,
     currentChapter,
@@ -219,7 +219,7 @@ export function recordDataAction({
     chapterCount,
   }
 
-  mixpanel.track('dataAction', props)
+  trackMixpanel('dataAction', props)
 }
 
 export function getUtcStringForMixpanel() {

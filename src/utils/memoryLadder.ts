@@ -22,8 +22,12 @@ export const MEMORY_LADDER_TEXT = [
 /** 新词首次答对后进入 1 天档 */
 export const MEMORY_GRADUATE_STAGE = 3
 
-/** 单次作答超过 6 秒记为慢词 */
-export const MEMORY_SLOW_MS = 6000
+/**
+ * 单次作答超过 6 秒记为慢词。
+ * v9.3.1（SRS-007）：收敛为单一来源 —— 以 `srsRules.MEMORY_SLOW_MS` 为准，这里只做 re-export。
+ * （此前 memoryLadder 与 srsRules 各定义一份 6000，实际生效的是 srsRules 那份，改一处会出现口径分叉。）
+ */
+export { MEMORY_SLOW_MS } from './srsRules'
 
 export function clampStage(stage: number): number {
   return Math.min(MEMORY_LADDER.length - 1, Math.max(0, Math.round(Number(stage) || 0)))
@@ -37,6 +41,12 @@ export function ladderText(stage: number): string {
   return MEMORY_LADDER_TEXT[clampStage(stage)]
 }
 
+/**
+ * 下一档（新词 undefined → 3 档）。
+ * @deprecated v9.3.1（SRS-007）：src 内已无调用点（db 用的是 `clampStage(stage + 1)` + `MEMORY_GRADUATE_STAGE`）。
+ * 保留导出只为不破坏 `D:\整理\audit\_v93-entry.ts` 的 re-export（删除会让门禁 bundle 构建失败）；
+ * 等审计入口同步移除后再删除本函数。
+ */
 export function nextStage(prevStage: number | undefined): number {
   return prevStage === undefined ? MEMORY_GRADUATE_STAGE : clampStage(prevStage + 1)
 }

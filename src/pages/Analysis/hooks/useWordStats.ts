@@ -4,13 +4,70 @@ import dayjs from 'dayjs'
 import { useEffect, useState } from 'react'
 import type { Activity } from 'react-activity-calendar'
 
+/** PAGES-008：单个按键的错误统计（保留全量按键，展示层再决定能否映射到键盘图） */
+export type WrongKeyStat = {
+  /** 规范化后的原始按键：字母统一大写，空格保留 ' '，其它（数字/标点/特殊键）保留原样 */
+  key: string
+  /** 展示名：字母为 A-Z，空格为「空格」，其它保留原 key */
+  label: string
+  /** 错误次数 */
+  value: number
+  /** 是否属于键盘热力图可映射的 A-Z（false 的键只在柱状图中展示） */
+  mappable: boolean
+}
+
+/** 空格键的展示名 */
+export const SPACE_KEY_LABEL = '空格'
+
+/**
+ * 规范化 e.key：
+ * - 单字符（字母/数字/标点）统一转大写，保证 'a' 与 'A' 合并；
+ * - 空格保持 ' '（展示层映射为「空格」）；
+ * - 多字符键（如 'Backspace'）保留原样，不再被旧实现的 toUpperCase 变成 'BACKSPACE'。
+ */
+export function normalizeWrongKey(rawKey: string): string {
+  const key = String(rawKey ?? '')
+  if (!key) return ''
+  if (key === ' ') return ' '
+  // 只有单个字符才需要大小写归一；多字符键名（Backspace/Enter 等）保持原样便于阅读
+  return key.length === 1 ? key.toUpperCase() : key
+}
+
+/** 键盘图可映射的键：A-Z */
+export function isMappableKeyboardKey(key: string): boolean {
+  return /^[A-Z]$/.test(key)
+}
+
+/**
+ * PAGES-008：把 mistakes 里的原始按键聚合为全量统计。
+ * 旧实现只保留 A-Z（且对 ' ' 之外的多字符键做了 toUpperCase），空格/数字/标点等真实高频错误
+ * 在柱状图与热力图中被静默丢弃；这里保留全量键，排序后由图表决定展示方式。
+ */
+export function buildWrongKeyStats(rawKeys: readonly string[]): WrongKeyStat[] {
+  const counter = new Map<string, number>()
+  for (const rawKey of rawKeys) {
+    const key = normalizeWrongKey(rawKey)
+    if (!key) continue
+    counter.set(key, (counter.get(key) ?? 0) + 1)
+  }
+
+  return Array.from(counter.entries())
+    .map(([key, value]) => ({
+      key,
+      label: key === ' ' ? SPACE_KEY_LABEL : key,
+      value,
+      mappable: isMappableKeyboardKey(key),
+    }))
+    .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label))
+}
+
 interface IWordStats {
   isEmpty?: boolean
   exerciseRecord: Activity[]
   wordRecord: Activity[]
   wpmRecord: [string, number][]
   accuracyRecord: [string, number][]
-  wrongTimeRecord: { name: string; value: number }[]
+  wrongTimeRecord: WrongKeyStat[]
 }
 
 // 获取两个日期之间的所有日期，使用dayjs计算
@@ -104,28 +161,21 @@ async function getChapterStats(startTimeStamp: number, endTimeStamp: number): Pr
     level: getLevel(Array.from(new Set(words)).length),
   }))
   // wpm=练习词数（不去重）/总时间
+  // PAGES-007：totalTime 为 0（timing 全 0/空、导入数据）时不能产生 Infinity/NaN 进入图表
   const wpmRecord: IWordStats['wpmRecord'] = RecordArray.map<[string, number]>(([date, { words, totalTime }]) => [
     date,
-    Math.round(words.length / (totalTime / 1000 / 60)),
-  ]).filter((d) => d[1])
+    totalTime > 0 ? Math.round(words.length / (totalTime / 1000 / 60)) : 0,
+  ]).filter(([, value]) => Number.isFinite(value) && value > 0)
   // 正确率=每个单词的长度合计/(每个单词的长度合计+总错误次数)
-  const accuracyRecord: IWordStats['accuracyRecord'] = RecordArray.map<[string, number]>(([date, { words, wrongCount }]) => [
-    date,
-    Math.round((words.join('').length / (words.join('').length + wrongCount)) * 100),
-  ]).filter((d) => d[1])
-  // 错误次数统计
-  const wrongTimeRecord: IWordStats['wrongTimeRecord'] = []
-  const allWrongTime = RecordArray.map(([, { wrongKeys }]) => wrongKeys)
-    .flat()
-    .map((key) => key.toUpperCase())
-  allWrongTime.forEach((key) => {
-    const index = wrongTimeRecord.findIndex((item) => item.name === key)
-    if (index === -1) {
-      wrongTimeRecord.push({ name: key, value: 1 })
-    } else {
-      wrongTimeRecord[index].value++
-    }
-  })
+  const accuracyRecord: IWordStats['accuracyRecord'] = RecordArray.map<[string, number]>(([date, { words, wrongCount }]) => {
+    const totalChars = words.join('').length
+    const denominator = totalChars + wrongCount
+    return [date, denominator > 0 ? Math.round((totalChars / denominator) * 100) : 0]
+  }).filter(([, value]) => Number.isFinite(value) && value > 0)
+  // 错误键统计（PAGES-008）：保留全量原始按键（大小写合并，空格/数字/标点/特殊键均保留），
+  // 展示层再区分是否可映射到键盘图，避免空格/数字等高频错误被静默丢弃。
+  const allWrongTime = RecordArray.flatMap(([, { wrongKeys }]) => wrongKeys)
+  const wrongTimeRecord = buildWrongKeyStats(allWrongTime)
 
   return { exerciseRecord, wordRecord, wpmRecord, accuracyRecord, wrongTimeRecord }
 }

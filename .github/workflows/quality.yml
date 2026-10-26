@@ -1,0 +1,46 @@
+# v9.5（dsh，L-08 门禁落地）：PR/push 必过的质量门禁。
+#
+# 设计取向（便于单独提上游 PR）：
+#   1. 不引入任何新依赖，全部用仓库已有的 tsc / eslint / vite；
+#   2. 只用上游通用命令（yarn install --frozen-lockfile / tsc / eslint / build），
+#      不引用 fork 专属脚本（quality-gate.ps1 / dsh-smoke.mjs）；
+#   3. 与 deploy-pages.yml 一样用 yarn + yarn.lock（仓库里没有 package-lock.json）。
+#
+# 本地等价命令（Windows）：
+#   powershell -NoProfile -ExecutionPolicy Bypass -File scripts/quality-gate.ps1
+# 本地等价命令（pwsh 7 / Linux / macOS）：
+#   npx tsc --noEmit -p tsconfig.json && npx eslint src --ext .ts,.tsx --max-warnings 0 && yarn build
+name: Quality Gate
+on:
+  push:
+    branches: [master, dev, dev/e2e]
+  pull_request:
+    branches: [master, dev]
+  workflow_dispatch:
+
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Typecheck (tsc --noEmit)
+        run: npx tsc --noEmit -p tsconfig.json
+
+      - name: Lint (eslint --max-warnings 0)
+        run: npx eslint src --ext .ts,.tsx --max-warnings 0
+
+      - name: Build (vite)
+        run: yarn build

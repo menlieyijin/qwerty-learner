@@ -1,39 +1,27 @@
-import { DonatingCard } from '../DonatingCard'
-import { StickerButton } from '../DonatingCard/components/StickerButton'
 import redBookCode from '@/assets/redBook-code.jpg'
+import { DonatingCard } from '@/components/DonatingCard'
+import { StickerButton } from '@/components/DonatingCard/components/StickerButton'
 import InfoPanel from '@/components/InfoPanel'
-import Tooltip from '@/components/Tooltip'
 import { infoPanelStateAtom } from '@/store'
 import type { InfoPanelType } from '@/typings'
-import { recordOpenInfoPanelAction } from '@/utils'
-import { useAtom } from 'jotai'
+import { useAtomValue, useSetAtom } from 'jotai'
 import type React from 'react'
 import { useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
-import IconMail from '~icons/material-symbols/mail'
-import IconCoffee2 from '~icons/mdi/coffee'
 import IconXiaoHongShu from '~icons/my-icons/xiaohongshu'
-import RiLinksLine from '~icons/ri/links-line'
-import IconTwitter from '~icons/ri/twitter-fill'
-import IconGithub from '~icons/simple-icons/github'
-import IconVisualstudiocode from '~icons/simple-icons/visualstudiocode'
-import IconWechat2 from '~icons/simple-icons/wechat'
 import IconWechat from '~icons/tabler/brand-wechat'
 import IconCoffee from '~icons/tabler/coffee'
 import IconTerminal2 from '~icons/tabler/terminal-2'
-import IconFlagChina from '~icons/twemoji/flag-china'
 
-const Footer: React.FC = () => {
-  const [infoPanelState, setInfoPanelState] = useAtom(infoPanelStateAtom)
-  const navigate = useNavigate()
-
-  const handleOpenInfoPanel = useCallback(
-    (modalType: InfoPanelType) => {
-      recordOpenInfoPanelAction(modalType, 'footer')
-      setInfoPanelState((state) => ({ ...state, [modalType]: true }))
-    },
-    [setInfoPanelState],
-  )
+/**
+ * v9.4 修复（dsh）：全局 InfoPanel 弹层（捐赠 / VSCode 插件 / 社群 / 小红书）。
+ *
+ * 这 4 个面板原来只由 Footer 渲染；v7 精简布局把 Footer 从 Layout 移除后，
+ * ResultScreen 里 setInfoPanelState(...) 的按钮就变成了哑按钮（状态改了但没有任何组件渲染）。
+ * 抽成独立组件后由 ResultScreen 直接渲染，打开/关闭仍共用同一个 infoPanelStateAtom。
+ */
+const InfoPanels: React.FC = () => {
+  const infoPanelState = useAtomValue(infoPanelStateAtom)
+  const setInfoPanelState = useSetAtom(infoPanelStateAtom)
 
   const handleCloseInfoPanel = useCallback(
     (modalType: InfoPanelType) => {
@@ -146,107 +134,8 @@ const Footer: React.FC = () => {
         <p className="text-sm text-gray-500 dark:text-gray-400">Tips: 从小红书“我”的左上角点击 三 找到 扫一扫</p>
         <br />
       </InfoPanel>
-
-      <footer className="mb-1 mt-4 flex w-full items-center justify-center gap-2.5 text-sm ease-in" onClick={(e) => e.currentTarget.blur()}>
-        <a href="https://github.com/RealKai42/qwerty-learner" target="_blank" rel="noreferrer" aria-label="前往 GitHub 项目主页">
-          <IconGithub fontSize={15} className="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-100" />
-        </a>
-
-        <button
-          className="cursor-pointer"
-          type="button"
-          onClick={(e) => {
-            handleOpenInfoPanel('redBook')
-            e.currentTarget.blur()
-          }}
-          aria-label="加入我们的小红书社群"
-        >
-          <IconXiaoHongShu fontSize={14} className="text-gray-500 hover:text-red-500 dark:text-gray-400 dark:hover:text-red-500" />
-        </button>
-
-        <button
-          className="cursor-pointer focus:outline-none"
-          type="button"
-          onClick={(e) => {
-            handleOpenInfoPanel('community')
-            e.currentTarget.blur()
-          }}
-          aria-label="加入我们的微信用户群"
-        >
-          <IconWechat2 fontSize={16} className="text-gray-500 hover:text-green-500 dark:text-gray-400 dark:hover:text-green-500" />
-        </button>
-
-        <a href="https://twitter.com/real_kai42" target="_blank" title="x" rel="noreferrer">
-          <IconTwitter fontSize={16} className="text-gray-500 hover:text-[#1DA1F2] dark:text-gray-400 dark:hover:text-[#1DA1F2]" />
-        </a>
-        <button
-          className="cursor-pointer focus:outline-none "
-          type="button"
-          onClick={(e) => {
-            handleOpenInfoPanel('donate')
-            e.currentTarget.blur()
-          }}
-          aria-label="考虑捐赠我们"
-        >
-          <IconCoffee2 fontSize={16} className="text-gray-500 hover:text-amber-500 dark:text-gray-400 dark:hover:text-amber-500" />
-        </button>
-
-        <button
-          className="cursor-pointer focus:outline-none"
-          type="button"
-          onClick={(e) => {
-            handleOpenInfoPanel('vsc')
-            e.currentTarget.blur()
-          }}
-          aria-label="使用 Visual Studio Code 插件版 Qwerty Learner"
-        >
-          <IconVisualstudiocode fontSize={14} className="text-gray-500 hover:text-sky-500 dark:text-gray-400 dark:hover:text-sky-500" />
-        </button>
-
-        <a
-          href="mailto:me@kaiyi.cool"
-          target="_blank"
-          rel="noreferrer"
-          onClick={(e) => e.currentTarget.blur()}
-          aria-label="发送邮件到 me@kaiyi.cool"
-        >
-          <IconMail fontSize={16} className="text-gray-500 hover:text-indigo-400 dark:text-gray-400 dark:hover:text-indigo-400" />
-        </a>
-        <a rel="noreferrer" className="cursor-pointer focus:outline-none" onClick={() => navigate('/friend-links')} aria-label="查看友链">
-          <RiLinksLine fontSize={14} className="text-gray-500 hover:text-indigo-400 dark:text-gray-400 dark:hover:text-indigo-400" />
-        </a>
-
-        <Tooltip content="中国大陆镜像">
-          <a href="https://kaiyiwing.gitee.io/qwerty-learner" target="_self" title="前往中国大陆镜像">
-            <IconFlagChina fontSize={16} />
-          </a>
-        </Tooltip>
-
-        <button
-          className="cursor-pointer text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-          type="button"
-          onClick={(e) => {
-            handleOpenInfoPanel('donate')
-            e.currentTarget.blur()
-          }}
-        >
-          @ Qwerty Learner
-        </button>
-
-        <a
-          className="cursor-pointer text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-          href="https://beian.miit.gov.cn"
-          target="_blank"
-          rel="noreferrer"
-        >
-          鲁ICP备2022030649号
-        </a>
-        <span className="select-none rounded bg-slate-200 px-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-400">
-          Build <span className="select-all">{LATEST_COMMIT_HASH}</span>
-        </span>
-      </footer>
     </>
   )
 }
 
-export default Footer
+export default InfoPanels

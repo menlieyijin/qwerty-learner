@@ -37,6 +37,9 @@ const MobilePage: React.FC = () => {
   const totalSlides = 3 // 轮播图的总数量
   const containerRef = useRef<HTMLDivElement>(null)
   const [activeIndex, setActiveIndex] = useState(0)
+  // PAGES-010：记录上一条 slide，用来区分“首次渲染/重复渲染（不该播放动画）”与“从末张回卷到首张”
+  const prevSlideRef = useRef(0)
+  const resetTimerRef = useRef<number | null>(null)
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -47,21 +50,46 @@ const MobilePage: React.FC = () => {
   }, [])
 
   useEffect(() => {
-    if (containerRef.current) {
-      const container = containerRef.current
-      const slideWidth = container.offsetWidth
+    const container = containerRef.current
+    if (!container) return
 
-      if (currentSlide === 0) {
-        container.style.transform = `translateX(-${totalSlides * slideWidth}px)`
-        setTimeout(() => {
-          container.style.transition = 'none'
-          container.style.transform = `translateX(0)`
-        }, 500)
-      } else {
-        container.style.transition = 'transform 0.5s ease'
-        container.style.transform = `translateX(-${currentSlide * slideWidth}px)`
+    const clearResetTimer = () => {
+      if (resetTimerRef.current !== null) {
+        window.clearTimeout(resetTimerRef.current)
+        resetTimerRef.current = null
       }
     }
+
+    const prevSlide = prevSlideRef.current
+    prevSlideRef.current = currentSlide
+    clearResetTimer()
+
+    // 首次挂载（以及 StrictMode 的重复 effect）直接定位到首张，不播放任何滑动动画，
+    // 修复旧实现“加载后整体横滑 0.5s 再瞬移回来”的首屏跳变。
+    if (currentSlide === 0 && prevSlide === 0) {
+      container.style.transition = 'none'
+      container.style.transform = 'translateX(0)'
+      return
+    }
+
+    const slideWidth = container.offsetWidth
+
+    if (currentSlide === 0) {
+      // 从最后一张滑到“首张的复制张”，动画结束后再无过渡地瞬移回真正的首张
+      container.style.transition = 'transform 0.5s ease'
+      container.style.transform = `translateX(-${totalSlides * slideWidth}px)`
+      resetTimerRef.current = window.setTimeout(() => {
+        resetTimerRef.current = null
+        container.style.transition = 'none'
+        container.style.transform = `translateX(0)`
+      }, 500)
+    } else {
+      container.style.transition = 'transform 0.5s ease'
+      container.style.transform = `translateX(-${currentSlide * slideWidth}px)`
+    }
+
+    // 卸载/下一次切换前清理未到期的复位定时器，避免旧定时器把新 slide 覆盖回首张
+    return clearResetTimer
   }, [currentSlide])
 
   return (

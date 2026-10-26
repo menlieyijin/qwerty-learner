@@ -3,11 +3,12 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 // v9.2：版本号单一来源——同步向主进程要（沙箱化 preload 不能 require('path') 读 package.json）
-let APP_VERSION = '1.0.0-enhanced-v9.3';
+// v9.4（SHELL-010）：取不到时返回 unknown，不再保留硬编码版本兜底
+let APP_VERSION = 'unknown';
 try {
   const v = ipcRenderer.sendSync('app:version-sync');
   if (v) APP_VERSION = String(v);
-} catch { /* 保持兜底 */ }
+} catch { /* 保持 unknown */ }
 
 function onEvent(cb) {
   if (typeof cb !== 'function') return;
@@ -98,6 +99,9 @@ try {
     contextBridge.executeInMainWorld({
       func: () => {
         try {
+          // v9.4（SHELL-001）：给 index.html 一个提前的「Electron 环境」标记，桌面端据此不加载 Google Analytics；
+          // 网页版没有该标记，gtag 行为保持不变。必须在页面脚本执行前设置（此处就是 preload 阶段）。
+          window.__QZ_ELECTRON__ = true;
           if (window.__QZ_DICT_PATCH__) return;
           window.__QZ_DICT_PATCH__ = true;
           const origFetch = window.fetch ? window.fetch.bind(window) : null;

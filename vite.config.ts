@@ -32,6 +32,37 @@ export default defineConfig(async ({ mode }) => {
       minify: true,
       outDir: 'build',
       sourcemap: false,
+      // v9.5（dsh，L-07 分包）：把体积大且不常变的第三方依赖拆成独立 chunk。
+      // 目标：首屏主 chunk 从 ~1.55MB 降到 < 1MB，并让 xlsx/echarts 这类大库能被浏览器单独缓存。
+      // 约束（保证不改变运行行为）：只对 node_modules 里的库分组，vendor chunk 之间可以互相 import，
+      // 但绝不回指 app 代码（避免 chunk 循环导致运行时 TDZ）；入口与 app 源码仍由 rollup 决定。
+      // 注意：core-js / react-app-polyfill 这类 polyfill 必须最先执行，故意留在入口 chunk，不单独拆。
+      chunkSizeWarningLimit: 1024,
+      rollupOptions: {
+        output: {
+          manualChunks(id: string) {
+            if (!id.includes('node_modules')) return
+            if (/node_modules\/(echarts|zrender)\//.test(id)) return 'vendor-echarts'
+            if (/node_modules\/(xlsx|ssf)\//.test(id)) return 'vendor-xlsx'
+            if (/node_modules\/(dexie|dexie-export-import|dexie-react-hooks)\//.test(id)) return 'vendor-db'
+            if (/node_modules\/(mixpanel-browser|@vercel\/analytics)\//.test(id)) return 'vendor-analytics'
+            if (/node_modules\/(react|react-dom|scheduler|react-router|react-router-dom|@remix-run\/router)\//.test(id)) {
+              return 'vendor-react'
+            }
+            if (
+              /node_modules\/(@radix-ui|@headlessui|@floating-ui|lucide-react|classnames|clsx|tailwind-merge|react-tooltip|embla-carousel|@tanstack|react-activity-calendar)\//.test(
+                id,
+              )
+            ) {
+              return 'vendor-ui'
+            }
+            if (/node_modules\/(howler|use-sound|pako|file-saver|canvas-confetti|html-to-image)\//.test(id)) {
+              return 'vendor-media'
+            }
+            return undefined
+          },
+        },
+      },
     },
     esbuild: {
       drop: mode === 'development' ? [] : ['console', 'debugger'],

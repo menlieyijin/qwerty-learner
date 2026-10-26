@@ -149,22 +149,60 @@ export function isDue(now: number, due: number): boolean {
 }
 
 /**
- * 时钟回拨校正：若 `now < lastSeen`（用户改系统时间 / CMOS 掉电 / 跨设备导入旧数据），
- * 说明 `due` 可能落在“未来很久”，会导致该词永远走 early-ok、档位冻结（v9.2 的 P1-4）。
- * 此时返回 `now`（让该词立即可复习）；否则原样返回 `due`。
+ * 时钟回拨校正（v9.3.1 / SRS-002）：若 `now < lastSeen`（用户改系统时间 / CMOS 掉电 /
+ * 跨设备导入时钟超前的数据），说明 `due` 可能落在“未来很久”，会导致该词长期进不了到期池、
+ * 复习只退化为随机回顾（v9.2 的 P1-4 只修了答题路径，取词路径一直没修）。
+ *
+ * 保守策略（只处理“能确定是时钟错”的记录）：
+ * - `now >= lastSeen`（正常记录）：**原样返回 `due`**，绝不影响 15/30/60/120/240 天等正常长间隔；
+ * - `now < lastSeen`（记录时间戳在未来）：把 `due` 压回 `min(due, now + intervalDays 天)`，
+ *   即“至少不会比它自己的间隔更远”；
+ * - `intervalDays` 缺省为 0 时退化为 `min(due, now)`（等价“立即可复习”的历史语义）；
+ * - 非法 `now`：返回合法 `due`；非法 `due`：返回 `now`（调用方不会写入 NaN）。
  *
  * @param now 当前时间（毫秒 epoch）
  * @param lastSeen 上次作答时间（毫秒 epoch）
  * @param due 原到期时间（毫秒 epoch）
- * @returns 校正后的到期时间
+ * @param intervalDays 该记录当前间隔（天，来自 `MEMORY_LADDER`），用于把未来 due 压回一个正常间隔内
+ * @returns 校正后的到期时间（未触发校正时与入参 `due` 完全相等）
  */
-export function correctClockRollback(now: number, lastSeen: number, due: number): number {
+export function correctClockRollback(now: number, lastSeen: number, due: number, intervalDays = 0): number {
   const n = Number(now)
   const l = Number(lastSeen)
   const d = Number(due)
   if (!Number.isFinite(n)) return Number.isFinite(d) ? d : 0
-  if (Number.isFinite(l) && n < l) return n
-  return Number.isFinite(d) ? d : n
+  const safeDue = Number.isFinite(d) ? d : n
+  // 非回拨（正常记录）：保持原值，避免误伤正常长间隔
+  if (!Number.isFinite(l) || n >= l) return safeDue
+  const days = Number(intervalDays)
+  const span = Number.isFinite(days) && days > 0 ? Math.round(days * MS_PER_DAY) : 0
+  return Math.min(safeDue, n + Math.max(0, span))
+}
+
+/**
+ * 单条记忆记录在当前时刻的“有效到期时间”（v9.3.1 / SRS-002）。
+ * 取词池、到期计数、复习债展示都应使用这个口径，保证「显示的数字」与「实际能抽到的词」一致。
+ *
+ * @param now 当前时间（毫秒 epoch）
+ * @param record 需要 `due` / `lastSeen` / `interval` 的最小记录形状
+ */
+export function effectiveDueOf(
+  now: number,
+  record: { due?: number | null; lastSeen?: number | null; interval?: number | null } | null | undefined,
+): number {
+  if (!record) return 0
+  return correctClockRollback(now, Number(record.lastSeen) || 0, Number(record.due) || 0, Number(record.interval) || 0)
+}
+
+/**
+ * 该记录在当前时刻是否“已到期”（口径统一：`effectiveDueOf` + `isDue`）。
+ * 与旧的 `Number(due) <= now` 相比，只多处理 `now < lastSeen` 的回拨记录。
+ */
+export function isRecordDue(
+  now: number,
+  record: { due?: number | null; lastSeen?: number | null; interval?: number | null } | null | undefined,
+): boolean {
+  return isDue(now, effectiveDueOf(now, record))
 }
 
 /**

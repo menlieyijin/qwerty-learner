@@ -41,8 +41,10 @@
   function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
 
   // v9.2：版本号单一来源——主进程在注入脚本前设置 window.__QZ_VERSION__（来自 package.json）
-  const APP_VERSION = (typeof window !== 'undefined' && window.__QZ_VERSION__) || '1.0.0-enhanced-v9.3';
+  // v9.4（SHELL-010）：不再保留硬编码版本兜底；v9.4（SHELL-008）：测试钩子仅测试环境开放
+  const APP_VERSION = (typeof window !== 'undefined' && window.__QZ_VERSION__) || 'unknown';
   const APP_VERSION_SHORT = APP_VERSION.replace('1.0.0-enhanced-', '');
+  const TEST_HOOKS = typeof window !== 'undefined' && window.__QZ_TEST_HOOKS__ === true;
 
   let settings = { version: APP_VERSION, dailyGoal: 30, theme: 'indigo', panelAppearance: 'auto', dictFavorites: [], dictRecent: {}, fontFamily: 'default', opacity: 1, zoom: 1, pomodoroFocus: 25, pomodoroBreak: 5, keySound: false, keySoundVolume: 0.25, clipboardWatch: false, onlineLookup: true, aiExperimental: false, pronCache: false, closeToTray: true, alwaysOnTop: false, miniMode: false, todayStats: {} };
   let appStats = null; // 缓存统计
@@ -1530,8 +1532,8 @@
     try {
       toast('正在收集数据…');
       const snap = await collectBackupSnapshot();
-      // 测试钩子：跳过原生保存对话框，把 JSON 放到 window 供自动化校验
-      if (window.__QZ_TEST_EXPORT__) {
+      // 测试钩子：跳过原生保存对话框，把 JSON 放到 window 供自动化校验（v9.4：仅 QZ_ALLOW_MULTI 测试环境开放）
+      if (TEST_HOOKS && window.__QZ_TEST_EXPORT__) {
         window.__QZ_EXPORT_LAST__ = JSON.stringify(snap);
         toast('测试导出已就绪（' + String(window.__QZ_EXPORT_LAST__.length) + ' 字节）');
         return;
@@ -1545,7 +1547,8 @@
   $('#btn-import-all').addEventListener('click', async () => {
     try {
       // 测试钩子：window.__QZ_IMPORT_TEXT__ 可由自动化测试注入，避免原生文件对话框/confirm 无法脚本化
-      const testHook = !!window.__QZ_IMPORT_TEXT__;
+      // v9.4（SHELL-008）：仅在 QZ_ALLOW_MULTI 测试环境（window.__QZ_TEST_HOOKS__=true）下生效，生产 asar 不会跳过任何确认
+      const testHook = TEST_HOOKS && !!window.__QZ_IMPORT_TEXT__;
       const res = testHook
         ? { ok: true, text: String(window.__QZ_IMPORT_TEXT__), path: 'test-hook' }
         : await api.importJSON();
@@ -1557,8 +1560,8 @@
       if (!testHook && !window.confirm('导入会覆盖当前全部学习数据（会先自动备份一份），确定继续？')) return;
       toast('正在备份当前数据…');
       const backup = await api.backupNow();
+      // v9.4：备份失败确认只保留一次（原实现同一条件重复两次，第一行是死代码）
       if (!(backup && backup.ok) && !testHook) { if (!window.confirm('自动备份失败，仍要继续导入？')) return; }
-      if (!(backup && backup.ok)) { if (!window.confirm('自动备份失败，仍要继续导入？')) return; }
       toast('正在导入…');
       let db = null;
       try {

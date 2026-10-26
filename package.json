@@ -63,7 +63,11 @@
     "build": "cross-env CI=false vite build --base=./",
     "test": "echo \"No tests\"",
     "test:e2e": "playwright test",
+    "test:local": "node scripts/dsh-smoke.mjs",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint .",
+    "lint:strict": "eslint src --ext .ts,.tsx --max-warnings 0",
+    "quality": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/quality-gate.ps1",
     "prettier": "prettier --write .",
     "prepare": "husky install"
   },

@@ -133,41 +133,49 @@ export function useWordList(): UseWordListResult {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isReviewMode, reviewWords, learningMode, currentDictInfo.id, customDictKey])
 
+  // v9.4（SRS-004）：取词串行化——并发调用排队执行，避免两次取词拿到同一个词（后者会入列却从未展示）
+  const nextInFlightRef = useRef<Promise<unknown>>(Promise.resolve())
+
   const nextWord = useCallback(
-    async (answered?: Word): Promise<WordWithIndex | null> => {
-      if (answered) {
-        const n = normalizeWordName(answered.name)
-        const list = recentRef.current.filter((x) => x !== n)
-        list.push(n)
-        recentRef.current = list.slice(-12)
-      }
-      try {
-        await ensureMemoryMigrated()
-        const records = await getMemoryRecords()
-        let manualWords = manualWordsRef.current
-        if (learningMode !== 'auto' && !manualWords) {
-          try {
-            manualWords = (await loadManualWords()) || []
-            manualWordsRef.current = manualWords
-          } catch { /* ignore */ }
+    (answered?: Word): Promise<WordWithIndex | null> => {
+      const run = async (): Promise<WordWithIndex | null> => {
+        if (answered) {
+          const n = normalizeWordName(answered.name)
+          const list = recentRef.current.filter((x) => x !== n)
+          list.push(n)
+          recentRef.current = list.slice(-12)
         }
-        const pick = await pickDynamicWord({
-          records,
-          recent: recentRef.current,
-          mode: learningMode,
-          manualDict: learningMode === 'custom' ? `custom:${customDict?.name || '自定义'}` : currentDictInfo.id,
-          manualWords: manualWords || undefined,
-        })
-        if (!pick) {
-          setLevelInfo(null)
+        try {
+          await ensureMemoryMigrated()
+          const records = await getMemoryRecords()
+          let manualWords = manualWordsRef.current
+          if (learningMode !== 'auto' && !manualWords) {
+            try {
+              manualWords = (await loadManualWords()) || []
+              manualWordsRef.current = manualWords
+            } catch { /* ignore */ }
+          }
+          const pick = await pickDynamicWord({
+            records,
+            recent: recentRef.current,
+            mode: learningMode,
+            manualDict: learningMode === 'custom' ? `custom:${customDict?.name || '自定义'}` : currentDictInfo.id,
+            manualWords: manualWords || undefined,
+          })
+          if (!pick) {
+            setLevelInfo(null)
+            return null
+          }
+          if (pick.level) setLevelInfo(pick.level)
+          return toIndexWord(pick.word, pick.dict, 0, pick.hint, pick.refresh)
+        } catch (e) {
+          console.error('next word failed', e)
           return null
         }
-        if (pick.level) setLevelInfo(pick.level)
-        return toIndexWord(pick.word, pick.dict, 0, pick.hint, pick.refresh)
-      } catch (e) {
-        console.error('next word failed', e)
-        return null
       }
+      const chained = nextInFlightRef.current.then(run, run)
+      nextInFlightRef.current = chained.catch(() => undefined)
+      return chained
     },
     [currentDictInfo.id, learningMode, customDict, loadManualWords, setLevelInfo],
   )

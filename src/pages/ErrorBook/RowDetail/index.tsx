@@ -79,7 +79,9 @@ const RowDetail: React.FC<RowDetailProps> = ({ currentRowDetail, allRecords }) =
             {word ? <Phonetic word={word} /> : <LoadingWordUI isLoading={isLoading} hasError={hasError} />}
             {word && (
               <WordPronunciationIcon
-                lang={dictInfo.language}
+                // PAGES-001：dictInfo 可能为 undefined（custom:<name> 自定义词库 / 词典已下架），
+                // 未判空会在渲染期抛 TypeError；应用现在有 ErrorBoundary 兜底，但这里仍按最小修复判空。
+                lang={dictInfo?.language ?? 'en'}
                 word={word}
                 className="absolute -right-7 top-1/2 h-5 w-5 -translate-y-1/2 transform "
                 ref={wordPronunciationIconRef}

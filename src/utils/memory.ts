@@ -4,8 +4,9 @@ import { db } from './db'
 import { idDictionaryMap } from '@/resources/dictionary'
 import { LEARNING_PATH, loadDictWords, loadLevelWords } from './learningPath'
 import { clearMemoryCache, getMemoryCache, setMemoryCache } from './memoryCache'
-import { memoryKey, normalizeWordName } from './memoryKey'
+import { memoryKey, normalizeWordKeyWord, normalizeWordName } from './memoryKey'
 import {
+  applyPendingResumeLapses,
   getLevelIndex,
   getLevelName,
   getNewRatio,
@@ -17,11 +18,15 @@ import {
 } from './autoLevel'
 import type { LevelProgress } from './autoLevel'
 import { takeRequeueWord } from './sessionRequeue'
-import { computeDue, migrateStage } from './srsRules'
+import { computeDue, correctClockRollback, effectiveDueOf, migrateStage } from './srsRules'
 
 export { memoryKey, normalizeWordName }
 
 export const MEMORY_MIGRATED_KEY = 'memoryMigratedV1'
+/** v9.3.1（SRS-002）：时钟回拨/未来 due 的一次性校准标记（记录最近一次校准时间，仅用于避免重复扫描） */
+export const MEMORY_FUTURE_DUE_FIXED_KEY = 'memoryFutureDueFixedV1'
+/** v9.5（DATA-003）：记忆记录 key 大小写拆分迁移的一次性标记 */
+export const MEMORY_KEY_CASE_MIGRATED_KEY = 'memoryKeyCaseV2'
 
 export type LearningMode = 'auto' | 'manual' | 'custom'
 
@@ -50,18 +55,167 @@ export type PickResult = {
 /** 读取旧版官方练习记录，迁移为记忆曲线记录（只执行一次；不修改旧记录） */
 let migratePromise: Promise<void> | null = null
 export function ensureMemoryMigrated(): Promise<void> {
-  if (!migratePromise) migratePromise = migrateMemoryRecords()
+  if (!migratePromise) {
+    // v9.3.1：迁移后再跑一次性校准：
+    //  - SRS-002「时钟回拨/未来 due」保守校准
+    //  - SRS-005「外部恢复待攻克」对账（enhance.js 直接清空 suspended + reload，不会调用 resumeWord）
+    // v9.5：wordRecords→memoryRecords 迁移之后，再做 key 大小写拆分迁移（DATA-003）
+    migratePromise = migrateMemoryRecords()
+      .then(() => migrateMemoryKeyCase())
+      .then(() => ensureFutureDueCorrected())
+      .then(() => applyPendingResumeLapses())
+      .then(() => undefined)
+  }
   return migratePromise
 }
 
+// ---------------------------------------------------------------------------
+// v9.5（数据修复 DATA-003）：memoryRecords key 大小写拆分迁移
+// ---------------------------------------------------------------------------
+
+/**
+ * 一次性迁移：把 v9.4 及之前的「trim+lower」key 记录复制到「保留大小写」的新 key。
+ *
+ * - 只复制、不删除旧记录（旧记录保留作兼容/回滚依据，读取侧 canonicalizeMemoryRecords 会去重）；
+ * - 只处理 `key !== memoryKey(dict, word)` 的记录（即单词含大写/内部空白的历史记录）；
+ * - 新 key 已存在同名记录时跳过，绝不覆盖；
+ * - 成功才写 localStorage 标记 `memoryKeyCaseV2`，失败只记录日志、下次启动重试；
+ * - 迁移后清 memoryCache，保证本次会话后续读取拿到的是一致视图。
+ *
+ * @returns 复制的记录条数；-1 表示失败（未写标记，下次重试）
+ */
+export async function migrateMemoryKeyCase(): Promise<number> {
+  try {
+    if (localStorage.getItem(MEMORY_KEY_CASE_MIGRATED_KEY)) return 0
+    const rows = await db.memoryRecords.toArray()
+    const existingKeys = new Set<string>()
+    for (const rec of rows) if (rec && rec.key) existingKeys.add(rec.key)
+    const copies: IMemoryRecord[] = []
+    for (const rec of rows) {
+      if (!rec || !rec.key || !rec.word || !rec.dict) continue
+      const newKey = memoryKey(rec.dict, rec.word)
+      if (newKey === rec.key) continue
+      if (existingKeys.has(newKey)) continue
+      copies.push({ ...rec, key: newKey })
+      existingKeys.add(newKey)
+    }
+    if (copies.length) await db.memoryRecords.bulkPut(copies)
+    clearMemoryCache()
+    localStorage.setItem(MEMORY_KEY_CASE_MIGRATED_KEY, String(Date.now()))
+    return copies.length
+  } catch (e) {
+    console.error('memoryKey 大小写拆分迁移失败（下次启动重试）', e)
+    return -1
+  }
+}
+
+/**
+ * v9.5（DATA-003）：读取侧规范化视图。
+ *
+ * 迁移后同一单词可能同时存在「legacy key 旧记录」与「新 key 规范记录」（只复制不删旧记录的代价）；
+ * 若直接参与统计/取词，会出现「已学数翻倍、同一词被抽两次」。这里按
+ * `memoryKey(dict, word)`（保留大小写）分组：
+ * - 优先保留 `key === memoryKey(dict, word)` 的规范记录；
+ * - 只有 legacy 记录（尚未迁移的数据）时保留 legacy，保证功能可用；
+ * - `march` 与 `March` 的 canonical key 不同 → 两条都会保留（这正是本次修复的目标）。
+ */
+export function canonicalizeMemoryRecords(records: IMemoryRecord[]): IMemoryRecord[] {
+  if (!Array.isArray(records) || records.length === 0) return records || []
+  const byCanonicalKey = new Map<string, IMemoryRecord>()
+  const order: string[] = []
+  for (const rec of records) {
+    if (!rec || !rec.word) continue
+    const canonicalKey = memoryKey(rec.dict, rec.word)
+    const existing = byCanonicalKey.get(canonicalKey)
+    if (!existing) {
+      byCanonicalKey.set(canonicalKey, rec)
+      order.push(canonicalKey)
+      continue
+    }
+    // 同组内优先保留「key 与自身 word 一致」的规范记录
+    if (existing.key !== canonicalKey && rec.key === canonicalKey) {
+      byCanonicalKey.set(canonicalKey, rec)
+    }
+  }
+  return order.map((key) => byCanonicalKey.get(key) as IMemoryRecord)
+}
+
+// ---------------------------------------------------------------------------
+// v9.3.1（SRS-002）：时钟回拨 / 未来 due 的保守校准
+// ---------------------------------------------------------------------------
+
+/** 同一会话内只做一次（模块级 promise 去重） */
+let futureDueFixPromise: Promise<number> | null = null
+/** 距上次校准不足该间隔则跳过，避免数据页/取词反复触发全表扫描 */
+const FUTURE_DUE_FIX_SKIP_MS = 5 * 60 * 1000
+
+/**
+ * 一次性校准入口（memory 初始化 / 取词前调用，内部去重）：
+ * 只有在 `now < lastSeen`（时钟回拨、从时钟超前的机器导入数据）时，才把该词的 due 保守地
+ * 压回 `min(due, now + interval)`；正常记录（`now >= lastSeen`）**完全不动**，不会误伤正常长间隔词。
+ *
+ * @returns 被修正的记录条数
+ */
+export function ensureFutureDueCorrected(): Promise<number> {
+  if (!futureDueFixPromise) futureDueFixPromise = correctFutureDueRecords()
+  return futureDueFixPromise
+}
+
+/**
+ * 执行一次「未来 due」校准并写回 DB（幂等，可重复调用）。
+ * - 只处理 `now < lastSeen` 的记录：这是唯一能确定「时间戳来自超前时钟」的信号；
+ * - 修正值 = `correctClockRollback(now, lastSeen, due, interval)` = `min(due, now + interval)`；
+ * - 用 localStorage 标记最近一次校准时间，5 分钟内重复调用直接返回 0（避免每次取词都全表扫）；
+ * - 全程 try/catch，失败只 console.warn，绝不阻塞取词/迁移。
+ */
+export async function correctFutureDueRecords(): Promise<number> {
+  try {
+    const now = Date.now()
+    try {
+      const last = Number(localStorage.getItem(MEMORY_FUTURE_DUE_FIXED_KEY)) || 0
+      if (last > 0 && now - last >= 0 && now - last < FUTURE_DUE_FIX_SKIP_MS) return 0
+    } catch {
+      // localStorage 不可用：继续执行（结果不落库也不致命）
+    }
+    const rows = await db.memoryRecords.toArray()
+    if (!rows.length) return 0
+    const fixed: IMemoryRecord[] = []
+    for (const rec of rows) {
+      if (!rec || !rec.key) continue
+      const lastSeen = Number(rec.lastSeen) || 0
+      // 只处理「记录时间戳在未来」的记录：正常记录（含 240 天档）一律不动
+      if (!(now < lastSeen)) continue
+      const due = Number(rec.due) || 0
+      const next = correctClockRollback(now, lastSeen, due, Number(rec.interval) || 0)
+      if (!Number.isFinite(next) || next === due) continue
+      rec.due = next
+      fixed.push(rec)
+    }
+    if (fixed.length) {
+      await db.memoryRecords.bulkPut(fixed)
+      clearMemoryCache()
+      console.info(`[memory] 时钟回拨校准：${fixed.length} 条记录 due 压回 now+interval`)
+    }
+    try {
+      localStorage.setItem(MEMORY_FUTURE_DUE_FIXED_KEY, String(now))
+    } catch {
+      // 标记写不进去只影响「5 分钟内重复调用」的优化，不影响正确性
+    }
+    return fixed.length
+  } catch (e) {
+    console.warn('[memory] correctFutureDueRecords failed', e)
+    return 0
+  }
+}
+
 async function fillTransFromDicts(agg: Map<string, { dict: string; word: string; trans?: string[]; phone?: string }>): Promise<void> {
-  const byDict = new Map<string, Set<string>>()
+  // 只关心「哪些词库有缺释义的词」；每个词库下的具体词名不需要（原实现的 Set<string> 值从未被读取）
+  const dicts = new Set<string>()
   for (const a of agg.values()) {
     if (a.trans && a.trans.length) continue
-    if (!byDict.has(a.dict)) byDict.set(a.dict, new Set())
-    byDict.get(a.dict)!.add(normalizeWordName(a.word))
+    dicts.add(a.dict)
   }
-  for (const [dict, names] of byDict) {
+  for (const dict of dicts) {
     const info = idDictionaryMap[dict]
     if (!info || !info.url) continue
     const file = info.url.split('/').pop() || ''
@@ -172,32 +326,48 @@ async function migrateMemoryRecords(): Promise<void> {
 
 export async function getMemoryRecords(): Promise<IMemoryRecord[]> {
   // v8.9：命中内存缓存后不再每词全表反序列化；写入/删除会增量更新缓存
+  // v9.5（DATA-003）：返回前按 canonical key 去重（legacy 旧记录 + 新记录并存时只算一次）
   const cached = getMemoryCache()
-  if (cached) return cached
+  if (cached) return canonicalizeMemoryRecords(cached)
   try {
     const records = await db.memoryRecords.toArray()
     await fillMissingTransInRecords(records)
     setMemoryCache(records)
-    return records
+    return canonicalizeMemoryRecords(records)
   } catch {
     return []
   }
 }
 
-/** v8.5：开始页概览（今日新学 / 到期复习 / 已学总数），只读 memoryRecords；v9.0 追加今日练习词数统一口径 */
+/**
+ * v8.5：开始页概览（今日新学 / 到期复习 / 已学总数），只读 memoryRecords；v9.0 追加今日练习词数统一口径。
+ *
+ * v9.3.1（SRS-001 后半）：`due` 与 `pickDynamicWord` 的到期池**完全同口径**——
+ * - 按 memoryKey 去重（与取词池一致）；
+ * - 排除已挂起（待攻克）的词：它们不会出现在到期复习里，不能计入「复习债」，
+ *   否则会出现「顶栏显示 N 个到期，但一直刷不到第 N 个词」；
+ * - 时钟回拨记录用 `effectiveDueOf` 校正值（SRS-002）。
+ */
 export async function getLearningSummary(): Promise<{ learned: number; due: number; todayNew: number; todayPracticed: number }> {
   try {
     const now = Date.now()
     const start = new Date()
     start.setHours(0, 0, 0, 0)
     const startTs = start.getTime()
-    const records = await db.memoryRecords.toArray()
-    let due = 0
+    const rows = await db.memoryRecords.toArray()
+    // v9.5（DATA-003）：legacy 旧记录与新 key 记录并存时按 canonical key 去重（已学/今日新学不翻倍）
+    const records = canonicalizeMemoryRecords(rows)
+    const suspendedKeys = new Set(getSuspendedKeys())
+    const dueKeys = new Set<string>()
     let todayNew = 0
     for (const r of records) {
-      if ((Number(r.due) || 0) <= now) due += 1
       if ((Number(r.createdAt) || 0) >= startTs) todayNew += 1
+      const key = r.key || memoryKey(r.dict, r.word)
+      if (key && suspendedKeys.has(key)) continue
+      // 与取词池同口径（SRS-002 校正 + SRS-001 排除 suspended）
+      if (effectiveDueOf(now, r) <= now) dueKeys.add(key || `${r.dict}::${r.word}`)
     }
+    const due = dueKeys.size
     // v9.0：与数据页/分析页统一为「今日练过的词（按单词去重）」，含复习
     let todayPracticed = 0
     try {
@@ -337,9 +507,14 @@ export async function pickDynamicWord(opts: {
   manualWords?: Word[]
 }): Promise<PickResult | null> {
   const now = Date.now()
-  const recentSet = new Set(opts.recent.map(normalizeWordName))
-  const known = new Set(opts.records.map((r) => normalizeWordName(r.word)))
+  const recentSet = new Set(opts.recent.map(normalizeWordKeyWord))
+  // v9.5（DATA-003）：known / recent 改用「保留大小写」的比较口径。
+  // 旧口径按小写比较，导致同词库 March / march 被当成同一个词：学完 march 后 March 永不进新词池。
+  // 仍然按 word（而不是 key）比较，保留 v9.3 的「跨词库同名同词不重复教」语义。
+  const known = new Set(opts.records.map((r) => normalizeWordKeyWord(r.word)))
   const suspendedKeys = new Set(getSuspendedKeys())
+  // v9.3.1（SRS-002）：取词前顺带触发一次性时钟回拨校准（内部去重，失败静默；不阻塞本次取词）
+  void ensureFutureDueCorrected()
 
   // 错词当场重现（若已被挂起则丢弃）
   const requeued = takeRequeueWord()
@@ -354,8 +529,10 @@ export async function pickDynamicWord(opts: {
     if (!rec || !rec.word) continue
     const key = rec.key || memoryKey(rec.dict, rec.word)
     if (suspendedKeys.has(key)) continue
-    if (recentSet.has(normalizeWordName(rec.word))) continue
-    const due = Number(rec.due) || 0
+    if (recentSet.has(normalizeWordKeyWord(rec.word))) continue
+    // v9.3.1（SRS-002）：时钟回拨/未来 lastSeen 的记录用「校正后的 due」分类，
+    // 否则它的 due 落在未来很久，永远进不了到期池（v9.3 只修了答题路径）。
+    const due = effectiveDueOf(now, rec)
     if (due <= now) {
       if (!dueByKey.has(key)) dueByKey.set(key, rec)
     } else {
@@ -391,7 +568,7 @@ export async function pickDynamicWord(opts: {
     if (opts.mode === 'auto') {
       const p = await ensureProgress()
       if (p && !p.error) {
-        const newWords = p.newWords.filter((w) => !recentSet.has(normalizeWordName(w.name)))
+        const newWords = p.newWords.filter((w) => !recentSet.has(normalizeWordKeyWord(w.name)))
         if (newWords.length) {
           const batch = newWords.slice(0, 20)
           const w = randOf(batch)
@@ -400,7 +577,7 @@ export async function pickDynamicWord(opts: {
       }
     } else {
       const manualNew = (opts.manualWords || []).filter(
-        (w) => w && w.name && !known.has(normalizeWordName(w.name)) && !recentSet.has(normalizeWordName(w.name)),
+        (w) => w && w.name && !known.has(normalizeWordKeyWord(w.name)) && !recentSet.has(normalizeWordKeyWord(w.name)),
       )
       if (manualNew.length) {
         const w = randOf(manualNew)

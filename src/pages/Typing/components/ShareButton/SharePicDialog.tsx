@@ -17,7 +17,25 @@ import { Fragment, useCallback, useContext, useEffect, useMemo, useRef, useState
 import IconXMark from '~icons/heroicons/x-mark-solid'
 
 const PIC_RATIO = 3
+/** SHARE-001：分享图生成超时（字体/图片远程拉取失败时 html-to-image 可能长时间挂起）。 */
+const SHARE_PNG_TIMEOUT = 8000
 const PIC_LIST = [shareImage1, shareImage2, shareImage3, shareImage4, shareImage5, shareImage6, shareImage7, shareImage8, shareImage9]
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = window.setTimeout(() => reject(new Error('share-image-timeout')), timeoutMs)
+    promise.then(
+      (value) => {
+        window.clearTimeout(timer)
+        resolve(value)
+      },
+      (error) => {
+        window.clearTimeout(timer)
+        reject(error)
+      },
+    )
+  })
+}
 // 我知道有些有点怪，但怪的有趣(狗头)，powered by chatGPT
 const PROMOTE_LIST = [
   { word: '快人一手', sentence: '速度快得就像比别人多长了一只手' },
@@ -53,6 +71,10 @@ export default function SharePicDialog({ showState, setShowState, randomChoose }
   const { state } = useContext(TypingContext)!
   const imageRef = useRef<HTMLDivElement>(null)
   const [imageURL, setImageURL] = useState<string | null>(null)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [saveHint, setSaveHint] = useState('')
+  const [attempt, setAttempt] = useState(0)
+  const isMountedRef = useRef(true)
   const currentDictInfo = useAtomValue(currentDictInfoAtom)
   const currentChapter = useAtomValue(currentChapterAtom)
 
@@ -61,30 +83,62 @@ export default function SharePicDialog({ showState, setShowState, randomChoose }
   const shareImage = useMemo(() => PIC_LIST[Math.floor(randomChoose.picRandom * PIC_LIST.length)], [randomChoose.picRandom])
   const promote = useMemo(() => PROMOTE_LIST[Math.floor(randomChoose.promoteRandom * PROMOTE_LIST.length)], [randomChoose.promoteRandom])
 
+  // SHARE-001：生成失败/超时不再永久转圈，而是给出错误态 + 重试按钮。
   useEffect(() => {
-    async function loadToPng() {
-      const { toPng } = await import('html-to-image')
+    isMountedRef.current = true
+    let cancelled = false
+    setImageURL(null)
+    setLoadError(null)
+    setSaveHint('')
 
-      if (imageRef.current) {
-        const width = imageRef.current.offsetWidth
-        const height = imageRef.current.offsetHeight
-        toPng(imageRef.current, { canvasWidth: width * PIC_RATIO, canvasHeight: height * PIC_RATIO }).then((url) => {
-          setImageURL(url)
-        })
+    async function loadToPng() {
+      try {
+        const node = imageRef.current
+        if (!node) throw new Error('share-image-node-missing')
+        const { toPng } = await import('html-to-image')
+        const width = node.offsetWidth
+        const height = node.offsetHeight
+        const url = await withTimeout(
+          toPng(node, { canvasWidth: width * PIC_RATIO, canvasHeight: height * PIC_RATIO }),
+          SHARE_PNG_TIMEOUT,
+        )
+        if (cancelled || !isMountedRef.current) return
+        setImageURL(url)
+      } catch (e) {
+        console.error('generate share image failed', e)
+        if (cancelled || !isMountedRef.current) return
+        setLoadError('分享图生成失败（可能是网络或字体加载问题），请重试')
       }
     }
 
     loadToPng()
+
+    return () => {
+      cancelled = true
+      isMountedRef.current = false
+    }
+  }, [attempt])
+
+  const handleRetry = useCallback(() => {
+    setAttempt((old) => old + 1)
   }, [])
 
   const handleDownload = useCallback(async () => {
-    const { saveAs } = await import('file-saver')
-
-    if (imageURL) {
+    if (!imageURL) {
+      // SHARE-001：无图时给出可见提示，而不是静默 return。
+      setSaveHint(loadError ? '分享图生成失败，请先点击“重试”' : '分享图还在生成中，请稍候再保存')
+      return
+    }
+    try {
+      const { saveAs } = await import('file-saver')
       saveAs(imageURL, 'Qwerty-learner.png')
       recordShareAction('download')
+      setSaveHint('')
+    } catch (e) {
+      console.error('save share image failed', e)
+      setSaveHint('保存图片失败，请重试')
     }
-  }, [imageURL])
+  }, [imageURL, loadError])
 
   const handleClose = useCallback(() => {
     setShowState(false)
@@ -125,6 +179,13 @@ export default function SharePicDialog({ showState, setShowState, randomChoose }
                     <div className="h-152 w-116">
                       {imageURL ? (
                         <img src={imageURL} className="h-auto w-full" />
+                      ) : loadError ? (
+                        <div className="flex h-full w-full flex-col items-center justify-center gap-4 rounded-lg border-2 border-dashed border-red-200 px-6 text-sm text-gray-500">
+                          <span className="text-center">{loadError}</span>
+                          <button type="button" className="my-btn-primary h-9" onClick={handleRetry}>
+                            重试
+                          </button>
+                        </div>
                       ) : (
                         <div className="flex h-full w-full items-center justify-center rounded-lg border-2 border-solid border-white">
                           <svg
@@ -145,13 +206,15 @@ export default function SharePicDialog({ showState, setShowState, randomChoose }
                     </div>
                     <button
                       ref={dialogFocusRef}
-                      className="my-btn-primary mr-9 mt-10 h-10"
+                      className="my-btn-primary mr-9 mt-10 h-10 disabled:cursor-not-allowed disabled:bg-gray-300"
                       type="button"
                       onClick={handleDownload}
+                      disabled={!imageURL && !!loadError}
                       title="保存"
                     >
                       保存
                     </button>
+                    {saveHint && <p className="mr-9 mt-2 text-xs text-amber-500">{saveHint}</p>}
                   </div>
                 </Dialog.Panel>
               </Transition.Child>

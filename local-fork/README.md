@@ -6,28 +6,33 @@ Qwerty Learner 本地魔改版的 Electron 外壳源码：主进程（托盘/快
 
 ## 目录
 
-- `package.json` — asar 根 package.json（`main: electron/main.js`，**版本号唯一来源**：`1.0.0-enhanced-v9.2`）
+- `package.json` — asar 根 package.json（`main: electron/main.js`，**版本号唯一来源**：`1.0.0-enhanced-v9.5`）
 - `electron/main.js` — 主进程（窗口/托盘/快捷键/单实例/备份/词库/发音缓存/免费接口/安全守卫等 IPC）
 - `electron/preload.js` — contextBridge 白名单 API（版本号通过 `app:version-sync` 同步 IPC 获取）
 - `electron/enhance/` — 注入的增强 UI（enhance.js/css、剪贴板查词窗、词库映射表）
 
-## 构建与安装（v9.2 起用脚本）
+## 构建与安装（v9.4 起脚本强化）
 
 ```powershell
 # 只构建 + 打包（产出 app.asar / SHA256SUMS / release-info.json）
-pwsh -File scripts\dsh-release.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\dsh-release.ps1
 
-# 构建 + 测试安装 + CDP 冒烟（默认会先跑 tsc 门禁）
-pwsh -File scripts\dsh-release.ps1 -TestInstall -Smoke
+# 本地质量门禁（tsc + eslint --max-warnings 0；-WithSim 追加 248 断言；-WithSmoke 追加冒烟）
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\quality-gate.ps1 -WithSim
 
-# 构建 + 正式安装（先退出应用、备份旧 asar、校验安装后哈希）
-pwsh -File scripts\dsh-release.ps1 -Install
+# 构建 + 测试安装 + 隔离 profile CDP 冒烟（默认先跑 tsc + 248 条核心回归）
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\dsh-release.ps1 -TestInstall -Smoke
 
-# 回滚
-pwsh -File scripts\dsh-rollback.ps1 -List
-pwsh -File scripts\dsh-rollback.ps1
+# 构建 + 正式安装（预检双目录哈希一致 → 备份（精确到秒）→ 原子替换 → 校验 → 写安装日志）
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\dsh-release.ps1 -Install
+
+# 回滚（自动选“与当前版本不同的最近备份”，回滚前自动存 redo 点）
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\dsh-rollback.ps1 -List
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\dsh-rollback.ps1
 ```
 
+> 本机只有 Windows PowerShell 5.1（无 `pwsh`），脚本保存为 UTF-8 BOM 以兼容 PS5；若使用 PowerShell 7，`pwsh -File` 等价。
+> `-SkipCheck` 跳过 tsc、`-SkipAudit` 跳过 248 条核心回归、`-SkipBuild` 复用现有 `build/`。
 > 发版只需改本目录 `package.json` 的 `version`：主进程读取 package.json；preload 通过 `app:version-sync` 获取；注入的增强面板用主进程传入的 `window.__QZ_VERSION__`。
 > 旧的打包工作区 `D:\整理\QwertyPackV7` 仍保留但不再手工同步（脚本直接从本目录组装）。
 > Electron 运行时版本与 EOL 见 `docs/Electron-EOL.md`。

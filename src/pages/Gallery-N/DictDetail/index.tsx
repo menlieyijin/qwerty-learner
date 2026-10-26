@@ -3,14 +3,13 @@ import { ErrorTable } from '../ErrorTable'
 import { getRowsFromErrorWordData } from '../ErrorTable/columns'
 import { ReviewDetail } from '../ReviewDetail'
 import useErrorWordData from '../hooks/useErrorWords'
-import { ScrollArea } from '@/components/ui/scroll-area'
+import { getDictTotalWordCount, useCanonicalLearnedCount } from '../DictionaryWithoutCover'
 import { Tabs, TabsContent } from '@/components/ui/tabs'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { currentChapterAtom, currentDictIdAtom, learningModeAtom, reviewModeInfoAtom } from '@/store'
 import type { Dictionary } from '@/typings'
-import { db } from '@/utils/db'
 import { useAtom, useSetAtom } from 'jotai'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import IcOutlineCollectionsBookmark from '~icons/ic/outline-collections-bookmark'
 import MajesticonsPaperFoldTextLine from '~icons/majesticons/paper-fold-text-line'
@@ -23,34 +22,19 @@ enum Tab {
 }
 
 export default function DictDetail({ dictionary: dict }: { dictionary: Dictionary }) {
-  const [currentChapter, setCurrentChapter] = useAtom(currentChapterAtom)
-  const [currentDictId, setCurrentDictId] = useAtom(currentDictIdAtom)
+  // v9.4（dsh）：本组件已不按章节展示，只需 setter；getter 未使用，避免 no-unused-vars 噪音
+  const [, setCurrentChapter] = useAtom(currentChapterAtom)
+  const [, setCurrentDictId] = useAtom(currentDictIdAtom)
   const setLearningMode = useSetAtom(learningModeAtom)
   const [curTab, setCurTab] = useState<Tab>(Tab.Chapters)
   const setReviewModeInfo = useSetAtom(reviewModeInfoAtom)
   const navigate = useNavigate()
   const { deleteWordRecord } = useDeleteWordRecord()
   const [reload, setReload] = useState(false)
-  const [learned, setLearned] = useState<number | null>(null)
 
-  // v9.1：v7 起练习不再按章节，这里改为展示该词库的记忆曲线学习进度
-  useEffect(() => {
-    let cancelled = false
-    setLearned(null)
-    db.memoryRecords
-      .where('dict')
-      .equals(dict.id)
-      .count()
-      .then((count) => {
-        if (!cancelled) setLearned(count)
-      })
-      .catch(() => {
-        if (!cancelled) setLearned(0)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [dict.id, reload])
+  // v9.5（DATA-010）：已学数按 canonical memoryRecords 去重统计（legacy 旧记录不翻倍）
+  const learned = useCanonicalLearnedCount(dict.id, true, reload)
+  const totalWords = getDictTotalWordCount(dict)
 
   const { errorWordData, isLoading, error } = useErrorWordData(dict, reload)
 
@@ -84,14 +68,14 @@ export default function DictDetail({ dictionary: dict }: { dictionary: Dictionar
     [curTab],
   )
 
-  const progress = learned == null ? 0 : Math.min(100, Math.round((learned / Math.max(1, dict.length)) * 100))
+  const progress = learned == null ? 0 : Math.min(100, Math.round((learned / Math.max(1, totalWords)) * 100))
 
   return (
     <div className="flex flex-col rounded-[4rem] px-4 py-3 pl-5 text-gray-800 dark:text-gray-300">
       <div className="text relative flex h-40 flex-col gap-2">
         <h3 className="text-2xl font-semibold">{dict.name}</h3>
         <p className="mt-1">记忆曲线出词 · 无章节</p>
-        <p>共 {dict.length} 词</p>
+        <p>共 {totalWords} 词</p>
         <p>{dict.description}</p>
         <div className="absolute bottom-5 right-4">
           <ToggleGroup type="single" value={curTab} onValueChange={handleTabChange}>
@@ -133,7 +117,7 @@ export default function DictDetail({ dictionary: dict }: { dictionary: Dictionar
               <div className="w-full rounded-2xl bg-white/70 p-6 shadow-sm dark:bg-gray-800/60">
                 <div className="text-lg font-semibold text-gray-800 dark:text-gray-100">{dict.name} · 学习进度</div>
                 <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                  已学 {learned == null ? '…' : learned} / {dict.length} 词（{progress}%）
+                  已学 {learned == null ? '…' : learned} / {totalWords} 词（{progress}%）
                 </div>
                 <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
                   <div className="h-full rounded-full bg-indigo-500 transition-all duration-300" style={{ width: `${progress}%` }} />

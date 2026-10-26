@@ -25,14 +25,16 @@ const LineCharts: FC<LineChartsProps> = ({ data, title, suffix, name }) => {
   const chartRef = useRef<HTMLDivElement>(null)
 
   const { width, height } = useWindowSize()
+  const hasData = data.length > 0
 
   useEffect(() => {
-    if (!chartRef.current || !data.length) return
+    if (!chartRef.current || !hasData) return
 
     let chart = echarts.getInstanceByDom(chartRef.current)
     chart?.dispose()
 
     chart = echarts.init(chartRef.current, isOpenDarkMode ? 'purple' : 'light')
+    const instance = chart
 
     const option = {
       tooltip: { trigger: 'axis' },
@@ -46,8 +48,10 @@ const LineCharts: FC<LineChartsProps> = ({ data, title, suffix, name }) => {
         type: 'time',
         axisPointer: {
           label: {
-            formatter: function (params: { seriesData: [{ data: [string, number] }] }) {
-              return params.seriesData[0].data[0]
+            // PAGES-012：ECharts 回调参数形态不保证 seriesData 存在，缺失时返回空串而不是抛错
+            formatter: function (params: { seriesData?: Array<{ data?: unknown }> }) {
+              const firstData = params?.seriesData?.[0]?.data
+              return Array.isArray(firstData) ? String(firstData[0]) : ''
             },
           },
         },
@@ -67,8 +71,14 @@ const LineCharts: FC<LineChartsProps> = ({ data, title, suffix, name }) => {
       ],
     }
 
-    chart.setOption(option)
-  }, [data, title, suffix, name, isOpenDarkMode])
+    instance.setOption(option)
+
+    // PAGES-004：路由卸载/主题切换时释放实例（含 zrender 与 canvas），
+    // 否则每次进出统计页都会在 echarts 内部实例表里留下引用（内存泄漏）。
+    return () => {
+      instance.dispose()
+    }
+  }, [data, hasData, title, suffix, name, isOpenDarkMode])
 
   useEffect(() => {
     if (!chartRef.current) return
@@ -79,7 +89,12 @@ const LineCharts: FC<LineChartsProps> = ({ data, title, suffix, name }) => {
   return (
     <div className="flex h-full flex-col">
       <div className="text-center text-xl font-bold text-gray-600	dark:text-white">{title}</div>
-      <div style={{ width: '100%', height: '100%' }} ref={chartRef} className="line-chart flex-grow"></div>
+      {hasData ? (
+        <div style={{ width: '100%', height: '100%' }} ref={chartRef} className="line-chart flex-grow"></div>
+      ) : (
+        // PAGES-007：无数据时给出占位文案，不再直接 return 留白（用户无法区分“无数据”与“加载失败”）
+        <div className="flex flex-grow items-center justify-center text-sm text-gray-400 dark:text-gray-500">暂无数据</div>
+      )}
     </div>
   )
 }

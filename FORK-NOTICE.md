@@ -10,13 +10,14 @@
 | 上游基线 | commit `1182426f2bd0a28c95302c33f9e19136b1262a70` |
 | 上游作者/版权 | 归原作者及贡献者所有（见 `LICENSE`，**GPL-3.0**） |
 | 本地修改者 | **dsh（DeepSeek Harness）** |
-| 本地修改时间 | 2026-10-21 ~ 2026-10-26（v1~v9.2） |
-| 本地仓库 | `D:\整理\qwerty-src`（分支 `dsh-local-v8`，仅本地；tag `v8.9/v9.0/v9.1/v9.2-dsh-local`） |
+| 本地修改时间 | 2026-10-21 ~ 2026-10-26（v1~v9.5） |
+| 本地仓库 | `D:\整理\qwerty-src`（分支 `dsh-local-v8`，仅本地；tag `v8.9/v9.0/v9.1/v9.2/v9.3/v9.5-dsh-local`；v9.4 与 v9.5 合并在同一提交） |
 
 ## 版权与许可
 
 - 上游代码采用 **GNU GPL v3.0**；本仓库作为其衍生作品，同样按 GPL-3.0 处理，原始版权声明与 `LICENSE` 文件保持不动。
-- 本仓库的本地修改部分由 **dsh** 完成，提交署名均为 `dsh <dsh@dsh.local>`，不冒用上游作者身份，也不向官方仓库提交任何内容。
+- 本仓库的本地修改部分由 **dsh** 完成，提交署名均为 `dsh <dsh@dsh.local>`，不冒用上游作者身份。
+- **本地魔改不向官方仓库提交**；但从中剥离出的、不依赖本地魔改的通用 bug 修复（最小 patch）会以 `dsh` 署名单独向上游提 PR/issue（基线 `1182426`，带 `Signed-off-by`），不夹带任何本地专属功能。
 - 未对外分发；如未来分发，需遵守 GPL-3.0（提供源码、保留版权声明等）。
 
 ## 上游策略：冻结，不跟随官方更新
@@ -29,10 +30,10 @@
 
 ## 本地改动概览（相对上游 1182426）
 
-- 记忆曲线调度：`src/utils/memory.ts`、`memoryLadder.ts`、`refreshMarker.ts`、`learningPath.ts`
+- 记忆曲线调度：`src/utils/memory.ts`、`memoryLadder.ts`、`srsRules.ts`、`autoLevel.ts`、`learningPath.ts`（v9.3 起删除 `refreshMarker.ts`，改为显式 refresh 参数）
 - 动态出词 / 自动词汇水平 / 跨词库去重 / 随机回顾：`src/pages/Typing/hooks/useWordList.ts`、`store/index.ts`、`WordPanel/*`
 - 无章节练习、HashRouter、相对路径、Electron 适配：`src/index.tsx`、`src/pages/Typing/*`、`src/components/*`
-- 数据库：`src/utils/db/index.ts`、`record.ts`（新增 `memoryRecords` 表，旧表保留）
-- 词库资源：补回 `public/dicts/` 下 5 本旧词库与图标（来自官方旧版本地构建，仅本地使用）
-- 增强外壳（Electron）：`D:\整理\qwerty-src\local-fork\electron\` —— 托盘/快捷键/备份/免费释义/发音缓存/注入式增强面板等，由 dsh 在本地实现；v8.9~v9.2 增加安全守卫、逻辑备份快照、到期复习中心、全量导入导出与版本单点
-- 构建与发布：`scripts\dsh-release.ps1`（tsc + Vite build + asar + SHA256SUMS + 测试/正式安装 + 冒烟）、`scripts\dsh-rollback.ps1`；Electron EOL 说明见 `docs/Electron-EOL.md`
+- 数据库：`src/utils/db/index.ts`、`record.ts`（新增 `memoryRecords` 表，旧表保留；v9.4 导入改为临时库+主库单事务；v9.5 memoryKey 保留大小写并迁移旧 key）
+- 词库资源：补回 `public/dicts/` 下 5 本旧词库与图标（来自官方旧版本地构建，仅本地使用）；v9.4 修重复 id 与 `trans` 类型归一化；v9.5 加载层空白归一化（286 条异常词条）+ 唯一词数进度分母
+- 增强外壳（Electron）：`D:\整理\qwerty-src\local-fork\electron\` —— 托盘/快捷键/备份/免费释义/发音缓存/注入式增强面板等，由 dsh 在本地实现；v8.9~v9.5 增加安全守卫（CSP/下载白名单/剪贴板转义/遥测默认关闭）、逻辑备份快照、到期复习中心、全量导入导出与版本单点
+- 构建与发布：`scripts\dsh-release.ps1`（tsc + 248 断言回归 + Vite build + asar + SHA256SUMS + 测试/正式安装 + 冒烟 + 安装日志）、`scripts\dsh-rollback.ps1`（自动选上一版本、redo 点）；Electron EOL 说明见 `docs/Electron-EOL.md`

@@ -9,14 +9,17 @@
  * 4. 记录按 word 取最优（跨级/跨词库同词去重），不按 memoryKey 的 dict 限定；
  * 5. 词库加载失败（抛错或空级别）标记 error，不判完成。
  *
- * 约束：不 import db/index.ts、不 import React；仅依赖 learningPath / memoryKey / srsRules / 类型。
+ * 约束：不 import db/index.ts、不 import React；仅依赖 learningPath / memoryKey / memoryCache / srsRules / 类型。
+ * （v9.3.1：`resumeWord` 里复位 lapses 需要写 indexDB，用**动态** `await import('@/utils/db')` 完成，
+ *   与 db/index.ts 反向动态 import autoLevel 对称，不在模块初始化期形成 TDZ 循环。）
  */
 import type { Word } from '@/typings'
 import type { IMemoryRecord } from '@/utils/db/record'
 import { LEARNING_PATH, loadLevelWords } from '@/utils/learningPath'
 import type { LearningLevel } from '@/utils/learningPath'
 import { memoryKey, normalizeWordName } from '@/utils/memoryKey'
-import { isDue, isMastered } from './srsRules'
+import { clearMemoryCache } from '@/utils/memoryCache'
+import { effectiveDueOf, isDue, isMastered } from './srsRules'
 
 /** localStorage 键（随备份/导入迁移，见 enhance.js collectBackupSnapshot 的 localStorage 全量快照） */
 export const AUTO_LEVEL_STORAGE_KEY = 'qzAutoLevelState'
@@ -26,6 +29,12 @@ export const AUTO_LEVEL_STATE_VERSION = 1
 export const AUTO_LEVEL_SUSPEND_THRESHOLD = 3
 /** 升级事件名；detail: LevelUpDetail */
 export const AUTO_LEVEL_UP_EVENT = 'qz-auto-level-up'
+/**
+ * v9.3.1（SRS-006）：状态持久化失败事件名；detail: { message: string; at: number }
+ * localStorage 不可用 / 写满时 saveAutoLevelState 返回 false，除 console.warn 外再派发该事件，
+ * 便于数据页「自动进阶」卡片提示「状态未持久化」，不再静默丢档。
+ */
+export const AUTO_LEVEL_STATE_ERROR_EVENT = 'qz-auto-level-state-error'
 
 /** 供顶栏/数据页快速展示的缓存信息（computeLevelProgress / getCachedInfo 写入） */
 export type AutoLevelCachedInfo = {
@@ -52,6 +61,13 @@ export type AutoLevelState = {
   skipped: Record<string, number>
   /** 达阈值或手动挂起的 memoryKey 列表 */
   suspended: string[]
+  /**
+   * v9.3.1（SRS-005）：本模块最后一次写入时已知的 suspended 集合快照。
+   * 用于识别「外部直接改 localStorage 把 suspended 清空」的恢复动作（增强面板「恢复全部待攻克」
+   * 走的是 enhance.js 直接 setItem + location.reload()，不会调用 resumeWord）。
+   * 启动时 `suspendedSnapshot - suspended` = 被外部恢复的词 → 补做 lapses 复位。
+   */
+  suspendedSnapshot?: string[]
   /** 最近一次升级时间 */
   lastLevelUpAt?: number
   cached?: AutoLevelCachedInfo
@@ -86,6 +102,8 @@ export type LevelProgress = {
 export type SkipRecordResult = {
   count: number
   suspended: boolean
+  /** v9.3.1（SRS-006）：本次状态是否成功落盘；false 表示 localStorage 不可用/写满（已 console.warn + 派发事件） */
+  persisted: boolean
 }
 
 export type LevelUpDetail = {
@@ -171,6 +189,11 @@ function normalizeState(raw: unknown): AutoLevelState {
   const base = createDefaultState()
   if (!raw || typeof raw !== 'object') return base
   const obj = raw as Record<string, unknown>
+  // v9.3.1（SRS-007）：未知/更高版本不 throw、不整份丢弃，按已知字段安全降级解析（旧版无 version 视为 0）
+  const rawVersion = isFiniteNumber(obj.version) ? obj.version : 0
+  if (rawVersion > AUTO_LEVEL_STATE_VERSION) {
+    console.warn(`[autoLevel] qzAutoLevelState version=${rawVersion} 高于当前 ${AUTO_LEVEL_STATE_VERSION}，按已知字段降级解析`)
+  }
 
   const levelId = typeof obj.levelId === 'string' && obj.levelId ? obj.levelId : base.levelId
   const startedAt = isFiniteNumber(obj.startedAt) ? obj.startedAt : base.startedAt
@@ -198,6 +221,14 @@ function normalizeState(raw: unknown): AutoLevelState {
     startedAt,
     skipped,
     suspended,
+  }
+  // v9.3.1（SRS-005）：外部恢复检测用快照（只读保留，不在这里和 suspended 对齐——对齐只发生在写入时）
+  if (Array.isArray(obj.suspendedSnapshot)) {
+    const snapshot: string[] = []
+    for (const item of obj.suspendedSnapshot) {
+      if (typeof item === 'string' && item && snapshot.indexOf(item) < 0) snapshot.push(item)
+    }
+    state.suspendedSnapshot = snapshot
   }
   if (isFiniteNumber(obj.lastLevelUpAt)) state.lastLevelUpAt = obj.lastLevelUpAt
   const cached = normalizeCachedInfo(obj.cached)
@@ -232,31 +263,100 @@ export function hasAutoLevelState(): boolean {
   return readStoredState() !== null
 }
 
-/** 保存状态（容错；localStorage 不可用或 quota 超限时返回 false） */
+/** 状态持久化失败计数（v9.3.1 / SRS-006：供测试与数据页展示，不参与业务判定） */
+let persistFailureCount = 0
+/** 已发生的状态持久化失败次数（成功写入不清零，方便用户发现问题后仍能看到历史） */
+export function getStatePersistFailures(): number {
+  return persistFailureCount
+}
+
+function reportStatePersistFailure(reason: string, error?: unknown): void {
+  persistFailureCount += 1
+  try {
+    console.warn(`[autoLevel] qzAutoLevelState 持久化失败（${reason}），自动进阶进度可能会丢失`, error)
+  } catch {
+    // console 不可用时静默
+  }
+  try {
+    if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
+      window.dispatchEvent(new CustomEvent(AUTO_LEVEL_STATE_ERROR_EVENT, { detail: { message: reason, at: Date.now() } }))
+    }
+  } catch {
+    // 非浏览器环境/事件构造失败时忽略：派发失败不影响返回值
+  }
+}
+
+/** 保存状态（容错；localStorage 不可用或 quota 超限时返回 false，并 console.warn + 派发事件） */
 export function saveAutoLevelState(state: AutoLevelState): boolean {
   const storage = getStorage()
-  if (!storage) return false
-  try {
-    storage.setItem(AUTO_LEVEL_STORAGE_KEY, JSON.stringify(normalizeState(state)))
-    return true
-  } catch {
+  if (!storage) {
+    reportStatePersistFailure('localStorage 不可用')
     return false
+  }
+  try {
+    const normalized = normalizeState(state)
+    storage.setItem(AUTO_LEVEL_STORAGE_KEY, JSON.stringify(normalized))
+    return true
+  } catch (e) {
+    reportStatePersistFailure('写入异常（可能为 quota 超限/隐私模式）', e)
+    return false
+  }
+}
+
+/**
+ * 状态修改的唯一入口（v9.3.1 / SRS-003）：**同步**读最新 localStorage → 原地修改 → 写回。
+ * 体内禁止 await/异步回调，保证「读-改-写」原子；调用方不得再自己持有旧快照整对象回写。
+ * mutator 返回 `true` 表示确有变化（才会写盘），返回 `false`/undefined 则不写，避免每词一次无谓落盘。
+ *
+ * v9.3.1（SRS-005）：只有**确实改动了 suspended** 时才同步 `suspendedSnapshot`，
+ * 这样「只更新 cached」的写入（数据页 getCachedInfo）不会把外部恢复检测线索冲掉。
+ */
+function mutateStateWithResult(mutator: (draft: AutoLevelState) => boolean): {
+  state: AutoLevelState
+  changed: boolean
+  persisted: boolean
+} {
+  const draft = loadAutoLevelState()
+  const suspendedBefore = JSON.stringify(draft.suspended)
+  let changed = false
+  try {
+    changed = mutator(draft) === true
+  } catch (e) {
+    console.warn('[autoLevel] mutateState mutator failed', e)
+    changed = false
+  }
+  if (!changed) return { state: draft, changed: false, persisted: true }
+  const normalized = normalizeState(draft)
+  if (JSON.stringify(normalized.suspended) !== suspendedBefore) {
+    normalized.suspendedSnapshot = normalized.suspended.slice()
+  } else if (!Array.isArray(normalized.suspendedSnapshot)) {
+    // 首次写入补基线快照，保证之后「外部清空 suspended」可被检测
+    normalized.suspendedSnapshot = normalized.suspended.slice()
+  }
+  const persisted = saveAutoLevelState(normalized)
+  return { state: normalized, changed: true, persisted }
+}
+
+function mutateState(mutator: (draft: AutoLevelState) => boolean): AutoLevelState {
+  return mutateStateWithResult(mutator).state
+}
+
+/** 只把 patch 里 `!== undefined` 的字段覆盖到 draft（避免显式 undefined 冲掉已有值） */
+function applyDefinedFields(draft: AutoLevelState, patch: Partial<AutoLevelState>): void {
+  const target = draft as Record<string, unknown>
+  for (const key of Object.keys(patch) as Array<keyof AutoLevelState>) {
+    const value = patch[key]
+    if (value !== undefined) target[key] = value
   }
 }
 
 /** 浅合并补丁；skipped/suspended 未传时保留原值，传入时整体替换（传入值会被 sanitize） */
 export function patchState(patch: Partial<AutoLevelState>): AutoLevelState {
-  const current = loadAutoLevelState()
-  const merged: AutoLevelState = {
-    ...current,
-    ...patch,
-    version: AUTO_LEVEL_STATE_VERSION,
-    skipped: patch.skipped ? patch.skipped : current.skipped,
-    suspended: patch.suspended ? patch.suspended : current.suspended,
-  }
-  const normalized = normalizeState(merged)
-  saveAutoLevelState(normalized)
-  return normalized
+  return mutateState((draft) => {
+    applyDefinedFields(draft, patch)
+    draft.version = AUTO_LEVEL_STATE_VERSION
+    return true
+  })
 }
 
 // ---------------------------------------------------------------------------
@@ -294,22 +394,25 @@ export function getSuspendedKeys(): string[] {
 /**
  * 记录一次 Skip（Skip 按钮 / Ctrl+Shift+→ 下一词 / 复习跳过都调用）。
  * 达到 AUTO_LEVEL_SUSPEND_THRESHOLD 后自动 suspended，不阻塞本级升级。
+ * v9.3.1（SRS-003）：走 mutateState 同步「读最新 → 改 → 写」，不再持有可能过期的整份快照。
  */
 export function recordSkip(dict: string, word: string): SkipRecordResult {
   const name = normalizeWordName(word)
-  const state = loadAutoLevelState()
+  if (!dict || !name) return { count: 0, suspended: false, persisted: true }
   const key = memoryKey(dict, word)
-  if (!dict || !name) return { count: 0, suspended: false }
-
-  const count = sanitizeNonNegativeInt(state.skipped[key]) + 1
-  state.skipped[key] = count
-  let suspended = state.suspended.indexOf(key) >= 0
-  if (!suspended && count >= AUTO_LEVEL_SUSPEND_THRESHOLD) {
-    state.suspended.push(key)
-    suspended = true
-  }
-  saveAutoLevelState(state)
-  return { count, suspended }
+  let count = 0
+  let suspended = false
+  const { persisted } = mutateStateWithResult((draft) => {
+    count = sanitizeNonNegativeInt(draft.skipped[key]) + 1
+    draft.skipped[key] = count
+    suspended = draft.suspended.indexOf(key) >= 0
+    if (!suspended && count >= AUTO_LEVEL_SUSPEND_THRESHOLD) {
+      draft.suspended.push(key)
+      suspended = true
+    }
+    return true
+  })
+  return { count, suspended, persisted }
 }
 
 /**
@@ -317,15 +420,21 @@ export function recordSkip(dict: string, word: string): SkipRecordResult {
  * 返回是否发生了变更（幂等，可安全重复调用）。
  */
 export function clearSkip(dict: string, word: string): boolean {
-  const state = loadAutoLevelState()
+  if (!dict || !normalizeWordName(word)) return false
   const key = memoryKey(dict, word)
-  const hadCounter = Object.prototype.hasOwnProperty.call(state.skipped, key)
-  if (hadCounter) delete state.skipped[key]
-  const index = state.suspended.indexOf(key)
-  const hadSuspended = index >= 0
-  if (hadSuspended) state.suspended.splice(index, 1)
-  if (hadCounter || hadSuspended) saveAutoLevelState(state)
-  return hadCounter || hadSuspended
+  return mutateStateWithResult((draft) => {
+    let changed = false
+    if (Object.prototype.hasOwnProperty.call(draft.skipped, key)) {
+      delete draft.skipped[key]
+      changed = true
+    }
+    const index = draft.suspended.indexOf(key)
+    if (index >= 0) {
+      draft.suspended.splice(index, 1)
+      changed = true
+    }
+    return changed
+  }).changed
 }
 
 /**
@@ -333,29 +442,111 @@ export function clearSkip(dict: string, word: string): boolean {
  * 返回是否新增（已挂起返回 false）。
  */
 export function suspendWord(dict: string, word: string): boolean {
-  const key = memoryKey(dict, word)
   if (!dict || !normalizeWordName(word)) return false
-  const state = loadAutoLevelState()
-  if (state.suspended.indexOf(key) >= 0) return false
-  state.suspended.push(key)
-  saveAutoLevelState(state)
-  return true
+  const key = memoryKey(dict, word)
+  return mutateStateWithResult((draft) => {
+    if (draft.suspended.indexOf(key) >= 0) return false
+    draft.suspended.push(key)
+    return true
+  }).changed
 }
 
 /**
- * 恢复一个挂起词：移出 suspended 并清零 Skip 计数（给 3 次新机会）。
+ * 恢复一个挂起词：移出 suspended、清零 Skip 计数（给 3 次新机会），
+ * 并**复位该词的 lapses**（v9.3.1 / SRS-005：不然 leech 词（lapses>=4）恢复后答错一次就被
+ * db/index.ts 的 `lapses>=4 → suspendWord` 立即重新挂起，「3 次新机会」形同虚设）。
+ * 复位 lapses 需要写 IndexedDB，用动态 import 异步尽力而为（失败只 console.warn，不影响返回值）。
  * 返回是否发生变更。
  */
 export function resumeWord(dict: string, word: string): boolean {
+  if (!dict || !normalizeWordName(word)) return false
   const key = memoryKey(dict, word)
-  const state = loadAutoLevelState()
-  const index = state.suspended.indexOf(key)
-  const hadSuspended = index >= 0
-  if (hadSuspended) state.suspended.splice(index, 1)
-  const hadCounter = Object.prototype.hasOwnProperty.call(state.skipped, key)
-  if (hadCounter) delete state.skipped[key]
-  if (hadSuspended || hadCounter) saveAutoLevelState(state)
-  return hadSuspended || hadCounter
+  const { changed } = mutateStateWithResult((draft) => {
+    let dirty = false
+    const index = draft.suspended.indexOf(key)
+    if (index >= 0) {
+      draft.suspended.splice(index, 1)
+      dirty = true
+    }
+    if (Object.prototype.hasOwnProperty.call(draft.skipped, key)) {
+      delete draft.skipped[key]
+      dirty = true
+    }
+    return dirty
+  })
+  if (changed) void resetLapsesAfterResume(key)
+  return changed
+}
+
+/** SRS-005：把单个词的 lapses 复位（0），使其需要重新累计到阈值才会再次被自动挂起 */
+async function resetLapsesByKey(key: string): Promise<boolean> {
+  try {
+    // 动态 import：避免 autoLevel ↔ db/index 在应用启动期形成 TDZ 循环（db 侧也是反向动态 import 本模块）
+    const { db } = await import('@/utils/db')
+    const rec = await db.memoryRecords.get(key)
+    if (!rec) return false
+    const expected = Number(rec.lapses) || 0
+    if (expected <= 0) return false
+    // CAS：读取后又发生了一次作答（lapses 已变）就放弃复位，避免把刚累计的 lapse 冲掉
+    const latest = await db.memoryRecords.get(key)
+    if (!latest || (Number(latest.lapses) || 0) !== expected) return false
+    latest.lapses = 0
+    await db.memoryRecords.put(latest)
+    // 清 memoryCache：让该词以「复位后的记录」重新进入可选池（下次 getMemoryRecords 从 DB 重读）
+    clearMemoryCache()
+    return true
+  } catch (e) {
+    console.warn('[autoLevel] 恢复待攻克时复位 lapses 失败（下次答错仍可能立即重新挂起）', e)
+    return false
+  }
+}
+
+/** 兼容旧名（resumeWord 内部使用） */
+async function resetLapsesAfterResume(key: string): Promise<void> {
+  await resetLapsesByKey(key)
+}
+
+/**
+ * v9.3.1（SRS-005）：找出「被外部恢复」的挂起词。
+ * 增强面板的「恢复全部待攻克」是 enhance.js 直接 `localStorage.setItem(清空 suspended)` +
+ * `location.reload()`，不会调用 resumeWord，所以只能靠启动时对账：
+ * `suspendedSnapshot`（本模块最后一次写入时已知的 suspended）减去当前 `suspended` = 被恢复的词。
+ * 返回被恢复的 key 列表（同时把快照与当前 suspended 对齐，幂等）。
+ */
+export function takePendingResumes(): string[] {
+  const current = loadAutoLevelState()
+  const known = Array.isArray(current.suspendedSnapshot) ? current.suspendedSnapshot : []
+  const suspendedSet = new Set(current.suspended)
+  const pending = known.filter((key) => !suspendedSet.has(key))
+  const snapshotBefore = JSON.stringify(known)
+  const snapshotAfter = JSON.stringify(current.suspended)
+  if (snapshotBefore !== snapshotAfter) {
+    mutateState((draft) => {
+      draft.suspendedSnapshot = draft.suspended.slice()
+      return true
+    })
+  }
+  return pending
+}
+
+/**
+ * v9.3.1（SRS-005）：启动对账入口（memory 初始化时调用一次）。
+ * 对外部恢复的挂起词复位 lapses，使「恢复待攻克」在真实 UI 路径（enhance.js 直接改 localStorage）
+ * 下也生效：否则 leech 词（lapses>=4）恢复后答错一次就会被 db 再次挂起。
+ *
+ * @returns 实际复位了 lapses 的词数
+ */
+export async function applyPendingResumeLapses(): Promise<number> {
+  const keys = takePendingResumes()
+  if (!keys.length) return 0
+  let reset = 0
+  for (const key of keys) {
+    if (await resetLapsesByKey(key)) reset += 1
+  }
+  if (keys.length) {
+    console.info(`[autoLevel] 检测到外部恢复 ${keys.length} 个待攻克词，已复位 ${reset} 条的 lapses`)
+  }
+  return reset
 }
 
 // ---------------------------------------------------------------------------
@@ -455,17 +646,28 @@ export function getRefreshChance(due: number): number {
   return calculateRefreshChance(sanitizeNonNegativeInt(due))
 }
 
-/** 到期词数（按 memoryKey 即 dict+word 去重；与取词 due 池口径一致） */
+/**
+ * 展示口径的「到期词数」：按 **word**（跨词库同名只算 1）去重，且排除已挂起（待攻克）的词。
+ *
+ * v9.3.1（SRS-001/002）：
+ * - 取词 due 池按 key（dict+word）去重；这里展示口径按 word 去重，与旧版/门禁 B-18 的展示语义一致
+ *   （同词跨词库有 2 条记录时顶栏显示 1 个复习债，而不是 2）；
+ * - 已 suspended 的到期词不再计入复习债，与出词池排除挂起词的口径一致（否则出现「显示 1 个复习债，
+ *   但取词永远只能取到别的词」）；
+ * - due 用 `effectiveDueOf`（时钟回拨/未来 lastSeen 校正），保证与 memory.ts 的到期判定同源。
+ */
 function countDueWords(records: IMemoryRecord[]): number {
   const now = Date.now()
+  const state = loadAutoLevelState()
+  const suspended = new Set(state.suspended)
   const seen = new Set<string>()
   for (const record of records) {
     if (!record || !record.word) continue
     const key = record.key || memoryKey(record.dict, record.word)
-    if (!key) continue
-    const due = Number(record.due) || 0
+    if (!key || suspended.has(key)) continue
+    const due = effectiveDueOf(now, record)
     if (due <= 0) continue
-    if (isDue(now, due)) seen.add(key)
+    if (isDue(now, due)) seen.add(normalizeWordName(record.word))
   }
   return seen.size
 }
@@ -621,16 +823,28 @@ export async function advanceIfComplete(records: IMemoryRecord[]): Promise<Advan
     }
   }
 
-  const nextState: AutoLevelState = { ...state }
-  if (!progress.error) {
-    nextState.cached = buildCachedInfo(progress, countDueWords(records))
-  }
-  if (levelUps.length > 0) {
-    const lastLevelUp = levelUps[levelUps.length - 1]
-    nextState.levelId = lastLevelUp.levelId
-    nextState.lastLevelUpAt = lastLevelUp.at
-  }
-  saveAutoLevelState(nextState)
+  // v9.3.1（SRS-003）：跨 await 之后**重新读最新状态再合并**，只写本函数负责的字段
+  // （cached / levelId / lastLevelUpAt），绝不拿进入函数时的旧快照整对象回写，
+  // 否则会冲掉并发发生的 recordSkip/suspendWord/resumeWord（实测 holdFile 窗口可稳定复现）。
+  // 同时保证「只升不回退」：只有当目标级别下标更大时才写 levelId（多实例/并发调用也不会回退）。
+  const lastLevelUp = levelUps.length > 0 ? levelUps[levelUps.length - 1] : null
+  const nextState = mutateState((draft) => {
+    let changed = false
+    if (!progress.error) {
+      draft.cached = buildCachedInfo(progress, countDueWords(records))
+      changed = true
+    }
+    if (lastLevelUp) {
+      const currentIndex = findLevelIndex(draft.levelId)
+      const targetIndex = findLevelIndex(lastLevelUp.levelId)
+      if (currentIndex < 0 || targetIndex > currentIndex) {
+        draft.levelId = lastLevelUp.levelId
+        draft.lastLevelUpAt = lastLevelUp.at
+        changed = true
+      }
+    }
+    return changed
+  })
   for (const detail of levelUps) dispatchLevelUp(detail)
   return { progress, levelUps, state: nextState }
 }
@@ -685,11 +899,19 @@ export async function reevaluateLevel(
 
   let progress = await computeLevelProgress(records, firstLevel.id)
   let index = progress.index
+  // v9.3 设计：首次迁移（migrate=true）按「第一个仍有未学词的级别」定位（旧逻辑）；
+  // 数据页显式重评（migrate=false）按「第一个未完成的级别」（已见 100% + 掌握≥90%）定位。
+  // 之前实现忽略了 options.migrate（参数成死参数），导致 B-07a 迁移路径与门禁 B-07a.migrateNote 不符。
+  const migrate = options.migrate === true
 
   while (!progress.error && index < LEARNING_PATH.length - 1) {
-    // v9.3：首次迁移也按新判据（已见 100% + 掌握≥90%）定位，
-    // 不再只按 unseen 停止，避免把“全 seen 但未掌握”的级别整级跳过。
-    if (!progress.done) break
+    if (migrate ? progress.unseen <= 0 : !progress.done) {
+      // migrate=true：本级已无未学词（全 seen，即使未掌握）→ 继续看下一级；
+      // migrate=false：本级未完成 → 停在本级。
+      if (!migrate) break
+    } else {
+      break
+    }
     const nextLevel = getLevelAt(index + 1)
     if (!nextLevel) break
     const nextProgress = await computeLevelProgress(records, nextLevel.id)
@@ -704,12 +926,15 @@ export async function reevaluateLevel(
     break
   }
 
-  const nextState: AutoLevelState = { ...state }
+  // v9.3.1（SRS-003）：reevaluate 是唯一允许回退 levelId 的入口，但同样只合并本函数负责的字段，
+  // 不再用进入函数时的旧快照整对象回写（否则跨 await 期间并发的 skip/suspend 会丢失）。
   if (!progress.error) {
-    nextState.levelId = progress.levelId
-    nextState.cached = buildCachedInfo(progress, countDueWords(records))
+    mutateState((draft) => {
+      draft.levelId = progress.levelId
+      draft.cached = buildCachedInfo(progress, countDueWords(records))
+      return true
+    })
   }
-  saveAutoLevelState(nextState)
   return progress
 }
 
