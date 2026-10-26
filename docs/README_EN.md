@@ -1,3 +1,6 @@
+> **非官方分支 / Unofficial fork**: 本文档是上游 [Qwerty Learner](https://github.com/RealKai42/qwerty-learner) 的英文原文（作为上游内容保留）；本仓库是其**非官方分支**，由 dsh 维护，与上游作者无隶属、委托或背书关系。
+> 分支声明与 GPL-3.0 合规见 [FORK-NOTICE.md](../FORK-NOTICE.md)；本分支的改动见 [DSH-FORK.md](DSH-FORK.md)（英文版 [DSH-FORK_EN.md](DSH-FORK_EN.md)）。
+
 <div align=center>
   <img src="https://github.com/RealKai42/qwerty-learner/blob/master/src/assets/logo.svg"/>
 </div>

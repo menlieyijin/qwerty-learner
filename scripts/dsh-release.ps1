@@ -4,12 +4,15 @@
 #       → 可选测试安装/隔离冒烟 → 可选双目录正式安装（先备份、原子替换、失败回滚）→ 发布日志
 # 用法示例：
 #   pwsh -File scripts\dsh-release.ps1                          # 质量门禁 + 构建 + 打包（不安装）
-#   pwsh -File scripts\dsh-release.ps1 -TestInstall             # 构建并安装到测试目录 D:\整理\qtest9\app
+#   pwsh -File scripts\dsh-release.ps1 -TestInstall             # 构建并安装到测试目录（-TestAppDir / QZ_TEST_APP_DIR 指定）
 #   pwsh -File scripts\dsh-release.ps1 -TestInstall -Smoke      # 构建+测试安装+隔离 profile CDP 冒烟
 #   pwsh -File scripts\dsh-release.ps1 -Install                 # 构建并安装到两个正式目录（自动备份+校验+日志）
 #   pwsh -File scripts\dsh-release.ps1 -SkipBuild -Install      # 用已有 build/ 直接打包安装
 #   pwsh -File scripts\dsh-release.ps1 -SkipCheck -SkipAudit    # 跳过 tsc / 核心回归门禁
 # 回滚：scripts\dsh-rollback.ps1（自动选择“与当前版本不同的最近备份”，回滚前会再备份当前版本）
+# 路径覆盖：下列路径参数均保留内置默认值（作者本机布局），优先级 = 显式参数 > 环境变量 > 内置默认：
+#   QZ_STAGE_ROOT / QZ_BACKUP_DIR / QZ_AUDIT_DIR / QZ_TEST_APP_DIR / QZ_INSTALL_DIRS（分号分隔多个目录）
+# 迁移到其它机器或公开仓库使用时，设置对应环境变量即可，无需改脚本。
 # ============================================================================
 param(
   [string]$Version = '',
@@ -19,11 +22,11 @@ param(
   [switch]$TestInstall,
   [switch]$Install,
   [switch]$Smoke,
-  [string]$StageRoot = 'D:\整理\QwertyRelease',
-  [string]$BackupDir = 'D:\整理\Qwerty备份',
-  [string]$AuditRoot = 'D:\整理\audit',
-  [string]$TestAppDir = 'D:\整理\qtest9\app',
-  [string[]]$InstallDirs = @('D:\bangong\QwertyLearner-Plus', 'D:\bangong\新建文件夹 (2)\Qwerty Learner'),
+  [string]$StageRoot = $(if ($env:QZ_STAGE_ROOT) { $env:QZ_STAGE_ROOT } else { 'D:\整理\QwertyRelease' }),
+  [string]$BackupDir = $(if ($env:QZ_BACKUP_DIR) { $env:QZ_BACKUP_DIR } else { 'D:\整理\Qwerty备份' }),
+  [string]$AuditRoot = $(if ($env:QZ_AUDIT_DIR) { $env:QZ_AUDIT_DIR } else { 'D:\整理\audit' }),
+  [string]$TestAppDir = $(if ($env:QZ_TEST_APP_DIR) { $env:QZ_TEST_APP_DIR } else { 'D:\整理\qtest9\app' }),
+  [string[]]$InstallDirs = $(if ($env:QZ_INSTALL_DIRS) { $env:QZ_INSTALL_DIRS -split '\s*;\s*' } else { @('D:\bangong\QwertyLearner-Plus', 'D:\bangong\新建文件夹 (2)\Qwerty Learner') }),
   [int]$KeepStaging = 5
 )
 

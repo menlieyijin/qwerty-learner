@@ -33,7 +33,7 @@ export default defineConfig({
     //      等价于 QZ_E2E_BASE_URL=http://127.0.0.1:5173 playwright test --project=chromium
     //   3) 首次需要浏览器：npx playwright install chromium
     // 说明：本地模式下 tests/e2e 已对齐当前 UI（v9.10 起）；打线上站点仍按线上 UI 断言，
-    //       两者差异见 D:\整理\audit\baseline\e2e-local-result.txt。
+    //       两者差异见本地 audit 基线（baseline/e2e-local-result.txt，不入库）。
     baseURL: process.env.QZ_E2E_BASE_URL || 'https://qwerty.kaiyi.cool',
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */

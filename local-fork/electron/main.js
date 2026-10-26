@@ -1500,12 +1500,40 @@ function registerVersionChannel() {
   } catch (e) { logError('version-sync', e); }
 }
 
+// ---------------------------------------------------------------------------
+// v9.9 安全（SHELL-012）：VITE_DEV_SERVER_URL 只在“未打包 + 回环地址”下生效。
+//   打包版忽略该变量（否则任何能设置环境变量的人可让远程页面经 preload 拿到本地 IPC），
+//   非回环地址（局域网/公网 URL）同样忽略；两者都写日志便于排查。
+// ---------------------------------------------------------------------------
+let devServerUrlCache;
+function devServerUrl() {
+  if (devServerUrlCache !== undefined) return devServerUrlCache;
+  devServerUrlCache = '';
+  const raw = process.env.VITE_DEV_SERVER_URL;
+  if (!raw) return devServerUrlCache;
+  if (app.isPackaged) {
+    logError('dev-server-ignored', 'packaged build ignores VITE_DEV_SERVER_URL');
+    return devServerUrlCache;
+  }
+  try {
+    const u = new URL(raw);
+    const host = u.hostname.toLowerCase();
+    const loopback = host === 'localhost' || host === '127.0.0.1' || host === '::1' || host === '[::1]';
+    if ((u.protocol === 'http:' || u.protocol === 'https:') && loopback) {
+      devServerUrlCache = raw;
+      return devServerUrlCache;
+    }
+  } catch { /* fall through：URL 非法 */ }
+  logError('dev-server-ignored', 'only http(s)://localhost|127.0.0.1 is allowed');
+  return devServerUrlCache;
+}
+
 function hardenWebContents(wc) {
   if (!wc) return;
   const guard = (event, url) => {
     const raw = String(url || '');
     try {
-      const devUrl = process.env.VITE_DEV_SERVER_URL || '';
+      const devUrl = devServerUrl();
       if (devUrl && raw.startsWith(devUrl)) return; // 开发模式放行 Vite 服务
       const u = new URL(raw);
       let allowed = false;
@@ -1568,9 +1596,10 @@ function createWindow() {
 
   if (saved && saved.maximized) mainWindow.maximize();
 
-  const devServerUrl = process.env.VITE_DEV_SERVER_URL;
-  if (devServerUrl) {
-    mainWindow.loadURL(devServerUrl);
+  const devUrl = devServerUrl();
+  if (devUrl) {
+    logRenderer('dev-server', 'loading VITE_DEV_SERVER_URL (unpackaged, loopback only)');
+    mainWindow.loadURL(devUrl);
   } else {
     const candidates = [
       path.join(__dirname, 'build/index.html'),

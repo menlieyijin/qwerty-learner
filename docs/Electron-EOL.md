@@ -1,5 +1,7 @@
 # Electron 运行时与 EOL 说明（dsh 维护）
 
+> 路径占位符：本文用 `<StageRoot>`（发布工作区）、`<BackupRoot>`（备份目录）、`<TestAppDir>`（测试安装目录）、`<InstallDir1/2>`（正式安装目录）表示本机路径；内置默认值见 `scripts/dsh-release.ps1`，可用显式参数或环境变量（`QZ_STAGE_ROOT` / `QZ_BACKUP_DIR` / `QZ_TEST_APP_DIR` / `QZ_INSTALL_DIRS`）覆盖。
+
 ## 现状（2026-10-27 已升级）
 
 | 项 | 值 |
@@ -18,18 +20,18 @@
 
 1. **下载**：`https://npmmirror.com/mirrors/electron/43.8.3/electron-v43.8.3-win32-x64.zip`
    - zip SHA256 = `98efbd2d1c7bd44150c0aa800cd9ac5fefcefd2d44fd94958a95d6744d86c6de`（与 `SHASUMS256.txt` 官方清单一致，已校验）
-   - 解压到 `D:\整理\QwertyRelease\electron-43.8.3\`
+   - 解压到 `<StageRoot>\electron-43.8.3\`
 2. **品牌化（关键）**：官方 zip 内是 `electron.exe`（Electron 品牌、图标/描述均为 Electron），直接改名会让任务栏/文件图标变成 Electron。用 **rcedit v2.0.0**（`rcedit-x64.exe`，sha256 `3e7801db1a5edbec91b49a24a094aad776cb4515488ea5a4ca2289c400eade2a`）写入：
    - `--set-icon public\icon.ico`（与旧 43.4 exe 图标一致：实测提取图标哈希 = `8B639E01…`，而未品牌化的 electron.exe 是 `74D479EE…`）
    - `ProductName` / `FileDescription` = `Qwerty Learner`
    - `CompanyName` = `Qwerty Learner Contributors`；`OriginalFilename` / `InternalName` = `Qwerty Learner(.exe)`
    - `FileVersion` = `9.8.0.0`；`ProductVersion` = `1.0.0-enhanced-v9.8`
    - 品牌化后 exe 仍可 `ELECTRON_RUN_AS_NODE=1` 运行并报告 `electron 43.8.3`（未损坏）
-3. **备份 + 替换**：以「只换运行时二进制、不动 `resources/`（含 app.asar）与用户数据」为原则，用 `D:\整理\QwertyRelease\runtime-upgrade\upgrade-runtime.ps1` 对每个安装目录：
-   - 备份**所有将被覆盖的旧运行时文件**（相对路径原样）到 `D:\整理\Qwerty备份\runtime-43.4.0-<stamp>[-<dir>]\`，并生成 `manifest.json`（每个文件相对路径 / 旧 SHA256 / 新 SHA256 / 旧大小 / 新大小）与 `ROLLBACK.txt`；
+3. **备份 + 替换**：以「只换运行时二进制、不动 `resources/`（含 app.asar）与用户数据」为原则，用 `<StageRoot>\runtime-upgrade\upgrade-runtime.ps1` 对每个安装目录：
+   - 备份**所有将被覆盖的旧运行时文件**（相对路径原样）到 `<BackupRoot>\runtime-43.4.0-<stamp>[-<dir>]\`，并生成 `manifest.json`（每个文件相对路径 / 旧 SHA256 / 新 SHA256 / 旧大小 / 新大小）与 `ROLLBACK.txt`；
    - 替换 `electron.exe → Qwerty Learner.exe` 与 DLL / pak / `icudtl.dat` / `locales/` / `snapshot_blob.bin` / `v8_context_snapshot.bin` / `LICENSES.chromium.html` 等共 72 个文件（另新增 `version` 文件 = `43.8.3`）；
    - **不替换** `resources/`、仓库 GPL `LICENSE`、`FORK-NOTICE.md`、`LICENSE.electron.txt`（其内容与新版 zip 的 `LICENSE` 完全相同，sha256 `5154E165…`）。
-4. **升级顺序**：先测试目录 `D:\整理\qtest9\app`（探针 + 冒烟通过），再正式双目录 `D:\bangong\QwertyLearner-Plus`、`D:\bangong\新建文件夹 (2)\Qwerty Learner`。
+4. **升级顺序**：先测试目录 `<TestAppDir>`（探针 + 冒烟通过），再正式双目录 `<InstallDir1>`、`<InstallDir2>`（即 `-InstallDirs`）。
 
 ## 已验证项（2026-10-27）
 

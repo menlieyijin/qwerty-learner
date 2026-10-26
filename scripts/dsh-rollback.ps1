@@ -7,14 +7,17 @@
 #   pwsh -File scripts\dsh-rollback.ps1 -List -All                 # 列出全部历史 asar（含非 before-*）
 # 说明：回滚前会把当前已安装 asar 自动备份为 app.asar.pre-rollback-<stamp>.asar，
 #       因此回滚本身也可“重做/撤销”；失败会自动恢复回滚前版本。
+# 路径覆盖：下列路径参数均保留内置默认值（作者本机布局），优先级 = 显式参数 > 环境变量 > 内置默认：
+#   QZ_BACKUP_DIR / QZ_INSTALL_DIRS（分号分隔多个目录）
+# 迁移到其它机器或公开仓库使用时，设置对应环境变量即可，无需改脚本。
 # ============================================================================
 param(
   [string]$AsarPath = '',
   [switch]$List,
   [switch]$All,
   [switch]$Force,
-  [string]$BackupDir = 'D:\整理\Qwerty备份',
-  [string[]]$InstallDirs = @('D:\bangong\QwertyLearner-Plus', 'D:\bangong\新建文件夹 (2)\Qwerty Learner')
+  [string]$BackupDir = $(if ($env:QZ_BACKUP_DIR) { $env:QZ_BACKUP_DIR } else { 'D:\整理\Qwerty备份' }),
+  [string[]]$InstallDirs = $(if ($env:QZ_INSTALL_DIRS) { $env:QZ_INSTALL_DIRS -split '\s*;\s*' } else { @('D:\bangong\QwertyLearner-Plus', 'D:\bangong\新建文件夹 (2)\Qwerty Learner') })
 )
 
 $ErrorActionPreference = 'Stop'

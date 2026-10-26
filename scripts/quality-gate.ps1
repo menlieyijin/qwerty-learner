@@ -17,7 +17,7 @@
     跳过 eslint。
 
 .PARAMETER WithSim
-    追加运行核心算法回归：D:\整理\audit\srs-sim.mjs 与 sim-autolevel.mjs（--strict）。
+    追加运行核心算法回归：audit 目录下的 srs-sim.mjs 与 sim-autolevel.mjs（--strict）。
 
 .PARAMETER WithSmoke
     追加运行 CDP 冒烟：node scripts/dsh-smoke.mjs（应用需已在 -SmokePort 上开好 CDP）。
@@ -26,7 +26,7 @@
     冒烟使用的 CDP 端口，默认 9472（与 dsh-smoke.mjs 默认一致；隔离测试建议 94xx）。
 
 .PARAMETER SimDir
-    核心算法回归脚本所在目录，默认 D:\整理\audit。
+    核心算法回归脚本所在目录；保留内置默认值，可用 -SimDir 或环境变量 QZ_AUDIT_DIR 覆盖。
 
 .EXAMPLE
     pwsh -File scripts/quality-gate.ps1
@@ -46,7 +46,7 @@ param(
     [switch]$WithSim,
     [switch]$WithSmoke,
     [int]$SmokePort = 9472,
-    [string]$SimDir = 'D:\整理\audit'
+    [string]$SimDir = $(if ($env:QZ_AUDIT_DIR) { $env:QZ_AUDIT_DIR } else { 'D:\整理\audit' })
 )
 
 $ErrorActionPreference = 'Continue'

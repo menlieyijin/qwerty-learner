@@ -21,7 +21,7 @@ import { useNavigate } from 'react-router-dom'
  * （如 coca20000 最多 87%）。这里只为「唯一词数 !== length」的词库提供覆盖值，进度分母统一走
  * `getDictTotalWordCount`。
  *
- * 生成/更新脚本：D:\整理\audit\full\data-layer\repro\gen-dict-unique-counts.mjs
+ * 生成/更新脚本：数据层复现脚本 gen-dict-unique-counts.mjs（来自本地 audit 数据层工具，不入库）。
  * （数据文件变更后重新生成 _dict-unique-counts.generated.json，再跑 _patch-data010-gallery.mjs）
  */
 const DICT_UNIQUE_WORD_COUNTS: Record<string, number> = {

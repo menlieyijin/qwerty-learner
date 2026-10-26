@@ -6,6 +6,8 @@ on:
       - dev/e2e
 jobs:
   e2e:
+    # 仅在上游官方仓库运行：fork 上默认 baseURL 指向上游线上站点，会对生产站产生外部流量与误报
+    if: github.repository == 'RealKai42/qwerty-learner'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3

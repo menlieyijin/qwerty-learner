@@ -1,3 +1,6 @@
+> **非公式フォーク / Unofficial fork**: この文書は上流 [Qwerty Learner](https://github.com/RealKai42/qwerty-learner) の日本語原文（上流コンテンツとして保持）です。本リポジトリは dsh が保守する**非公式フォーク**であり、上流作者との提携・承認関係はありません。
+> フォーク宣言と GPL-3.0 準拠は [FORK-NOTICE.md](../FORK-NOTICE.md)、本フォークの変更点は [DSH-FORK.md](DSH-FORK.md) を参照してください。
+
 <div align=center>
 <img  src="../src/assets/logo.svg"/>
 </div>

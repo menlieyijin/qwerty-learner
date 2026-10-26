@@ -7,7 +7,7 @@
  *   避免 v9.2 里这些规则散落在 `updateMemoryProgress` 分支中难以回归测试；
  * - 默认所有时间戳均为毫秒 epoch，`computeDue` 的“日”按**本地自然日**计算（见函数注释）。
  *
- * 依据：`D:\整理\Qwerty-v9.3-核心算法修复设计_2026-10-26.md` 第二章。
+ * 依据：v9.3 SRS / 记忆曲线修复设计（见 docs/DSH-FORK.md）第二章。
  */
 
 /** 成熟档：`stage >= MEMORY_MATURE_STAGE`（1 天档及以上）视为“已学会”。只有成熟词答错才计 lapse / 走分级降档。 */

@@ -7,6 +7,8 @@ env:
   REACT_APP_DEPLOY_ENV: pages
 jobs:
   deploy:
+    # 仅在上游官方仓库运行：避免 fork 上缺 secrets 每次 push 失败，或误把内容部署/镜像到上游站点与 Gitee
+    if: github.repository == 'RealKai42/qwerty-learner'
     runs-on: ubuntu-latest
     strategy:
       matrix:
