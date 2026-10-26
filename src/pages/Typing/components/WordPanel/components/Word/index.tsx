@@ -304,11 +304,14 @@ export default function WordComponent({ word, onFinish }: { word: Word; onFinish
     { enableOnFormTags: true, preventDefault: true },
   )
 
+  // AUDIO-004（v9.7 方案 C）：自动发音按“新词出现 / 开始练习”触发。
+  // - 依赖业务键 `word.name` + `state.isTyping`，不再依赖 imperative handle 的函数身份（render 期快照）；
+  // - 去掉 `inputWord.length === 0` 谓词：极速连打时被 pendingKeys 回放的首键可能让整个词一次都不播。
+  // 子组件（usePronunciationSound）的 passive effect 先于本 effect 执行，ref 在 layout 期已指向新词元素。
   useEffect(() => {
-    if (wordState.inputWord.length === 0 && state.isTyping) {
-      wordPronunciationIconRef.current?.play && wordPronunciationIconRef.current?.play()
-    }
-  }, [state.isTyping, wordState.inputWord.length, wordPronunciationIconRef.current?.play])
+    if (!state.isTyping) return
+    wordPronunciationIconRef.current?.play?.()
+  }, [word.name, state.isTyping])
 
   const getLetterVisible = useCallback(
     (index: number) => {

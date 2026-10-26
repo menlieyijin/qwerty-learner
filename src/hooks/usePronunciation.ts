@@ -1,12 +1,8 @@
 import { pronunciationConfigAtom } from '@/store'
 import type { PronunciationType } from '@/typings'
-import { addHowlListener } from '@/utils'
 import { romajiToHiragana } from '@/utils/kana'
-import type { Howl } from 'howler'
 import { useAtomValue } from 'jotai'
-import { useEffect, useMemo, useRef, useState } from 'react'
-import useSound from 'use-sound'
-import type { HookOptions } from 'use-sound/dist/types'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 const pronunciationApi = 'https://dict.youdao.com/dictvoice?audio='
 
@@ -41,159 +37,168 @@ export function generateWordSoundSrc(word: string, pronunciation: Exclude<Pronun
 }
 
 /**
- * 已预取的发音元素缓存（AUDIO-005）：
- * - 以发音 URL 为键去重，避免“查 link 却插 audio”导致预取永远不命中；
- * - 不设置 crossOrigin='anonymous'（有道未保证返回 CORS 头，设了反而使预取必失败）；
- * - 限制容量，避免长会话 DOM/Audio 无界增长。
+ * AUDIO-004 / 方案 C（v9.7）：单词发音改为原生 HTMLAudioElement 直放。
+ *
+ * 为什么不再用 use-sound(Howler html5)：
+ * - Howler 的 `<audio>` 是「换词那一帧才创建并开始下载」，而 v9.6 又要求「Howl.loaded 之后才 play」，
+ *   于是极速连打时（词窗口 40~200ms < 有道 mp3 加载 145~184ms）播放请求会被换词 cleanup 的 unload 中止；
+ * - 原生 `HTMLAudioElement.play()` 只要 src 已设置就会排队缓冲、缓冲就绪后自动开始，不会丢请求。
+ * 因此这里：每个 URL 复用一个元素（预取与播放共用，预取首次真正有意义），换词时 pause 旧元素（不 unload，
+ * 保留已下载数据、复习/循环再遇同词可瞬发），并且同一时刻只允许一个元素发声（杜绝串词）。
  */
 const PREFETCH_CACHE_LIMIT = 24
-const prefetchCache = new Map<string, HTMLAudioElement>()
+/** URL -> 原生音频元素（预取与播放共用同一元素） */
+const soundCache = new Map<string, HTMLAudioElement>()
+/** 当前占用的元素（同一时刻只允许一个词发声；换词/卸载时精确暂停，杜绝串词） */
+let activeAudio: HTMLAudioElement | null = null
 
-function prefetchPronunciationSound(soundUrl: string) {
-  if (!soundUrl || prefetchCache.has(soundUrl)) return
-  const audio = new Audio()
-  audio.preload = 'auto'
-  audio.src = soundUrl
-  audio.style.display = 'none'
-  document.head.appendChild(audio)
-  prefetchCache.set(soundUrl, audio)
+function acquireAudio(url: string): HTMLAudioElement {
+  let element = soundCache.get(url)
+  if (!element) {
+    element = new Audio()
+    element.preload = 'auto' // 与原 Howl 的 preload=true 等价；赋值 src 即开始加载
+    element.src = url
+    element.style.display = 'none'
+    try {
+      document.head.appendChild(element)
+    } catch {
+      /* ignore */
+    }
+    soundCache.set(url, element)
+  }
 
-  if (prefetchCache.size > PREFETCH_CACHE_LIMIT) {
-    const oldestKey = prefetchCache.keys().next().value as string | undefined
-    if (oldestKey && oldestKey !== soundUrl) {
-      const oldest = prefetchCache.get(oldestKey)
-      prefetchCache.delete(oldestKey)
+  // AUDIO-005/R-007：容量上限 24，只淘汰“非当前占用”的旧元素，避免把正在播的元素清掉。
+  if (soundCache.size > PREFETCH_CACHE_LIMIT) {
+    for (const [key, old] of soundCache) {
+      if (soundCache.size <= PREFETCH_CACHE_LIMIT) break
+      if (old === activeAudio || old === element) continue
+      soundCache.delete(key)
       try {
-        oldest?.remove()
+        old.removeAttribute('src')
+        old.load()
+      } catch {
+        /* ignore */
+      }
+      try {
+        old.remove()
       } catch {
         /* ignore */
       }
     }
   }
+  return element
+}
+
+function stopAudio(element: HTMLAudioElement) {
+  try {
+    element.pause()
+    element.currentTime = 0
+  } catch {
+    /* ignore */
+  }
+  if (activeAudio === element) activeAudio = null
+}
+
+function playAudio(url: string, options: { volume: number; rate: number; loop: boolean }): HTMLAudioElement {
+  const element = acquireAudio(url)
+  // 换词/换源即停掉上一个词：元素按 URL 隔离，不会串词。
+  if (activeAudio && activeAudio !== element) stopAudio(activeAudio)
+  activeAudio = element
+  try {
+    element.volume = Math.min(1, Math.max(0, options.volume))
+    element.playbackRate = options.rate
+    element.loop = options.loop
+  } catch {
+    /* ignore */
+  }
+  try {
+    element.currentTime = 0
+  } catch {
+    /* ignore */
+  }
+  // 关键：不判断 readyState/loaded，直接 play()。原生播放器会在缓冲就绪后自动开始，
+  // 这补上了 v9.6「等 Howl.loaded 才播」在极速连打时必然漏发的缺口。
+  const playPromise = element.play() as Promise<void> | undefined
+  playPromise?.catch((error: unknown) => {
+    const name = (error as { name?: string })?.name
+    // 换词/暂停打断未完成的 play 属预期行为，静默；其它错误保留日志便于排查。
+    if (name !== 'AbortError' && name !== 'NotAllowedError') {
+      console.error('play pronunciation failed', error)
+    }
+  })
+  return element
 }
 
 export default function usePronunciationSound(word: string, isLoop?: boolean) {
   const pronunciationConfig = useAtomValue(pronunciationConfigAtom)
   const loop = useMemo(() => (typeof isLoop === 'boolean' ? isLoop : pronunciationConfig.isLoop), [isLoop, pronunciationConfig.isLoop])
   const [isPlaying, setIsPlaying] = useState(false)
-
   const src = useMemo(() => generateWordSoundSrc(word, pronunciationConfig.type), [word, pronunciationConfig.type])
 
-  // AUDIO-002：use-sound@4.0.1 运行期只认 playbackRate（rate 仅在创建 Howl 时作为构造参数生效），
-  // 因此这里必须传 playbackRate，单独修改倍速才会作用于已加载的音频。
-  const [play, { stop, sound }] = useSound(src, {
-    html5: true,
-    format: ['mp3'],
-    loop,
-    volume: pronunciationConfig.volume,
-    playbackRate: pronunciationConfig.rate,
-  } as HookOptions)
+  const volume = pronunciationConfig.volume
+  const rate = pronunciationConfig.rate ?? 1
+  const elementRef = useRef<HTMLAudioElement | null>(null)
 
-  // play 的引用会随 sound 变化；用 ref 持有最新引用，避免把它放进下面 effect 的依赖导致反复 unload。
-  const playRef = useRef(play)
-  playRef.current = play
-  const soundRef = useRef<Howl | null>(null)
-  const soundSrcRef = useRef<string>('')
-  const prevSoundRef = useRef<Howl | null>(null)
-  const pendingPlayRef = useRef(false)
-  const prevSrcRef = useRef<string>('')
-
-  // AUDIO-002：运行期同步音量/倍速（use-sound 内部对 playbackRate 的同步发生在它自己的 effect 里，
-  // 这里再兜底一次，保证“改音量不会把倍速打回 1、改倍速立刻生效”）。
+  // 词/发音变化：绑定元素并挂播放状态监听。本 effect 只做生命周期，不自动 play（自动播放由调用方决定）。
   useEffect(() => {
-    if (!sound) return
-    try {
-      sound.volume(pronunciationConfig.volume)
-      sound.rate(pronunciationConfig.rate ?? 1)
-    } catch (e) {
-      console.error('sync pronunciation volume/rate failed', e)
+    if (!src) {
+      elementRef.current = null
+      return
     }
-  }, [sound, pronunciationConfig.volume, pronunciationConfig.rate])
+    const element = acquireAudio(src)
+    element.volume = Math.min(1, Math.max(0, volume))
+    element.playbackRate = rate
+    element.loop = loop
+    elementRef.current = element
 
-  useEffect(() => {
-    if (!sound) return
-    sound.loop(loop)
-    return undefined
-  }, [loop, sound])
-
-  useEffect(() => {
-    if (!sound) return
-    const howl = sound as Howl
-    soundRef.current = howl
-
-    // 新词（src 变化）时丢弃上一词遗留的“待播放”请求，避免串词。
-    if (prevSrcRef.current !== src) {
-      prevSrcRef.current = src
-      pendingPlayRef.current = false
-    }
-
-    // 只有 sound 实例真正更换时才更新它对应的 src；src 变化但 Howl 尚未重建期间保持旧映射，
-    // 这样播放请求会走“等待加载”的分支，而不是误播上一个词（AUDIO-004）。
-    if (prevSoundRef.current !== howl) {
-      prevSoundRef.current = howl
-      soundSrcRef.current = src
-    }
-
-    const unListens: Array<() => void> = []
-    unListens.push(addHowlListener(howl, 'play', () => setIsPlaying(true)))
-    unListens.push(addHowlListener(howl, 'end', () => setIsPlaying(false)))
-    unListens.push(addHowlListener(howl, 'pause', () => setIsPlaying(false)))
-    unListens.push(addHowlListener(howl, 'stop', () => setIsPlaying(false)))
-    unListens.push(addHowlListener(howl, 'playerror', () => setIsPlaying(false)))
-
-    // AUDIO-004：音频加载完成时补播“新词自动发音”的请求（之前 play 在 sound 未就绪时会被静默丢弃）。
-    const playPendingIfReady = () => {
-      if (!pendingPlayRef.current) return
-      if (soundSrcRef.current !== src) return
-      if (howl.state() !== 'loaded') return
-      pendingPlayRef.current = false
-      setIsPlaying(true)
-      try {
-        playRef.current()
-      } catch (e) {
-        console.error('play pending pronunciation failed', e)
-        setIsPlaying(false)
-      }
-    }
-    unListens.push(addHowlListener(howl, 'load', playPendingIfReady))
+    const onStart = () => setIsPlaying(true)
+    const onStop = () => setIsPlaying(false)
+    element.addEventListener('play', onStart)
+    element.addEventListener('playing', onStart)
+    element.addEventListener('ended', onStop)
+    element.addEventListener('pause', onStop)
+    element.addEventListener('error', onStop)
 
     return () => {
-      setIsPlaying(false)
-      unListens.forEach((unListen) => unListen())
-      // 换词/切换发音类型时卸载旧 Howl，避免音频元素与解码资源泄漏（AUDIO-007）。
-      ;(howl as Howl).unload()
+      element.removeEventListener('play', onStart)
+      element.removeEventListener('playing', onStart)
+      element.removeEventListener('ended', onStop)
+      element.removeEventListener('pause', onStop)
+      element.removeEventListener('error', onStop)
+      // 换词/卸载：立即停掉旧词（只 pause，不 unload、不丢已下载数据；元素留缓存供复习/循环复用）。
+      if (activeAudio === element) stopAudio(element)
+      if (elementRef.current === element) elementRef.current = null
     }
-  }, [sound, src])
+    // 音量/倍速/循环不进依赖，避免与换词生命周期耦合（见下方同步 effect）。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [src])
 
-  /**
-   * 播放当前词发音：
-   * - Howl 已加载且属于当前词 -> 立即播放；
-   * - 还在加载（新词第一次加载的常见情况）-> 记为待播放，由 'load' 监听补播（AUDIO-004）。
-   */
-  const playSound = useMemo(
-    () => () => {
-      const howl = soundRef.current
-      if (howl && soundSrcRef.current === src && howl.state() === 'loaded') {
-        pendingPlayRef.current = false
-        setIsPlaying(true)
-        playRef.current()
-        return
-      }
-      pendingPlayRef.current = true
-    },
-    [src],
-  )
+  // AUDIO-002：运行期同步音量/倍速/循环（改音量不会把倍速打回 1，改倍速立即作用于当前元素）。
+  useEffect(() => {
+    const element = elementRef.current
+    if (!element) return
+    try {
+      element.volume = Math.min(1, Math.max(0, volume))
+      element.playbackRate = rate
+      element.loop = loop
+    } catch {
+      /* ignore */
+    }
+  }, [volume, rate, loop, src])
 
-  const stopSound = useMemo(
-    () => () => {
-      pendingPlayRef.current = false
-      setIsPlaying(false)
-      stop()
-    },
-    [stop],
-  )
+  const play = useCallback(() => {
+    if (!src) return
+    elementRef.current = playAudio(src, { volume, rate, loop })
+  }, [src, volume, rate, loop])
 
-  return { play: playSound, stop: stopSound, isPlaying }
+  // stop 保持稳定引用：WordPronunciationIcon 的 `useEffect(() => () => stop, [word, stop])` 会在换词时
+  // 执行 cleanup，如果 stop 依赖 word 会换成新元素引用；这里读 ref，先于新 play 执行时停的仍是旧元素。
+  const stop = useCallback(() => {
+    const element = elementRef.current
+    if (element) stopAudio(element)
+  }, [])
+
+  return { play, stop, isPlaying }
 }
 
 export function usePrefetchPronunciationSound(word: string | undefined) {
@@ -202,7 +207,8 @@ export function usePrefetchPronunciationSound(word: string | undefined) {
   useEffect(() => {
     if (!word) return
     const soundUrl = generateWordSoundSrc(word, pronunciationConfig.type)
-    if (soundUrl === '') return
-    prefetchPronunciationSound(soundUrl)
+    if (!soundUrl) return
+    // 与播放共用同一缓存：预取的字节第一次真正被播放侧复用（AUDIO-005）。
+    acquireAudio(soundUrl)
   }, [pronunciationConfig.type, word])
 }

@@ -355,14 +355,26 @@ export function useDeleteWordRecord() {
   return { deleteWordRecord }
 }
 
-/** v9.3：复习模式跳过时把该词的 due 顺延（至少 N 天），避免立刻再次出现 */
+/**
+ * v9.3：Skip 时把该词的 due 顺延（至少 N×24h），避免立刻再次出现。
+ *
+ * v9.7（DATA-009）：Skip 的承诺是「至少 N 天」= 精确 N×24 小时，不能用 computeDue 的
+ * 「目标本地自然日 00:00」语义（23:50 Skip 只隔 10 分钟就再次到期）。
+ * 正常 SRS 排程（updateMemoryProgress）仍走 computeDue 的本地自然日 00:00，故只改本函数：
+ * - 保留 Math.max：已更远的 due 不缩短（只延后、不回退）；
+ * - 保留 days 的既有兜底（0/负数/NaN/非有限值 → 约 30 分钟），避免写出 now/NaN；
+ * - 用 epoch 毫秒做绝对时长，不受本地时区/DST 影响（中国无 DST；DST 地区代价见 DATA009-AUDIT）。
+ */
 export async function deferMemoryDue(dict: string, word: string, days = 1): Promise<void> {
   try {
     // v9.5（DATA-003）：兼容 legacy key；副本记录的 key 已是新 key
     const rec = await readMemoryRecordForWord(dict, word)
     if (!rec) return
     const now = Date.now()
-    rec.due = Math.max(Number(rec.due) || 0, computeDue(now, Math.max(0.0208, days)))
+    const requestedDays = Number(days)
+    const spanDays = Number.isFinite(requestedDays) && requestedDays > 0 ? Math.max(0.0208, requestedDays) : 0.0208
+    const minDue = now + Math.round(spanDays * 24 * 60 * 60 * 1000)
+    rec.due = Math.max(Number(rec.due) || 0, minDue)
     await db.memoryRecords.put(rec)
     upsertMemoryCache(rec)
   } catch (e) {

@@ -4,7 +4,6 @@ import { StickerButton } from '../DonatingCard/components/StickerButton'
 import { useChapterNumber, useDayFromFirstWordRecord, useSumWrongCount, useWordNumber } from './hooks/useWordStats'
 import { DONATE_DATE } from '@/constants'
 import { reportDonateCard } from '@/utils'
-import noop from '@/utils/noop'
 import { Dialog, Transition } from '@headlessui/react'
 import dayjs from 'dayjs'
 import type React from 'react'
@@ -29,6 +28,16 @@ export const DonateCard = () => {
     return <span className={`font-bold  ${className ? className : 'text-indigo-500'}`}>{children}</span>
   }
 
+  // PROMO-001（dsh）：把 DONATE_DATE 作为「不再打扰」的频控时间戳（30 天窗口）。
+  // 唯一消费者是下方 useLayoutEffect 的 30 天判断；localStorage 不可用时忽略，最多退化回旧行为。
+  const persistDonateDate = () => {
+    try {
+      window.localStorage.setItem(DONATE_DATE, dayjs().format())
+    } catch (error) {
+      console.warn('[DonateCard] 写入捐赠卡静默日期失败：', error)
+    }
+  }
+
   const onClickHasDonated = () => {
     reportDonateCard({
       type: 'donate',
@@ -41,8 +50,7 @@ export const DonateCard = () => {
     })
 
     setShow(false)
-    const now = dayjs()
-    window.localStorage.setItem(DONATE_DATE, now.format())
+    persistDonateDate()
   }
 
   const onClickRemindMeLater = () => {
@@ -57,6 +65,10 @@ export const DonateCard = () => {
     })
 
     setShow(false)
+    // PROMO-001 P0（dsh）：本地没有「章节」概念，chapterNumber 会随暂停/复习记录行数增长；
+    // 若 dismiss 不留痕，卡片会每 5 条记录重弹且永不可静默。复用 DONATE_DATE（与「我已捐赠」
+    // 同一 30 天窗口），语义 =「30 天后再提」→ 卡片最多每 30 天出现一次。
+    persistDonateDate()
   }
 
   const onAmountChange = (amount: AmountType) => {
@@ -82,9 +94,9 @@ export const DonateCard = () => {
       <Dialog
         as="div"
         className="relative z-50"
-        onClose={() => {
-          noop()
-        }}
+        // PROMO-001 P3（dsh）：ESC/点击遮罩等同于「下次再说」，并写入 DONATE_DATE，
+        // 否则这条关闭路径会“白送”一次曝光且不进入 30 天静默。
+        onClose={onClickRemindMeLater}
       >
         <Transition.Child
           as={Fragment}
@@ -149,7 +161,10 @@ export const DonateCard = () => {
                   <div className="flex w-full justify-between  px-14 pb-3 pt-0">
                     <button
                       type="button"
-                      className={`my-btn-primary ${!amount && 'invisible'} w-36 bg-amber-500 font-medium transition-all`}
+                      // PROMO-001 P3（dsh）：未选金额时按钮不可见（视觉不变）且 disabled，
+                      // 避免 Tab/Enter 误触导致误报“已捐赠”并写入 DONATE_DATE 造成 30 天静默。
+                      disabled={!amount}
+                      className={`my-btn-primary ${!amount && 'invisible'} w-36 bg-amber-500 font-medium transition-all disabled:cursor-not-allowed`}
                       onClick={onClickHasDonated}
                     >
                       我已捐赠
