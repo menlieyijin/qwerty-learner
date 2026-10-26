@@ -6,13 +6,17 @@
 #   pwsh -File scripts\dsh-release.ps1 -TestInstall             # 构建并安装到测试目录 D:\整理\qtest9\app
 #   pwsh -File scripts\dsh-release.ps1 -Install                 # 构建并安装到两个正式目录（会先退出应用）
 #   pwsh -File scripts\dsh-release.ps1 -SkipBuild -Install      # 用已有 build/ 直接打包安装
+#   pwsh -File scripts\dsh-release.ps1 -TestInstall -Smoke      # 构建+测试安装+CDP 冒烟
+#   pwsh -File scripts\dsh-release.ps1 -SkipCheck               # 跳过 tsc 检查（默认会跑）
 # 回滚：scripts\dsh-rollback.ps1
 # ============================================================================
 param(
   [string]$Version = '',
   [switch]$SkipBuild,
+  [switch]$SkipCheck,
   [switch]$TestInstall,
   [switch]$Install,
+  [switch]$Smoke,
   [string]$StageRoot = 'D:\整理\QwertyRelease',
   [string]$BackupDir = 'D:\整理\Qwerty备份',
   [string]$TestAppDir = 'D:\整理\qtest9\app',
@@ -34,6 +38,14 @@ $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 $stage = Join-Path $StageRoot "staging-$ver-$stamp"
 $gitSha = (git rev-parse --short HEAD 2>$null)
 Write-Step "版本 $ver（git $gitSha），暂存目录 $stage"
+
+# 1.5 类型检查门禁（v9.2；默认开启，-SkipCheck 可跳过）
+if (-not $SkipCheck) {
+  Write-Step 'TypeScript 检查（tsc --noEmit）...'
+  & cmd.exe /c 'npx tsc --noEmit -p tsconfig.json 2>&1'
+  if ($LASTEXITCODE -ne 0) { throw 'TypeScript 检查失败（exit ' + $LASTEXITCODE + '）' }
+  Write-Ok 'tsc 通过'
+}
 
 # 2. 构建网页产物
 if (-not $SkipBuild) {
@@ -86,6 +98,27 @@ if ($TestInstall) {
   if (-not (Test-Path $testRes)) { throw "测试目录不存在：$testRes" }
   Copy-Item $asarOut (Join-Path $testRes 'app.asar') -Force
   Write-Ok '测试安装完成（用 QZ_USER_DATA / QZ_PLUS_DIR 隔离 profile 启动）'
+  if ($Smoke) {
+    Write-Step '冒烟测试（隔离 profile + CDP 9472）'
+    $exe = Join-Path $TestAppDir 'Qwerty Learner.exe'
+    if (-not (Test-Path $exe)) { throw "测试程序不存在：$exe" }
+    $smokeUser = Join-Path (Split-Path $TestAppDir -Parent) 'userdata-smoke'
+    $smokePlus = Join-Path (Split-Path $TestAppDir -Parent) 'plus-smoke'
+    New-Item -ItemType Directory -Force -Path $smokeUser, $smokePlus | Out-Null
+    $env:QZ_USER_DATA = $smokeUser
+    $env:QZ_PLUS_DIR = $smokePlus
+    $env:QZ_ALLOW_MULTI = '1'
+    $env:QZ_SMOKE_PORT = '9472'
+    Remove-Item Env:ELECTRON_RUN_AS_NODE -ErrorAction SilentlyContinue
+    $proc = Start-Process -FilePath $exe -ArgumentList '--remote-debugging-port=9472' -PassThru
+    Start-Sleep -Seconds 7
+    & cmd.exe /c 'node scripts\dsh-smoke.mjs 2>&1'
+    $smokeCode = $LASTEXITCODE
+    Get-Process -Id $proc.Id -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+    Get-Process -Name 'Qwerty Learner' -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "$TestAppDir*" } | Stop-Process -Force -ErrorAction SilentlyContinue
+    if ($smokeCode -ne 0) { throw "冒烟测试失败（exit $smokeCode）" }
+    Write-Ok '冒烟测试通过'
+  }
 }
 
 # 7. 正式安装
@@ -107,6 +140,10 @@ if ($Install) {
     $got = (Get-FileHash $target -Algorithm SHA256).Hash
     Write-Ok "$target -> $got"
     if ($got -ne $hash) { throw "安装后哈希不一致：$target" }
+    # v9.2：GPL 材料随安装目录一起分发（asar 内也已包含）
+    foreach ($f in @('LICENSE', 'FORK-NOTICE.md')) {
+      if (Test-Path $f) { Copy-Item $f (Join-Path $dir $f) -Force }
+    }
   }
 }
 

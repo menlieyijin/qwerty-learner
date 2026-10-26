@@ -1,6 +1,6 @@
 // ============================================================================
 // Qwerty Learner Plus — Electron 主进程（增强版壳）
-// 版本: 1.0.0-enhanced-v9.0
+// 版本: 1.0.0-enhanced-v9.2
 // 说明: A 层外壳增强（置顶/快捷键/迷你模式/托盘/自启/透明度缩放/自动备份/
 //       错误日志/托盘进度）+ B 层桌面增强（AI/剪贴板/发音缓存等 IPC 支撑）。
 //       所有私有数据（设置/日志/备份/缓存）写入 %APPDATA%\qwerty-learner-plus，
@@ -38,7 +38,12 @@ protocol.registerSchemesAsPrivileged([
 // ---------------------------------------------------------------------------
 // 路径与设置
 // ---------------------------------------------------------------------------
-const APP_VERSION = '1.0.0-enhanced-v9.0';
+// v9.2：版本号单一来源——package.json（构建脚本只需改这里）
+let APP_VERSION = '1.0.0-enhanced-v9.2';
+try {
+  const pkg = require(path.join(__dirname, '..', 'package.json'));
+  if (pkg && pkg.version) APP_VERSION = String(pkg.version);
+} catch { /* 保持兜底 */ }
 const PLUS_DIR = process.env.QZ_PLUS_DIR
   ? path.resolve(process.env.QZ_PLUS_DIR)
   : path.join(app.getPath('appData'), 'qwerty-learner-plus');
@@ -272,6 +277,7 @@ function injectEnhance(win) {
       try {
         if (window.__QZ_ENHANCED__) return 'already';
         window.__QZ_ENHANCED__ = true;
+        window.__QZ_VERSION__ = ${JSON.stringify(APP_VERSION)};
         var style = document.createElement('style');
         style.id = 'qz-enhance-style';
         style.textContent = ${JSON.stringify(css)};
@@ -1533,6 +1539,10 @@ function setAutoStart(on) {
 }
 
 function registerIpc() {
+  // v9.2：沙箱化 preload 无法读 package.json，用同步 IPC 把单一版本号交给 preload
+  try {
+    ipcMain.on('app:version-sync', (e) => { e.returnValue = APP_VERSION; });
+  } catch (e) { logError('version-sync', e); }
   handle('app:getSettings', () => publicSettings());
   handle('app:updateSettings', (_e, patch) => {
     if (patch && typeof patch === 'object') {

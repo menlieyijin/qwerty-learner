@@ -40,7 +40,11 @@
   const nowIso = () => new Date().toISOString();
   function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
 
-  let settings = { version: '1.0.0-enhanced-v9.0', dailyGoal: 30, theme: 'indigo', panelAppearance: 'auto', dictFavorites: [], dictRecent: {}, fontFamily: 'default', opacity: 1, zoom: 1, pomodoroFocus: 25, pomodoroBreak: 5, keySound: false, keySoundVolume: 0.25, clipboardWatch: false, onlineLookup: true, aiExperimental: false, pronCache: false, closeToTray: true, alwaysOnTop: false, miniMode: false, todayStats: {} };
+  // v9.2：版本号单一来源——主进程在注入脚本前设置 window.__QZ_VERSION__（来自 package.json）
+  const APP_VERSION = (typeof window !== 'undefined' && window.__QZ_VERSION__) || '1.0.0-enhanced-v9.2';
+  const APP_VERSION_SHORT = APP_VERSION.replace('1.0.0-enhanced-', '');
+
+  let settings = { version: APP_VERSION, dailyGoal: 30, theme: 'indigo', panelAppearance: 'auto', dictFavorites: [], dictRecent: {}, fontFamily: 'default', opacity: 1, zoom: 1, pomodoroFocus: 25, pomodoroBreak: 5, keySound: false, keySoundVolume: 0.25, clipboardWatch: false, onlineLookup: true, aiExperimental: false, pronCache: false, closeToTray: true, alwaysOnTop: false, miniMode: false, todayStats: {} };
   let appStats = null; // 缓存统计
   let panelOpen = false;
 
@@ -242,6 +246,7 @@
     const todayWords = new Set();
     const seenWords = new Set();
     const heatMap = {};
+    const dayWordsMap = {};
     for (const r of wordRecords) {
       const ts = normTs(r.timeStamp || r.timestamp || r.ts || 0);
       if (!ts) continue;
@@ -252,6 +257,8 @@
       if (!w) continue;
       seenWords.add(w);
       if (k === stats.today) todayWords.add(w);
+      if (!dayWordsMap[k]) dayWordsMap[k] = new Set();
+      dayWordsMap[k].add(w);
       const wc = Number(r.wrongCount || r.errorCount || 0);
       if (wc > 0) stats.wrongCount += 1;
     }
@@ -332,6 +339,7 @@
     const nowTs = Date.now();
     const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0);
     const dueNowList = [];
+    const newCountMap = {};
     let todayNew = 0;
     for (const m of memoryRecords) {
       if (!m) continue;
@@ -339,7 +347,9 @@
       if (st <= 2) buckets.short += 1;
       else if (st <= 5) buckets.mid += 1;
       else buckets.long += 1;
-      if ((Number(m.createdAt) || 0) >= startOfToday.getTime()) todayNew += 1;
+      const created = Number(m.createdAt) || 0;
+      if (created >= startOfToday.getTime()) todayNew += 1;
+      if (created) { const ck = dayKey(created); newCountMap[ck] = (newCountMap[ck] || 0) + 1; }
       const due = Number(m.due) || 0;
       if (due) {
         const k = dayKey(due);
@@ -374,6 +384,24 @@
         interval: Number(m.interval) || 0,
       })),
     };
+    // v9.1：14 天周历（周几/日期/点击明细）+ 近 30 天趋势（新学/复习）
+    const baseDay = new Date(); baseDay.setHours(0, 0, 0, 0);
+    const heatDays = [];
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(baseDay); d.setDate(d.getDate() - i);
+      const k = dayKey(d.getTime());
+      const set = dayWordsMap[k];
+      heatDays.push({ date: k, weekday: d.getDay(), count: set ? set.size : 0, words: set ? Array.from(set).slice(0, 10) : [] });
+    }
+    const trend = [];
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(baseDay); d.setDate(d.getDate() - i);
+      const k = dayKey(d.getTime());
+      const set = dayWordsMap[k];
+      trend.push({ date: k, practiced: set ? set.size : 0, fresh: newCountMap[k] || 0 });
+    }
+    stats.heatDays = heatDays;
+    stats.trend = trend;
     return stats;
   }
 
@@ -716,7 +744,7 @@
     <div class="chip" id="qz-chip" title="点击打开增强面板"><span id="qz-chip-text">今日 0/30 · 连续 0 天</span></div>
     <div class="panel" id="qz-panel">
       <div class="ph">
-        <div class="t">增强工具 <small>Qwerty Plus v9.0</small></div>
+        <div class="t">增强工具 <small>Qwerty Plus ${APP_VERSION_SHORT}</small></div>
         <button class="x" id="qz-close" title="关闭">✕</button>
       </div>
       <div class="tabs">
@@ -808,9 +836,15 @@
             </div>
           </div>
           <div class="sec">
-            <h4>近 14 天练习热力</h4>
-            <div class="heat" id="heat-box"></div>
+            <h4>近 14 天练习（周历）</h4>
+            <div id="heat-box"></div>
+            <div class="muted" id="heat-detail" style="margin-top:6px">点击某天查看当天练过的词</div>
             <div class="muted" style="margin-top:6px" id="lbl-source"></div>
+          </div>
+          <div class="sec">
+            <h4>近 30 天练习趋势（新学 / 复习）</h4>
+            <div id="trend-box" style="display:flex;gap:3px;align-items:flex-end;height:84px"></div>
+            <div class="muted" style="margin-top:6px">深色=当天新学词，浅色=当天复习/重练词（按单词去重）。</div>
           </div>
           <div class="sec">
             <h4>学习报告（记忆曲线）</h4>
@@ -894,7 +928,7 @@
           <div class="sec">
             <h4>内置词库管理（v5 · 搜索 / 收藏 / 最近 / 分类）</h4>
             <div class="hint">385 个内置词库：显示名称、词数、启发式分类（CET / 考研 / 雅思 / 托福 / GRE / 编程 / 其他）与当前词库标记。<br>
-              「设为当前」会尝试自动操作官方“词典切换”弹层；失败时会打开官方选择器并提示手动选择（不直接改动应用未知存储）。</div>
+              「设为当前」直接写入官方 localStorage（currentDict / learningMode=manual）后重载，可靠且不依赖弹层；仅当词库缺少 id 时才回退官方画廊自动化。</div>
             <div class="flex" style="margin-bottom:8px">
               <input class="input grow" id="dict-search" placeholder="搜索词库（中英文/文件名）">
               <button class="btn sm ghost" id="dict-reset-filter">重置</button>
@@ -1012,7 +1046,7 @@
           <div class="sec">
             <h4>Qwerty Learner Plus</h4>
             <div class="muted">
-              版本：<b>1.0.0-enhanced-v9.0（随机出词 + 艾宾浩斯记忆曲线 + 错词当场重现 + 数据收口 + 错误分类提示 + 逻辑备份快照 + 到期复习中心 + 全量导入导出；无章节、无每日上限）</b><br>
+              版本：<b>${APP_VERSION}（随机出词 + 艾宾浩斯记忆曲线 + 错词当场重现 + 数据收口 + 错误分类提示 + 逻辑备份快照 + 到期复习中心 + 全量导入导出；无章节、无每日上限）</b><br>
               基于官方 Qwerty Learner 源码（commit 1182426）自行构建：练习页不再有章节选择，直接按记忆曲线随机出词；官方打字/默写/音标/音效/错题本/数据统计/词库画廊/设置等功能全部保留；v1~v6 中仍适用的增强功能收纳到顶栏「工具」全屏页。本地魔改由 dsh 完成，不跟随官方更新。
             </div>
           </div>
@@ -1047,7 +1081,7 @@
               · 自定义词库：「记忆曲线」按钮进入主练习流程（记录命名空间 custom:名称）；v9.0 起官方错题本会回退显示记忆曲线里的释义（若练习/导入时已存 trans）。<br>
               · v8 数据收口：错词/键位/慢词/时长均只读官方 RecordDB（wordRecords/memoryRecords），旧插件练习数据不再写入也不迁移显示；<br>
               · WPM 与练习时长按按键间隔估算（不含读题停顿），仅供参考；键位延迟为相邻按键的近似间隔。<br>
-              · 词库「设为当前」依赖官方“词典切换”弹层的 DOM 自动化；官方改版或弹层结构变化时可能失败，失败会打开官方选择器供手动选择（不会直接改应用未知存储）。<br>
+              · 词库「设为当前」v9.1 起直接写官方 localStorage（currentDict/learningMode）并重载；仅少数缺少 id 的异常词库仍回退官方画廊自动化。<br>
               · 在线更新只下载你点击的单个词库文件；更新文件通过请求层覆盖生效，重启应用/切换词库后最可靠；删除 dicts-update 目录即回滚。<br>
               · 发音预缓存会按词库词数下载音频（单条约 14KB），大词库（上万词）请使用「本次上限」或分次进行；仅写入本机缓存，不修改词库/应用数据。
             </div>
@@ -1305,16 +1339,42 @@
     $('#lbl-goal').textContent = `今日练习 ${s.words} / ${s.goal} 词（新学 ${s.todayNew || 0}）· 完成 ${Math.round(s.ratio * 100)}% · 连续 ${s.streak} 天`;
     $('#lbl-source').textContent = '数据源: ' + (s.source === 'RecordDB' ? 'IndexedDB RecordDB' : (s.source === 'localStorage' ? 'localStorage 回退' : '暂无数据'));
     const box = $('#heat-box');
+    const heatDays = s.heatDays || [];
     if (box) {
-      const days = [];
-      for (let i = 13; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); days.push(dayKey(d.getTime())); }
-      const map = {}; (s.heat || []).forEach((h) => { map[h.date] = h.count; });
-      const max = Math.max(1, ...days.map((d) => map[d] || 0));
-      box.innerHTML = days.map((d) => {
-        const n = map[d] || 0;
-        const alpha = n ? 0.18 + 0.82 * (n / max) : 0;
+      const weekLabels = ['日', '一', '二', '三', '四', '五', '六'];
+      const max = Math.max(1, ...heatDays.map((d) => d.count || 0));
+      box.innerHTML = `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">` + heatDays.map((d) => {
+        const n = d.count || 0;
+        const alpha = n ? 0.22 + 0.78 * (n / max) : 0;
         const bg = n ? `rgba(129,140,248,${alpha.toFixed(2)})` : 'var(--qz-track)';
-        return `<div class="cell" title="${d}: ${n} 词" style="background:${bg};color:${n / max > 0.55 ? '#fff' : 'var(--qz-muted)'}">${n || ''}</div>`;
+        const fg = (n / max > 0.55) ? '#fff' : 'var(--qz-text)';
+        const mmdd = String(d.date).slice(5);
+        return `<div data-heat-date="${d.date}" title="${d.date}：${n} 词" style="cursor:pointer;border-radius:8px;padding:6px 4px;text-align:center;background:${bg};color:${fg}">
+          <div style="font-size:10px;opacity:.85">周${weekLabels[d.weekday] || ''} ${mmdd}</div>
+          <div style="font-size:15px;font-weight:700;line-height:1.2">${n || '·'}</div>
+        </div>`;
+      }).join('') + `</div>`;
+      box.querySelectorAll('[data-heat-date]').forEach((el) => el.addEventListener('click', () => {
+        const day = heatDays.find((d) => d.date === el.dataset.heatDate);
+        const detail = $('#heat-detail');
+        if (detail && day) {
+          detail.textContent = `${day.date}：${day.count} 词${day.words && day.words.length ? ' · ' + day.words.join(' / ') : ''}`;
+        }
+      }));
+    }
+    const trendBox = $('#trend-box');
+    if (trendBox) {
+      const trend = s.trend || [];
+      const maxT = Math.max(1, ...trend.map((t) => t.practiced || 0));
+      trendBox.innerHTML = trend.map((t) => {
+        const total = Math.max(0, t.practiced || 0);
+        const fresh = Math.min(total, t.fresh || 0);
+        const review = Math.max(0, total - fresh);
+        const h = (v) => Math.max(v > 0 ? 2 : 0, Math.round(58 * v / maxT));
+        return `<div title="${t.date}：练习 ${total}（新学 ${fresh}）" style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%">
+          <i style="display:block;height:${h(review)}px;background:rgba(129,140,248,.38);border-radius:2px 2px 0 0"></i>
+          <i style="display:block;height:${h(fresh)}px;background:var(--qz-accent);border-radius:2px 2px 0 0"></i>
+        </div>`;
       }).join('');
     }
     if ($('#in-goal') && document.activeElement !== $('#in-goal')) $('#in-goal').value = s.goal;
@@ -1735,6 +1795,29 @@
   async function setCurrentDict(entry) {
     if (!entry) return;
     if (currentDictEntry() && currentDictEntry().file === entry.file) return toast('已经是当前词库');
+    // v9.1：直接写官方 localStorage 状态（currentDict / learningMode / currentChapter）后重载，
+    // 不再依赖官方画廊弹层的 DOM 自动化（该方式对个别词库会白屏/失败）。
+    if (entry.id) {
+      try {
+        localStorage.setItem('currentDict', JSON.stringify(entry.id));
+        localStorage.setItem('learningMode', JSON.stringify('manual'));
+        localStorage.setItem('currentChapter', '0');
+        try { localStorage.removeItem('reviewModeInfo'); } catch { /* ignore */ }
+        await recordDictRecent(entry.file);
+        toast('已切换为「' + entry.name + '」，正在重载…', 2600);
+        if ($('#dict-note')) $('#dict-note').textContent = '已写入官方 currentDict=' + entry.id + '（learningMode=manual），重载后生效。';
+        setTimeout(() => { try { location.reload(); } catch { /* ignore */ } }, 500);
+        return;
+      } catch (e) {
+        toast('切换失败：' + (e.message || e));
+        return;
+      }
+    }
+    await setCurrentDictViaUI(entry);
+  }
+  // 兼容回退：词库缺少 id 时仍走官方画廊自动化（旧路径）
+  async function setCurrentDictViaUI(entry) {
+    if (!entry) return;
     if (isUnsafeSwitch(entry)) {
       try { const link = document.querySelector('a[href="#/gallery"]'); if (link) link.click(); } catch { /* ignore */ }
       const msg = '「' + entry.name + '」在官方画廊中的卡片数据异常（点击可能导致页面空白），已跳过自动切换；可尝试在官方画廊手动选择，或重启应用后保持当前词库。';
@@ -2463,7 +2546,7 @@
     refreshWrongbookUI().catch(() => {});
     renderStatsToPanel(appStats || { today: TODAY(), words: 0, goal: settings.dailyGoal, streak: 0, ratio: 0, totalWords: 0, wrongWords: [], heat: [], source: 'none' });
     pomoRender();
-    console.log('[QZ-ENHANCE] UI injected, version', settings.version || '1.0.0-enhanced-v9.0');
+    console.log('[QZ-ENHANCE] UI injected, version', settings.version || APP_VERSION);
   }
   init();
 

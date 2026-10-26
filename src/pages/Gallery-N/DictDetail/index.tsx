@@ -1,5 +1,4 @@
 import { useDeleteWordRecord } from '../../../utils/db'
-import Chapter from '../Chapter'
 import { ErrorTable } from '../ErrorTable'
 import { getRowsFromErrorWordData } from '../ErrorTable/columns'
 import { ReviewDetail } from '../ReviewDetail'
@@ -7,11 +6,11 @@ import useErrorWordData from '../hooks/useErrorWords'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tabs, TabsContent } from '@/components/ui/tabs'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import { currentChapterAtom, currentDictIdAtom, reviewModeInfoAtom } from '@/store'
+import { currentChapterAtom, currentDictIdAtom, learningModeAtom, reviewModeInfoAtom } from '@/store'
 import type { Dictionary } from '@/typings'
-import range from '@/utils/range'
+import { db } from '@/utils/db'
 import { useAtom, useSetAtom } from 'jotai'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import IcOutlineCollectionsBookmark from '~icons/ic/outline-collections-bookmark'
 import MajesticonsPaperFoldTextLine from '~icons/majesticons/paper-fold-text-line'
@@ -26,13 +25,33 @@ enum Tab {
 export default function DictDetail({ dictionary: dict }: { dictionary: Dictionary }) {
   const [currentChapter, setCurrentChapter] = useAtom(currentChapterAtom)
   const [currentDictId, setCurrentDictId] = useAtom(currentDictIdAtom)
+  const setLearningMode = useSetAtom(learningModeAtom)
   const [curTab, setCurTab] = useState<Tab>(Tab.Chapters)
   const setReviewModeInfo = useSetAtom(reviewModeInfoAtom)
   const navigate = useNavigate()
   const { deleteWordRecord } = useDeleteWordRecord()
   const [reload, setReload] = useState(false)
+  const [learned, setLearned] = useState<number | null>(null)
 
-  const chapter = useMemo(() => (dict.id === currentDictId ? currentChapter : 0), [currentChapter, currentDictId, dict.id])
+  // v9.1：v7 起练习不再按章节，这里改为展示该词库的记忆曲线学习进度
+  useEffect(() => {
+    let cancelled = false
+    setLearned(null)
+    db.memoryRecords
+      .where('dict')
+      .equals(dict.id)
+      .count()
+      .then((count) => {
+        if (!cancelled) setLearned(count)
+      })
+      .catch(() => {
+        if (!cancelled) setLearned(0)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [dict.id, reload])
+
   const { errorWordData, isLoading, error } = useErrorWordData(dict, reload)
 
   const tableData = useMemo(() => {
@@ -47,15 +66,14 @@ export default function DictDetail({ dictionary: dict }: { dictionary: Dictionar
     [deleteWordRecord, dict.id],
   )
 
-  const onChangeChapter = useCallback(
-    (index: number) => {
-      setCurrentDictId(dict.id)
-      setCurrentChapter(index)
-      setReviewModeInfo((old) => ({ ...old, isReviewMode: false }))
-      navigate('/')
-    },
-    [dict.id, navigate, setCurrentChapter, setCurrentDictId, setReviewModeInfo],
-  )
+  // v9.1：改为「用该词库练习」，写入官方 localStorage 状态并回到练习页（不再只设章节）
+  const onStartManual = useCallback(() => {
+    setLearningMode('manual')
+    setCurrentDictId(dict.id)
+    setCurrentChapter(0)
+    setReviewModeInfo((old) => ({ ...old, isReviewMode: false, reviewRecord: undefined, reviewKind: undefined }))
+    navigate('/')
+  }, [dict.id, navigate, setCurrentChapter, setCurrentDictId, setLearningMode, setReviewModeInfo])
 
   const handleTabChange = useCallback(
     (value: Tab) => {
@@ -66,11 +84,13 @@ export default function DictDetail({ dictionary: dict }: { dictionary: Dictionar
     [curTab],
   )
 
+  const progress = learned == null ? 0 : Math.min(100, Math.round((learned / Math.max(1, dict.length)) * 100))
+
   return (
     <div className="flex flex-col rounded-[4rem] px-4 py-3 pl-5 text-gray-800 dark:text-gray-300">
       <div className="text relative flex h-40 flex-col gap-2">
         <h3 className="text-2xl font-semibold">{dict.name}</h3>
-        <p className="mt-1">{dict.chapterCount} 章节</p>
+        <p className="mt-1">记忆曲线出词 · 无章节</p>
         <p>共 {dict.length} 词</p>
         <p>{dict.description}</p>
         <div className="absolute bottom-5 right-4">
@@ -81,7 +101,7 @@ export default function DictDetail({ dictionary: dict }: { dictionary: Dictionar
               className={`${curTab === Tab.Chapters ? 'text-primary-foreground bg-primary' : ''} disabled:opacity-100`}
             >
               <MajesticonsPaperFoldTextLine className="mr-1.5 text-gray-500" />
-              章节选择
+              词库进度
             </ToggleGroupItem>
             {errorWordData.length > 0 && (
               <>
@@ -108,20 +128,27 @@ export default function DictDetail({ dictionary: dict }: { dictionary: Dictionar
       </div>
       <div className="flex pl-0">
         <Tabs value={curTab} className="h-[30rem] w-full ">
-          <TabsContent value={Tab.Chapters} className="h-full ">
-            <ScrollArea className="h-[30rem] ">
-              <div className="flex w-full flex-wrap gap-3">
-                {range(0, dict.chapterCount, 1).map((index) => (
-                  <Chapter
-                    key={`${dict.id}-${index}`}
-                    index={index}
-                    checked={chapter === index}
-                    dictID={dict.id}
-                    onChange={onChangeChapter}
-                  />
-                ))}
+          <TabsContent value={Tab.Chapters} className="h-full">
+            <div className="flex h-full w-full flex-col pt-1">
+              <div className="w-full rounded-2xl bg-white/70 p-6 shadow-sm dark:bg-gray-800/60">
+                <div className="text-lg font-semibold text-gray-800 dark:text-gray-100">{dict.name} · 学习进度</div>
+                <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                  已学 {learned == null ? '…' : learned} / {dict.length} 词（{progress}%）
+                </div>
+                <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+                  <div className="h-full rounded-full bg-indigo-500 transition-all duration-300" style={{ width: `${progress}%` }} />
+                </div>
+                <div className="mt-4 text-sm leading-6 text-gray-500 dark:text-gray-400">
+                  当前版本按记忆曲线自动出词，不再按章节练习：每天从「到期复习词 + 当前水平未学词」中随机取词。点下面按钮可把该词库设为当前词库并回到练习页。
+                </div>
+                <button
+                  className="my-btn-primary mt-4 rounded-lg bg-indigo-500 px-4 py-1.5 text-sm text-white hover:bg-indigo-400"
+                  onClick={onStartManual}
+                >
+                  用该词库练习
+                </button>
               </div>
-            </ScrollArea>
+            </div>
           </TabsContent>
           <TabsContent value={Tab.Errors} className="h-full">
             <ErrorTable data={tableData} isLoading={isLoading} error={error} onDelete={onDelete} />

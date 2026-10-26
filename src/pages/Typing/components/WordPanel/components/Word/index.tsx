@@ -213,8 +213,6 @@ export default function WordComponent({ word, onFinish }: { word: Word; onFinish
         })
         playKeySound()
       }
-
-      dispatch({ type: TypingStateActionType.REPORT_CORRECT_WORD })
     } else {
       // 出错时
       playBeepSound()
@@ -248,9 +246,6 @@ export default function WordComponent({ word, onFinish }: { word: Word; onFinish
         } else {
           state.letterMistake[inputLength - 1] = [inputChar]
         }
-
-        const currentState = JSON.parse(JSON.stringify(state))
-        dispatch({ type: TypingStateActionType.REPORT_WRONG_WORD, payload: { letterMistake: currentState.letterMistake } })
       })
 
       if (currentChapter === 0 && state.chapterData.index === 0 && wordState.wrongCount >= 3) {
@@ -279,6 +274,15 @@ export default function WordComponent({ word, onFinish }: { word: Word; onFinish
   useEffect(() => {
     if (wordState.isFinished) {
       dispatch({ type: TypingStateActionType.SET_IS_SAVING_RECORD, payload: true })
+      // v9.1：整词完成再一次性上报按键统计（此前每个字母 dispatch 一次，触发整树重渲染）
+      dispatch({
+        type: TypingStateActionType.REPORT_WORD_RESULT,
+        payload: {
+          correctCount: wordState.correctCount,
+          wrongCount: wordState.wrongCount,
+          letterMistake: wordState.letterMistake,
+        },
+      })
 
       // wordLogUploader({
       //   headword: word.name,

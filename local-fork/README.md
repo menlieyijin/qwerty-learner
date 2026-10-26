@@ -6,21 +6,31 @@ Qwerty Learner 本地魔改版的 Electron 外壳源码：主进程（托盘/快
 
 ## 目录
 
-- `package.json` — asar 根 package.json（`main: electron/main.js`，版本 `1.0.0-enhanced-v8`）
-- `electron/main.js` — 主进程（窗口/托盘/快捷键/单实例/备份/词库/发音缓存/免费接口等 IPC）
-- `electron/preload.js` — contextBridge 白名单 API
+- `package.json` — asar 根 package.json（`main: electron/main.js`，**版本号唯一来源**：`1.0.0-enhanced-v9.2`）
+- `electron/main.js` — 主进程（窗口/托盘/快捷键/单实例/备份/词库/发音缓存/免费接口/安全守卫等 IPC）
+- `electron/preload.js` — contextBridge 白名单 API（版本号通过 `app:version-sync` 同步 IPC 获取）
 - `electron/enhance/` — 注入的增强 UI（enhance.js/css、剪贴板查词窗、词库映射表）
 
-## 构建与安装（当前手工流程）
+## 构建与安装（v9.2 起用脚本）
 
-1. 仓库根目录：`npm run build`（Vite，`outDir=build`）
-2. 组装 asar 根目录：`package.json` + `electron/` + `build/`（网页产物与 385 本词库）
-3. 打包：`npx --yes @electron/asar pack <组装目录> <输出>.asar`
-4. 退出应用后替换：`<安装目录>\resources\app.asar`
-5. 启动验证；保留上一版 asar 以便回滚
+```powershell
+# 只构建 + 打包（产出 app.asar / SHA256SUMS / release-info.json）
+pwsh -File scripts\dsh-release.ps1
 
-> 当前打包工作区为 `D:\整理\QwertyPackV7`（`electron/` 与本目录保持同步、`build/` 由 Vite 产物同步）。
-> 后续会改为同一脚本从本目录组装，避免双份文件漂移。
+# 构建 + 测试安装 + CDP 冒烟（默认会先跑 tsc 门禁）
+pwsh -File scripts\dsh-release.ps1 -TestInstall -Smoke
+
+# 构建 + 正式安装（先退出应用、备份旧 asar、校验安装后哈希）
+pwsh -File scripts\dsh-release.ps1 -Install
+
+# 回滚
+pwsh -File scripts\dsh-rollback.ps1 -List
+pwsh -File scripts\dsh-rollback.ps1
+```
+
+> 发版只需改本目录 `package.json` 的 `version`：主进程读取 package.json；preload 通过 `app:version-sync` 获取；注入的增强面板用主进程传入的 `window.__QZ_VERSION__`。
+> 旧的打包工作区 `D:\整理\QwertyPackV7` 仍保留但不再手工同步（脚本直接从本目录组装）。
+> Electron 运行时版本与 EOL 见 `docs/Electron-EOL.md`。
 
 ## 维护约定
 

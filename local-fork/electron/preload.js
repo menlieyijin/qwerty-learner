@@ -2,6 +2,13 @@
 // 通过 contextBridge 只暴露白名单 API，渲染进程不接触 Node。
 const { contextBridge, ipcRenderer } = require('electron');
 
+// v9.2：版本号单一来源——同步向主进程要（沙箱化 preload 不能 require('path') 读 package.json）
+let APP_VERSION = '1.0.0-enhanced-v9.2';
+try {
+  const v = ipcRenderer.sendSync('app:version-sync');
+  if (v) APP_VERSION = String(v);
+} catch { /* 保持兜底 */ }
+
 function onEvent(cb) {
   if (typeof cb !== 'function') return;
   const handler = (_e, payload) => { try { cb(payload); } catch { /* ignore */ } };
@@ -14,7 +21,7 @@ function onClipboardWord(cb) {
 }
 
 contextBridge.exposeInMainWorld('qwertyEnhance', {
-  version: '1.0.0-enhanced-v9.0',
+  version: APP_VERSION,
   platform: process.platform,
   // —— 设置 ——
   getSettings: () => ipcRenderer.invoke('app:getSettings'),

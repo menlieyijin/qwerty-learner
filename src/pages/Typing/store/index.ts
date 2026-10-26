@@ -44,6 +44,8 @@ export enum TypingStateActionType {
   TOGGLE_IS_TYPING = 'TOGGLE_IS_TYPING',
   REPORT_WRONG_WORD = 'REPORT_WRONG_WORD',
   REPORT_CORRECT_WORD = 'REPORT_CORRECT_WORD',
+  // v9.1：整词完成时一次性上报按键统计，替代每个字母 dispatch 一次（减少整树重渲染）
+  REPORT_WORD_RESULT = 'REPORT_WORD_RESULT',
   NEXT_WORD = 'NEXT_WORD',
   LOOP_CURRENT_WORD = 'LOOP_CURRENT_WORD',
   FINISH_CHAPTER = 'FINISH_CHAPTER',
@@ -70,6 +72,7 @@ export type TypingStateAction =
   | { type: TypingStateActionType.TOGGLE_IS_TYPING }
   | { type: TypingStateActionType.REPORT_WRONG_WORD; payload: { letterMistake: LetterMistakes } }
   | { type: TypingStateActionType.REPORT_CORRECT_WORD }
+  | { type: TypingStateActionType.REPORT_WORD_RESULT; payload: { correctCount: number; wrongCount: number; letterMistake: LetterMistakes } }
   | {
       type: TypingStateActionType.NEXT_WORD
       payload?: {
@@ -136,6 +139,19 @@ export const typingReducer = (state: TypingState, action: TypingStateAction) => 
       const wordLog = state.chapterData.userInputLogs[state.chapterData.index]
       wordLog.wrongCount += 1
       wordLog.LetterMistakes = mergeLetterMistake(wordLog.LetterMistakes, letterMistake)
+      break
+    }
+    case TypingStateActionType.REPORT_WORD_RESULT: {
+      // v9.1：一个词完成时一次性累加，避免每敲一个字母就让整个练习页重渲染
+      const { correctCount = 0, wrongCount = 0, letterMistake } = action.payload
+      state.chapterData.correctCount += correctCount
+      state.chapterData.wrongCount += wrongCount
+      const wordLog = state.chapterData.userInputLogs[state.chapterData.index]
+      if (wordLog) {
+        wordLog.correctCount += correctCount
+        wordLog.wrongCount += wrongCount
+        if (letterMistake) wordLog.LetterMistakes = mergeLetterMistake(wordLog.LetterMistakes, letterMistake)
+      }
       break
     }
     case TypingStateActionType.NEXT_WORD: {
