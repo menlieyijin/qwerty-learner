@@ -107,7 +107,8 @@ export class ChapterRecord implements IChapterRecord {
   }
 
   get inputAccuracy() {
-    return Math.round((this.correctCount / this.correctCount + this.wrongCount) * 100)
+    const total = this.correctCount + this.wrongCount
+    return total > 0 ? Math.round((this.correctCount / total) * 100) : 0
   }
 
   get wordAccuracy() {
@@ -193,7 +194,7 @@ export interface IMemoryRecord {
   wrong: number
   slow: number
   lapses: number
-  lastResult: 'ok' | 'wrong' | ''
+  lastResult: 'ok' | 'early-ok' | 'wrong' | 'refresh-ok' | 'refresh-wrong' | ''
   /** v8.3 影子调度：自适应间隔（天），仅记录、暂不启用 */
   shadowInterval?: number
   /** v8.3 影子调度：自适应到期时间（毫秒） */

@@ -19,7 +19,7 @@ import { useSaveChapterRecord } from '@/utils/db'
 import { useMixPanelChapterLogUploader } from '@/utils/mixpanel'
 import { useAtom, useAtomValue } from 'jotai'
 import type React from 'react'
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useImmerReducer } from 'use-immer'
 
 const App: React.FC = () => {
@@ -33,6 +33,8 @@ const App: React.FC = () => {
 
   const reviewModeInfo = useAtomValue(reviewModeInfoAtom)
   const isReviewMode = useAtomValue(isReviewModeAtom)
+  // v8.9：词池耗尽提示（全部学会且暂无到期词 / 空词库），避免空白页
+  const [noMoreWords, setNoMoreWords] = useState(false)
 
   useEffect(() => {
     // 检测用户设备
@@ -52,9 +54,22 @@ const App: React.FC = () => {
     }
   }, [currentDictId, setCurrentDictId])
 
-  const skipWord = useCallback(() => {
-    dispatch({ type: TypingStateActionType.SKIP_WORD })
-  }, [dispatch])
+  const skipWord = useCallback(async () => {
+    // v8.9：动态出词时 Skip 要实时取下一个词；之前直接 SKIP_WORD 会在末词进入空白完成态
+    const word = state.chapterData.words[state.chapterData.index]
+    if (!isReviewMode && nextWord) {
+      const next = await nextWord(word)
+      if (next) {
+        setNoMoreWords(false)
+        dispatch({ type: TypingStateActionType.PUSH_WORD, payload: next })
+        dispatch({ type: TypingStateActionType.NEXT_WORD })
+        return
+      }
+      setNoMoreWords(true)
+      return
+    }
+    dispatch({ type: TypingStateActionType.SKIP_WORD, payload: { finishIfLast: isReviewMode } })
+  }, [dispatch, isReviewMode, nextWord, state.chapterData.index, state.chapterData.words])
 
   // 开始/继续时缓存按键，等输入监听挂载后重放，避免「第一下按键」被吞掉
   const startBufferRef = useRef<string[]>([])
@@ -103,6 +118,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (words.length > 0) {
+      setNoMoreWords(false)
       const initialIndex = isReviewMode && reviewModeInfo.reviewRecord?.index ? reviewModeInfo.reviewRecord.index : 0
       dispatch({
         type: TypingStateActionType.SETUP_CHAPTER,
@@ -163,8 +179,40 @@ const App: React.FC = () => {
                   role="status"
                 ></div>
               </div>
+            ) : state.isFinished && !isReviewMode ? (
+              <div className="flex flex-col items-center justify-center gap-3 text-center">
+                <p className="text-xl text-gray-600 dark:text-gray-300">本轮练习结束</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  共 {state.chapterData.wordCount} 词 · 正确 {state.chapterData.correctCount} 键 · 错误 {state.chapterData.wrongCount} 键
+                </p>
+                <button className="my-btn-primary bg-indigo-500 hover:bg-indigo-400" onClick={() => window.location.reload()}>
+                  重新开始
+                </button>
+              </div>
+            ) : noMoreWords || (!state.isFinished && words.length === 0) ? (
+              <div className="flex flex-col items-center justify-center gap-3 text-center">
+                <p className="text-xl text-gray-600 dark:text-gray-300">当前没有可练习的词</p>
+                <p className="max-w-lg text-sm text-gray-500 dark:text-gray-400">
+                  词库已全部学完且暂时没有到期复习词；可换一个词库，或稍后再来复习。
+                </p>
+                <div className="flex gap-3">
+                  <button className="my-btn-primary bg-indigo-500 hover:bg-indigo-400" onClick={() => window.location.reload()}>
+                    刷新
+                  </button>
+                  <button
+                    className="my-btn-primary bg-gray-400 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500"
+                    onClick={() => {
+                      window.location.hash = '#/gallery'
+                    }}
+                  >
+                    打开词库
+                  </button>
+                </div>
+              </div>
             ) : (
-              !state.isFinished && <WordPanel onNeedNextWord={isReviewMode ? undefined : nextWord} />
+              !state.isFinished && (
+                <WordPanel onNeedNextWord={isReviewMode ? undefined : nextWord} onNoMoreWords={() => setNoMoreWords(true)} />
+              )
             )}
           </div>
         </div>

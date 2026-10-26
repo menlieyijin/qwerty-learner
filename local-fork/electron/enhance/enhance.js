@@ -40,7 +40,7 @@
   const nowIso = () => new Date().toISOString();
   function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
 
-  let settings = { version: '1.0.0-enhanced-v8.8', dailyGoal: 30, theme: 'indigo', panelAppearance: 'auto', dictFavorites: [], dictRecent: {}, fontFamily: 'default', opacity: 1, zoom: 1, pomodoroFocus: 25, pomodoroBreak: 5, keySound: false, keySoundVolume: 0.25, clipboardWatch: false, onlineLookup: true, aiExperimental: false, pronCache: false, closeToTray: true, alwaysOnTop: false, miniMode: false, todayStats: {} };
+  let settings = { version: '1.0.0-enhanced-v8.9', dailyGoal: 30, theme: 'indigo', panelAppearance: 'auto', dictFavorites: [], dictRecent: {}, fontFamily: 'default', opacity: 1, zoom: 1, pomodoroFocus: 25, pomodoroBreak: 5, keySound: false, keySoundVolume: 0.25, clipboardWatch: false, onlineLookup: true, aiExperimental: false, pronCache: false, closeToTray: true, alwaysOnTop: false, miniMode: false, todayStats: {} };
   let appStats = null; // 缓存统计
   let panelOpen = false;
 
@@ -144,6 +144,75 @@
       }).catch((e) => { console.warn('[QZ] plus db:', e); return null; });
     }
     return plusDBPromise;
+  }
+
+  // ---------------------------------------------------------------- v8.9 逻辑备份快照
+  // 主进程在备份时通过 'backup:request' 事件请求；这里只读收集 RecordDB 全部 store、
+  // QwertyPlusDB.dicts（自定义词库）、localStorage 全量与主进程设置，序列化后回传。
+  // 注意：全程只读、连接用完即关；任何一步失败都不影响主进程的目录副本备份。
+  async function collectBackupSnapshot() {
+    const snap = {
+      version: api.version || settings.version || '',
+      ts: Date.now(),
+      recordDb: {},
+      customDicts: [],
+      localStorage: {},
+      settings: {},
+    };
+    // RecordDB：遍历全部 object store（只读打开，读完立即关闭，避免阻塞应用自身 Dexie 升级）
+    let db = null;
+    try {
+      db = await idbOpen('RecordDB');
+      const stores = Array.from(db.objectStoreNames || []);
+      for (const store of stores) {
+        snap.recordDb[store] = await idbAll(db, store);
+      }
+    } catch (e) {
+      console.warn('[QZ] backup snapshot RecordDB:', e);
+    } finally {
+      try { if (db) db.close(); } catch { /* ignore */ }
+    }
+    // QwertyPlusDB.dicts：库不存在时跳过（用 databases() 探测，避免只读操作顺手建空库）
+    try {
+      let exists = true;
+      if (indexedDB.databases) {
+        const list = await indexedDB.databases();
+        exists = list.some((d) => d && d.name === 'QwertyPlusDB');
+      }
+      if (exists) {
+        let pdb = null;
+        try {
+          pdb = await idbOpen('QwertyPlusDB');
+          if (pdb.objectStoreNames.contains('dicts')) snap.customDicts = await idbAll(pdb, 'dicts');
+        } finally {
+          try { if (pdb) pdb.close(); } catch { /* ignore */ }
+        }
+      }
+    } catch (e) {
+      console.warn('[QZ] backup snapshot QwertyPlusDB:', e);
+    }
+    // localStorage 全量（含 qzCustomDict / state 等，原样保留字符串，可能较大）
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k == null) continue;
+        snap.localStorage[k] = localStorage.getItem(k);
+      }
+    } catch (e) {
+      console.warn('[QZ] backup snapshot localStorage:', e);
+    }
+    // 主进程设置（只读快照）
+    try { snap.settings = await api.getSettings(); } catch { snap.settings = {}; }
+    return snap;
+  }
+  function handleBackupRequest() {
+    collectBackupSnapshot()
+      .then((snap) => {
+        let text = null;
+        try { text = JSON.stringify(snap); } catch (e) { console.warn('[QZ] backup snapshot stringify:', e); return null; }
+        return api.writeBackupSnapshot(text);
+      })
+      .catch((e) => console.warn('[QZ] backup snapshot:', e));
   }
 
   // ---------------------------------------------------------------- 统计
@@ -624,7 +693,7 @@
     <div class="chip" id="qz-chip" title="点击打开增强面板"><span id="qz-chip-text">今日 0/30 · 连续 0 天</span></div>
     <div class="panel" id="qz-panel">
       <div class="ph">
-        <div class="t">增强工具 <small>Qwerty Plus v8.8</small></div>
+        <div class="t">增强工具 <small>Qwerty Plus v8.9</small></div>
         <button class="x" id="qz-close" title="关闭">✕</button>
       </div>
       <div class="tabs">
@@ -901,7 +970,7 @@
           <div class="sec">
             <h4>Qwerty Learner Plus</h4>
             <div class="muted">
-              版本：<b>1.0.0-enhanced-v8.8（随机出词 + 艾宾浩斯记忆曲线 + 错词当场重现 + 数据收口 + 错误分类提示；无章节、无每日上限）</b><br>
+              版本：<b>1.0.0-enhanced-v8.9（随机出词 + 艾宾浩斯记忆曲线 + 错词当场重现 + 数据收口 + 错误分类提示 + 逻辑备份快照；无章节、无每日上限）</b><br>
               基于官方 Qwerty Learner 源码（commit 1182426）自行构建：练习页不再有章节选择，直接按记忆曲线随机出词；官方打字/默写/音标/音效/错题本/数据统计/词库画廊/设置等功能全部保留；v1~v6 中仍适用的增强功能收纳到顶栏「工具」全屏页。本地魔改由 dsh 完成，不跟随官方更新。
             </div>
           </div>
@@ -919,6 +988,7 @@
               v8.4 自定义词库进主流程：「工具 → 词库 → 我的自定义词库 → 记忆曲线」即可按记忆曲线练习自己的词表（记录命名空间 custom:名称；官方错题本对自定义词只显示单词与错误次数）<br>
               v8.7 视觉：开始页概览改为 14px、数字加粗、到期数高亮；错误提示 15px；「再练一次 / 随机回顾」改为徽标<br>
               v8.8 清理：移除旧 v6 记忆曲线/插件练习/键位统计死代码（约 860 行）；面板只保留 常规 / 数据 / 词库 / 工具 / 关于<br>
+              v8.9 壳加固：IPC 来源白名单 · 导航/外链守卫 · 权限一律拒绝 · 崩溃 reload 限流 · 日志按日轮转保留 14 天 · 备份新增 data.json 逻辑快照（RecordDB/自定义词库/localStorage/设置）· 统计上报去重 · 剪贴板轮询按需启动<br>
               v5 词库层：内置 385 词库搜索/收藏/最近/分类 + 设为当前 · GitHub 官方词库在线更新（逐个下载、SHA 比对、可回滚）· 当前词库发音预缓存（美/英音、续传、暂停/继续/取消、失败重试）
             </div>
           </div>
@@ -2172,9 +2242,12 @@
     refreshWrongbookUI().catch(() => {});
     renderStatsToPanel(appStats || { today: TODAY(), words: 0, goal: settings.dailyGoal, streak: 0, ratio: 0, totalWords: 0, wrongWords: [], heat: [], source: 'none' });
     pomoRender();
-    console.log('[QZ-ENHANCE] UI injected, version', settings.version || '1.0.0-enhanced-v8.8');
+    console.log('[QZ-ENHANCE] UI injected, version', settings.version || '1.0.0-enhanced-v8.9');
   }
   init();
+
+  // v8.9：主进程备份时收集逻辑快照（RecordDB 全 store + 自定义词库 + localStorage + 设置）
+  if (api.onBackupRequest) api.onBackupRequest(handleBackupRequest);
 
   // 剪贴板查词在主窗口事件（小窗自己处理，这里仅提示）
   api.onClipboardWord((word) => {

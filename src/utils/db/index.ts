@@ -4,6 +4,8 @@ import { TypingContext, TypingStateActionType } from '@/pages/Typing/store'
 import type { TypingState } from '@/pages/Typing/store/type'
 import { currentChapterAtom, currentDictIdAtom, isReviewModeAtom } from '@/store'
 import { MEMORY_GRADUATE_STAGE, MEMORY_SLOW_MS, adaptiveDaysFromRecord, clampStage, ladderDays } from '@/utils/memoryLadder'
+import { removeMemoryCache, upsertMemoryCache } from '@/utils/memoryCache'
+import { memoryKey } from '@/utils/memoryKey'
 import { consumeRefresh } from '@/utils/refreshMarker'
 import { pushWrongWordRequeue } from '@/utils/sessionRequeue'
 import type { Table } from 'dexie'
@@ -58,10 +60,12 @@ export async function updateMemoryProgress(
   phone?: string,
 ): Promise<void> {
   try {
-    const key = `${dict}::${String(word || '').toLowerCase()}`
+    const key = memoryKey(dict, word)
     const now = Date.now()
     const prev = await db.memoryRecords.get(key)
     const isNew = !prev
+    // v8.9：只有新词 / 已到期的词答对才推进档位；同会话循环重练、回看上一词、Restart 重放不升档
+    const wasDue = isNew || (Number(prev?.due) || 0) <= now
     const ok = Number(wrongCount) === 0
     const isRefresh = consumeRefresh(key)
     const rec: IMemoryRecord = prev
@@ -111,27 +115,37 @@ export async function updateMemoryProgress(
       rec.shadowDue = now + Math.round(rec.shadowInterval * 24 * 3600 * 1000)
       rec.shadowAt = now
       await db.memoryRecords.put(rec)
+      upsertMemoryCache(rec)
       return
     }
     if (ok) {
       rec.correct += 1
-      rec.stage = isNew ? MEMORY_GRADUATE_STAGE : clampStage(rec.stage + 1)
-      rec.ease = Math.min(3, Math.round((rec.ease + 0.1) * 100) / 100)
+      if (wasDue) {
+        rec.stage = isNew ? MEMORY_GRADUATE_STAGE : clampStage(rec.stage + 1)
+        rec.ease = Math.min(3, Math.round((rec.ease + 0.1) * 100) / 100)
+        rec.interval = ladderDays(rec.stage)
+        rec.due = now + rec.interval * 24 * 3600 * 1000
+        rec.lastResult = 'ok'
+      } else {
+        // 同会话提前重练：只刷新记忆，不推进档位、不延长到期时间
+        rec.lastResult = 'early-ok'
+      }
     } else {
       rec.wrong += 1
       rec.lapses += 1
       rec.stage = 0
       rec.ease = Math.max(1.3, Math.round((rec.ease - 0.2) * 100) / 100)
+      rec.interval = ladderDays(rec.stage)
+      rec.due = now + rec.interval * 24 * 3600 * 1000
+      rec.lastResult = 'wrong'
     }
-    rec.interval = ladderDays(rec.stage)
-    rec.due = now + rec.interval * 24 * 3600 * 1000
     if (totalMs > MEMORY_SLOW_MS) rec.slow += 1
-    rec.lastResult = ok ? 'ok' : 'wrong'
     // v8.3 影子调度：只记录自适应估算，不改变 due
     rec.shadowInterval = adaptiveDaysFromRecord(rec)
     rec.shadowDue = now + Math.round(rec.shadowInterval * 24 * 3600 * 1000)
     rec.shadowAt = now
     await db.memoryRecords.put(rec)
+    upsertMemoryCache(rec)
   } catch (e) {
     console.error('update memory progress failed', e)
   }
@@ -244,6 +258,14 @@ export function useDeleteWordRecord() {
   const deleteWordRecord = useCallback(async (word: string, dict: string) => {
     try {
       const deletedCount = await db.wordRecords.where({ word, dict }).delete()
+      // v8.9：错词本删词时同步删记忆曲线记录，否则删掉的词仍按曲线出现、累计已学不减
+      try {
+        const key = memoryKey(dict, word)
+        await db.memoryRecords.delete(key)
+        removeMemoryCache(key)
+      } catch (e) {
+        console.error('删除记忆曲线记录失败：', e)
+      }
       return deletedCount
     } catch (error) {
       console.error(`删除单词记录时出错：`, error)

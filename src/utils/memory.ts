@@ -3,8 +3,12 @@ import type { IMemoryRecord } from './db/record'
 import { db } from './db'
 import { idDictionaryMap } from '@/resources/dictionary'
 import { LEARNING_PATH, loadDictWords, loadLevelWords } from './learningPath'
+import { clearMemoryCache, getMemoryCache, setMemoryCache } from './memoryCache'
+import { memoryKey, normalizeWordName } from './memoryKey'
 import { markRefresh } from './refreshMarker'
 import { takeRequeueWord } from './sessionRequeue'
+
+export { memoryKey, normalizeWordName }
 
 export const MEMORY_MIGRATED_KEY = 'memoryMigratedV1'
 
@@ -26,14 +30,6 @@ export type PickResult = {
   refresh: boolean
   /** v8：retry=会话内错词重练，review=随机回顾 */
   hint?: 'retry' | 'review'
-}
-
-export function normalizeWordName(name: string): string {
-  return String(name || '').trim().toLowerCase()
-}
-
-export function memoryKey(dict: string, word: string): string {
-  return `${dict}::${normalizeWordName(word)}`
 }
 
 /** 读取旧版官方练习记录，迁移为记忆曲线记录（只执行一次；不修改旧记录） */
@@ -72,6 +68,15 @@ async function fillTransFromDicts(agg: Map<string, { dict: string; word: string;
   }
 }
 
+function hashKey(text: string): number {
+  let hash = 2166136261
+  for (let i = 0; i < text.length; i++) {
+    hash ^= text.charCodeAt(i)
+    hash = Math.imul(hash, 16777619)
+  }
+  return hash >>> 0
+}
+
 async function migrateMemoryRecords(): Promise<void> {
   if (localStorage.getItem(MEMORY_MIGRATED_KEY)) return
   try {
@@ -98,6 +103,11 @@ async function migrateMemoryRecords(): Promise<void> {
     const records: IMemoryRecord[] = []
     for (const a of agg.values()) {
       const stage = a.wrong === 0 ? 3 : a.wrong < 3 ? 2 : 1
+      const interval = [10 / 1440, 30 / 1440, 0.5, 1, 2, 4, 7, 15, 30, 60, 120, 240][stage]
+      const lastSeen = a.lastSeen || now
+      // v8.9：旧记录按「最后练习时间 + 间隔」算到期；已过期的摊到未来 3 天内，避免首课全部压在到期池
+      let due = lastSeen + interval * 24 * 3600 * 1000
+      if (due <= now) due = now + (hashKey(a.key) % (3 * 24 * 60)) * 60 * 1000
       records.push({
         key: a.key,
         word: a.word,
@@ -105,10 +115,10 @@ async function migrateMemoryRecords(): Promise<void> {
         trans: a.trans || [],
         phone: a.phone || '',
         stage,
-        interval: [10 / 1440, 30 / 1440, 0.5, 1, 2, 4, 7, 15, 30, 60, 120, 240][stage],
+        interval,
         ease: 2.5,
-        due: now,
-        lastSeen: a.lastSeen || now,
+        due,
+        lastSeen,
         createdAt: a.created || now,
         attempts: a.attempts,
         correct: Math.max(0, a.attempts - a.wrong),
@@ -119,16 +129,22 @@ async function migrateMemoryRecords(): Promise<void> {
       })
     }
     if (records.length) await db.memoryRecords.bulkPut(records)
+    clearMemoryCache()
+    // v8.9：只有真正成功才写「已迁移」标记；之前失败也会写，导致进度永远补不回来
+    localStorage.setItem(MEMORY_MIGRATED_KEY, String(Date.now()))
   } catch (e) {
     console.error('migrate memory records failed', e)
   }
-  localStorage.setItem(MEMORY_MIGRATED_KEY, String(Date.now()))
 }
 
 export async function getMemoryRecords(): Promise<IMemoryRecord[]> {
+  // v8.9：命中内存缓存后不再每词全表反序列化；写入/删除会增量更新缓存
+  const cached = getMemoryCache()
+  if (cached) return cached
   try {
     const records = await db.memoryRecords.toArray()
     await fillMissingTransInRecords(records)
+    setMemoryCache(records)
     return records
   } catch {
     return []
@@ -260,6 +276,14 @@ export async function pickDynamicWord(opts: {
   const recentSet = new Set(opts.recent.map(normalizeWordName))
   const known = new Set(opts.records.map((r) => normalizeWordName(r.word)))
 
+  // v8 错词当场重现：答错的词隔几个词优先拉回一次，避免只等 10 分钟档而本次练习再也见不到。
+  // v8.9：提前到「算级别/未学词」之前，命中重练时不再白算整级词表。
+  const requeued = takeRequeueWord()
+  if (requeued) {
+    markRefresh(memoryKey(requeued.dict, requeued.word.name))
+    return { word: requeued.word, dict: requeued.dict, level: null, refresh: true, hint: 'retry' }
+  }
+
   let levelInfo: LevelInfo | null = null
   let newWords: Word[] = []
   if (opts.mode === 'auto') {
@@ -272,13 +296,6 @@ export async function pickDynamicWord(opts: {
     newWords = (opts.manualWords || []).filter((w) => !known.has(normalizeWordName(w.name)))
   }
   newWords = newWords.filter((w) => !recentSet.has(normalizeWordName(w.name)))
-
-  // v8 错词当场重现：答错的词隔几个词优先拉回一次，避免只等 10 分钟档而本次练习再也见不到
-  const requeued = takeRequeueWord()
-  if (requeued) {
-    markRefresh(memoryKey(requeued.dict, requeued.word.name))
-    return { word: requeued.word, dict: requeued.dict, level: levelInfo, refresh: true, hint: 'retry' }
-  }
 
   const dueByWord = new Map<string, IMemoryRecord>()
   const refreshRecords: IMemoryRecord[] = []

@@ -1,9 +1,14 @@
 import type { Word } from '@/typings'
+import { memoryKey } from './memoryKey'
 
 /**
  * 会话内错词重现队列（v8）：
- * 答错的词在本次练习中隔 3 个词强制再出现一次，同一个词最多再排 2 次。
+ * 答错的词在本次练习中隔 3 个词强制再出现，同一个词最多再排 2 次。
  * 队列只存在内存里，退出应用即清空；持久化仍由 memoryRecords 的 10 分钟档负责。
+ *
+ * v8.9：
+ * - 用 sessionCounts 记「本会话累计重排次数」；之前取出即删、再错重建 times=1，上限实际失效；
+ * - 换词库/换模式/新会话时调用 clearSessionRequeue()，避免 A 词库的错词串进 B 词库。
  */
 const REQUEUE_GAP = 3
 const REQUEUE_MAX_TIMES = 2
@@ -14,35 +19,28 @@ type RequeueEntry = {
   dict: string
   /** 还要跳过几个词才出现 */
   skip: number
-  /** 已排队次数 */
-  times: number
 }
 
 let queue: RequeueEntry[] = []
-
-function normalize(name: string): string {
-  return String(name || '')
-    .trim()
-    .toLowerCase()
-}
+const sessionCounts = new Map<string, number>()
 
 /** 答错后登记：稍后（隔 3 个词）在本次会话内再练一次。 */
 export function pushWrongWordRequeue(dict: string, word: string, trans?: string[], phone?: string): void {
   const name = String(word || '').trim()
   if (!dict || !name) return
-  const key = `${dict}::${normalize(name)}`
+  const key = memoryKey(dict, name)
+  const used = sessionCounts.get(key) || 0
+  if (used >= REQUEUE_MAX_TIMES) return
+  sessionCounts.set(key, used + 1)
   const existing = queue.find((item) => item.key === key)
   if (existing) {
-    if (existing.times >= REQUEUE_MAX_TIMES) return
     existing.skip = REQUEUE_GAP
-    existing.times += 1
     return
   }
   queue.push({
     key,
     dict,
     skip: REQUEUE_GAP,
-    times: 1,
     word: {
       name,
       trans: Array.isArray(trans) ? trans.filter((item) => typeof item === 'string') : [],
@@ -72,6 +70,8 @@ export function getSessionRequeueCount(): number {
   return queue.length
 }
 
+/** 清空队列与计数（换词库/换模式/新会话时调用）。 */
 export function clearSessionRequeue(): void {
   queue = []
+  sessionCounts.clear()
 }

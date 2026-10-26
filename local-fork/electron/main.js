@@ -1,6 +1,6 @@
 // ============================================================================
 // Qwerty Learner Plus — Electron 主进程（增强版壳）
-// 版本: 1.0.0-enhanced-v7
+// 版本: 1.0.0-enhanced-v8.9
 // 说明: A 层外壳增强（置顶/快捷键/迷你模式/托盘/自启/透明度缩放/自动备份/
 //       错误日志/托盘进度）+ B 层桌面增强（AI/剪贴板/发音缓存等 IPC 支撑）。
 //       所有私有数据（设置/日志/备份/缓存）写入 %APPDATA%\qwerty-learner-plus，
@@ -13,6 +13,7 @@ const {
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
+const { fileURLToPath } = require('url');
 
 // —— 测试/多开隔离（仅当显式设置环境变量时生效，正常启动完全不受影响）——
 // QZ_USER_DATA: 覆盖 Electron userData（IndexedDB / Local Storage），用于隔离测试
@@ -37,7 +38,7 @@ protocol.registerSchemesAsPrivileged([
 // ---------------------------------------------------------------------------
 // 路径与设置
 // ---------------------------------------------------------------------------
-const APP_VERSION = '1.0.0-enhanced-v8.8';
+const APP_VERSION = '1.0.0-enhanced-v8.9';
 const PLUS_DIR = process.env.QZ_PLUS_DIR
   ? path.resolve(process.env.QZ_PLUS_DIR)
   : path.join(app.getPath('appData'), 'qwerty-learner-plus');
@@ -49,8 +50,12 @@ const EXPORTS_DIR = path.join(app.getPath('documents'), 'QwertyLearnerPlus', 'ex
 const UPDATE_DIR = path.join(PLUS_DIR, 'dicts-update'); // 在线更新词库下载目录（删除即回滚）
 const SETTINGS_FILE = path.join(PLUS_DIR, 'enhanced-settings.json');
 const STATE_FILE = path.join(PLUS_DIR, 'window-state.json');
-const ERROR_LOG = path.join(LOG_DIR, 'error.log');
-const RENDERER_LOG = path.join(LOG_DIR, 'renderer.log');
+// v8.9：日志按日轮转（error-YYYYMMDD.log / renderer-YYYYMMDD.log），保留最近 14 天
+const LOG_RETENTION_DAYS = 14;
+function logStamp(d = new Date()) {
+  return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+}
+function logFilePath(kind) { return path.join(LOG_DIR, `${kind}-${logStamp()}.log`); }
 const USER_DATA = app.getPath('userData'); // %APPDATA%\qwerty-learner（只读备份源）
 
 for (const d of [PLUS_DIR, LOG_DIR, BACKUP_DIR, CACHE_DIR, AUDIO_CACHE_DIR, EXPORTS_DIR, UPDATE_DIR]) {
@@ -129,15 +134,33 @@ function rotateIfNeeded(file, maxBytes = 2 * 1024 * 1024) {
     }
   } catch { /* ignore */ }
 }
-function writeLog(file, tag, message) {
+let logPruneAt = 0;
+// 清理超过保留期的日志（旧版固定文件名 error.log / renderer.log 也一并纳入轮转）
+function pruneLogs() {
+  const now = Date.now();
+  if (now - logPruneAt < 6 * 3600 * 1000) return; // 每 6 小时最多扫一次目录
+  logPruneAt = now;
   try {
+    const cutoff = now - LOG_RETENTION_DAYS * 24 * 3600 * 1000;
+    for (const name of fs.readdirSync(LOG_DIR)) {
+      if (!/^(error|renderer)(-\d{8})?\.log(\.\d+)?$/.test(name)) continue;
+      try {
+        if (fs.statSync(path.join(LOG_DIR, name)).mtimeMs < cutoff) fs.rmSync(path.join(LOG_DIR, name), { force: true });
+      } catch { /* ignore */ }
+    }
+  } catch { /* ignore */ }
+}
+function writeLog(kind, tag, message) {
+  try {
+    const file = logFilePath(kind);
     rotateIfNeeded(file);
     const line = `[${new Date().toISOString()}] [${tag}] ${typeof message === 'string' ? message : (message && (message.stack || message.message)) || String(message)}\n`;
     fs.appendFileSync(file, line, 'utf-8');
+    pruneLogs();
   } catch { /* ignore */ }
 }
-function logError(tag, err) { writeLog(ERROR_LOG, tag, err); }
-function logRenderer(tag, message) { writeLog(RENDERER_LOG, tag, message); }
+function logError(tag, err) { writeLog('error', tag, err); }
+function logRenderer(tag, message) { writeLog('renderer', tag, message); }
 
 process.on('uncaughtException', (err) => { logError('uncaughtException', err); });
 process.on('unhandledRejection', (err) => { logError('unhandledRejection', err); });
@@ -155,7 +178,36 @@ let clipboardTimer = null;
 let lastClipboardText = '';
 let clipboardHideTimer = null;
 const seenConsoleErrors = new Set();
+const SEEN_CONSOLE_ERRORS_MAX = 500;
 let backupTimer = null;
+let lastStatsKey = '';
+let reloadTimes = [];
+const RELOAD_WINDOW_MS = 60 * 1000; // 崩溃自动 reload 统计窗口
+const RELOAD_MAX = 3;               // 窗口内最多自动 reload 次数
+let snapshotPending = null;         // 等待渲染端逻辑备份快照的 pending resolver
+
+// ---------------------------------------------------------------------------
+// v8.9 安全：IPC 调用来源白名单
+//   mainWindow / clipboardWin 是后声明的模块级变量，包装函数只在调用时读取，
+//   因此 registerIpc() 中提前引用不会踩 TDZ。
+// ---------------------------------------------------------------------------
+function isTrustedWebContents(wc) {
+  if (!wc) return false;
+  try {
+    if (mainWindow && !mainWindow.isDestroyed() && wc === mainWindow.webContents) return true;
+    if (clipboardWin && !clipboardWin.isDestroyed() && wc === clipboardWin.webContents) return true;
+  } catch { /* ignore */ }
+  return false;
+}
+function handle(channel, fn) {
+  ipcMain.handle(channel, (event, ...args) => {
+    if (!isTrustedWebContents(event && event.sender)) {
+      logError('ipc-deny', channel);
+      throw new Error('forbidden');
+    }
+    return fn(event, ...args);
+  });
+}
 
 // ---------------------------------------------------------------------------
 // 窗口状态记忆（存到 plus 目录，避免污染用户数据目录）
@@ -244,54 +296,104 @@ function injectEnhance(win) {
 const BACKUP_ITEMS_DIR = ['IndexedDB', 'Local Storage'];
 const BACKUP_ITEMS_FILE = ['Preferences'];
 
+// v8.9：向渲染端请求逻辑备份快照（RecordDB 全 store + 自定义词库 + localStorage + 设置）
+//   - 主窗口不可用 / 页面加载中 / 已有等待中的快照时直接返回 null（走原目录副本兜底）
+//   - 最多等待 8 秒；超时或失败只记日志，绝不阻塞原备份流程
+const SNAPSHOT_TIMEOUT_MS = 8000;
+function requestRendererSnapshot() {
+  return new Promise((resolve) => {
+    if (snapshotPending) return resolve(null);
+    try {
+      if (!mainWindow || mainWindow.isDestroyed() || !mainWindow.webContents) return resolve(null);
+      if (mainWindow.webContents.isLoading()) return resolve(null);
+    } catch { return resolve(null); }
+    const pending = { resolve, timer: null };
+    snapshotPending = pending;
+    pending.timer = setTimeout(() => {
+      if (snapshotPending !== pending) return;
+      snapshotPending = null;
+      logError('backup-snapshot', 'timeout waiting renderer snapshot (8s)');
+      resolve(null);
+    }, SNAPSHOT_TIMEOUT_MS);
+    try {
+      mainWindow.webContents.send('backup:request');
+    } catch (e) {
+      if (snapshotPending === pending) {
+        snapshotPending = null;
+        clearTimeout(pending.timer);
+      }
+      logError('backup-snapshot', e);
+      resolve(null);
+    }
+  });
+}
+
 function runBackup(reason = 'auto') {
   return new Promise((resolve) => {
-    try {
-      const now = new Date();
-      const stamp = now.toISOString().replace(/[-:]/g, '').replace('T', '-').slice(0, 15); // YYYYMMDD-HHmmss
-      const dest = path.join(BACKUP_DIR, `backup-${stamp}`);
-      fs.mkdirSync(dest, { recursive: true });
-      const copied = [];
-      for (const name of BACKUP_ITEMS_DIR) {
-        const src = path.join(USER_DATA, name);
-        if (fs.existsSync(src)) {
-          try {
-            fs.cpSync(src, path.join(dest, name), { recursive: true, force: true, errorOnExist: false });
-            copied.push(name);
-          } catch (e) { logError('backup-copy-' + name, e); }
-        }
-      }
-      for (const name of BACKUP_ITEMS_FILE) {
-        const src = path.join(USER_DATA, name);
-        if (fs.existsSync(src)) {
-          try {
-            fs.copyFileSync(src, path.join(dest, name));
-            copied.push(name);
-          } catch (e) { logError('backup-copy-' + name, e); }
-        }
-      }
-      // 写一份说明，方便回滚
+    (async () => {
       try {
-        fs.writeFileSync(path.join(dest, 'BACKUP-README.txt'),
-          `Qwerty Learner Plus 自动备份\r\n时间: ${now.toLocaleString()}\r\n原因: ${reason}\r\n源目录: ${USER_DATA}\r\n备份内容: ${copied.join(', ')}\r\n恢复方法: 退出应用后，将本目录下的 IndexedDB / Local Storage / Preferences 覆盖回源目录即可。\r\n`,
-          'utf-8');
-      } catch { /* ignore */ }
-      // 保留最近 7 份
-      const dirs = fs.readdirSync(BACKUP_DIR)
-        .filter((n) => n.startsWith('backup-'))
-        .map((n) => ({ n, t: fs.statSync(path.join(BACKUP_DIR, n)).mtimeMs }))
-        .sort((a, b) => b.t - a.t);
-      for (const d of dirs.slice(7)) {
-        try { fs.rmSync(path.join(BACKUP_DIR, d.n), { recursive: true, force: true }); } catch (e) { logError('backup-prune', e); }
+        const now = new Date();
+        const stamp = now.toISOString().replace(/[-:]/g, '').replace('T', '-').slice(0, 15); // YYYYMMDD-HHmmss
+        const dest = path.join(BACKUP_DIR, `backup-${stamp}`);
+        fs.mkdirSync(dest, { recursive: true });
+        // v8.9：先写渲染端逻辑快照 data.json（8 秒超时；失败/超时不影响下面的目录副本兜底）
+        let snapshotBytes = 0;
+        try {
+          const snapshot = await requestRendererSnapshot();
+          if (snapshot != null) {
+            const text = typeof snapshot === 'string' ? snapshot : JSON.stringify(snapshot);
+            if (text && text.length > 0) {
+              if (text.length > 64 * 1024 * 1024) {
+                logError('backup-snapshot', `snapshot too large (${text.length} chars), skipped`);
+              } else {
+                fs.writeFileSync(path.join(dest, 'data.json'), text, 'utf-8');
+                snapshotBytes = Buffer.byteLength(text, 'utf-8');
+              }
+            }
+          }
+        } catch (e) { logError('backup-snapshot', e); }
+        const copied = [];
+        for (const name of BACKUP_ITEMS_DIR) {
+          const src = path.join(USER_DATA, name);
+          if (fs.existsSync(src)) {
+            try {
+              fs.cpSync(src, path.join(dest, name), { recursive: true, force: true, errorOnExist: false });
+              copied.push(name);
+            } catch (e) { logError('backup-copy-' + name, e); }
+          }
+        }
+        for (const name of BACKUP_ITEMS_FILE) {
+          const src = path.join(USER_DATA, name);
+          if (fs.existsSync(src)) {
+            try {
+              fs.copyFileSync(src, path.join(dest, name));
+              copied.push(name);
+            } catch (e) { logError('backup-copy-' + name, e); }
+          }
+        }
+        // 写一份说明，方便回滚
+        try {
+          fs.writeFileSync(path.join(dest, 'BACKUP-README.txt'),
+            `Qwerty Learner Plus 自动备份\r\n时间: ${now.toLocaleString()}\r\n原因: ${reason}\r\n源目录: ${USER_DATA}\r\n备份内容: ${copied.join(', ')}${snapshotBytes ? ' + data.json(逻辑快照)' : ''}\r\n逻辑快照: ${snapshotBytes ? `data.json（${snapshotBytes} B）：RecordDB 全 store + QwertyPlusDB.dicts + localStorage + 设置` : '本份备份未能获取（应用未就绪或超时），已由目录副本兜底'}\r\n恢复方法: 退出应用后，将本目录下的 IndexedDB / Local Storage / Preferences 覆盖回源目录即可。\r\n`,
+            'utf-8');
+        } catch { /* ignore */ }
+        // 保留最近 7 份
+        const dirs = fs.readdirSync(BACKUP_DIR)
+          .filter((n) => n.startsWith('backup-'))
+          .map((n) => ({ n, t: fs.statSync(path.join(BACKUP_DIR, n)).mtimeMs }))
+          .sort((a, b) => b.t - a.t);
+        for (const d of dirs.slice(7)) {
+          try { fs.rmSync(path.join(BACKUP_DIR, d.n), { recursive: true, force: true }); } catch (e) { logError('backup-prune', e); }
+        }
+        settings.lastBackupDate = now.toISOString().slice(0, 10);
+        saveSettings();
+        logRenderer('backup', `backup ok (${reason}) -> ${dest}, copied: ${copied.join(',') || 'nothing'}, snapshot: ${snapshotBytes ? snapshotBytes + 'B' : 'none'}`);
+        resolve({ ok: true, path: dest, copied, snapshot: snapshotBytes || 0 });
+      } catch (e) {
+        logError('backup', e);
+        resolve({ ok: false, error: String(e && e.message || e) });
       }
-      settings.lastBackupDate = now.toISOString().slice(0, 10);
-      saveSettings();
-      logRenderer('backup', `backup ok (${reason}) -> ${dest}, copied: ${copied.join(',') || 'nothing'}`);
-      resolve({ ok: true, path: dest, copied });
-    } catch (e) {
-      logError('backup', e);
-      resolve({ ok: false, error: String(e && e.message || e) });
-    }
+    })();
   });
 }
 function scheduleDailyBackup() {
@@ -421,6 +523,8 @@ function createClipboardWindow() {
     },
   });
   clipboardWin.loadFile(path.join(__dirname, 'enhance/clipboard.html'));
+  // v8.9：剪贴板小窗同样加导航/外链守卫
+  hardenWebContents(clipboardWin.webContents);
   clipboardWin.on('closed', () => { clipboardWin = null; });
   return clipboardWin;
 }
@@ -445,10 +549,12 @@ function showClipboardWord(word) {
     try { if (clipboardWin && !clipboardWin.isDestroyed()) clipboardWin.hide(); } catch { /* ignore */ }
   }, 25000);
 }
+// v8.9：剪贴板轮询按需启停（settings.clipboardWatch 为 true 时才创建定时器）
 function startClipboardWatch() {
+  if (!settings.clipboardWatch) return;
   if (clipboardTimer) return;
   clipboardTimer = setInterval(() => {
-    if (!settings.clipboardWatch) return;
+    if (!settings.clipboardWatch) { stopClipboardWatch(); return; }
     try {
       const text = (clipboard.readText() || '').trim();
       if (!text || text === lastClipboardText) return;
@@ -459,6 +565,15 @@ function startClipboardWatch() {
       showClipboardWord(text);
     } catch (e) { logError('clipboard-watch', e); }
   }, 1200);
+}
+function stopClipboardWatch() {
+  if (!clipboardTimer) return;
+  try { clearInterval(clipboardTimer); } catch { /* ignore */ }
+  clipboardTimer = null;
+}
+function syncClipboardWatch() {
+  if (settings.clipboardWatch) startClipboardWatch();
+  else stopClipboardWatch();
 }
 
 // ---------------------------------------------------------------------------
@@ -483,7 +598,19 @@ function registerAudioCache() {
           return new Response(fs.readFileSync(p), { status: 200, headers: { 'content-type': 'application/json; charset=utf-8' } });
         } catch (e) { logError('dict-override-protocol', e); return new Response('', { status: 500 }); }
       }
-      const url = decodeURIComponent(request.url.replace('qzcache://audio/', ''));
+      // v8.9 安全：音频缓存只允许有道 dictvoice 的 https 地址，其余（含解析失败）一律 403
+      let url = '';
+      try {
+        url = decodeURIComponent(request.url.replace('qzcache://audio/', ''));
+        const audioUrl = new URL(url);
+        if (audioUrl.protocol !== 'https:' || audioUrl.host !== 'dict.youdao.com' || audioUrl.pathname !== '/dictvoice') {
+          logError('pron-cache-deny', url);
+          return new Response('', { status: 403 });
+        }
+      } catch (e) {
+        logError('pron-cache-deny', `${url || request.url} (${(e && e.message) || e})`);
+        return new Response('', { status: 403 });
+      }
       const file = audioCachePath(url);
       try {
         if (fs.existsSync(file)) {
@@ -1189,6 +1316,49 @@ function freeCacheClear() {
 }
 
 // ---------------------------------------------------------------------------
+// v8.9 安全：导航 / 新窗口守卫（主窗口与剪贴板窗共用）
+//   will-navigate / will-redirect：仅允许 file:// 且真实路径位于 app.getAppPath() 内
+//   setWindowOpenHandler：仅 http:/https: 交给系统浏览器，其余协议只记日志
+// ---------------------------------------------------------------------------
+function hardenWebContents(wc) {
+  if (!wc) return;
+  const guard = (event, url) => {
+    const raw = String(url || '');
+    try {
+      const devUrl = process.env.VITE_DEV_SERVER_URL || '';
+      if (devUrl && raw.startsWith(devUrl)) return; // 开发模式放行 Vite 服务
+      const u = new URL(raw);
+      let allowed = false;
+      if (u.protocol === 'file:') {
+        const appPath = path.resolve(app.getAppPath());
+        const target = path.resolve(fileURLToPath(u));
+        const rel = path.relative(appPath, target);
+        allowed = rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel));
+      }
+      if (!allowed) {
+        event.preventDefault();
+        logError('navigation-deny', raw);
+      }
+    } catch (e) {
+      try { event.preventDefault(); } catch { /* ignore */ }
+      logError('navigation-deny', `${raw} (${(e && e.message) || e})`);
+    }
+  };
+  try { wc.on('will-navigate', guard); } catch (e) { logError('navigation-guard', e); }
+  try { wc.on('will-redirect', guard); } catch (e) { logError('navigation-guard', e); }
+  try {
+    wc.setWindowOpenHandler(({ url }) => {
+      try {
+        const proto = new URL(String(url)).protocol;
+        if (proto === 'http:' || proto === 'https:') shell.openExternal(url);
+        else logError('window-open-deny', String(url));
+      } catch (e) { logError('window-open-deny', `${url} (${(e && e.message) || e})`); }
+      return { action: 'deny' };
+    });
+  } catch (e) { logError('window-open-handler', e); }
+}
+
+// ---------------------------------------------------------------------------
 // 主窗口
 // ---------------------------------------------------------------------------
 function createWindow() {
@@ -1261,9 +1431,16 @@ function createWindow() {
   });
   mainWindow.webContents.on('render-process-gone', (_e, details) => {
     logError('render-process-gone', JSON.stringify(details));
-    if (details && details.reason !== 'clean-exit') {
-      try { mainWindow && mainWindow.reload(); } catch { /* ignore */ }
+    if (!details || details.reason === 'clean-exit') return;
+    // v8.9：自动 reload 限流（60 秒窗口内最多 3 次），超限只记日志不再 reload，避免崩溃风暴
+    const now = Date.now();
+    reloadTimes = reloadTimes.filter((t) => now - t < RELOAD_WINDOW_MS);
+    if (reloadTimes.length >= RELOAD_MAX) {
+      logError('render-process-gone', `reload suppressed: ${reloadTimes.length} crashes within ${RELOAD_WINDOW_MS / 1000}s`);
+      return;
     }
+    reloadTimes.push(now);
+    try { mainWindow && mainWindow.reload(); } catch { /* ignore */ }
   });
   mainWindow.webContents.on('console-message', (_e, a, b, c, d) => {
     // 兼容新老 Electron 事件签名：旧版 (event, level, message, line, sourceId)，新版 (event, details)
@@ -1282,6 +1459,11 @@ function createWindow() {
     if (level >= 2) {
       const key = message.slice(0, 120);
       if (seenConsoleErrors.has(key)) return;
+      // v8.9：Set 上限 500，超限时删最旧的一条，防止长时间运行内存增长
+      if (seenConsoleErrors.size >= SEEN_CONSOLE_ERRORS_MAX) {
+        const oldest = seenConsoleErrors.values().next().value;
+        if (oldest !== undefined) seenConsoleErrors.delete(oldest);
+      }
       seenConsoleErrors.add(key);
       logRenderer(level === 3 ? 'console-error' : 'console-warning', `${message} (${sourceId}:${line})`);
     }
@@ -1290,11 +1472,8 @@ function createWindow() {
     logError('preload-error', `${preloadPath} ${error && error.stack || error}`);
   });
 
-  // 外链用系统浏览器打开
-  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    try { shell.openExternal(url); } catch { /* ignore */ }
-    return { action: 'deny' };
-  });
+  // v8.9：外链/导航守卫（仅 http(s) 交给系统浏览器；页面内导航只允许本应用 file:// 路径）
+  hardenWebContents(mainWindow.webContents);
 
   // 窗口变化时持久化位置尺寸
   const save = () => saveWindowState(mainWindow);
@@ -1354,8 +1533,8 @@ function setAutoStart(on) {
 }
 
 function registerIpc() {
-  ipcMain.handle('app:getSettings', () => publicSettings());
-  ipcMain.handle('app:updateSettings', (_e, patch) => {
+  handle('app:getSettings', () => publicSettings());
+  handle('app:updateSettings', (_e, patch) => {
     if (patch && typeof patch === 'object') {
       const allowed = Object.keys(DEFAULT_SETTINGS);
       for (const k of Object.keys(patch)) {
@@ -1370,28 +1549,29 @@ function registerIpc() {
       if (typeof patch.miniMode === 'boolean') setMiniMode(patch.miniMode);
       if (typeof patch.autoStart === 'boolean') setAutoStart(patch.autoStart);
       if (typeof patch.shortcutToggle === 'string' || typeof patch.shortcutMini === 'string') registerShortcuts();
+      if (typeof patch.clipboardWatch === 'boolean') syncClipboardWatch();
       if (patch.pronCache !== undefined) { /* 拦截器读取 settings，实时生效 */ }
       sendEvent('settings', publicSettings());
       updateTrayMenu();
     }
     return publicSettings();
   });
-  ipcMain.handle('win:setTop', (_e, v) => { const r = setAlwaysOnTop(!!v); updateTrayMenu(); return r; });
-  ipcMain.handle('win:setMini', (_e, v) => { const r = setMiniMode(!!v); updateTrayMenu(); return r; });
-  ipcMain.handle('win:setOpacity', (_e, v) => {
+  handle('win:setTop', (_e, v) => { const r = setAlwaysOnTop(!!v); updateTrayMenu(); return r; });
+  handle('win:setMini', (_e, v) => { const r = setMiniMode(!!v); updateTrayMenu(); return r; });
+  handle('win:setOpacity', (_e, v) => {
     const val = Math.min(1, Math.max(0.3, Number(v) || 1));
     try { mainWindow && mainWindow.setOpacity(val); } catch (e) { logError('opacity', e); }
     settings.opacity = val; saveSettings(); return { ok: true, opacity: val };
   });
-  ipcMain.handle('win:setZoom', (_e, v) => {
+  handle('win:setZoom', (_e, v) => {
     const val = Math.min(1.6, Math.max(0.6, Number(v) || 1));
     try { mainWindow && mainWindow.webContents.setZoomFactor(val); } catch (e) { logError('zoom', e); }
     settings.zoom = val; saveSettings(); return { ok: true, zoom: val };
   });
-  ipcMain.handle('win:setAutoStart', (_e, v) => setAutoStart(!!v));
-  ipcMain.handle('win:setCloseToTray', (_e, v) => { settings.closeToTray = !!v; saveSettings(); return { ok: true, closeToTray: settings.closeToTray }; });
-  ipcMain.handle('win:setClipboardWatch', (_e, v) => { settings.clipboardWatch = !!v; saveSettings(); return { ok: true, clipboardWatch: settings.clipboardWatch }; });
-  ipcMain.handle('stats:update', (_e, stats) => {
+  handle('win:setAutoStart', (_e, v) => setAutoStart(!!v));
+  handle('win:setCloseToTray', (_e, v) => { settings.closeToTray = !!v; saveSettings(); return { ok: true, closeToTray: settings.closeToTray }; });
+  handle('win:setClipboardWatch', (_e, v) => { settings.clipboardWatch = !!v; saveSettings(); syncClipboardWatch(); return { ok: true, clipboardWatch: settings.clipboardWatch }; });
+  handle('stats:update', (_e, stats) => {
     if (!stats || typeof stats !== 'object') return { ok: false };
     const safe = {
       date: String(stats.date || ''),
@@ -1400,6 +1580,10 @@ function registerIpc() {
       streak: Number(stats.streak) || 0,
       ratio: Math.min(1, Math.max(0, Number(stats.ratio) || 0)),
     };
+    // v8.9 性能：渲染端每 60 秒上报一次，内容没变化就直接返回（不写盘 / 不重建托盘 / 不刷进度条）
+    const statsKey = JSON.stringify(safe);
+    if (statsKey === lastStatsKey) return { ok: true, unchanged: true };
+    lastStatsKey = statsKey;
     settings.todayStats = safe;
     saveSettings();
     // A9: 托盘 tooltip + 任务栏进度
@@ -1419,8 +1603,34 @@ function registerIpc() {
     }
     return { ok: true };
   });
-  ipcMain.handle('backup:now', () => runBackup('manual-panel'));
-  ipcMain.handle('app:openPath', (_e, which) => {
+  handle('backup:now', () => runBackup('manual-panel'));
+  // v8.9：渲染端逻辑快照回传（requestRendererSnapshot 的 pending resolver 在此保存/清理）
+  handle('backup:writeSnapshot', (_e, json) => {
+    try {
+      let text = null;
+      if (typeof json === 'string') text = json;
+      else if (json != null) text = JSON.stringify(json);
+      if (snapshotPending) {
+        const pending = snapshotPending;
+        snapshotPending = null;
+        clearTimeout(pending.timer);
+        pending.resolve(text);
+      } else {
+        logError('backup-snapshot', 'received snapshot without pending request');
+      }
+      return { ok: true, bytes: text ? Buffer.byteLength(text, 'utf-8') : 0 };
+    } catch (e) {
+      logError('backup-snapshot', e);
+      if (snapshotPending) {
+        const pending = snapshotPending;
+        snapshotPending = null;
+        clearTimeout(pending.timer);
+        pending.resolve(null);
+      }
+      return { ok: false, error: String(e && e.message || e) };
+    }
+  });
+  handle('app:openPath', (_e, which) => {
     const map = {
       backup: BACKUP_DIR, log: LOG_DIR, plus: PLUS_DIR, data: USER_DATA, cache: CACHE_DIR,
       dictupdate: UPDATE_DIR, exports: EXPORTS_DIR,
@@ -1430,24 +1640,24 @@ function registerIpc() {
     shell.openPath(p);
     return { ok: true, path: p };
   });
-  ipcMain.handle('app:relaunch', () => {
+  handle('app:relaunch', () => {
     try { isQuitting = true; app.relaunch(); app.exit(0); return { ok: true }; }
     catch (e) { return { ok: false, error: String(e.message || e) }; }
   });
-  ipcMain.handle('app:notify', (_e, title, body) => {
+  handle('app:notify', (_e, title, body) => {
     try {
       if (Notification.isSupported()) new Notification({ title: String(title || 'Qwerty Learner Plus'), body: String(body || ''), icon: appIconPath() }).show();
       return { ok: true };
     } catch (e) { logError('notify', e); return { ok: false, error: String(e.message || e) }; }
   });
-  ipcMain.handle('app:quit', () => { isQuitting = true; app.quit(); });
-  ipcMain.handle('clipboard:get', () => { try { return clipboard.readText(); } catch { return ''; } });
-  ipcMain.handle('clipboard:close', (e) => {
+  handle('app:quit', () => { isQuitting = true; app.quit(); });
+  handle('clipboard:get', () => { try { return clipboard.readText(); } catch { return ''; } });
+  handle('clipboard:close', (e) => {
     if (clipboardWin && !clipboardWin.isDestroyed() && e.sender === clipboardWin.webContents) clipboardWin.hide();
     return { ok: true };
   });
   // U4：CSV 快速导出（自动保存到 文档\QwertyLearnerPlus\exports，不再弹保存框）
-  ipcMain.handle('file:saveCSV', async (_e, defaultName, content) => {
+  handle('file:saveCSV', async (_e, defaultName, content) => {
     try {
       fs.mkdirSync(EXPORTS_DIR, { recursive: true });
       const safe = String(defaultName || 'qwerty-export.csv').replace(/[\\/:*?"<>|]/g, '_').slice(0, 120);
@@ -1458,11 +1668,11 @@ function registerIpc() {
       return { ok: true, path: filePath, dir: EXPORTS_DIR, autoSaved: true };
     } catch (e) { logError('save-csv', e); return { ok: false, error: String(e.message || e) }; }
   });
-  ipcMain.handle('file:openExports', () => {
+  handle('file:openExports', () => {
     try { fs.mkdirSync(EXPORTS_DIR, { recursive: true }); shell.openPath(EXPORTS_DIR); return { ok: true, path: EXPORTS_DIR }; }
     catch (e) { return { ok: false, error: String(e.message || e) }; }
   });
-  ipcMain.handle('file:exportJSON', async (_e, defaultName, content) => {
+  handle('file:exportJSON', async (_e, defaultName, content) => {
     try {
       const win = BrowserWindow.getFocusedWindow() || mainWindow;
       const { canceled, filePath } = await dialog.showSaveDialog(win, {
@@ -1476,17 +1686,17 @@ function registerIpc() {
     } catch (e) { logError('export-json', e); return { ok: false, error: String(e.message || e) }; }
   });
   // —— 免费释义 / 翻译（免 Key）——
-  ipcMain.handle('free:lookup', (_e, word, dictId) => lookupWordFree(word, dictId));
-  ipcMain.handle('free:translate', (_e, text) => translateSentenceFree(text));
-  ipcMain.handle('free:hover', (_e, word, dictId) => hoverTranslateFree(word, dictId));
-  ipcMain.handle('free:stats', () => freeCacheStats());
-  ipcMain.handle('free:clear', () => freeCacheClear());
-  ipcMain.handle('free:ecdict', () => ({
+  handle('free:lookup', (_e, word, dictId) => lookupWordFree(word, dictId));
+  handle('free:translate', (_e, text) => translateSentenceFree(text));
+  handle('free:hover', (_e, word, dictId) => hoverTranslateFree(word, dictId));
+  handle('free:stats', () => freeCacheStats());
+  handle('free:clear', () => freeCacheClear());
+  handle('free:ecdict', () => ({
     ok: false,
     disabled: true,
     error: 'ECDICT 离线词典（约 80MB）下载在当前版本未启用；免费在线释义已可用，不影响查词/翻译。',
   }));
-  ipcMain.handle('pron:stats', () => {
+  handle('pron:stats', () => {
     try {
       const files = fs.readdirSync(AUDIO_CACHE_DIR).filter((f) => f.endsWith('.audio'));
       let bytes = 0;
@@ -1494,7 +1704,7 @@ function registerIpc() {
       return { ok: true, count: files.length, bytes };
     } catch { return { ok: false }; }
   });
-  ipcMain.handle('pron:clear', () => {
+  handle('pron:clear', () => {
     try {
       if (precacheJob && !precacheJob.finished) return { ok: false, error: '请先暂停/取消预缓存任务再清理' };
       for (const f of fs.readdirSync(AUDIO_CACHE_DIR)) fs.rmSync(path.join(AUDIO_CACHE_DIR, f), { force: true });
@@ -1502,26 +1712,26 @@ function registerIpc() {
     } catch (e) { return { ok: false, error: String(e.message || e) }; }
   });
   // —— v5：词库管理 ——
-  ipcMain.handle('dicts:list', () => listBuiltinDicts());
+  handle('dicts:list', () => listBuiltinDicts());
   // —— v6：整本词库读取（记忆曲线）——
-  ipcMain.handle('dicts:read', (_e, file) => readDictContent(file));
-  ipcMain.handle('dicts:checkUpdates', () => checkDictUpdates());
-  ipcMain.handle('dicts:downloadUpdate', (_e, name, url) => downloadDictUpdate(name, url));
-  ipcMain.handle('dicts:override', (_e, name) => dictOverrideExists(name));
-  ipcMain.handle('dicts:updateInfo', () => dictUpdateInfo());
-  ipcMain.handle('dicts:openUpdateDir', () => { try { shell.openPath(UPDATE_DIR); return { ok: true, path: UPDATE_DIR }; } catch (e) { return { ok: false, error: String(e.message || e) }; } });
-  ipcMain.handle('dicts:clearUpdates', () => {
+  handle('dicts:read', (_e, file) => readDictContent(file));
+  handle('dicts:checkUpdates', () => checkDictUpdates());
+  handle('dicts:downloadUpdate', (_e, name, url) => downloadDictUpdate(name, url));
+  handle('dicts:override', (_e, name) => dictOverrideExists(name));
+  handle('dicts:updateInfo', () => dictUpdateInfo());
+  handle('dicts:openUpdateDir', () => { try { shell.openPath(UPDATE_DIR); return { ok: true, path: UPDATE_DIR }; } catch (e) { return { ok: false, error: String(e.message || e) }; } });
+  handle('dicts:clearUpdates', () => {
     try {
       for (const f of fs.readdirSync(UPDATE_DIR)) fs.rmSync(path.join(UPDATE_DIR, f), { force: true, recursive: true });
       return { ok: true };
     } catch (e) { return { ok: false, error: String(e.message || e) }; }
   });
   // —— v5：发音预缓存 ——
-  ipcMain.handle('pron:precacheStart', (_e, opts) => startPrecache(opts));
-  ipcMain.handle('pron:precachePause', () => precachePause());
-  ipcMain.handle('pron:precacheResume', () => precacheResume());
-  ipcMain.handle('pron:precacheCancel', () => precacheCancel());
-  ipcMain.handle('pron:precacheStatus', () => precacheSnapshot());
+  handle('pron:precacheStart', (_e, opts) => startPrecache(opts));
+  handle('pron:precachePause', () => precachePause());
+  handle('pron:precacheResume', () => precacheResume());
+  handle('pron:precacheCancel', () => precacheCancel());
+  handle('pron:precacheStatus', () => precacheSnapshot());
 }
 
 // ---------------------------------------------------------------------------
@@ -1548,7 +1758,12 @@ if (!gotLock) {
   app.on('will-quit', () => {
     isQuitting = true;
     try { globalShortcut.unregisterAll(); } catch { /* ignore */ }
-    if (clipboardTimer) clearInterval(clipboardTimer);
+    stopClipboardWatch();
+    if (clipboardHideTimer) { try { clearTimeout(clipboardHideTimer); } catch { /* ignore */ } clipboardHideTimer = null; }
+    if (snapshotPending) {
+      try { clearTimeout(snapshotPending.timer); } catch { /* ignore */ }
+      snapshotPending = null;
+    }
     if (backupTimer) clearInterval(backupTimer);
   });
 
@@ -1557,6 +1772,17 @@ if (!gotLock) {
     settings.miniMode = false; // 迷你模式不跨启动保持（窗口尺寸本身已记忆）
     startHidden = process.argv.includes('--hidden');
     Menu.setApplicationMenu(null);
+    // v8.9 安全：默认拒绝所有网页权限请求/权限检查。
+    // 例外：'clipboard-sanitized-write' —— Chromium 把 navigator.clipboard.writeText 路由到该权限，
+    //       全拒会让增强面板/剪贴板小窗的「复制」按钮失效；它不会弹窗、仅允许写入剪贴板，故单独放行。
+    //       桌面通知走主进程 Notification、剪贴板读取走主进程 clipboard，都不经过这里。
+    try {
+      const ALLOWED_PERMISSIONS = new Set(['clipboard-sanitized-write']);
+      session.defaultSession.setPermissionRequestHandler((_wc, permission, callback) => {
+        callback(ALLOWED_PERMISSIONS.has(permission));
+      });
+      session.defaultSession.setPermissionCheckHandler((_wc, permission) => ALLOWED_PERMISSIONS.has(permission));
+    } catch (e) { logError('permission-handler', e); }
     registerAudioCache();
     createWindow();
     createTray();

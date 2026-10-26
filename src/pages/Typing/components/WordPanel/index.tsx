@@ -15,8 +15,10 @@ import { useHotkeys } from 'react-hotkeys-hook'
 
 export default function WordPanel({
   onNeedNextWord,
+  onNoMoreWords,
 }: {
   onNeedNextWord?: (answered: Word) => Promise<WordWithIndex | null>
+  onNoMoreWords?: () => void
 }) {
   // eslint-disable-next-line  @typescript-eslint/no-non-null-assertion
   const { state, dispatch } = useContext(TypingContext)!
@@ -91,6 +93,9 @@ export default function WordPanel({
         reloadCurrentWordComponent()
         return
       }
+      // v8.9：词池真的没有了（全部学会且无到期词）时交给外层显示提示，不再进入空白完成态
+      onNoMoreWords?.()
+      return
     }
     if (!isLast) {
       if (isReviewMode) {
@@ -122,19 +127,33 @@ export default function WordPanel({
     updateReviewRecord,
     setReviewModeInfo,
     onNeedNextWord,
+    onNoMoreWords,
   ])
 
   const onSkipWord = useCallback(
-    (type: 'prev' | 'next') => {
+    async (type: 'prev' | 'next') => {
       if (type === 'prev') {
         dispatch({ type: TypingStateActionType.SKIP_2_WORD_INDEX, newIndex: prevIndex })
+        return
       }
-
-      if (type === 'next') {
-        dispatch({ type: TypingStateActionType.SKIP_2_WORD_INDEX, newIndex: nextIndex })
+      // v8.9：动态出词时「下一个」需要实时取词，不能只在已有词表里移动（末词会直接空白）
+      if (!isReviewMode && onNeedNextWord && currentWord) {
+        const next = await onNeedNextWord(currentWord)
+        if (next) {
+          dispatch({ type: TypingStateActionType.PUSH_WORD, payload: next })
+          dispatch({ type: TypingStateActionType.NEXT_WORD })
+          return
+        }
+        onNoMoreWords?.()
+        return
       }
+      dispatch({
+        type: TypingStateActionType.SKIP_2_WORD_INDEX,
+        newIndex: nextIndex,
+        payload: { finishIfLast: isReviewMode },
+      })
     },
-    [dispatch, prevIndex, nextIndex],
+    [dispatch, prevIndex, nextIndex, isReviewMode, onNeedNextWord, onNoMoreWords, currentWord],
   )
 
   useHotkeys(

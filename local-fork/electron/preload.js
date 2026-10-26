@@ -14,7 +14,7 @@ function onClipboardWord(cb) {
 }
 
 contextBridge.exposeInMainWorld('qwertyEnhance', {
-  version: '1.0.0-enhanced-v8.8',
+  version: '1.0.0-enhanced-v8.9',
   platform: process.platform,
   // —— 设置 ——
   getSettings: () => ipcRenderer.invoke('app:getSettings'),
@@ -30,6 +30,12 @@ contextBridge.exposeInMainWorld('qwertyEnhance', {
   setAutoStart: (v) => ipcRenderer.invoke('win:setAutoStart', v),
   setCloseToTray: (v) => ipcRenderer.invoke('win:setCloseToTray', v),
   backupNow: () => ipcRenderer.invoke('backup:now'),
+  // —— v8.9：逻辑备份快照（主进程备份时请求，渲染端收集数据后回传）——
+  onBackupRequest: (cb) => {
+    if (typeof cb !== 'function') return;
+    ipcRenderer.on('backup:request', () => { try { cb(); } catch { /* ignore */ } });
+  },
+  writeBackupSnapshot: (json) => ipcRenderer.invoke('backup:writeSnapshot', json),
   openPath: (which) => ipcRenderer.invoke('app:openPath', which),
   notify: (title, body) => ipcRenderer.invoke('app:notify', title, body),
   quit: () => ipcRenderer.invoke('app:quit'),

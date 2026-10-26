@@ -32,6 +32,8 @@ export const LEARNING_PATH: LearningLevel[] = [
 ]
 
 const wordCache = new Map<string, Word[]>()
+// v8.9：合并后的整级词表也缓存一份，避免每个新词都重新合并文件数组 + 去重
+const levelCache = new Map<string, Word[]>()
 const fileToDictId = new Map(dictionaryResources.map((r) => [String(r.url).split('/').pop() || '', r.id]))
 
 function normalizeWord(w: Word): Word {
@@ -54,6 +56,8 @@ export async function loadDictWords(file: string): Promise<Word[]> {
 }
 
 export async function loadLevelWords(level: LearningLevel): Promise<Word[]> {
+  const cachedLevel = levelCache.get(level.id)
+  if (cachedLevel) return cachedLevel
   const seen = new Set<string>()
   const out: Word[] = []
   for (const file of level.files) {
@@ -70,5 +74,6 @@ export async function loadLevelWords(level: LearningLevel): Promise<Word[]> {
       console.error('load level word list failed', file, e)
     }
   }
+  levelCache.set(level.id, out)
   return out
 }

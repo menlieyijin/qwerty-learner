@@ -1,6 +1,8 @@
 import { autoLevelInfoAtom, currentDictInfoAtom, customDictInfoAtom, learningModeAtom, reviewModeInfoAtom } from '@/store'
 import type { Word, WordWithIndex } from '@/typings/index'
 import { ensureMemoryMigrated, getMemoryRecords, normalizeWordName, pickDynamicWord } from '@/utils/memory'
+import { clearRefreshMarks } from '@/utils/refreshMarker'
+import { clearSessionRequeue } from '@/utils/sessionRequeue'
 import { wordListFetcher } from '@/utils/wordListFetcher'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -38,7 +40,11 @@ export function useWordList(): UseWordListResult {
   const recentRef = useRef<string[]>([])
   const manualWordsRef = useRef<Word[] | null>(null)
   const reviewWords = reviewRecord?.words
-  const customDictKey = customDict ? `${customDict.name}:${(customDict.words || []).length}` : ''
+  // v8.9：用内容指纹（名称+词数+首尾词）做依赖，同名词库替换词表后也能触发重载
+  const customWords = customDict?.words || []
+  const customDictKey = customDict
+    ? `${customDict.name}:${customWords.length}:${customWords[0]?.name || ''}:${customWords[customWords.length - 1]?.name || ''}`
+    : ''
 
   // v8.4：手动词库 / 自定义词库加载；自定义词库带 `custom:<name>` 命名空间，跨词库去重仍按单词
   const loadManualWords = useCallback(async (): Promise<Word[] | undefined> => {
@@ -55,6 +61,9 @@ export function useWordList(): UseWordListResult {
   useEffect(() => {
     let cancelled = false
     recentRef.current = []
+    // v8.9：切换词库/模式/新会话时清空会话级状态，避免错词队列和 refresh 标记跨词库串场
+    clearSessionRequeue()
+    clearRefreshMarks()
     if (isReviewMode) {
       setWords((reviewWords ?? []).map((w) => toIndexWord(w)))
       setIsLoading(false)
@@ -88,7 +97,8 @@ export function useWordList(): UseWordListResult {
         if (cancelled) return
         if (pick) {
           setWords([toIndexWord(pick.word, pick.dict, 0, pick.hint)])
-          setLevelInfo(pick.level)
+          // v8.9：错词重练（requeue）不带级别信息，不能让顶栏级别闪回「准备中」
+          if (pick.level) setLevelInfo(pick.level)
         } else {
           setWords([])
           setLevelInfo(null)
@@ -135,7 +145,7 @@ export function useWordList(): UseWordListResult {
           setLevelInfo(null)
           return null
         }
-        setLevelInfo(pick.level)
+        if (pick.level) setLevelInfo(pick.level)
         return toIndexWord(pick.word, pick.dict, 0, pick.hint)
       } catch (e) {
         console.error('next word failed', e)

@@ -78,8 +78,8 @@ export type TypingStateAction =
     }
   | { type: TypingStateActionType.LOOP_CURRENT_WORD }
   | { type: TypingStateActionType.FINISH_CHAPTER }
-  | { type: TypingStateActionType.SKIP_WORD }
-  | { type: TypingStateActionType.SKIP_2_WORD_INDEX; newIndex: number }
+  | { type: TypingStateActionType.SKIP_WORD; payload?: { finishIfLast?: boolean } }
+  | { type: TypingStateActionType.SKIP_2_WORD_INDEX; newIndex: number; payload?: { finishIfLast?: boolean } }
   | { type: TypingStateActionType.REPEAT_CHAPTER; shouldShuffle: boolean }
   | { type: TypingStateActionType.NEXT_CHAPTER }
   | { type: TypingStateActionType.TOGGLE_TRANS_VISIBLE }
@@ -161,8 +161,10 @@ export const typingReducer = (state: TypingState, action: TypingStateAction) => 
     case TypingStateActionType.SKIP_WORD: {
       const newIndex = state.chapterData.index + 1
       if (newIndex >= state.chapterData.words.length) {
+        // v8.9：动态词表只有 1 个词，末词 Skip 不再直接进入「完成」空白页；
+        // 非复习模式只暂停并保留当前词，复习模式才结束本轮（由调用方传 finishIfLast）
         state.isTyping = false
-        state.isFinished = true
+        if (action.payload?.finishIfLast) state.isFinished = true
       } else {
         state.chapterData.index = newIndex
       }
@@ -173,9 +175,12 @@ export const typingReducer = (state: TypingState, action: TypingStateAction) => 
       const newIndex = action.newIndex
       if (newIndex >= state.chapterData.words.length) {
         state.isTyping = false
-        state.isFinished = true
+        state.isShowSkip = false
+        if (action.payload?.finishIfLast) state.isFinished = true
+        else state.chapterData.index = Math.max(0, state.chapterData.words.length - 1)
+      } else {
+        state.chapterData.index = Math.max(0, newIndex)
       }
-      state.chapterData.index = newIndex
       break
     }
     case TypingStateActionType.REPEAT_CHAPTER: {
