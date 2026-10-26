@@ -2,14 +2,12 @@ import Loading from './components/Loading'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import './index.css'
 import { ErrorBook } from './pages/ErrorBook'
-import { FriendLinks } from './pages/FriendLinks'
-import MobilePage from './pages/Mobile'
 import TypingPage from './pages/Typing'
 import { isOpenDarkModeAtom } from '@/store'
 import { initTelemetry } from '@/utils/telemetry'
 import 'animate.css'
 import { useAtomValue } from 'jotai'
-import React, { Suspense, lazy, useEffect, useRef, useState } from 'react'
+import React, { Suspense, lazy, useEffect } from 'react'
 import 'react-app-polyfill/stable'
 import { createRoot } from 'react-dom/client'
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
@@ -30,55 +28,20 @@ function Root() {
     darkMode ? document.documentElement.classList.add('dark') : document.documentElement.classList.remove('dark')
   }, [darkMode])
 
-  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 600)
-  // L-02：记录上一次的断点状态，只有 mobile→desktop 跃迁才需要把路由复位到首页；
-  // 普通桌面窗口 resize（拖动边缘/最大化切换）绝不能改变用户当前所在路由。
-  const wasMobileRef = useRef(isMobile)
-
-  useEffect(() => {
-    const handleResize = () => {
-      const nextIsMobile = window.innerWidth <= 600
-      const wasMobile = wasMobileRef.current
-      wasMobileRef.current = nextIsMobile
-
-      if (wasMobile && !nextIsMobile) {
-        // v8.6 修复：官方原代码用 window.location.href = '/'，在 Electron file:// 下会解析成
-        // file:///D:/（盘符根目录），窗口直接白屏且 IndexedDB 被拒。改为 HashRouter 的 hash 导航。
-        // 仅在“从移动布局切回桌面布局”时复位，因为 /mobile 在桌面路由表里没有对应页面。
-        try {
-          if (window.location.hash && window.location.hash !== '#/' && window.location.hash !== '#') {
-            window.location.hash = '#/'
-          }
-        } catch {
-          /* ignore */
-        }
-      }
-      setIsMobile(nextIsMobile)
-    }
-
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
-
+  // v9.8（Batch5b）：删除 Mobile 营销落地页后不再有移动/桌面双路由，
+  // 窄窗口也渲染完整桌面应用；原先的 isMobile 状态与 resize 重定向逻辑一并移除，
+  // 因此“普通 resize 不得改变当前路由”的语义天然成立。
   return (
     <React.StrictMode>
       <HashRouter>
         <ErrorBoundary>
           <Suspense fallback={<Loading />}>
             <Routes>
-              {isMobile ? (
-                <Route path="/*" element={<Navigate to="/mobile" />} />
-              ) : (
-                <>
-                  <Route index element={<TypingPage />} />
-                  <Route path="/gallery" element={<GalleryPage />} />
-                  <Route path="/analysis" element={<AnalysisPage />} />
-                  <Route path="/error-book" element={<ErrorBook />} />
-                  <Route path="/friend-links" element={<FriendLinks />} />
-                  <Route path="/*" element={<Navigate to="/" />} />
-                </>
-              )}
-              <Route path="/mobile" element={<MobilePage />} />
+              <Route index element={<TypingPage />} />
+              <Route path="/gallery" element={<GalleryPage />} />
+              <Route path="/analysis" element={<AnalysisPage />} />
+              <Route path="/error-book" element={<ErrorBook />} />
+              <Route path="/*" element={<Navigate to="/" />} />
             </Routes>
           </Suspense>
         </ErrorBoundary>

@@ -9,29 +9,10 @@ import {
   randomConfigAtom,
   wordDictationConfigAtom,
 } from '@/store'
-import type { InfoPanelType } from '@/typings'
 import type { PronunciationType } from '@/typings'
 import { trackMixpanel } from '@/utils/telemetry'
 import { useAtomValue } from 'jotai'
 import { useCallback } from 'react'
-
-export type starAction = 'star' | 'dismiss'
-
-export function recordStarAction(action: starAction) {
-  const props = {
-    action,
-  }
-  trackMixpanel('star', props)
-}
-
-export type openInfoPanelLocation = 'footer' | 'resultScreen'
-export function recordOpenInfoPanelAction(type: InfoPanelType, location: openInfoPanelLocation) {
-  const props = {
-    type,
-    location,
-  }
-  trackMixpanel('openInfoPanel', props)
-}
 
 export type shareType = 'open' | 'download'
 export function recordShareAction(type: shareType) {
@@ -54,24 +35,6 @@ export function recordErrorBookAction(type: errorBookType) {
   }
 
   trackMixpanel('error-book', props)
-}
-
-export type donateCardInfo = {
-  type: 'donate' | 'dismiss'
-  chapterNumber: number
-  wordNumber: number
-  sumWrongCount: number
-  dayFromFirstWord: number
-  dayFromQwerty: number
-  amount: number
-}
-
-export function reportDonateCard(info: donateCardInfo) {
-  const props = {
-    ...info,
-  }
-
-  trackMixpanel('donate-card', props)
 }
 
 /**

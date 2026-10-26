@@ -6,7 +6,6 @@ import { correctSoundResources, keySoundResources, wrongSoundResources } from '@
 import type {
   CustomDict,
   Dictionary,
-  InfoPanelState,
   LoopWordTimesOption,
   PhoneticType,
   PronunciationType,
@@ -112,13 +111,6 @@ export const isShowSkipAtom = atom(false)
 
 export const isInDevModeAtom = atom(false)
 
-export const infoPanelStateAtom = atom<InfoPanelState>({
-  donate: false,
-  vsc: false,
-  community: false,
-  redBook: false,
-})
-
 export const wordDictationConfigAtom = atomForConfig('wordDictationConfig', {
   isOpen: false,
   type: 'hideAll' as WordDictationType,
@@ -126,9 +118,6 @@ export const wordDictationConfigAtom = atomForConfig('wordDictationConfig', {
 })
 
 export const dismissStartCardDateAtom = atomWithStorage<Date | null>(DISMISS_START_CARD_DATE_KEY, null)
-
-// Enhanced version promotion popup state
-export const hasSeenEnhancedPromotionAtom = atomWithStorage('hasSeenEnhancedPromotion', false)
 
 // for dev test
 //   dismissStartCardDateAtom = atom<Date | null>(new Date())

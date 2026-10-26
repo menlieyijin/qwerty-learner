@@ -10,7 +10,6 @@ import { useConfetti } from './hooks/useConfetti'
 import { useWordList } from './hooks/useWordList'
 import { TypingContext, TypingStateActionType, initialState, typingReducer } from './store'
 import type { TypingSettleFn } from './store'
-import { DonateCard } from '@/components/DonateCard'
 import Header from '@/components/Header'
 import Tooltip from '@/components/Tooltip'
 import { idDictionaryMap } from '@/resources/dictionary'
@@ -221,7 +220,6 @@ const App: React.FC = () => {
 
   return (
     <TypingContext.Provider value={{ state: state, dispatch, settleRef, skipLockRef }}>
-      {state.isFinished && isReviewMode && <DonateCard />}
       {state.isFinished && isReviewMode && <ResultScreen />}
       <Layout>
         <Header>

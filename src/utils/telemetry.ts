@@ -6,7 +6,7 @@
  * 时长等），没有开关也没有告知。
  *
  * 本模块的策略：
- * - 网页版（qwerty.kaiyi.cool）：保持原有行为（继续统计），不影响线上数据；
+ * - 网页版（官方站点）：保持原有行为（继续统计），不影响线上数据；
  * - 桌面 Electron（preload 已设 `window.__QZ_ELECTRON__`）/ UA 含 Electron / file:// 页面：
  *   **默认完全关闭**：不初始化 mixpanel、不调用 @vercel/analytics、不向 gtag 推事件。
  *   用户显式设置 `localStorage['qzTelemetryOptIn'] === '1'`（或在控制台 `qzTelemetry.optIn()`）才开启。

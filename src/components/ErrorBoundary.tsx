@@ -27,8 +27,6 @@ const CLEARABLE_STORAGE_KEYS = [
   'isTextSelectable',
   'isOpenDarkModeAtom',
   'dismissStartCardDate',
-  'donateDate',
-  'hasSeenEnhancedPromotion',
   'v7FontAdjusted',
 ]
 

@@ -1,5 +1,4 @@
 import react from '@vitejs/plugin-react'
-import { promises as fs } from 'fs'
 import { getLastCommit } from 'git-last-commit'
 import jotaiDebugLabel from 'jotai/babel/plugin-debug-label'
 import jotaiReactRefresh from 'jotai/babel/plugin-react-refresh'
@@ -21,11 +20,6 @@ export default defineConfig(async ({ mode }) => {
       Icons({
         compiler: 'jsx',
         jsx: 'react',
-        customCollections: {
-          'my-icons': {
-            xiaohongshu: () => fs.readFile('./src/assets/xiaohongshu.svg', 'utf-8'),
-          },
-        },
       }),
     ],
     build: {
