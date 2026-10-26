@@ -4,7 +4,7 @@ import { db } from './db'
 import { idDictionaryMap } from '@/resources/dictionary'
 import { LEARNING_PATH, loadDictWords, loadLevelWords } from './learningPath'
 import { clearMemoryCache, getMemoryCache, setMemoryCache } from './memoryCache'
-import { memoryKey, normalizeWordKeyWord, normalizeWordName } from './memoryKey'
+import { legacyMemoryKey, memoryKey, normalizeWordKeyWord, normalizeWordName } from './memoryKey'
 import {
   applyPendingResumeLapses,
   getLevelIndex,
@@ -14,6 +14,7 @@ import {
   getRefreshChance,
   getSuspendedKeys,
   loadAutoLevelState,
+  migrateAutoLevelStateKeys,
   resolveCurrentLevel,
 } from './autoLevel'
 import type { LevelProgress } from './autoLevel'
@@ -27,6 +28,11 @@ export const MEMORY_MIGRATED_KEY = 'memoryMigratedV1'
 export const MEMORY_FUTURE_DUE_FIXED_KEY = 'memoryFutureDueFixedV1'
 /** v9.5（DATA-003）：记忆记录 key 大小写拆分迁移的一次性标记 */
 export const MEMORY_KEY_CASE_MIGRATED_KEY = 'memoryKeyCaseV2'
+/**
+ * v9.6（Batch3 / DATA-003 收尾）：autoLevel 状态旧 key（trim+lower）迁移的一次性标记。
+ * 与 `memoryKeyCaseV2` **独立**——v9.5 老用户已有记录迁移标记，不能因为该标记短路而漏掉状态迁移。
+ */
+export const AUTO_LEVEL_STATE_KEYS_MIGRATED_KEY = 'autoLevelStateKeysV1'
 
 export type LearningMode = 'auto' | 'manual' | 'custom'
 
@@ -74,19 +80,102 @@ export function ensureMemoryMigrated(): Promise<void> {
 // ---------------------------------------------------------------------------
 
 /**
- * 一次性迁移：把 v9.4 及之前的「trim+lower」key 记录复制到「保留大小写」的新 key。
+ * v9.6（Batch3 / DATA-003 收尾）：根据记忆记录构建 autoLevel 状态「旧 key → 新 key」映射。
  *
+ * v9.4 及之前的 autoLevel 状态键（`qzAutoLevelState.skipped` / `suspended`）是 trim+lower 的
+ * memoryKey；v9.5 起新 key 保留大小写。记录里的 `word` 保留了词的原始大小写，是解析旧键归属的
+ * 唯一可靠依据（只有「含大写 / 内部空白」的词新旧 key 才不同）：
+ * - 只收集 `legacyMemoryKey !== memoryKey` 的词（小写词的旧键即新键，无需改名，也保证幂等）；
+ * - 「旧键已被某个词的规范记录占用」（存在 `rec.key === memoryKey(rec.dict, rec.word)` 的记录）时
+ *   **保守跳过改名**：这种键在 v9.5 之后可能正是某个小写词的新 key（recordSkip 写的就是新 key），
+ *   改名会把该词的 Skip 计数/挂起状态抢给大小写变体；
+ * - 同一旧键对应多个新 key（同词库同时存在 March / MARCH 这类极端变体）时取**字典序最小**者，
+ *   保证结果与记录遍历顺序无关、可复现，并 console.warn 提示歧义。
+ *
+ * 已知边界：只被 Skip 过、从未产生记忆记录的词没有 `word` 字段可依据，其旧键无法判定大小写归属
+ * （这类键在 v9.5 的新 key 体系下本来也匹配不到，迁移后维持原样，不会更差）。
+ */
+function buildAutoLevelKeyRenameMap(rows: IMemoryRecord[]): Map<string, string> {
+  const canonicalKeys = new Set<string>()
+  for (const rec of rows) {
+    if (!rec || !rec.dict || !rec.word || !rec.key) continue
+    if (rec.key === memoryKey(rec.dict, rec.word)) canonicalKeys.add(rec.key)
+  }
+  const renameMap = new Map<string, string>()
+  for (const rec of rows) {
+    if (!rec || !rec.dict || !rec.word) continue
+    const legacy = legacyMemoryKey(rec.dict, rec.word)
+    const next = memoryKey(rec.dict, rec.word)
+    if (legacy === next) continue
+    if (canonicalKeys.has(legacy)) continue
+    const prev = renameMap.get(legacy)
+    if (prev === undefined) {
+      renameMap.set(legacy, next)
+    } else if (prev !== next) {
+      const chosen = next < prev ? next : prev
+      renameMap.set(legacy, chosen)
+      console.warn(`[memory] autoLevel 旧 key 迁移存在歧义：${legacy} → ${prev} / ${next}，取字典序最小者 ${chosen}`)
+    }
+  }
+  return renameMap
+}
+
+/**
+ * v9.6（Batch3）：执行一次 autoLevel 状态旧 key 迁移（自带独立标记 `autoLevelStateKeysV1`）。
+ * 成功才写标记；失败只 console.warn，返回 false 让调用方保留重试机会（下次启动重跑）。
+ *
+ * @param rows 已读取的记忆记录（复用外层迁移的 toArray 结果，避免重复全表扫描）；缺省时自行读取
+ * @returns true=已迁移或无需迁移；false=失败
+ */
+async function migrateAutoLevelStateKeysOnce(rows?: IMemoryRecord[]): Promise<boolean> {
+  try {
+    if (localStorage.getItem(AUTO_LEVEL_STATE_KEYS_MIGRATED_KEY)) return true
+    const records = rows || (await db.memoryRecords.toArray())
+    const renameMap = buildAutoLevelKeyRenameMap(records)
+    const result = migrateAutoLevelStateKeys(renameMap)
+    if (!result.persisted) {
+      console.warn('[memory] autoLevel 旧 key 迁移未能写入 localStorage（下次启动重试）')
+      return false
+    }
+    if (result.changed) {
+      console.info(
+        `[memory] autoLevel 旧 key 迁移：skipped ${result.skippedMoved} / suspended ${result.suspendedMoved} / snapshot ${result.snapshotMoved}`,
+      )
+    }
+    localStorage.setItem(AUTO_LEVEL_STATE_KEYS_MIGRATED_KEY, String(Date.now()))
+    return true
+  } catch (e) {
+    console.warn('[memory] autoLevel 旧 key 迁移失败（下次启动重试）', e)
+    return false
+  }
+}
+
+/**
+ * 一次性迁移：把 v9.4 及之前的「trim+lower」key 记录复制到「保留大小写」的新 key，
+ * 并收尾迁移 autoLevel 状态里的旧 key（v9.6 / Batch3）。
+ *
+ * 记录迁移：
  * - 只复制、不删除旧记录（旧记录保留作兼容/回滚依据，读取侧 canonicalizeMemoryRecords 会去重）；
  * - 只处理 `key !== memoryKey(dict, word)` 的记录（即单词含大写/内部空白的历史记录）；
  * - 新 key 已存在同名记录时跳过，绝不覆盖；
  * - 成功才写 localStorage 标记 `memoryKeyCaseV2`，失败只记录日志、下次启动重试；
  * - 迁移后清 memoryCache，保证本次会话后续读取拿到的是一致视图。
  *
+ * v9.6 autoLevel 状态迁移：
+ * - 映射来自同一份记录（word 保留原始大小写），由 migrateAutoLevelStateKeys 同步改名；
+ * - 状态迁移失败时不写外层 `memoryKeyCaseV2` 标记 → 下次启动整体重试（记录复制幂等：
+ *   已存在的规范 key 会被 existingKeys 跳过，不会重复写入）；状态迁移自身的标记也只在成功后写；
+ * - v9.5 老用户已有 `memoryKeyCaseV2` 标记：这里先补跑状态迁移（独立标记 + 幂等），再返回 0。
+ *
  * @returns 复制的记录条数；-1 表示失败（未写标记，下次重试）
  */
 export async function migrateMemoryKeyCase(): Promise<number> {
   try {
-    if (localStorage.getItem(MEMORY_KEY_CASE_MIGRATED_KEY)) return 0
+    if (localStorage.getItem(MEMORY_KEY_CASE_MIGRATED_KEY)) {
+      // v9.6：v9.5 老用户的记录 key 迁移已完成，但 autoLevel 状态旧 key 可能还没迁移 → 独立补跑
+      await migrateAutoLevelStateKeysOnce()
+      return 0
+    }
     const rows = await db.memoryRecords.toArray()
     const existingKeys = new Set<string>()
     for (const rec of rows) if (rec && rec.key) existingKeys.add(rec.key)
@@ -101,6 +190,7 @@ export async function migrateMemoryKeyCase(): Promise<number> {
     }
     if (copies.length) await db.memoryRecords.bulkPut(copies)
     clearMemoryCache()
+    if (!(await migrateAutoLevelStateKeysOnce(rows))) return -1
     localStorage.setItem(MEMORY_KEY_CASE_MIGRATED_KEY, String(Date.now()))
     return copies.length
   } catch (e) {

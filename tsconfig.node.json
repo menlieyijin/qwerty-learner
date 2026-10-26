@@ -3,7 +3,13 @@
     "composite": true,
     "module": "ESNext",
     "moduleResolution": "Node",
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    // v9.6（dsh，tsconfig.node 收尾）：只编译 vite.config.ts 这个构建脚本工程，
+    // 但 include 之外会自动加载 node_modules/@types/**，其中 @types/react-router-dom(v5 类型) 与
+    // react-router(v6) 不匹配、jotai/babel/utils.d.ts 依赖未安装的 @babel/core 类型，
+    // 导致 `npx tsc -p tsconfig.node.json --noEmit` 出现 21 条全部来自 .d.ts 的错误。
+    // 这些库的类型不参与本项目产物，跳过声明文件检查是 TS 官方推荐做法（与根 tsconfig.json 一致）。
+    "skipLibCheck": true
   },
   "include": ["vite.config.ts"]
 }

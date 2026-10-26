@@ -908,7 +908,7 @@
               <button class="btn" id="btn-export-all">导出全量数据 JSON</button>
               <button class="btn" id="btn-import-all">导入全量数据…</button>
             </div>
-            <div class="muted" style="margin-top:8px">JSON 含：设置 + 记忆曲线/练习记录/章节记录 + 自定义词库 + localStorage。导入会先自动备份当前数据，再覆盖学习数据并重载。</div>
+            <div class="muted" style="margin-top:8px">JSON 含：设置 + 记忆曲线/练习记录/章节记录 + 自定义词库（QwertyPlusDB.dicts）+ localStorage（含「当前自定义词库」qzCustomDict、自动进阶状态等）。导入会先自动备份当前数据，再覆盖学习数据并重载。<br><b>跨设备恢复请用本页导出/导入</b>：官方「设置 → 数据 → 导出/导入数据库」只含 IndexedDB，不含 qzCustomDict 与外壳设置。</div>
           </div>
           <div class="sec">
             <h4>导出 CSV（快速保存，无需手选路径）</h4>
@@ -953,7 +953,7 @@
               <button class="btn primary" id="btn-backup">立即备份</button>
               <button class="btn ghost" id="btn-open-backup">打开备份目录</button>
             </div>
-            <div class="muted" style="margin-top:8px">自动备份每天一次（IndexedDB + Local Storage + Preferences），保留最近 7 份，位置：%APPDATA%\\qwerty-learner-plus\\backups。</div>
+            <div class="muted" style="margin-top:8px">自动备份每天一次（IndexedDB + Local Storage + Preferences），保留最近 7 份，位置：%APPDATA%\\qwerty-learner-plus\\backups。<br>自定义词库已包含（Local Storage 的 qzCustomDict + IndexedDB 的 QwertyPlusDB.dicts）；同机恢复用整目录副本，<b>跨设备恢复请用下面「导入全量数据」导入 data.json</b>。</div>
           </div>
         </div>
 
@@ -1595,21 +1595,40 @@
           });
         } finally { try { if (pdb) pdb.close(); } catch { /* ignore */ } }
       }
+      // v9.6（Batch3 / DATA-008）：localStorage 恢复要显式确认「当前自定义词库」qzCustomDict 是否落盘，
+      //   并把写入失败（常见：超出 localStorage 配额）暴露给用户，避免“导入成功但自定义词库/设置悄悄丢失”。
+      let lsFailed = [];
+      let customDictRestored = null;
       if (data.localStorage && typeof data.localStorage === 'object') {
         const skip = new Set(['reviewModeInfo']);
         for (const k of Object.keys(data.localStorage)) {
           const v = data.localStorage[k];
           if (skip.has(k) || typeof v !== 'string') continue;
-          try { localStorage.setItem(k, v); } catch { /* ignore */ }
+          try { localStorage.setItem(k, v); } catch { lsFailed.push(k); }
         }
+        try {
+          if (typeof data.localStorage.qzCustomDict === 'string') {
+            customDictRestored = localStorage.getItem('qzCustomDict') === data.localStorage.qzCustomDict;
+            if (!customDictRestored && lsFailed.indexOf('qzCustomDict') < 0) lsFailed.push('qzCustomDict');
+          }
+        } catch { customDictRestored = false; }
+      }
+      if (lsFailed.length) {
+        console.warn('[QZ] import localStorage failed keys:', lsFailed.join(','));
       }
       // v9.0：导入后清掉可能在进行的复习会话，避免重载后困在旧复习列表
       try { localStorage.removeItem('reviewModeInfo'); } catch { /* ignore */ }
       if (data.settings && typeof data.settings === 'object') {
         try { await api.updateSettings(data.settings); } catch { /* ignore */ }
       }
-      toast('导入完成，正在重载…');
-      setTimeout(() => { try { location.reload(); } catch { /* ignore */ } }, 700);
+      if (lsFailed.length) {
+        // 有失败项时延长展示时间（原 700ms 重载会让警告一闪而过）
+        toast('导入完成，但 ' + lsFailed.length + ' 项本地配置未写入（可能超出 localStorage 配额）：' + lsFailed.slice(0, 5).join('、') + (lsFailed.length > 5 ? ' …' : '') + '，6 秒后重载…', 6000);
+        setTimeout(() => { try { location.reload(); } catch { /* ignore */ } }, 6200);
+      } else {
+        toast('导入完成，正在重载…');
+        setTimeout(() => { try { location.reload(); } catch { /* ignore */ } }, 700);
+      }
     } catch (e) { toast('导入失败: ' + (e.message || e)); }
   });
 

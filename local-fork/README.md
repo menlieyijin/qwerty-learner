@@ -6,7 +6,7 @@ Qwerty Learner 本地魔改版的 Electron 外壳源码：主进程（托盘/快
 
 ## 目录
 
-- `package.json` — asar 根 package.json（`main: electron/main.js`，**版本号唯一来源**：`1.0.0-enhanced-v9.5`）
+- `package.json` — asar 根 package.json（`main: electron/main.js`，**版本号唯一来源**：`1.0.0-enhanced-v9.6`）
 - `electron/main.js` — 主进程（窗口/托盘/快捷键/单实例/备份/词库/发音缓存/免费接口/安全守卫等 IPC）
 - `electron/preload.js` — contextBridge 白名单 API（版本号通过 `app:version-sync` 同步 IPC 获取）
 - `electron/enhance/` — 注入的增强 UI（enhance.js/css、剪贴板查词窗、词库映射表）

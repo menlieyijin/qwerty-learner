@@ -1,4 +1,6 @@
-import { test, expect, Page } from '@playwright/test'
+import { dismissPromoIfPresent } from './utils'
+import type { Page } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
 const pressWord = async (page: Page, word: string) => {
   const letters = word.split('')
@@ -18,7 +20,8 @@ test.describe('Practice', () => {
   test.beforeEach(async ({ page }) => {
     test.slow()
     await page.goto('/')
-    await page.getByLabel('关闭提示').click()
+    // v9.6：StarCard 已从源码删除，本地构建里没有「关闭提示」，存在才点（见 ./utils）
+    await dismissPromoIfPresent(page)
   })
 
   test('Press any key to start', async ({ page }) => {

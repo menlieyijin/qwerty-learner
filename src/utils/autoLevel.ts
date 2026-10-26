@@ -360,6 +360,119 @@ export function patchState(patch: Partial<AutoLevelState>): AutoLevelState {
 }
 
 // ---------------------------------------------------------------------------
+// v9.6（Batch3 / DATA-003 收尾）：旧 key（trim+lower）状态键迁移
+// ---------------------------------------------------------------------------
+
+/**
+ * 旧 key 迁移结果（migrateAutoLevelStateKeys 返回）。
+ * - `changed`：本次是否真正改写了 localStorage（无变化/写失败均为 false）；
+ * - `persisted`：是否已落盘（无变化视为已落盘；写失败为 false，调用方应保留重试机会）；
+ * - `skippedMoved` / `suspendedMoved` / `snapshotMoved`：被改名的条目数
+ *   （写失败时表示「本应改名」的数量）。
+ */
+export type AutoLevelKeyMigrationResult = {
+  changed: boolean
+  persisted: boolean
+  skippedMoved: number
+  suspendedMoved: number
+  snapshotMoved: number
+}
+
+/** 把 Map / 普通对象形态的映射统一成只含「合法且非同值」条目的 Map（非法输入一律忽略） */
+function normalizeKeyRenameMap(
+  legacyToNewKeyMap: Map<string, string> | Record<string, string>,
+): Map<string, string> {
+  const map = new Map<string, string>()
+  if (!legacyToNewKeyMap || typeof legacyToNewKeyMap !== 'object') return map
+  const entries: Array<[string, string]> =
+    legacyToNewKeyMap instanceof Map
+      ? Array.from(legacyToNewKeyMap.entries())
+      : Object.keys(legacyToNewKeyMap).map((key) => [key, legacyToNewKeyMap[key]] as [string, string])
+  for (const [from, to] of entries) {
+    if (typeof from !== 'string' || !from) continue
+    if (typeof to !== 'string' || !to || to === from) continue
+    map.set(from, to)
+  }
+  return map
+}
+
+/**
+ * v9.6（Batch3 / DATA-003 收尾）：把 `qzAutoLevelState` 里旧 schema 的状态键
+ * （v9.4 及之前的 `trim + lower` memoryKey）改名成 v9.5 的新 key（保留大小写），
+ * 修复「March / march 混用时 Skip 计数与挂起状态对新 key 对不上」的遗留问题。
+ *
+ * 迁移范围（**同步**读-改-写，整份状态一次 setItem 原子落盘）：
+ * - `skipped`：旧 key → 新 key；同一词在新旧两套 key 下各有一份计数时**相加**——
+ *   v9.4 的历史计数与 v9.5 之后的计数属于同一个词，取 max 会丢历史；改名会删掉旧 key，
+ *   重复调用不会重复累加（不是复制）；
+ * - `suspended`：按映射改名并去重（旧 key 与新 key 同时挂起时只保留新 key）；
+ * - `suspendedSnapshot`：同步改名（v9.3.1 的外部恢复对账依赖它；只改 suspended 不改快照，
+ *   下次启动会把迁移过的挂起词误判成「被外部恢复」，进而误复位 lapses）。
+ *
+ * 幂等：无旧 key / 无变化时直接返回且不写盘；重复调用第二次返回 `changed=false`。
+ * 只改名、不新增挂起：合并后计数即使 >= AUTO_LEVEL_SUSPEND_THRESHOLD 也不在这里补挂起
+ * （迁移只负责「换 key」，保持用户当前可见的待攻克集合不变；下一次 Skip 仍按阈值正常挂起）。
+ * 本函数不加载词库、不 import db：映射由调用方（memory.ts 的 memoryKeyCaseV2 迁移）构建后传入。
+ *
+ * @param legacyToNewKeyMap 旧 key → 新 key 映射；同值条目会被忽略
+ */
+export function migrateAutoLevelStateKeys(
+  legacyToNewKeyMap: Map<string, string> | Record<string, string>,
+): AutoLevelKeyMigrationResult {
+  const renameMap = normalizeKeyRenameMap(legacyToNewKeyMap)
+  const result: AutoLevelKeyMigrationResult = {
+    changed: false,
+    persisted: true,
+    skippedMoved: 0,
+    suspendedMoved: 0,
+    snapshotMoved: 0,
+  }
+  if (renameMap.size === 0) return result
+
+  const state = loadAutoLevelState()
+
+  const skipped: Record<string, number> = {}
+  for (const key of Object.keys(state.skipped)) {
+    const count = sanitizeNonNegativeInt(state.skipped[key])
+    if (count <= 0) continue
+    const target = renameMap.get(key) || key
+    if (target !== key) result.skippedMoved += 1
+    skipped[target] = sanitizeNonNegativeInt(skipped[target]) + count
+  }
+
+  const renameKeys = (keys: string[]): { keys: string[]; moved: number } => {
+    const renamed: string[] = []
+    let moved = 0
+    for (const key of keys) {
+      const target = renameMap.get(key) || key
+      if (target !== key) moved += 1
+      if (renamed.indexOf(target) < 0) renamed.push(target)
+    }
+    return { keys: renamed, moved }
+  }
+
+  const suspended = renameKeys(state.suspended)
+  const snapshot = Array.isArray(state.suspendedSnapshot) ? renameKeys(state.suspendedSnapshot) : null
+
+  // 变化判定用序列化比较：改名/合并/去重任一发生即需写回
+  const skippedChanged = JSON.stringify(skipped) !== JSON.stringify(state.skipped)
+  const suspendedChanged = JSON.stringify(suspended.keys) !== JSON.stringify(state.suspended)
+  const snapshotChanged = snapshot
+    ? JSON.stringify(snapshot.keys) !== JSON.stringify(state.suspendedSnapshot)
+    : false
+  if (!skippedChanged && !suspendedChanged && !snapshotChanged) return result
+
+  result.suspendedMoved = suspended.moved
+  result.snapshotMoved = snapshot ? snapshot.moved : 0
+
+  const nextState: AutoLevelState = { ...state, skipped, suspended: suspended.keys }
+  if (snapshot) nextState.suspendedSnapshot = snapshot.keys
+  result.changed = saveAutoLevelState(nextState)
+  result.persisted = result.changed
+  return result
+}
+
+// ---------------------------------------------------------------------------
 // Skip / suspended
 // ---------------------------------------------------------------------------
 

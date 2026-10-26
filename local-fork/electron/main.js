@@ -405,9 +405,10 @@ function runBackup(reason = 'auto') {
           }
         }
         // 写一份说明，方便回滚（v9.4：不写绝对路径，避免日志/备份泄露本机目录结构）
+        // v9.6（Batch3 / DATA-008）：明确说明自定义词库 qzCustomDict 已包含在 Local Storage 与 data.json.localStorage 中
         try {
           fs.writeFileSync(path.join(dest, 'BACKUP-README.txt'),
-            `Qwerty Learner Plus 自动备份\r\n时间: ${now.toLocaleString()}\r\n原因: ${reason}\r\n源目录: Electron userData（%APPDATA%\\qwerty-learner）\r\n备份内容: ${copied.join(', ')}${snapshotBytes ? ' + data.json(逻辑快照)' : ''}\r\n逻辑快照: ${snapshotBytes ? `data.json（${snapshotBytes} B）：RecordDB 全 store + QwertyPlusDB.dicts + localStorage + 设置` : '本份备份未能获取（应用未就绪或超时），已由目录副本兜底'}\r\n恢复方法: 退出应用后，将本目录下的 IndexedDB / Local Storage / Preferences 覆盖回 userData 目录；或直接用应用内「数据 → 导入全量数据」导入本目录的 data.json。\r\n`,
+            `Qwerty Learner Plus 自动备份\r\n时间: ${now.toLocaleString()}\r\n原因: ${reason}\r\n源目录: Electron userData（%APPDATA%\\qwerty-learner）\r\n备份内容: ${copied.join(', ')}${snapshotBytes ? ' + data.json(逻辑快照)' : ''}\r\n逻辑快照: ${snapshotBytes ? `data.json（${snapshotBytes} B）：RecordDB 全 store + QwertyPlusDB.dicts + localStorage（含 qzCustomDict 自定义词库与自动进阶状态）+ 设置` : '本份备份未能获取（应用未就绪或超时），已由目录副本兜底'}\r\n自定义词库: 「当前自定义词库」存于 localStorage(qzCustomDict)，词库本体存于 IndexedDB(QwertyPlusDB.dicts)；两者均已包含在本备份的 Local Storage / IndexedDB 目录与 data.json 中。\r\n恢复方法: 同机恢复——退出应用后，将本目录下的 IndexedDB / Local Storage / Preferences 整目录覆盖回 userData 目录；跨设备恢复——直接用应用内「工具 → 数据 → 导入全量数据」导入本目录的 data.json（含 RecordDB、QwertyPlusDB 自定义词库、localStorage 与设置）。注意：官方设置里的「导出/导入数据库」只含 IndexedDB，不含 localStorage(qzCustomDict) 与外壳设置，跨设备请不要用它。\r\n`,
             'utf-8');
         } catch { /* ignore */ }
         // 保留最近 7 份
@@ -548,7 +549,9 @@ function createClipboardWindow() {
     alwaysOnTop: true,
     backgroundColor: '#111827',
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      // v9.6（Batch3，SHELL-002 收敛）：剪贴板小窗用专用最小 preload，只暴露查词/收词/关闭 3 个能力，
+      // 不再复用主窗口的 40+ 个高风险 IPC。
+      preload: path.join(__dirname, 'preload-clipboard.js'),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
@@ -1413,11 +1416,13 @@ function freeCacheClear() {
 //   实测 Electron 43 的 session.webRequest.onHeadersReceived 会命中 file:// 文档请求，
 //   因此在这里对「主文档 URL 精确匹配 app.asar/build/index.html」注入响应头；
 //   剪贴板小窗（clipboard.html 自带更严格的 meta CSP）、静态资源、开发服务器都不受影响。
+// v9.6（Batch3 收敛）：script-src 不再依赖 'unsafe-inline' —— 首个主文档请求时读取构建产物 index.html，
+//   按 HTML 解析规则（CRLF→LF）提取内联 <script> 计算 sha256，注入 `script-src 'self' 'sha256-...'`；
+//   读取/解析失败则回退到含 'unsafe-inline' 的旧策略（宁可宽松也不白屏）。
 //   注意：单例监听器——本文件不要重复注册 onHeadersReceived。
 // ---------------------------------------------------------------------------
-const MAIN_WINDOW_CSP = [
+const CSP_BASE_DIRECTIVES = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline'", // Vite 产物的 module chunk + index.html 内联初始化脚本
   "style-src 'self' 'unsafe-inline'",  // React/Tailwind 行内样式
   "img-src 'self' data: blob:",
   "font-src 'self' data:",
@@ -1430,7 +1435,42 @@ const MAIN_WINDOW_CSP = [
   "form-action 'none'",
   "frame-src 'none'",
   "frame-ancestors 'none'",
-].join('; ');
+];
+function buildMainWindowCsp(inlineScriptHashes) {
+  const scriptSrc = Array.isArray(inlineScriptHashes) && inlineScriptHashes.length
+    ? `script-src 'self' ${inlineScriptHashes.join(' ')}`
+    : "script-src 'self' 'unsafe-inline'"; // 兜底：解析失败时保持旧行为
+  return [scriptSrc, ...CSP_BASE_DIRECTIVES].join('; ');
+}
+// 缓存：html 路径 + mtime + size -> 内联脚本 hash 列表
+const cspInlineHashCache = new Map();
+function inlineScriptHashesFor(htmlPath) {
+  try {
+    const st = fs.statSync(htmlPath);
+    const key = `${htmlPath}|${st.mtimeMs}|${st.size}`;
+    const cached = cspInlineHashCache.get(key);
+    if (cached) return cached;
+    const html = fs.readFileSync(htmlPath, 'utf-8');
+    const hashes = [];
+    const re = /<script(?![^>]*\ssrc\s*=)([^>]*)>([\s\S]*?)<\/script>/gi;
+    let m;
+    while ((m = re.exec(html))) {
+      const type = ((/type\s*=\s*["']?([^"'\s>]+)/i.exec(m[1]) || [])[1] || '').toLowerCase();
+      // 只给会执行的 JS 内联脚本算 hash；JSON-LD 等数据块不执行，也不受 script-src 约束
+      if (type && !/^(?:text\/javascript|application\/javascript|module)$/.test(type)) continue;
+      const code = m[2].replace(/\r\n?/g, '\n'); // HTML 解析器把 CRLF/CR 规范化为 LF
+      if (!code.trim()) continue;
+      hashes.push(`'sha256-${crypto.createHash('sha256').update(code, 'utf-8').digest('base64')}'`);
+    }
+    cspInlineHashCache.set(key, hashes);
+    if (hashes.length) logRenderer('csp', `inline script hashes=${hashes.length}`);
+    else logRenderer('csp', 'no inline script found, fallback to unsafe-inline');
+    return hashes;
+  } catch (e) {
+    logError('csp-hash', e);
+    return null;
+  }
+}
 function installMainWindowCsp() {
   try {
     session.defaultSession.webRequest.onHeadersReceived({ urls: ['<all_urls>'] }, (details, callback) => {
@@ -1438,8 +1478,9 @@ function installMainWindowCsp() {
         const u = new URL(String(details.url || ''));
         // 只给生产主窗口文档加 CSP；开发服务器（VITE_DEV_SERVER_URL / HMR ws）不加，避免误伤
         if (u.protocol !== 'file:' || !/\/build\/index\.html$/.test(u.pathname)) return callback({});
+        const csp = buildMainWindowCsp(inlineScriptHashesFor(fileURLToPath(u)));
         const responseHeaders = { ...(details.responseHeaders || {}) };
-        responseHeaders['Content-Security-Policy'] = [MAIN_WINDOW_CSP];
+        responseHeaders['Content-Security-Policy'] = [csp];
         callback({ responseHeaders });
       } catch { callback({}); }
     });

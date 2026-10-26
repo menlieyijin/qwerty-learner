@@ -1,10 +1,12 @@
-import { test, expect, Page } from '@playwright/test'
+import { dismissPromoIfPresent } from './utils'
+import { expect, test } from '@playwright/test'
 
 test.describe('Practice List', () => {
   test.beforeEach(async ({ page }) => {
     test.slow()
     await page.goto('/')
-    await page.getByLabel('关闭提示').click()
+    // v9.6：StarCard 已从源码删除，本地构建里没有「关闭提示」，存在才点（见 ./utils）
+    await dismissPromoIfPresent(page)
     await page.waitForTimeout(1000)
 
     // should use testId

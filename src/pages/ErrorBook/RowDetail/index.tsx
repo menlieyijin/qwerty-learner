@@ -24,6 +24,54 @@ type RowDetailProps = {
   allRecords: groupedWordRecords[]
 }
 
+/**
+ * DATA-006：错题详情的统计口径（此前标签与数值错位）：
+ * - 平均用时 = 该词所有练习记录的 totalTime 平均值（单位：秒，保留 2 位小数）；无记录时该字段无意义，UI 隐藏；
+ * - 练习次数 = 该词产生的练习记录条数（每条记录 = 一次完整作答/一次错题回顾中的一次练习）；
+ * - 答对次数 = 其中 wrongCount === 0 的记录条数（该次练习零错键完成）；
+ * - 错键次数 = 所有记录 wrongCount 之和（按错键的次数，不是错词数、不是练习次数）。
+ * 旧实现把「练习次数」显示成 records.length + wrongCount（把错键次数当练习次数）、
+ * 把「正确次数」显示成 records.length（实际是练习次数）、「错误次数」用聚合 wrongCount 也没说清是错键次数。
+ */
+export type RowDetailData = {
+  hasRecords: boolean
+  /** 平均用时（秒，2 位小数字符串；无记录时为占位符，UI 会隐藏该字段） */
+  averageSeconds: string
+  /** 练习次数 = 记录条数 */
+  exerciseCount: number
+  /** 答对次数 = wrongCount === 0 的记录条数 */
+  correctCount: number
+  /** 错键次数 = 所有记录 wrongCount 之和 */
+  wrongKeyCount: number
+}
+
+type RowDetailRecordLike = {
+  totalTime?: number
+  wrongCount?: number
+}
+
+/** 容错：缺失/NaN/负数等脏数据一律按 0 计，避免统计里出现 NaN；同时保证“答对”判定与“错键次数”口径一致 */
+function toSafeCount(value: number | undefined): number {
+  const count = Number(value)
+  return Number.isFinite(count) && count > 0 ? count : 0
+}
+
+export function computeRowDetailStats(records: readonly RowDetailRecordLike[]): RowDetailData {
+  const exerciseCount = records.length
+  if (exerciseCount === 0) {
+    // 没有任何记录时平均值无意义 → averageSeconds 用占位符且 UI 不渲染「平均用时」标签
+    return { hasRecords: false, averageSeconds: '—', exerciseCount: 0, correctCount: 0, wrongKeyCount: 0 }
+  }
+
+  const totalTime = records.reduce((sum, record) => sum + (Number(record.totalTime) || 0), 0)
+  const averageSeconds = (totalTime / exerciseCount / 1000).toFixed(2)
+  const wrongKeyCounts = records.map((record) => toSafeCount(record.wrongCount))
+  const correctCount = wrongKeyCounts.filter((wrongCount) => wrongCount === 0).length
+  const wrongKeyCount = wrongKeyCounts.reduce((sum, wrongCount) => sum + wrongCount, 0)
+
+  return { hasRecords: true, averageSeconds, exerciseCount, correctCount, wrongKeyCount }
+}
+
 const RowDetail: React.FC<RowDetailProps> = ({ currentRowDetail, allRecords }) => {
   const setCurrentRowDetail = useSetAtom(currentRowDetailAtom)
 
@@ -31,17 +79,7 @@ const RowDetail: React.FC<RowDetailProps> = ({ currentRowDetail, allRecords }) =
   const { word, isLoading, hasError } = useGetWord(currentRowDetail.word, dictInfo, currentRowDetail.dict)
   const wordPronunciationIconRef = useRef<WordPronunciationIconRef>(null)
 
-  const rowDetailData: RowDetailData = useMemo(() => {
-    const time =
-      currentRowDetail.records.length > 0
-        ? currentRowDetail.records.reduce((acc, cur) => acc + cur.totalTime, 0) / currentRowDetail.records.length
-        : 0
-    const timeStr = (time / 1000).toFixed(2)
-    const correctCount = currentRowDetail.records.length
-    const wrongCount = currentRowDetail.wrongCount
-    const sumCount = correctCount + wrongCount
-    return { time: timeStr, sumCount, correctCount, wrongCount }
-  }, [currentRowDetail.records, currentRowDetail.wrongCount])
+  const rowDetailData = useMemo(() => computeRowDetailStats(currentRowDetail.records), [currentRowDetail.records])
 
   const onClose = useCallback(() => {
     setCurrentRowDetail(null)
@@ -96,12 +134,12 @@ const RowDetail: React.FC<RowDetailProps> = ({ currentRowDetail, allRecords }) =
         </div>
         <div className="item flex flex-col gap-4">
           <div className="flex gap-6">
-            <DataTag icon={ClockIcon} name="平均用时" data={rowDetailData.time} />
-            <DataTag icon={HashtagIcon} name="练习次数" data={rowDetailData.sumCount} />
+            {rowDetailData.hasRecords && <DataTag icon={ClockIcon} name="平均用时" data={`${rowDetailData.averageSeconds}s`} />}
+            <DataTag icon={HashtagIcon} name="练习次数" data={rowDetailData.exerciseCount} />
           </div>
           <div className="flex gap-6">
-            <DataTag icon={CheckCircle} name="正确次数" data={rowDetailData.correctCount} />
-            <DataTag icon={XCircle} name="错误次数" data={rowDetailData.wrongCount} />
+            <DataTag icon={CheckCircle} name="答对次数" data={rowDetailData.correctCount} />
+            <DataTag icon={XCircle} name="错键次数" data={rowDetailData.wrongKeyCount} />
           </div>
         </div>
         <RowPagination className="absolute bottom-6 mt-10" allRecords={allRecords} />
@@ -109,13 +147,6 @@ const RowDetail: React.FC<RowDetailProps> = ({ currentRowDetail, allRecords }) =
       <div className="absolute inset-0 z-0  cursor-pointer bg-transparent" onClick={onClose}></div>
     </div>
   )
-}
-
-type RowDetailData = {
-  time: string
-  sumCount: number
-  correctCount: number
-  wrongCount: number
 }
 
 export default RowDetail

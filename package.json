@@ -61,7 +61,8 @@
     "dev": "vite",
     "start": "vite",
     "build": "cross-env CI=false vite build --base=./",
-    "test": "echo \"No tests\"",
+    "test": "npm run typecheck && npm run lint:strict",
+    "test:quality": "tsc --noEmit -p tsconfig.json && eslint src --ext .ts,.tsx --max-warnings 0",
     "test:e2e": "playwright test",
     "test:local": "node scripts/dsh-smoke.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
@@ -72,6 +73,9 @@
     "prepare": "husky install"
   },
   "lint-staged": {
+    "src/**/*.{ts,tsx}": [
+      "eslint --max-warnings 0 --fix"
+    ],
     "src/**/*.{js,jsx,ts,tsx,json,css,scss,md}": [
       "prettier --write"
     ]
