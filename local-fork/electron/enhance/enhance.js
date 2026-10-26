@@ -41,7 +41,7 @@
   function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
 
   // v9.2：版本号单一来源——主进程在注入脚本前设置 window.__QZ_VERSION__（来自 package.json）
-  const APP_VERSION = (typeof window !== 'undefined' && window.__QZ_VERSION__) || '1.0.0-enhanced-v9.2';
+  const APP_VERSION = (typeof window !== 'undefined' && window.__QZ_VERSION__) || '1.0.0-enhanced-v9.3';
   const APP_VERSION_SHORT = APP_VERSION.replace('1.0.0-enhanced-', '');
 
   let settings = { version: APP_VERSION, dailyGoal: 30, theme: 'indigo', panelAppearance: 'auto', dictFavorites: [], dictRecent: {}, fontFamily: 'default', opacity: 1, zoom: 1, pomodoroFocus: 25, pomodoroBreak: 5, keySound: false, keySoundVolume: 0.25, clipboardWatch: false, onlineLookup: true, aiExperimental: false, pronCache: false, closeToTray: true, alwaysOnTop: false, miniMode: false, todayStats: {} };
@@ -402,12 +402,29 @@
     }
     stats.heatDays = heatDays;
     stats.trend = trend;
+    // v9.3：自动进阶状态（由页面 localStorage 持久化，数据页只读展示）
+    try {
+      const st = JSON.parse(localStorage.getItem('qzAutoLevelState') || 'null') || {};
+      const c = st.cached || {};
+      stats.autoLevel = {
+        levelId: String(st.levelId || ''),
+        name: String(c.name || ''),
+        total: Number(c.total) || 0,
+        seen: Number(c.seen) || 0,
+        mastered: Number(c.mastered) || 0,
+        suspended: Number(c.suspendedCount) || 0,
+        due: dueNowList.length,
+        newRatio: Number.isFinite(Number(c.newRatio)) ? Number(c.newRatio) : null,
+        updatedAt: Number(c.updatedAt) || 0,
+      };
+    } catch { stats.autoLevel = null; }
+    stats.at = Date.now();
     return stats;
   }
 
   async function pushStats() {
     try {
-      const s = appStats && appStats.today === TODAY() ? appStats : await collectStats();
+      const s = appStats && appStats.today === TODAY() && Date.now() - (appStats.at || 0) < 30000 ? appStats : await collectStats();
       appStats = s;
       api.sendStats({ date: s.today, words: s.words, goal: s.goal, streak: s.streak, ratio: s.ratio });
       const chip = shadow.getElementById('qz-chip-text');
@@ -858,6 +875,21 @@
             <div class="muted" style="margin-top:6px" id="rp-shadow">影子调度：尚未记录（自适应算法并行计算中，暂不启用）</div>
           </div>
           <div class="sec">
+            <h4>自动进阶（v9.3）</h4>
+            <div class="grid4">
+              <div class="stat"><div class="n" id="al-level">-</div><div class="k">当前级别</div></div>
+              <div class="stat"><div class="n" id="al-mastered">0</div><div class="k">已掌握</div></div>
+              <div class="stat"><div class="n" id="al-seen">0</div><div class="k">已见</div></div>
+              <div class="stat"><div class="n" id="al-suspended">0</div><div class="k">待攻克</div></div>
+            </div>
+            <div class="muted" id="al-detail" style="margin-top:10px">-</div>
+            <div class="btns" style="margin-top:8px">
+              <button class="btn ghost" id="btn-auto-reeval">重新评估级别</button>
+              <button class="btn ghost" id="btn-auto-resume">恢复全部待攻克</button>
+            </div>
+            <div class="muted" style="margin-top:8px">升级条件：本级已见 100%（待攻克除外）+ 掌握 ≥90%；Skip ≥3 次的词进入「待攻克」，不阻塞升级。重新评估是唯一允许级别回退的入口。</div>
+          </div>
+          <div class="sec">
             <h4>到期复习（v9.0）</h4>
             <div class="muted" id="due-summary">已到期 0 词 · 未来 7 天 -</div>
             <div id="due-bars" style="display:flex;gap:6px;align-items:flex-end;height:74px;margin-top:10px"></div>
@@ -1132,6 +1164,14 @@
     if (!panelOpen) openPanel(tab || 'general');
     else if (tab) switchTab(tab);
   });
+  // v9.3：自动进阶升级事件（页面侧 dispatch）→ 轻提示 + 数据页刷新
+  window.addEventListener('qz-auto-level-up', (e) => {
+    const detail = e && e.detail;
+    if (detail && detail.name) {
+      toast(`自动进阶：升级到「${detail.name}」`, 4200);
+      if (panelOpen) refreshStatsUI();
+    }
+  });
   $('#qz-close').addEventListener('click', closePanel);
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && panelOpen) { closePanel(); e.stopPropagation(); }
@@ -1262,6 +1302,30 @@
 
   // ---------------------------------------------------------------- v9.0 到期复习
   let dueSelectedDay = '';
+  function renderAutoLevel(s) {
+    const al = s && s.autoLevel;
+    if (!$('#al-level')) return;
+    if (!al || !al.levelId) {
+      $('#al-level').textContent = '-';
+      $('#al-mastered').textContent = '0';
+      $('#al-seen').textContent = '0';
+      $('#al-suspended').textContent = '0';
+      $('#al-detail').textContent = '尚未初始化（开始自动进阶练习后生成；也可点「重新评估级别」）';
+      return;
+    }
+    const effective = Math.max(1, (Number(al.total) || 0) - (Number(al.suspended) || 0));
+    const ratio = Math.round(((Number(al.mastered) || 0) / effective) * 100);
+    const debt = Number(al.due) || 0;
+    $('#al-level').textContent = al.name || al.levelId;
+    $('#al-mastered').textContent = fmtNum(al.mastered || 0);
+    $('#al-seen').textContent = fmtNum(al.seen || 0);
+    $('#al-suspended').textContent = fmtNum(al.suspended || 0);
+    $('#al-detail').textContent =
+      `有效词 ${effective} · 已见 ${fmtNum(al.seen || 0)} · 掌握 ${fmtNum(al.mastered || 0)}（${ratio}%）` +
+      ` · 复习债 ${fmtNum(debt)} 词（按每天 100 词约 ${debt > 0 ? Math.ceil(debt / 100) : 0} 天）` +
+      ` · 当前新词比例 ${al.newRatio == null ? '-' : Math.round(Number(al.newRatio) * 100) + '%'}` +
+      (al.updatedAt ? ` · 更新于 ${new Date(al.updatedAt).toLocaleTimeString()}` : '');
+  }
   function renderDueList(dueList) {
     const box = $('#due-list');
     if (!box) return;
@@ -1394,6 +1458,9 @@
         : '影子调度：尚未记录（自适应算法并行计算中，暂不启用）';
     }
     renderDueReview(mem);
+    // v9.3：累计口径与开始页统一为 memoryRecords；自动进阶卡片
+    if ($('#st-total')) $('#st-total').textContent = fmtNum(mem.learned || 0);
+    renderAutoLevel(s);
   }
   async function refreshStatsUI() {
     try {
@@ -1414,8 +1481,9 @@
 
   // v9.0 到期复习：从 appStats.memory.dueList 取到期词，写 localStorage 桥接后回到练习页重载
   $('#btn-due-refresh').addEventListener('click', async () => { dueSelectedDay = ''; await refreshStatsUI(); toast('到期队列已刷新'); });
-  $('#btn-due-start').addEventListener('click', () => {
+  $('#btn-due-start').addEventListener('click', async () => {
     try {
+      await refreshStatsUI();
       const mem = appStats && appStats.memory;
       const list = (mem && mem.dueList) || [];
       if (!list.length) return toast('暂无到期词');
@@ -1432,6 +1500,29 @@
       try { location.hash = '#/'; } catch { /* ignore */ }
       setTimeout(() => { try { location.reload(); } catch { /* ignore */ } }, 350);
     } catch (e) { toast('开始复习失败: ' + (e.message || e)); }
+  });
+
+  // v9.3 自动进阶：重新评估（唯一允许回退）/ 恢复全部待攻克
+  $('#btn-auto-reeval').addEventListener('click', () => {
+    try {
+      if (!window.confirm('重新评估会按当前学习记录重新定位级别（可能回退），确定继续？')) return;
+      localStorage.setItem('qzReevaluateLevel', '1');
+      toast('正在重新评估级别…', 2400);
+      setTimeout(() => { try { location.reload(); } catch { /* ignore */ } }, 300);
+    } catch (e) { toast('重新评估失败: ' + (e.message || e)); }
+  });
+  $('#btn-auto-resume').addEventListener('click', () => {
+    try {
+      const st = JSON.parse(localStorage.getItem('qzAutoLevelState') || 'null') || {};
+      const n = Array.isArray(st.suspended) ? st.suspended.length : 0;
+      if (!n) return toast('暂无待攻克词');
+      if (!window.confirm(`恢复 ${n} 个待攻克词并清空 Skip 计数？`)) return;
+      st.suspended = [];
+      st.skipped = {};
+      localStorage.setItem('qzAutoLevelState', JSON.stringify(st));
+      toast('已恢复，正在重载…', 2400);
+      setTimeout(() => { try { location.reload(); } catch { /* ignore */ } }, 400);
+    } catch (e) { toast('恢复失败: ' + (e.message || e)); }
   });
 
   // v9.0 全量数据导出 / 导入
@@ -1565,7 +1656,7 @@
   });
   $('#btn-wb-export').addEventListener('click', async () => {
     try {
-      const s = appStats && appStats.today === TODAY() ? appStats : await collectStats();
+      const s = appStats && appStats.today === TODAY() && Date.now() - (appStats.at || 0) < 30000 ? appStats : await collectStats();
       if (!s || !s.wrongWords.length) return toast('没有错词数据可导出');
       const rows = s.wrongWords.map((w) => [w.word, w.wrongCount, w.dict, tsText(w.timeStamp)]);
       const csv = toCSV(['单词', '错误次数', '词库', '最后练习时间'], rows);

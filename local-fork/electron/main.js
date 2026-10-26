@@ -1,6 +1,6 @@
 // ============================================================================
 // Qwerty Learner Plus — Electron 主进程（增强版壳）
-// 版本: 1.0.0-enhanced-v9.2
+// 版本: 1.0.0-enhanced-v9.3
 // 说明: A 层外壳增强（置顶/快捷键/迷你模式/托盘/自启/透明度缩放/自动备份/
 //       错误日志/托盘进度）+ B 层桌面增强（AI/剪贴板/发音缓存等 IPC 支撑）。
 //       所有私有数据（设置/日志/备份/缓存）写入 %APPDATA%\qwerty-learner-plus，
@@ -39,7 +39,7 @@ protocol.registerSchemesAsPrivileged([
 // 路径与设置
 // ---------------------------------------------------------------------------
 // v9.2：版本号单一来源——package.json（构建脚本只需改这里）
-let APP_VERSION = '1.0.0-enhanced-v9.2';
+let APP_VERSION = '1.0.0-enhanced-v9.3';
 try {
   const pkg = require(path.join(__dirname, '..', 'package.json'));
   if (pkg && pkg.version) APP_VERSION = String(pkg.version);

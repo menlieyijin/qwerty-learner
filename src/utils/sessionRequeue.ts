@@ -70,6 +70,13 @@ export function getSessionRequeueCount(): number {
   return queue.length
 }
 
+/** 删除某词时把它从会话重练队列中移除（避免删完 30 分钟内又被拉回） */
+export function removeFromRequeue(dict: string, word: string): void {
+  const key = memoryKey(dict, word)
+  queue = queue.filter((item) => item.key !== key)
+  sessionCounts.delete(key)
+}
+
 /** 清空队列与计数（换词库/换模式/新会话时调用）。 */
 export function clearSessionRequeue(): void {
   queue = []

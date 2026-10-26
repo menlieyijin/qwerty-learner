@@ -6,8 +6,10 @@ import Phonetic from './components/Phonetic'
 import Translation from './components/Translation'
 import WordComponent from './components/Word'
 import { usePrefetchPronunciationSound } from '@/hooks/usePronunciation'
-import { isReviewModeAtom, isShowPrevAndNextWordAtom, loopWordConfigAtom, phoneticConfigAtom, reviewModeInfoAtom } from '@/store'
+import { isReviewModeAtom, isShowPrevAndNextWordAtom, loopWordConfigAtom, phoneticConfigAtom, reviewModeInfoAtom, currentDictIdAtom } from '@/store'
 import type { Word, WordWithIndex } from '@/typings'
+import { recordSkip } from '@/utils/autoLevel'
+import { deferMemoryDue } from '@/utils/db'
 import { getLearningSummary } from '@/utils/memory'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
@@ -17,7 +19,7 @@ export default function WordPanel({
   onNeedNextWord,
   onNoMoreWords,
 }: {
-  onNeedNextWord?: (answered: Word) => Promise<WordWithIndex | null>
+  onNeedNextWord?: (answered?: Word) => Promise<WordWithIndex | null>
   onNoMoreWords?: () => void
 }) {
   // eslint-disable-next-line  @typescript-eslint/no-non-null-assertion
@@ -34,6 +36,7 @@ export default function WordPanel({
 
   const setReviewModeInfo = useSetAtom(reviewModeInfoAtom)
   const isReviewMode = useAtomValue(isReviewModeAtom)
+  const currentDictId = useAtomValue(currentDictIdAtom)
 
   useEffect(() => {
     // v8.7：只在开始/暂停页需要概览，避免每换一个词就全表扫描 memoryRecords
@@ -137,8 +140,16 @@ export default function WordPanel({
         return
       }
       // v8.9：动态出词时「下一个」需要实时取词，不能只在已有词表里移动（末词会直接空白）
-      if (!isReviewMode && onNeedNextWord && currentWord) {
-        const next = await onNeedNextWord(currentWord)
+      if (currentWord) {
+        // v9.3：跳过必须落状态（skipCount/suspended），否则该词永远 unseen、级别卡死
+        const dict = currentWord.dict || currentDictId
+        try { recordSkip(dict, currentWord.name) } catch { /* ignore */ }
+        if (isReviewMode) {
+          try { await deferMemoryDue(dict, currentWord.name, 1) } catch { /* ignore */ }
+        }
+      }
+      if (!isReviewMode && onNeedNextWord) {
+        const next = await onNeedNextWord()
         if (next) {
           dispatch({ type: TypingStateActionType.PUSH_WORD, payload: next })
           dispatch({ type: TypingStateActionType.NEXT_WORD })
@@ -153,7 +164,7 @@ export default function WordPanel({
         payload: { finishIfLast: isReviewMode },
       })
     },
-    [dispatch, prevIndex, nextIndex, isReviewMode, onNeedNextWord, onNoMoreWords, currentWord],
+    [dispatch, prevIndex, nextIndex, isReviewMode, onNeedNextWord, onNoMoreWords, currentWord, currentDictId],
   )
 
   useHotkeys(

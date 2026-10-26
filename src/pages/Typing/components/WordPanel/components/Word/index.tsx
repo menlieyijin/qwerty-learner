@@ -300,6 +300,8 @@ export default function WordComponent({ word, onFinish }: { word: Word; onFinish
         wrongCount: wordState.wrongCount,
         letterTimeArray: wordState.letterTimeArray,
         letterMistake: wordState.letterMistake,
+        // v9.3：显式传递本次作答是否为回顾/重练，避免全局 refresh 标记残留
+        isRefresh: !!word.refresh,
       }).then(() => {
         onFinish()
       })

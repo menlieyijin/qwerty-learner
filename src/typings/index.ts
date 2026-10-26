@@ -29,6 +29,8 @@ export type Word = {
   dict?: string
   /** v8 出词提示：retry=错词当场重练，review=随机回顾 */
   hint?: 'retry' | 'review'
+  /** v9.3：本次作答是否为随机回顾/错词重练（显式传递，替代全局 refresh 标记） */
+  refresh?: boolean
 }
 
 export type WordWithIndex = Word & {

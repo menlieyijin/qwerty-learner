@@ -70,7 +70,12 @@ export const errorColumns = (onDelete: (word: string) => Promise<void>): ColumnD
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger>
-              <DeleteIcon className="cursor-pointer" onClick={() => onDelete(row.original.word)} />
+              <DeleteIcon
+                className="cursor-pointer"
+                onClick={() => {
+                  if (window.confirm(`删除「${row.original.word}」的练习记录与记忆曲线记录？删除后复习进度会丢失。`)) onDelete(row.original.word)
+                }}
+              />
             </TooltipTrigger>
             <TooltipContent>
               <p>Delete Records</p>

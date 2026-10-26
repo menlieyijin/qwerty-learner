@@ -1,7 +1,7 @@
 import { autoLevelInfoAtom, currentDictInfoAtom, customDictInfoAtom, learningModeAtom, reviewModeInfoAtom } from '@/store'
 import type { Word, WordWithIndex } from '@/typings/index'
+import { reevaluateLevel, resolveCurrentLevel } from '@/utils/autoLevel'
 import { ensureMemoryMigrated, getMemoryRecords, normalizeWordName, pickDynamicWord } from '@/utils/memory'
-import { clearRefreshMarks } from '@/utils/refreshMarker'
 import { clearSessionRequeue } from '@/utils/sessionRequeue'
 import { wordListFetcher } from '@/utils/wordListFetcher'
 import { useAtomValue, useSetAtom } from 'jotai'
@@ -14,12 +14,19 @@ export type UseWordListResult = {
   nextWord: (answered?: Word) => Promise<WordWithIndex | null>
 }
 
-function toIndexWord(word: Word, dict?: string, index = 0, hint?: Word['hint']): WordWithIndex {
+function toIndexWord(word: Word, dict?: string, index = 0, hint?: Word['hint'], refresh?: boolean): WordWithIndex {
   let trans: string[]
   if (Array.isArray(word.trans)) trans = word.trans.filter((item) => typeof item === 'string')
   else if (word.trans == null) trans = []
   else trans = [String(word.trans)]
-  return { ...word, trans, dict: dict || word.dict, index, ...(hint ? { hint } : {}) }
+  return {
+    ...word,
+    trans,
+    dict: dict || word.dict,
+    index,
+    ...(hint ? { hint } : {}),
+    ...(refresh ? { refresh: true } : {}),
+  }
 }
 
 /**
@@ -61,9 +68,8 @@ export function useWordList(): UseWordListResult {
   useEffect(() => {
     let cancelled = false
     recentRef.current = []
-    // v8.9：切换词库/模式/新会话时清空会话级状态，避免错词队列和 refresh 标记跨词库串场
+    // v8.9：切换词库/模式/新会话时清空会话级状态，避免错词队列跨词库串场
     clearSessionRequeue()
-    clearRefreshMarks()
     if (isReviewMode) {
       setWords((reviewWords ?? []).map((w) => toIndexWord(w)))
       setIsLoading(false)
@@ -87,6 +93,17 @@ export function useWordList(): UseWordListResult {
           manualWordsRef.current = null
         }
         const records = await getMemoryRecords()
+        // v9.3：自动模式下先解析当前级别（会写 cached，供顶栏/数据页/到期配比使用；完成则升级）
+        if (learningMode === 'auto') {
+          try { await resolveCurrentLevel(records) } catch { /* ignore */ }
+        }
+        // v9.3：数据页「重新评估级别」通过 localStorage 标记触发（唯一允许回退的入口）
+        try {
+          if (localStorage.getItem('qzReevaluateLevel')) {
+            localStorage.removeItem('qzReevaluateLevel')
+            await reevaluateLevel(records, { migrate: false })
+          }
+        } catch { /* ignore */ }
         const pick = await pickDynamicWord({
           records,
           recent: [],
@@ -96,7 +113,7 @@ export function useWordList(): UseWordListResult {
         })
         if (cancelled) return
         if (pick) {
-          setWords([toIndexWord(pick.word, pick.dict, 0, pick.hint)])
+          setWords([toIndexWord(pick.word, pick.dict, 0, pick.hint, pick.refresh)])
           // v8.9：错词重练（requeue）不带级别信息，不能让顶栏级别闪回「准备中」
           if (pick.level) setLevelInfo(pick.level)
         } else {
@@ -146,7 +163,7 @@ export function useWordList(): UseWordListResult {
           return null
         }
         if (pick.level) setLevelInfo(pick.level)
-        return toIndexWord(pick.word, pick.dict, 0, pick.hint)
+        return toIndexWord(pick.word, pick.dict, 0, pick.hint, pick.refresh)
       } catch (e) {
         console.error('next word failed', e)
         return null

@@ -110,6 +110,9 @@ if ($TestInstall) {
     $env:QZ_ALLOW_MULTI = '1'
     $env:QZ_SMOKE_PORT = '9472'
     Remove-Item Env:ELECTRON_RUN_AS_NODE -ErrorAction SilentlyContinue
+    # 先清掉可能残留的测试实例，避免 CDP 9472 连到旧版本/旧 profile
+    Get-Process -Name 'Qwerty Learner' -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "$TestAppDir*" } | Stop-Process -Force -ErrorAction SilentlyContinue
+    Start-Sleep -Milliseconds 800
     $proc = Start-Process -FilePath $exe -ArgumentList '--remote-debugging-port=9472' -PassThru
     Start-Sleep -Seconds 7
     & cmd.exe /c 'node scripts\dsh-smoke.mjs 2>&1'

@@ -3,7 +3,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 // v9.2：版本号单一来源——同步向主进程要（沙箱化 preload 不能 require('path') 读 package.json）
-let APP_VERSION = '1.0.0-enhanced-v9.2';
+let APP_VERSION = '1.0.0-enhanced-v9.3';
 try {
   const v = ipcRenderer.sendSync('app:version-sync');
   if (v) APP_VERSION = String(v);

@@ -24,7 +24,11 @@ export const DictButton = () => {
     : learningMode === 'custom' && customDict
       ? `自定义词库「${customDict.name}」（${(customDict.words || []).length} 词）· 记忆曲线；点击可切换`
       : learningMode === 'auto' && levelInfo
-        ? `按词汇水平循序渐进（当前 ${levelInfo.name}，本级别剩余 ${levelInfo.unseen}/${levelInfo.total} 词）；点击可切换词库`
+        ? `按词汇水平循序渐进：当前 ${levelInfo.name}，未学 ${levelInfo.unseen}/${levelInfo.total}${
+            levelInfo.seen != null ? `，已见 ${levelInfo.seen}` : ''
+          }${levelInfo.mastered != null ? `，掌握 ${levelInfo.mastered}` : ''}${
+            levelInfo.suspended ? `，待攻克 ${levelInfo.suspended}` : ''
+          }${levelInfo.done ? '（本级已完成）' : ''}；点击可切换词库`
         : '切换词库（点击词库将改为手动选择）'
 
   return (

@@ -22,7 +22,17 @@ export const currentDictIdAtom = atomWithStorage('currentDict', 'cet4')
 export const learningModeAtom = atomWithStorage<'auto' | 'manual' | 'custom'>('learningMode', 'auto')
 /** v8.4：增强面板导入的自定义词库（localStorage 桥接，供主练习流程读取） */
 export const customDictInfoAtom = atomWithStorage<CustomDict | null>('qzCustomDict', null)
-export type AutoLevelInfo = { id: string; name: string; index: number; unseen: number; total: number; done: boolean }
+export type AutoLevelInfo = {
+  id: string
+  name: string
+  index: number
+  unseen: number
+  total: number
+  done: boolean
+  seen?: number
+  mastered?: number
+  suspended?: number
+}
 export const autoLevelInfoAtom = atom<AutoLevelInfo | null>(null)
 export const currentDictInfoAtom = atom<Dictionary>((get) => {
   const id = get(currentDictIdAtom)
