@@ -40,7 +40,7 @@
   const nowIso = () => new Date().toISOString();
   function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
 
-  let settings = { version: '1.0.0-enhanced-v8.9', dailyGoal: 30, theme: 'indigo', panelAppearance: 'auto', dictFavorites: [], dictRecent: {}, fontFamily: 'default', opacity: 1, zoom: 1, pomodoroFocus: 25, pomodoroBreak: 5, keySound: false, keySoundVolume: 0.25, clipboardWatch: false, onlineLookup: true, aiExperimental: false, pronCache: false, closeToTray: true, alwaysOnTop: false, miniMode: false, todayStats: {} };
+  let settings = { version: '1.0.0-enhanced-v9.0', dailyGoal: 30, theme: 'indigo', panelAppearance: 'auto', dictFavorites: [], dictRecent: {}, fontFamily: 'default', opacity: 1, zoom: 1, pomodoroFocus: 25, pomodoroBreak: 5, keySound: false, keySoundVolume: 0.25, clipboardWatch: false, onlineLookup: true, aiExperimental: false, pronCache: false, closeToTray: true, alwaysOnTop: false, miniMode: false, todayStats: {} };
   let appStats = null; // 缓存统计
   let panelOpen = false;
 
@@ -329,17 +329,23 @@
       dueDays.push({ date: dayKey(d.getTime()), count: 0 });
     }
     const shadow = { count: 0, adaptiveSum: 0, actualSum: 0 };
+    const nowTs = Date.now();
+    const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0);
+    const dueNowList = [];
+    let todayNew = 0;
     for (const m of memoryRecords) {
       if (!m) continue;
       const st = Number(m.stage) || 0;
       if (st <= 2) buckets.short += 1;
       else if (st <= 5) buckets.mid += 1;
       else buckets.long += 1;
+      if ((Number(m.createdAt) || 0) >= startOfToday.getTime()) todayNew += 1;
       const due = Number(m.due) || 0;
       if (due) {
         const k = dayKey(due);
         const row = dueDays.find((x) => x.date === k);
         if (row) row.count += 1;
+        if (due <= nowTs) dueNowList.push(m);
       }
       const shadowDays = Number(m.shadowInterval) || 0;
       if (shadowDays > 0) {
@@ -350,7 +356,24 @@
     }
     shadow.avgAdaptive = shadow.count ? shadow.adaptiveSum / shadow.count : 0;
     shadow.avgActual = shadow.count ? shadow.actualSum / shadow.count : 0;
-    stats.memory = { learned: memoryRecords.length, buckets, dueDays, shadow };
+    dueNowList.sort((a, b) => (Number(a.due) || 0) - (Number(b.due) || 0));
+    stats.todayNew = todayNew;
+    stats.memory = {
+      learned: memoryRecords.length,
+      buckets,
+      dueDays,
+      shadow,
+      dueNow: dueNowList.length,
+      dueList: dueNowList.slice(0, 200).map((m) => ({
+        word: String(m.word || ''),
+        trans: Array.isArray(m.trans) ? m.trans : [],
+        phone: String(m.phone || ''),
+        dict: String(m.dict || ''),
+        stage: Number(m.stage) || 0,
+        due: Number(m.due) || 0,
+        interval: Number(m.interval) || 0,
+      })),
+    };
     return stats;
   }
 
@@ -693,7 +716,7 @@
     <div class="chip" id="qz-chip" title="点击打开增强面板"><span id="qz-chip-text">今日 0/30 · 连续 0 天</span></div>
     <div class="panel" id="qz-panel">
       <div class="ph">
-        <div class="t">增强工具 <small>Qwerty Plus v8.9</small></div>
+        <div class="t">增强工具 <small>Qwerty Plus v9.0</small></div>
         <button class="x" id="qz-close" title="关闭">✕</button>
       </div>
       <div class="tabs">
@@ -799,6 +822,25 @@
             </div>
             <div class="muted" style="margin-top:12px" id="rp-due">未来 7 天到期：-</div>
             <div class="muted" style="margin-top:6px" id="rp-shadow">影子调度：尚未记录（自适应算法并行计算中，暂不启用）</div>
+          </div>
+          <div class="sec">
+            <h4>到期复习（v9.0）</h4>
+            <div class="muted" id="due-summary">已到期 0 词 · 未来 7 天 -</div>
+            <div id="due-bars" style="display:flex;gap:6px;align-items:flex-end;height:74px;margin-top:10px"></div>
+            <div id="due-list" class="muted" style="margin-top:8px">暂无到期词</div>
+            <div class="btns" style="margin-top:8px">
+              <button class="btn primary" id="btn-due-start" disabled>开始到期复习</button>
+              <button class="btn ghost" id="btn-due-refresh">刷新</button>
+            </div>
+            <div class="muted" style="margin-top:8px">到期词按记忆曲线自动排队；开始后进入复习模式，答对推进档位、答错回到 10 分钟档，并按每个词的原词库写回。</div>
+          </div>
+          <div class="sec">
+            <h4>全量数据导出 / 导入（v9.0）</h4>
+            <div class="btns">
+              <button class="btn" id="btn-export-all">导出全量数据 JSON</button>
+              <button class="btn" id="btn-import-all">导入全量数据…</button>
+            </div>
+            <div class="muted" style="margin-top:8px">JSON 含：设置 + 记忆曲线/练习记录/章节记录 + 自定义词库 + localStorage。导入会先自动备份当前数据，再覆盖学习数据并重载。</div>
           </div>
           <div class="sec">
             <h4>导出 CSV（快速保存，无需手选路径）</h4>
@@ -970,7 +1012,7 @@
           <div class="sec">
             <h4>Qwerty Learner Plus</h4>
             <div class="muted">
-              版本：<b>1.0.0-enhanced-v8.9（随机出词 + 艾宾浩斯记忆曲线 + 错词当场重现 + 数据收口 + 错误分类提示 + 逻辑备份快照；无章节、无每日上限）</b><br>
+              版本：<b>1.0.0-enhanced-v9.0（随机出词 + 艾宾浩斯记忆曲线 + 错词当场重现 + 数据收口 + 错误分类提示 + 逻辑备份快照 + 到期复习中心 + 全量导入导出；无章节、无每日上限）</b><br>
               基于官方 Qwerty Learner 源码（commit 1182426）自行构建：练习页不再有章节选择，直接按记忆曲线随机出词；官方打字/默写/音标/音效/错题本/数据统计/词库画廊/设置等功能全部保留；v1~v6 中仍适用的增强功能收纳到顶栏「工具」全屏页。本地魔改由 dsh 完成，不跟随官方更新。
             </div>
           </div>
@@ -988,7 +1030,8 @@
               v8.4 自定义词库进主流程：「工具 → 词库 → 我的自定义词库 → 记忆曲线」即可按记忆曲线练习自己的词表（记录命名空间 custom:名称；官方错题本对自定义词只显示单词与错误次数）<br>
               v8.7 视觉：开始页概览改为 14px、数字加粗、到期数高亮；错误提示 15px；「再练一次 / 随机回顾」改为徽标<br>
               v8.8 清理：移除旧 v6 记忆曲线/插件练习/键位统计死代码（约 860 行）；面板只保留 常规 / 数据 / 词库 / 工具 / 关于<br>
-              v8.9 壳加固：IPC 来源白名单 · 导航/外链守卫 · 权限一律拒绝 · 崩溃 reload 限流 · 日志按日轮转保留 14 天 · 备份新增 data.json 逻辑快照（RecordDB/自定义词库/localStorage/设置）· 统计上报去重 · 剪贴板轮询按需启动<br>
+              v8.9 壳加固：IPC 来源白名单 · 导航/外链守卫 · 权限默认拒绝（仅放行剪贴板写）· 崩溃 reload 限流 · 日志按日轮转保留 14 天 · 备份新增 data.json 逻辑快照（RecordDB/自定义词库/localStorage/设置）· 统计上报去重 · 剪贴板轮询按需启动<br>
+              v9.0 学习闭环：到期复习中心（未来 7 天柱状图 + 到期词列表 + 一键复习，按原词库写回）· 开始页「到期复习」可点直达 · 今日练习/新学口径统一 · 自定义词库在官方错题本回退记忆曲线释义 · 全量数据导出/导入 JSON（导入前自动备份）· 暂停时补写 chapterRecord<br>
               v5 词库层：内置 385 词库搜索/收藏/最近/分类 + 设为当前 · GitHub 官方词库在线更新（逐个下载、SHA 比对、可回滚）· 当前词库发音预缓存（美/英音、续传、暂停/继续/取消、失败重试）
             </div>
           </div>
@@ -1001,7 +1044,7 @@
               · ECDICT 离线词典为预留功能，当前版本未提供下载；<br>
               · 发音缓存为实验功能，个别网络环境下可能影响发音，可在"常规"页关闭；<br>
               · 迷你模式依靠 CSS 隐藏页面头部，官方页面结构若大改可能失效；<br>
-              · 自定义词库：「记忆曲线」按钮进入主练习流程（记录命名空间 custom:名称），官方错题本/统计对自定义词只显示单词与错误次数，暂无释义。<br>
+              · 自定义词库：「记忆曲线」按钮进入主练习流程（记录命名空间 custom:名称）；v9.0 起官方错题本会回退显示记忆曲线里的释义（若练习/导入时已存 trans）。<br>
               · v8 数据收口：错词/键位/慢词/时长均只读官方 RecordDB（wordRecords/memoryRecords），旧插件练习数据不再写入也不迁移显示；<br>
               · WPM 与练习时长按按键间隔估算（不含读题停顿），仅供参考；键位延迟为相邻按键的近似间隔。<br>
               · 词库「设为当前」依赖官方“词典切换”弹层的 DOM 自动化；官方改版或弹层结构变化时可能失败，失败会打开官方选择器供手动选择（不会直接改应用未知存储）。<br>
@@ -1050,7 +1093,11 @@
   function closePanel() { panelOpen = false; panel.classList.remove('open'); }
   fab.addEventListener('click', () => { panelOpen ? closePanel() : openPanel(); });
   chip.addEventListener('click', () => openPanel('data'));
-  window.addEventListener('qz-open-enhance', () => { if (!panelOpen) openPanel('general'); });
+  window.addEventListener('qz-open-enhance', (e) => {
+    const tab = e && e.detail && e.detail.tab;
+    if (!panelOpen) openPanel(tab || 'general');
+    else if (tab) switchTab(tab);
+  });
   $('#qz-close').addEventListener('click', closePanel);
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && panelOpen) { closePanel(); e.stopPropagation(); }
@@ -1179,6 +1226,72 @@
     }
   });
 
+  // ---------------------------------------------------------------- v9.0 到期复习
+  let dueSelectedDay = '';
+  function renderDueList(dueList) {
+    const box = $('#due-list');
+    if (!box) return;
+    let list = dueList || [];
+    if (dueSelectedDay) list = list.filter((d) => dayKey(d.due) === dueSelectedDay);
+    if (!list.length) {
+      box.innerHTML = dueSelectedDay ? '这一天没有到期词（再次点击柱状图可取消筛选）' : '暂无到期词，继续按节奏练习即可。';
+      return;
+    }
+    const shown = list.slice(0, 12);
+    box.innerHTML = shown.map((d) => {
+      const trans = (d.trans || []).join('；').slice(0, 26);
+      const when = d.due ? new Date(d.due) : null;
+      const whenText = when
+        ? `${when.getMonth() + 1}/${when.getDate()} ${String(when.getHours()).padStart(2, '0')}:${String(when.getMinutes()).padStart(2, '0')}`
+        : '';
+      return `<div style="display:flex;gap:8px;align-items:baseline;padding:3px 0;border-bottom:1px dashed var(--qz-track)">
+        <b style="min-width:104px;color:var(--qz-text-strong)">${esc(d.word)}</b>
+        <span style="flex:1;color:var(--qz-muted)">${esc(trans)}</span>
+        <span style="color:var(--qz-muted);font-size:11px;white-space:nowrap">第${Number(d.stage) + 1}档 · ${whenText}</span>
+      </div>`;
+    }).join('') + (list.length > shown.length ? `<div style="margin-top:4px;color:var(--qz-muted)">还有 ${list.length - shown.length} 个到期词…</div>` : '');
+  }
+  function renderDueReview(mem) {
+    const dueNow = (mem && Number(mem.dueNow)) || 0;
+    const dueList = (mem && mem.dueList) || [];
+    const dueDays = (mem && mem.dueDays) || [];
+    const totalNext7 = dueDays.reduce((a, d) => a + (Number(d.count) || 0), 0);
+    const summary = $('#due-summary');
+    if (summary) summary.textContent = `已到期 ${dueNow} 词 · 未来 7 天共 ${totalNext7} 词`;
+    const bars = $('#due-bars');
+    if (bars) {
+      const max = Math.max(1, ...dueDays.map((d) => Number(d.count) || 0), dueNow);
+      bars.innerHTML = dueDays
+        .map((d, i) => {
+          const label = i === 0 ? '今天' : String(d.date).slice(5);
+          const count = Number(d.count) || 0;
+          const h = Math.max(3, Math.round(58 * (count / max)));
+          const bg = dueSelectedDay === d.date ? 'var(--qz-accent)' : (i === 0 ? 'var(--qz-accent)' : 'rgba(129,140,248,.55)');
+          const fw = dueSelectedDay === d.date ? '700' : '400';
+          return `<button type="button" data-day="${d.date}" title="${d.date}：${count} 词到期" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px;height:100%;background:none;border:0;padding:0;cursor:pointer;color:var(--qz-muted);font-size:11px;font-weight:${fw}">
+            <span style="color:var(--qz-text)">${count || ''}</span>
+            <i style="display:block;width:100%;height:${h}px;background:${bg};border-radius:4px 4px 0 0"></i>
+            <span>${label}</span>
+          </button>`;
+        })
+        .join('');
+      const days = Array.from(bars.querySelectorAll('button[data-day]'));
+      for (const b of days) {
+        b.addEventListener('click', () => {
+          dueSelectedDay = dueSelectedDay === b.dataset.day ? '' : b.dataset.day;
+          renderDueReview(appStats ? appStats.memory : mem);
+        });
+      }
+    }
+    renderDueList(dueList);
+    const startBtn = $('#btn-due-start');
+    if (startBtn) {
+      const n = Math.min(dueNow, 100);
+      startBtn.disabled = n <= 0;
+      startBtn.textContent = n > 0 ? `开始到期复习（${n}${dueNow > 100 ? ' +' : ''}）` : '暂无到期词';
+    }
+  }
+
   // ---------------------------------------------------------------- 统计 UI
   function renderStatsToPanel(s) {
     if (!s) return;
@@ -1189,7 +1302,7 @@
     $('#st-acc').textContent = (s.accuracy == null) ? '-' : s.accuracy + '%';
     $('#st-min').textContent = s.totalMinutes ? fmtNum(s.totalMinutes) : '0';
     $('#bar-goal').style.width = Math.round(s.ratio * 100) + '%';
-    $('#lbl-goal').textContent = `今日 ${s.words} / ${s.goal} 词 · 完成 ${Math.round(s.ratio * 100)}% · 连续 ${s.streak} 天`;
+    $('#lbl-goal').textContent = `今日练习 ${s.words} / ${s.goal} 词（新学 ${s.todayNew || 0}）· 完成 ${Math.round(s.ratio * 100)}% · 连续 ${s.streak} 天`;
     $('#lbl-source').textContent = '数据源: ' + (s.source === 'RecordDB' ? 'IndexedDB RecordDB' : (s.source === 'localStorage' ? 'localStorage 回退' : '暂无数据'));
     const box = $('#heat-box');
     if (box) {
@@ -1220,6 +1333,7 @@
         ? `影子调度：已记录 ${sh.count} 条（自适应平均 ${fmtDays(sh.avgAdaptive)} vs 当前 ${fmtDays(sh.avgActual)}；暂不启用）`
         : '影子调度：尚未记录（自适应算法并行计算中，暂不启用）';
     }
+    renderDueReview(mem);
   }
   async function refreshStatsUI() {
     try {
@@ -1237,6 +1351,113 @@
     toast('每日目标已设为 ' + v + ' 词');
   });
   $('#btn-refresh').addEventListener('click', async () => { await refreshStatsUI(); await pushStats(); toast('统计已刷新'); });
+
+  // v9.0 到期复习：从 appStats.memory.dueList 取到期词，写 localStorage 桥接后回到练习页重载
+  $('#btn-due-refresh').addEventListener('click', async () => { dueSelectedDay = ''; await refreshStatsUI(); toast('到期队列已刷新'); });
+  $('#btn-due-start').addEventListener('click', () => {
+    try {
+      const mem = appStats && appStats.memory;
+      const list = (mem && mem.dueList) || [];
+      if (!list.length) return toast('暂无到期词');
+      const words = list.slice(0, 100).map((m) => ({
+        name: m.word,
+        trans: Array.isArray(m.trans) ? m.trans : [],
+        usphone: m.phone || '',
+        ukphone: m.phone || '',
+        dict: m.dict,
+      }));
+      localStorage.setItem('qzDueReviewWords', JSON.stringify(words));
+      toast(`已准备 ${words.length} 个到期词，正在进入复习…`);
+      try { closePanel(); } catch { /* ignore */ }
+      try { location.hash = '#/'; } catch { /* ignore */ }
+      setTimeout(() => { try { location.reload(); } catch { /* ignore */ } }, 350);
+    } catch (e) { toast('开始复习失败: ' + (e.message || e)); }
+  });
+
+  // v9.0 全量数据导出 / 导入
+  $('#btn-export-all').addEventListener('click', async () => {
+    try {
+      toast('正在收集数据…');
+      const snap = await collectBackupSnapshot();
+      // 测试钩子：跳过原生保存对话框，把 JSON 放到 window 供自动化校验
+      if (window.__QZ_TEST_EXPORT__) {
+        window.__QZ_EXPORT_LAST__ = JSON.stringify(snap);
+        toast('测试导出已就绪（' + String(window.__QZ_EXPORT_LAST__.length) + ' 字节）');
+        return;
+      }
+      const r = await api.exportJSON(`qwerty-全量数据-${TODAY()}.json`, JSON.stringify(snap, null, 2));
+      if (r && r.ok) toast('已导出：' + r.path, 4200);
+      else if (r && r.canceled) toast('已取消');
+      else toast('导出失败: ' + ((r && r.error) || '未知'));
+    } catch (e) { toast('导出失败: ' + (e.message || e)); }
+  });
+  $('#btn-import-all').addEventListener('click', async () => {
+    try {
+      // 测试钩子：window.__QZ_IMPORT_TEXT__ 可由自动化测试注入，避免原生文件对话框/confirm 无法脚本化
+      const testHook = !!window.__QZ_IMPORT_TEXT__;
+      const res = testHook
+        ? { ok: true, text: String(window.__QZ_IMPORT_TEXT__), path: 'test-hook' }
+        : await api.importJSON();
+      try { delete window.__QZ_IMPORT_TEXT__; } catch { /* ignore */ }
+      if (!res || !res.ok) { if (!(res && res.canceled)) toast('读取失败: ' + ((res && res.error) || '未知')); return; }
+      let data = null;
+      try { data = JSON.parse(res.text); } catch { return toast('JSON 解析失败'); }
+      if (!data || !data.recordDb) return toast('不是有效的全量数据文件');
+      if (!testHook && !window.confirm('导入会覆盖当前全部学习数据（会先自动备份一份），确定继续？')) return;
+      toast('正在备份当前数据…');
+      const backup = await api.backupNow();
+      if (!(backup && backup.ok) && !testHook) { if (!window.confirm('自动备份失败，仍要继续导入？')) return; }
+      if (!(backup && backup.ok)) { if (!window.confirm('自动备份失败，仍要继续导入？')) return; }
+      toast('正在导入…');
+      let db = null;
+      try {
+        db = await idbOpen('RecordDB');
+        const stores = Array.from(db.objectStoreNames || []);
+        for (const store of stores) {
+          const rows = data.recordDb[store];
+          if (!Array.isArray(rows)) continue;
+          await new Promise((resolve, reject) => {
+            const tx = db.transaction(store, 'readwrite');
+            const os = tx.objectStore(store);
+            try { os.clear(); } catch { /* ignore */ }
+            for (const row of rows) { try { os.put(row); } catch { /* ignore */ } }
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error || new Error('write ' + store));
+            tx.onabort = () => reject(tx.error || new Error('abort ' + store));
+          });
+        }
+      } finally { try { if (db) db.close(); } catch { /* ignore */ } }
+      if (Array.isArray(data.customDicts) && data.customDicts.length) {
+        let pdb = null;
+        try {
+          pdb = await idbOpen('QwertyPlusDB', 3, (d) => { if (!d.objectStoreNames.contains('dicts')) d.createObjectStore('dicts', { keyPath: 'name' }); });
+          await new Promise((resolve, reject) => {
+            const tx = pdb.transaction('dicts', 'readwrite');
+            const os = tx.objectStore('dicts');
+            try { os.clear(); } catch { /* ignore */ }
+            for (const row of data.customDicts) { try { os.put(row); } catch { /* ignore */ } }
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error || new Error('custom dict import'));
+          });
+        } finally { try { if (pdb) pdb.close(); } catch { /* ignore */ } }
+      }
+      if (data.localStorage && typeof data.localStorage === 'object') {
+        const skip = new Set(['reviewModeInfo']);
+        for (const k of Object.keys(data.localStorage)) {
+          const v = data.localStorage[k];
+          if (skip.has(k) || typeof v !== 'string') continue;
+          try { localStorage.setItem(k, v); } catch { /* ignore */ }
+        }
+      }
+      // v9.0：导入后清掉可能在进行的复习会话，避免重载后困在旧复习列表
+      try { localStorage.removeItem('reviewModeInfo'); } catch { /* ignore */ }
+      if (data.settings && typeof data.settings === 'object') {
+        try { await api.updateSettings(data.settings); } catch { /* ignore */ }
+      }
+      toast('导入完成，正在重载…');
+      setTimeout(() => { try { location.reload(); } catch { /* ignore */ } }, 700);
+    } catch (e) { toast('导入失败: ' + (e.message || e)); }
+  });
 
   $('#btn-csv-wrong').addEventListener('click', async () => {
     try {
@@ -2242,7 +2463,7 @@
     refreshWrongbookUI().catch(() => {});
     renderStatsToPanel(appStats || { today: TODAY(), words: 0, goal: settings.dailyGoal, streak: 0, ratio: 0, totalWords: 0, wrongWords: [], heat: [], source: 'none' });
     pomoRender();
-    console.log('[QZ-ENHANCE] UI injected, version', settings.version || '1.0.0-enhanced-v8.9');
+    console.log('[QZ-ENHANCE] UI injected, version', settings.version || '1.0.0-enhanced-v9.0');
   }
   init();
 

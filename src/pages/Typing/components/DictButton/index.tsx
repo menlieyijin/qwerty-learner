@@ -1,5 +1,5 @@
 import Tooltip from '@/components/Tooltip'
-import { autoLevelInfoAtom, currentDictInfoAtom, customDictInfoAtom, isReviewModeAtom, learningModeAtom } from '@/store'
+import { autoLevelInfoAtom, currentDictInfoAtom, customDictInfoAtom, isReviewModeAtom, learningModeAtom, reviewModeInfoAtom } from '@/store'
 import { useAtomValue } from 'jotai'
 import { NavLink } from 'react-router-dom'
 
@@ -8,16 +8,19 @@ export const DictButton = () => {
   const currentDictInfo = useAtomValue(currentDictInfoAtom)
   const customDict = useAtomValue(customDictInfoAtom)
   const isReviewMode = useAtomValue(isReviewModeAtom)
+  const reviewInfo = useAtomValue(reviewModeInfoAtom)
   const learningMode = useAtomValue(learningModeAtom)
   const levelInfo = useAtomValue(autoLevelInfoAtom)
 
   let label = currentDictInfo.name
-  if (isReviewMode) label = `${currentDictInfo.name} · 错题复习`
+  if (isReviewMode) label = reviewInfo.reviewKind === 'due' ? '到期复习' : `${currentDictInfo.name} · 错题复习`
   else if (learningMode === 'custom' && customDict) label = `自定义 · ${customDict.name}`
   else if (learningMode === 'auto') label = levelInfo ? levelInfo.name : '准备中'
 
   const tip = isReviewMode
-    ? '错题复习模式'
+    ? reviewInfo.reviewKind === 'due'
+      ? '记忆曲线到期复习（答完自动回到正常出词）'
+      : '错题复习模式'
     : learningMode === 'custom' && customDict
       ? `自定义词库「${customDict.name}」（${(customDict.words || []).length} 词）· 记忆曲线；点击可切换`
       : learningMode === 'auto' && levelInfo

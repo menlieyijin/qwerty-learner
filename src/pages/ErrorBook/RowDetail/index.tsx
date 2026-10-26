@@ -28,7 +28,7 @@ const RowDetail: React.FC<RowDetailProps> = ({ currentRowDetail, allRecords }) =
   const setCurrentRowDetail = useSetAtom(currentRowDetailAtom)
 
   const dictInfo = idDictionaryMap[currentRowDetail.dict]
-  const { word, isLoading, hasError } = useGetWord(currentRowDetail.word, dictInfo)
+  const { word, isLoading, hasError } = useGetWord(currentRowDetail.word, dictInfo, currentRowDetail.dict)
   const wordPronunciationIconRef = useRef<WordPronunciationIconRef>(null)
 
   const rowDetailData: RowDetailData = useMemo(() => {

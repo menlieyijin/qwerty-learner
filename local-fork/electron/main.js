@@ -1,6 +1,6 @@
 // ============================================================================
 // Qwerty Learner Plus — Electron 主进程（增强版壳）
-// 版本: 1.0.0-enhanced-v8.9
+// 版本: 1.0.0-enhanced-v9.0
 // 说明: A 层外壳增强（置顶/快捷键/迷你模式/托盘/自启/透明度缩放/自动备份/
 //       错误日志/托盘进度）+ B 层桌面增强（AI/剪贴板/发音缓存等 IPC 支撑）。
 //       所有私有数据（设置/日志/备份/缓存）写入 %APPDATA%\qwerty-learner-plus，
@@ -38,7 +38,7 @@ protocol.registerSchemesAsPrivileged([
 // ---------------------------------------------------------------------------
 // 路径与设置
 // ---------------------------------------------------------------------------
-const APP_VERSION = '1.0.0-enhanced-v8.9';
+const APP_VERSION = '1.0.0-enhanced-v9.0';
 const PLUS_DIR = process.env.QZ_PLUS_DIR
   ? path.resolve(process.env.QZ_PLUS_DIR)
   : path.join(app.getPath('appData'), 'qwerty-learner-plus');
@@ -1684,6 +1684,23 @@ function registerIpc() {
       fs.writeFileSync(filePath, String(content || ''), 'utf-8');
       return { ok: true, path: filePath };
     } catch (e) { logError('export-json', e); return { ok: false, error: String(e.message || e) }; }
+  });
+  // v9.0：全量数据导入（打开文件对话框读取 JSON 文本，限 64MB）
+  handle('file:importJSON', async () => {
+    try {
+      const win = BrowserWindow.getFocusedWindow() || mainWindow;
+      const { canceled, filePaths } = await dialog.showOpenDialog(win, {
+        title: '导入全量数据 JSON',
+        properties: ['openFile'],
+        filters: [{ name: 'JSON', extensions: ['json'] }, { name: '所有文件', extensions: ['*'] }],
+      });
+      if (canceled || !filePaths || !filePaths.length) return { ok: false, canceled: true };
+      const filePath = filePaths[0];
+      const stat = fs.statSync(filePath);
+      if (stat.size > 64 * 1024 * 1024) return { ok: false, error: '文件超过 64MB' };
+      const text = fs.readFileSync(filePath, 'utf-8');
+      return { ok: true, path: filePath, text };
+    } catch (e) { logError('import-json', e); return { ok: false, error: String(e.message || e) }; }
   });
   // —— 免费释义 / 翻译（免 Key）——
   handle('free:lookup', (_e, word, dictId) => lookupWordFree(word, dictId));

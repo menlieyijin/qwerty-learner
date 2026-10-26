@@ -151,8 +151,8 @@ export async function getMemoryRecords(): Promise<IMemoryRecord[]> {
   }
 }
 
-/** v8.5：开始页概览（今日新学 / 到期复习 / 已学总数），只读 memoryRecords */
-export async function getLearningSummary(): Promise<{ learned: number; due: number; todayNew: number }> {
+/** v8.5：开始页概览（今日新学 / 到期复习 / 已学总数），只读 memoryRecords；v9.0 追加今日练习词数统一口径 */
+export async function getLearningSummary(): Promise<{ learned: number; due: number; todayNew: number; todayPracticed: number }> {
   try {
     const now = Date.now()
     const start = new Date()
@@ -165,9 +165,20 @@ export async function getLearningSummary(): Promise<{ learned: number; due: numb
       if ((Number(r.due) || 0) <= now) due += 1
       if ((Number(r.createdAt) || 0) >= startTs) todayNew += 1
     }
-    return { learned: records.length, due, todayNew }
+    // v9.0：与数据页/分析页统一为「今日练过的词（按单词去重）」，含复习
+    let todayPracticed = 0
+    try {
+      const rows = await db.wordRecords.where('timeStamp').aboveOrEqual(Math.floor(startTs / 1000)).toArray()
+      const seen = new Set<string>()
+      for (const row of rows) {
+        const name = String(row.word || '').trim().toLowerCase()
+        if (name) seen.add(name)
+      }
+      todayPracticed = seen.size
+    } catch { /* ignore */ }
+    return { learned: records.length, due, todayNew, todayPracticed }
   } catch {
-    return { learned: 0, due: 0, todayNew: 0 }
+    return { learned: 0, due: 0, todayNew: 0, todayPracticed: 0 }
   }
 }
 

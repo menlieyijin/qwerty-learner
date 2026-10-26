@@ -6,6 +6,8 @@ import { atomWithStorage } from 'jotai/utils'
 type TReviewInfoAtomData = {
   isReviewMode: boolean
   reviewRecord: ReviewRecord | undefined
+  /** v9.0：复习来源。wrong=官方错题本回顾；due=记忆曲线到期复习 */
+  reviewKind?: 'wrong' | 'due'
 }
 
 export function reviewInfoAtom(initialValue: TReviewInfoAtomData) {

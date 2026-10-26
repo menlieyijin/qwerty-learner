@@ -29,8 +29,8 @@ export default function WordPanel({
   const { times: loopWordTimes } = useAtomValue(loopWordConfigAtom)
   const currentWord = state.chapterData.words[state.chapterData.index]
   const nextWord = state.chapterData.words[state.chapterData.index + 1] as Word | undefined
-  // v8.5：开始/暂停页概览（今日新学、到期复习、累计）
-  const [summary, setSummary] = useState<{ learned: number; due: number; todayNew: number } | null>(null)
+  // v8.5：开始/暂停页概览（今日新学、到期复习、累计）；v9.0 增加今日练习并支持点到期数进复习
+  const [summary, setSummary] = useState<{ learned: number; due: number; todayNew: number; todayPracticed: number } | null>(null)
 
   const setReviewModeInfo = useSetAtom(reviewModeInfoAtom)
   const isReviewMode = useAtomValue(isReviewModeAtom)
@@ -230,11 +230,23 @@ export default function WordPanel({
                   {summary && (
                     <p className="mt-3 flex w-full select-none flex-wrap items-center justify-center gap-x-2.5 gap-y-1 text-sm font-medium leading-5 text-gray-600 dark:text-gray-300">
                       <span>
-                        今日新学{' '}
-                        <b className="font-semibold tabular-nums text-gray-800 dark:text-gray-100">{summary.todayNew.toLocaleString()}</b>
+                        今日练习{' '}
+                        <b className="font-semibold tabular-nums text-gray-800 dark:text-gray-100">{summary.todayPracticed.toLocaleString()}</b>
                       </span>
                       <span className="text-gray-300 dark:text-gray-600">·</span>
                       <span>
+                        新学{' '}
+                        <b className="font-semibold tabular-nums text-gray-800 dark:text-gray-100">{summary.todayNew.toLocaleString()}</b>
+                      </span>
+                      <span className="text-gray-300 dark:text-gray-600">·</span>
+                      <button
+                        type="button"
+                        title="打开「数据」页，查看未来 7 天到期分布并可一键开始到期复习"
+                        className="group inline-flex items-center gap-1 rounded-md px-1 transition-colors hover:bg-amber-50 dark:hover:bg-amber-500/10"
+                        onClick={() => {
+                          window.dispatchEvent(new CustomEvent('qz-open-enhance', { detail: { tab: 'data' } }))
+                        }}
+                      >
                         到期复习{' '}
                         <b
                           className={`font-semibold tabular-nums ${
@@ -243,7 +255,8 @@ export default function WordPanel({
                         >
                           {summary.due.toLocaleString()}
                         </b>
-                      </span>
+                        {summary.due > 0 && <span className="text-[11px] text-amber-600/80 group-hover:underline dark:text-amber-400/80">去复习 →</span>}
+                      </button>
                       <span className="text-gray-300 dark:text-gray-600">·</span>
                       <span>
                         累计{' '}

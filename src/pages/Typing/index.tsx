@@ -17,7 +17,7 @@ import { currentDictIdAtom, isReviewModeAtom, randomConfigAtom, reviewModeInfoAt
 import { IsDesktop, isLegal } from '@/utils'
 import { useSaveChapterRecord } from '@/utils/db'
 import { useMixPanelChapterLogUploader } from '@/utils/mixpanel'
-import { useAtom, useAtomValue } from 'jotai'
+import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import type React from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useImmerReducer } from 'use-immer'
@@ -33,8 +33,28 @@ const App: React.FC = () => {
 
   const reviewModeInfo = useAtomValue(reviewModeInfoAtom)
   const isReviewMode = useAtomValue(isReviewModeAtom)
+  const setReviewModeInfo = useSetAtom(reviewModeInfoAtom)
   // v8.9：词池耗尽提示（全部学会且暂无到期词 / 空词库），避免空白页
   const [noMoreWords, setNoMoreWords] = useState(false)
+
+  // v9.0：增强面板「到期复习」通过 localStorage 桥接一批到期词；进入复习模式后按每个词自己的 dict 写回记忆曲线
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('qzDueReviewWords')
+      if (!raw) return
+      localStorage.removeItem('qzDueReviewWords')
+      const words = JSON.parse(raw)
+      if (Array.isArray(words) && words.length > 0) {
+        setReviewModeInfo({
+          isReviewMode: true,
+          reviewKind: 'due',
+          reviewRecord: { dict: 'due-review', index: 0, createTime: Date.now(), isFinished: false, words },
+        })
+      }
+    } catch (e) {
+      console.error('consume due review words failed', e)
+    }
+  }, [setReviewModeInfo])
 
   useEffect(() => {
     // 检测用户设备
@@ -135,6 +155,16 @@ const App: React.FC = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.isFinished, state.isSavingRecord])
+
+  // v9.0：动态模式不会自然结束；暂停时补一条会话级 chapterRecord，让官方统计的时长/WPM/正确率不再长期为空
+  const savedPartialRef = useRef(0)
+  useEffect(() => {
+    if (isReviewMode || state.isTyping) return
+    const wordCount = state.chapterData.wordCount
+    if (wordCount <= 0 || wordCount === savedPartialRef.current) return
+    savedPartialRef.current = wordCount
+    saveChapterRecord(state)
+  }, [state, state.isTyping, state.chapterData.wordCount, isReviewMode, saveChapterRecord])
 
   useEffect(() => {
     let intervalId: number

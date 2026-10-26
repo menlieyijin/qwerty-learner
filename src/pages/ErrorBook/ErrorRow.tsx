@@ -18,7 +18,7 @@ type IErrorRowProps = {
 const ErrorRow: FC<IErrorRowProps> = ({ record, onDelete }) => {
   const setCurrentRowDetail = useSetAtom(currentRowDetailAtom)
   const dictInfo = idDictionaryMap[record.dict]
-  const { word, isLoading, hasError } = useGetWord(record.word, dictInfo)
+  const { word, isLoading, hasError } = useGetWord(record.word, dictInfo, record.dict)
 
   const onClick = useCallback(() => {
     setCurrentRowDetail(record)

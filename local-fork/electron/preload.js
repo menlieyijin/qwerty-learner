@@ -14,7 +14,7 @@ function onClipboardWord(cb) {
 }
 
 contextBridge.exposeInMainWorld('qwertyEnhance', {
-  version: '1.0.0-enhanced-v8.9',
+  version: '1.0.0-enhanced-v9.0',
   platform: process.platform,
   // —— 设置 ——
   getSettings: () => ipcRenderer.invoke('app:getSettings'),
@@ -52,6 +52,8 @@ contextBridge.exposeInMainWorld('qwertyEnhance', {
   saveCSV: (name, content) => ipcRenderer.invoke('file:saveCSV', name, content),
   openExports: () => ipcRenderer.invoke('file:openExports'),
   exportJSON: (name, content) => ipcRenderer.invoke('file:exportJSON', name, content),
+  // v9.0：全量数据导入（主进程弹文件框并返回 JSON 文本）
+  importJSON: () => ipcRenderer.invoke('file:importJSON'),
   // —— v5：词库管理（列表 / 在线更新）——
   dictList: () => ipcRenderer.invoke('dicts:list'),
   // v6：读取整本词库（记忆曲线用；不分章节）
