@@ -2,6 +2,7 @@ import type * as PakoModule from 'pako'
 import Dexie from 'dexie'
 import { db } from '.'
 import { getCurrentDate, recordDataAction } from '..'
+import { cleanupStaleTempImportDbs, createTempImportDbName } from './temp-import-db'
 import { MEMORY_KEY_CASE_MIGRATED_KEY, MEMORY_MIGRATED_KEY } from '../memory'
 import { clearMemoryCache } from '../memoryCache'
 
@@ -17,8 +18,6 @@ export type ImportProgress = {
   done: boolean
 }
 
-/** v9.4：临时导入库名前缀（导入中途崩溃/关窗可能残留，下次导入前会被清理） */
-const TEMP_DB_PREFIX = 'RecordDB-import-'
 /** v9.4：写入主库时每次 bulkPut 的行数（太大容易让单个 IDB 请求过重，太小则事务回调过多） */
 const COPY_CHUNK_SIZE = 1000
 /** v9.4：导入失败时区分“文件本身有问题”（主库完全没动）与“写入失败”（已整体回滚） */
@@ -26,31 +25,6 @@ class ImportFileError extends Error {
   constructor(message: string) {
     super(message)
     this.name = 'ImportFileError'
-  }
-}
-
-function createTempDbName(): string {
-  return `${TEMP_DB_PREFIX}${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-}
-
-/** 清理历史残留的临时导入库（上一次导入中途被杀掉时可能留下） */
-async function cleanupStaleTempDbs(): Promise<void> {
-  try {
-    if (typeof indexedDB.databases !== 'function') return
-    const list = await indexedDB.databases()
-    const staleNames = list.map((info) => info && info.name).filter((name): name is string => !!name && name.startsWith(TEMP_DB_PREFIX))
-    await Promise.all(
-      staleNames.map(async (name) => {
-        try {
-          await Dexie.delete(name)
-        } catch (e) {
-          console.warn('清理残留临时导入库失败：', name, e)
-        }
-      }),
-    )
-  } catch (e) {
-    // 枚举数据库失败不影响导入（只是残留临时库清不掉）
-    console.warn('枚举 IndexedDB 数据库失败，跳过临时库清理：', e)
   }
 }
 
@@ -134,8 +108,8 @@ export async function importDatabase(onStart: () => void, callback: (importProgr
       }
 
       // ---------- 2) 导入唯一命名的临时库：失败不影响主库 ----------
-      await cleanupStaleTempDbs()
-      tempDbName = createTempDbName()
+      await cleanupStaleTempImportDbs()
+      tempDbName = createTempImportDbName()
       tempDb = new Dexie(tempDbName)
       tempDb.version(Number(meta.data.databaseVersion) || 1).stores(
         Object.fromEntries(exportedTables.map((table) => [table.name, table.schema])),

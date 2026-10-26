@@ -64,6 +64,7 @@
     "test": "npm run typecheck && npm run lint:strict",
     "test:quality": "tsc --noEmit -p tsconfig.json && eslint src --ext .ts,.tsx --max-warnings 0",
     "test:e2e": "playwright test",
+    "test:e2e:local": "cross-env QZ_E2E_BASE_URL=http://127.0.0.1:5173 playwright test --project=chromium",
     "test:local": "node scripts/dsh-smoke.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint .",

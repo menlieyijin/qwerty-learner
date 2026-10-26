@@ -25,10 +25,15 @@ export default defineConfig({
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
     // 默认打线上站点（历史上的 e2e 就是线上巡检）。
-    // v9.6（dsh）：支持本地/CI 构建验证，用环境变量覆盖即可，例如：
-    //   QZ_E2E_BASE_URL=http://127.0.0.1:3000 npx playwright test      （先 yarn dev / vite --port 3000）
-    //   PowerShell: $env:QZ_E2E_BASE_URL='http://127.0.0.1:3000'; npx playwright test
-    // 指向本地后请确认 spec 里的中文选择器与当前 UI 一致（部分用例断言的是线上文案）。
+    // v9.6/v9.10（dsh）：支持本地构建验证，用 QZ_E2E_BASE_URL 覆盖即可。
+    //   1) 先起本地 dev server（默认端口 5173，注意显式绑 127.0.0.1）：
+    //        npm run dev -- --port 5173 --strictPort --host 127.0.0.1
+    //   2) 再跑（跨平台，已封装成 npm script）：
+    //        npm run test:e2e:local
+    //      等价于 QZ_E2E_BASE_URL=http://127.0.0.1:5173 playwright test --project=chromium
+    //   3) 首次需要浏览器：npx playwright install chromium
+    // 说明：本地模式下 tests/e2e 已对齐当前 UI（v9.10 起）；打线上站点仍按线上 UI 断言，
+    //       两者差异见 D:\整理\audit\baseline\e2e-local-result.txt。
     baseURL: process.env.QZ_E2E_BASE_URL || 'https://qwerty.kaiyi.cool',
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */

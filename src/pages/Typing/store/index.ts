@@ -1,7 +1,8 @@
 import type { TypingState, UserInputLog } from './type'
 import type { WordWithIndex } from '@/typings'
 import type { LetterMistakes } from '@/utils/db/record'
-import '@/utils/db/review-record'
+// v9.9（Batch6）：原来这里有一行 `import '@/utils/db/review-record'` 的纯副作用 import（上游遗留），
+// 该模块已随 Gallery 详情死集群删除，且本文件从未使用它的任何导出。
 import { mergeLetterMistake } from '@/utils/db/utils'
 import shuffle from '@/utils/shuffle'
 import { createContext } from 'react'

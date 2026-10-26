@@ -50,6 +50,19 @@ db.wordRecords.mapToClass(WordRecord)
 db.chapterRecords.mapToClass(ChapterRecord)
 db.reviewRecords.mapToClass(ReviewRecord)
 
+// v9.9（Batch6 / DATA-001 验收缺陷修复）：启动即清理「导入中途被强杀」残留的 RecordDB-import-* 临时库。
+// 之前只有下一次导入开始时才清理 → 强杀一次会留下永久残留（实测 9 轮有 6 轮残留）。
+// - 动态 import：data-export.ts 静态依赖 `db` 与 `../memory`，静态 import 会形成循环；
+// - 只在浏览器有 indexedDB.databases() 时生效（Node/仿真环境直接跳过），失败只 warn，绝不阻塞启动。
+void (async () => {
+  try {
+    const { cleanupStaleTempImportDbs } = await import('./temp-import-db')
+    await cleanupStaleTempImportDbs()
+  } catch (e) {
+    console.warn('[QZ] 启动清理残留临时导入库失败（不影响启动，下次导入会重试）：', e)
+  }
+})()
+
 // ---------------------------------------------------------------------------
 // v9.5（数据修复 DATA-003）：记忆记录 key 大小写拆分后的「读写兼容层」
 //
