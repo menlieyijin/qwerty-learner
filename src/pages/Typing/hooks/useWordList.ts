@@ -14,7 +14,7 @@ export type UseWordListResult = {
   nextWord: (answered?: Word) => Promise<WordWithIndex | null>
 }
 
-/** v9.10：会话滑动窗口里还能掺入几个上级词（MIX_WINDOW_CAP - 最近 MIX_WINDOW_SIZE 次已掺入数） */
+/** v9.11：会话滑动窗口里还能掺入几个上级词（MIX_WINDOW_CAP - 最近 MIX_WINDOW_SIZE 次已掺入数） */
 function previewBudgetOf(window: boolean[]): number {
   return Math.max(0, MIX_WINDOW_CAP - window.filter(Boolean).length)
 }
@@ -54,7 +54,7 @@ export function useWordList(): UseWordListResult {
   const [isLoading, setIsLoading] = useState(true)
   const [error] = useState<Error | undefined>(undefined)
   const recentRef = useRef<string[]>([])
-  // v9.10：最近 MIX_WINDOW_SIZE 次取词是否为「掺入的上级词」（会话级，随 recentRef 一起重置）
+  // v9.11：最近 MIX_WINDOW_SIZE 次取词是否为「掺入的上级词」（会话级，随 recentRef 一起重置）
   const previewWindowRef = useRef<boolean[]>([])
   const manualWordsRef = useRef<Word[] | null>(null)
   const reviewWords = reviewRecord?.words

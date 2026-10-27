@@ -9,10 +9,10 @@ An **unofficial fork** of [Qwerty Learner](https://github.com/RealKai42/qwerty-l
 | Item | Value |
 | --- | --- |
 | Upstream baseline | `1182426f2bd0a28c95302c33f9e19136b1262a70` (upstream `master`) |
-| Fork commits | 21 (`git log origin/master..dsh-local-v8`) |
+| Fork commits | 24 (`git rev-list --count 1182426..dsh-local-v8`) |
 | License | GNU GPL v3.0 (same as upstream; `LICENSE` kept intact) |
-| App version | `1.0.0-enhanced-v9.9` (single source: `local-fork/package.json`) |
-| Author of fork changes | `dsh <dsh@dsh.local>`; 6 of the 21 commits (from v9.3) carry a `Signed-off-by` trailer; earlier commits credit dsh in the commit message |
+| App version | `1.0.0-enhanced-v9.11` (single source: `local-fork/package.json`) |
+| Author of fork changes | `dsh <dsh@dsh.local>`; 12 commits carry a `Signed-off-by` trailer (added from v9.3 onwards); earlier commits credit dsh in the commit message |
 | Desktop runtime | Electron 43.8.3 / Chromium 150.0.7871.250 (Windows) |
 
 It is a desktop-first study app: the upstream typing / pronunciation / dictation / error-book / statistics / dictionary-gallery features are kept, while the vocabulary workflow is replaced by an Ebbinghaus-style SRS scheduler, dynamic word picking and automatic level progression. An Electron shell is added on top of the web app.
@@ -70,17 +70,43 @@ Slow word = total attempt time **> 6000 ms** (strictly greater). `lapses >= 4` a
 ### 4.4 Mastery & level-up (`autoLevel.ts`)
 
 - Mastered: `correct >= 2 && stage >= 2 && lastResult !== 'wrong'`.
-- Level complete: `required = total − suspended`; `required === 0`, or `seen === required && mastered / required >= 0.9`.
+- Level complete (graduation line **85%**, `MASTERY_RATIO = 0.85`, was 0.90 before v9.11): `required = total − suspended`; `required === 0`, or `seen === required && mastered / required >= 0.85`. Up to 15% of unmastered words move on with the level — they stay in `memoryRecords` and keep coming back as due words, they just no longer block graduation.
 - State is persisted in `localStorage` key `qzAutoLevelState`; moves forward only. Explicit "re-evaluate level" is the only backward path.
 - Skip 3 times → suspended ("to conquer"), does not block level-up; resuming resets `lapses`. Dictionary load failure → `error='load-failed'`, no completion, no level advance.
+
+**Mixing in next-level words (v9.11).** Once the current level reaches 70% mastery, each pick may land on an unseen word of the **next** level. It is shown and recorded but does not change `levelId` and does not count towards the current level's completion.
+
+| Constant | Value | Meaning |
+| --- | --- | --- |
+| `MASTERY_RATIO` | 0.85 | graduation line (0.90 before v9.11) |
+| `MIX_START` | 0.70 | mastery at which mixing starts |
+| `MIX_FULL` | 0.85 | mastery at which the mixing ratio caps (aligned with graduation) |
+| `MIX_MIN` | 0.10 | mixing probability at 70% |
+| `MIX_MAX` | 0.30 | mixing probability at ≥85% |
+| `MIX_MIN_REQUIRED` | 20 | levels smaller than 20 words never mix |
+| `MIX_WINDOW_CAP` / `MIX_WINDOW_SIZE` | 6 / 20 | at most 6 mixed words per rolling window of 20 picks |
+
+```
+m = mastered / required
+m <  0.70                  -> 0
+0.70 <= m < 0.85           -> 0.10 + 0.20 * (m - 0.70) / (0.85 - 0.70)
+m >= 0.85                  -> 0.30
+required < 20 or = 0       -> 0
+last level (no next level) -> 0
+```
+
+Invariant: `MIX_MAX === MIX_WINDOW_CAP / MIX_WINDOW_SIZE` (0.30 === 6/20); the window cap is asserted by `B-19.capAligned`, because changing only one side makes the probability ceiling unreachable. Measured effect (3 seeds, `audit/mix70-sim.mjs`): S1 (100 words / 20 picks a day / 80% accuracy) graduation 38.00 → **40.33 days (+6.1%)**; S2 (392 words / 60 picks / 85%) 44.33 → **44.33 (flat)**; the share of next-level words in the last 200 picks of the dead zone goes 0.3% → **46.5% / 29.2%**.
 
 ### 4.5 Dynamic picking (`pickDynamicWord`)
 
 1. Session wrong-word requeue (gap 3, max 2 per word).
 2. Probabilistic review of not-yet-due words (correct review only refreshes, does not extend interval).
 3. New word with dynamic ratio; new words are randomly chosen from the first 20 unseen words of the current level (file order preserved).
-4. Due words (deduped by `memoryKey`, suspended and last-12 excluded).
-5. Fallback: random review.
+4. Next-level word when mixing is active (v9.11): only in `auto` mode with `dueCount > 0`, `previewBudget > 0` and `getMixRatio() > 0`; the dice are rolled with that probability and a word from the next level's unseen pool is returned with `preview=true`. **The injection point is fixed: after wrong-word requeue, before the due fallback.**
+5. Due words (deduped by `memoryKey`, suspended and last-12 excluded).
+6. Fallback: random review.
+
+Mixing never returns `null` to the caller: no next level, next-level dictionary load failure, no unseen next-level word, or every candidate inside the recent window → `pickPreviewWord` returns `null` and `pickDynamicWord` **falls through to step 5**. When `previewBudget <= 0` or `mix <= 0` the dice are not rolled at all (no `Math.random()` call), so existing deterministic assertions keep the same random sequence. `useWordList.ts` keeps the rolling window and passes `previewBudget = max(0, 6 − mixed in window)`.
 
 | due count | new-word ratio | review chance |
 | --- | --- | --- |
@@ -91,6 +117,15 @@ Slow word = total attempt time **> 6000 ms** (strictly greater). `lapses >= 4` a
 | ≥300 | 0.02 | 0 |
 
 "Learned" dedupe is case-insensitive by word; SRS keys preserve case (`March` ≠ `march`). No hard daily new-word cap.
+
+### 4.6 Typing judgement — separator equivalence (v9.10)
+
+- Single judgement point: the settle effect in `Word/index.tsx` compares `inputWord[i]` with `displayWord[i]` through `charsMatch(input, expected, isIgnoreCase)`.
+- Equivalence class `SEPARATOR_CLASS = { ' ', '␣' (EXPLICIT_SPACE), '-', '/' }`: `t-shirt` typed as `t shirt`, `a/an` as `a an`, `ice cream` as `ice-cream` are all accepted.
+- `_` `.` `'` `&` never take part (`a.m.` vs `a m`, `don't` vs `dont`, `AT&T` stay strict).
+- Length and indexes stay 1:1 (`t shirt` and `t-shirt` are both 7 chars), so letter states, `letterMistake` indexes, exports and stored keys are unaffected; `isIgnoreCase` keeps its meaning.
+- Enabled only for `language ∈ {en, de}` with `languageCategory !== 'code'` (romaji `-` is a long-vowel mark; in code lists `-` `/` `_` are syntax).
+- Data: across 385 dictionaries / 457,031 head words, 3,301 contain `-`, 359 contain `/`, 73 contain `_` (all in code dictionaries).
 
 ## 5. Data & migration
 
@@ -136,10 +171,10 @@ pwsh -File scripts/dsh-rollback.ps1
 
 ## 7. Versioning
 
-- App version single source: `local-fork/package.json` → `1.0.0-enhanced-v9.9` (read by main process, preload via `app:version-sync`, injected panel via `window.__QZ_VERSION__`).
+- App version single source: `local-fork/package.json` → `1.0.0-enhanced-v9.11` (read by main process, preload via `app:version-sync`, injected panel via `window.__QZ_VERSION__`).
 - Root `package.json` stays at upstream `0.1.0` and is not the desktop version.
-- Milestone tags: `vX.Y-dsh-local` (v7.1, v8.9, v9.0, v9.2, v9.3, v9.5, v9.6, v9.7, v9.8, v9.9). v9.1/v9.2 and v9.4/v9.5 were released in shared commits, so no separate tags.
-- Installer exe metadata is written by rcedit only during runtime upgrades and may lag the app version (currently FileVersion 9.8.0.0 while the app is v9.9).
+- Milestone tags: `vX.Y-dsh-local` (v7.1, v8.9, v9.0, v9.2, v9.3, v9.5, v9.6, v9.7, v9.8, v9.9; v9.10 and v9.11 are not tagged yet). v9.1/v9.2 and v9.4/v9.5 were released in shared commits, so no separate tags.
+- Installer exe metadata is written by rcedit only during runtime upgrades and may lag the app version (currently FileVersion 9.8.0.0 while the app is v9.11).
 
 ## 8. Security design
 
@@ -155,9 +190,9 @@ pwsh -File scripts/dsh-rollback.ps1
 ## 9. Testing
 
 - Static gates: `tsc --noEmit` 0 errors; `eslint --max-warnings 0` clean.
-- Core-algorithm regression: real `src` bundled with esbuild, Node stubs, fixed seed and injected clock, `--strict`. Results: **248 assertions** in v9.3–v9.6; **253/253** (120 SRS + 133 auto-level) from v9.7 to v9.9.
+- Core-algorithm regression: real `src` bundled with esbuild, Node stubs, fixed seed and injected clock, `--strict`. Results: **248 assertions** in v9.3–v9.6; **253** in v9.7–v9.9; **309/309** (120 SRS + 189 auto-level) in v9.11, plus a determinism check (both sims run twice, byte-identical). Typing-judgement cases live outside that gate: `wordmatch-src` 29/29 (bundles the real source) and `word-judgment-sim` 42/42.
 - Playwright (local mode): 12 passed / 5 skipped (skips are retired legacy flows).
-- CDP smoke: 11/11; shell security probes: 19/19 (author-machine v9.9 record).
+- CDP smoke: 11/11; shell security probes: 19/19 (author-machine v9.9 record). For v9.10 / v9.11 the smoke was run **manually**: the in-script `-Smoke` hit a GPU crash in the build session (`NO_PAGE`), so the same `scripts/dsh-smoke.mjs` was executed with `--disable-gpu --no-sandbox` and an isolated profile — 11/11 for both test installs and for the **installed** v9.11 build (`logs\smoke-1.0.0-enhanced-v9.11-installed.txt`). `smoke=false` in the install logs only means the install step itself ran without `-Smoke`.
 - The regression scripts and reports live in the author's separate audit directory and are **not shipped** in this repository. A clean clone will SKIP the `-WithSim` gate; the numbers above are local acceptance records, not public CI results.
 
 ## 10. Known limitations
@@ -183,4 +218,4 @@ GPL-3.0; upstream `LICENSE` preserved untouched; redistributions must include fu
 
 Credits: RealKai42 and all Qwerty Learner contributors; dictionary/data sources (kajweb and community contributors); Youdao/dictionaryapi.dev/MyMemory for lookup/pronunciation services; Electron/Chromium/React/Vite/Dexie/Tailwind CSS; **DeepSeek Harness (dsh)** for the toolchain used to develop, audit and document this fork (tooling attribution, not an endorsement).
 
-*See also: [`FORK-NOTICE.md`](../FORK-NOTICE.md) · [`DSH-FORK.md`](DSH-FORK.md) · [`RELEASE-NOTES-v9.9.md`](RELEASE-NOTES-v9.9.md) · [`Backup-Restore.md`](Backup-Restore.md) · [`Electron-EOL.md`](Electron-EOL.md).*
+*See also: [`FORK-NOTICE.md`](../FORK-NOTICE.md) · [`DSH-FORK.md`](DSH-FORK.md) · [`RELEASE-NOTES-v9.11.md`](RELEASE-NOTES-v9.11.md) · [`RELEASE-NOTES-v9.9.md`](RELEASE-NOTES-v9.9.md) · [`Backup-Restore.md`](Backup-Restore.md) · [`Electron-EOL.md`](Electron-EOL.md).*

@@ -1,6 +1,6 @@
 # DSH Fork 技术文档（Qwerty Learner Plus）
 
-> 本文档描述 Qwerty Learner 的 **dsh 非官方分支**（分支 `dsh-local-v8`，应用版本 `1.0.0-enhanced-v9.9`）。
+> 本文档描述 Qwerty Learner 的 **dsh 非官方分支**（分支 `dsh-local-v8`，应用版本 `1.0.0-enhanced-v9.11`）。
 > 上游项目：[RealKai42/qwerty-learner](https://github.com/RealKai42/qwerty-learner)，基线 commit `1182426`，GPL-3.0。
 > 分支声明、GPL 合规与已知限制的**权威版本**见仓库根目录 [`FORK-NOTICE.md`](../FORK-NOTICE.md)；本文档补充实现细节。
 
@@ -46,7 +46,8 @@
 | 记忆调度 | 无 SRS 调度（错词进错题本） | **12 档艾宾浩斯阶梯** + 分级降档 + 慢词/时钟回拨处理 | `src/utils/memoryLadder.ts`、`src/utils/srsRules.ts`、`src/utils/memory.ts` |
 | 出词 | 预先取章节词表 | **每词实时决策**：到期优先、按概率回顾、动态新词比例、跨词库去重、最近 12 词不重复 | `src/utils/memory.ts` 的 `pickDynamicWord` |
 | 错词复现 | 进错题本，后续手动复习 | 本次会话**隔 3 个词重现**（同词最多 2 次）+ 持续遗忘自动挂起为"待攻克" | `src/utils/sessionRequeue.ts`、`src/utils/autoLevel.ts` |
-| 自动进阶 | 无 | **13 级路径**（小学一年级 → 大学六级），状态持久化、只升不回退 | `src/utils/autoLevel.ts` |
+| 自动进阶 | 无 | **13 级路径**（小学一年级 → 大学六级），状态持久化、只升不回退；本级掌握 85% 毕业，70% 起掺入下一级词 | `src/utils/autoLevel.ts` |
+| 打字判定 | 逐字符严格相等（仅大小写可放宽） | 同一位置上空格 / `-` / `/` **互相等价**（仅 en/de 且非程序类词库） | `src/pages/Typing/components/WordPanel/components/Word/displayWord.ts`、`Word/index.tsx` |
 | 每日上限 | 无 | **不设每日新词硬上限**；按到期量动态调节新词/复习配比 | `getNewRatio` / `getRefreshChance` |
 | 数据表 | `wordRecords` / `chapterRecords` / `reviewRecords` | 新增 `memoryRecords`（Dexie v4），旧表保留不改结构 | `src/utils/db/index.ts`、`src/utils/db/record.ts` |
 | 数据库导入 | 直接 `db.import`（先清表） | **临时库 + 行数校验 + 主库单事务**的原子导入；启动清理强杀残留 | `src/utils/db/data-export.ts`、`src/utils/db/temp-import-db.ts` |
@@ -154,11 +155,52 @@ qwerty-learner/
 `src/utils/autoLevel.ts`：
 
 - **掌握**（`srsRules.isMastered`）：`correct >= 2` 且 `stage >= 2` 且 `lastResult !== 'wrong'`。新词首答对不算掌握。
-- **级别完成**：`required = 本级总词数 − 已挂起`；`required === 0`，或 `seen === required` 且 `mastered / required >= 0.9`。
+- **级别完成（毕业线 85%）**：`required = 本级总词数 − 已挂起`；`required === 0`，或 `seen === required` 且 `mastered / required >= MASTERY_RATIO = 0.85`（v9.11 起，v9.9 为 0.90）。代价是最多 15% 未掌握词随升级带走 —— 它们仍在 `memoryRecords` 里，会作为到期词继续复习，只是不再阻塞本级毕业；"只升不回退"的语义不变，回退仍只能靠显式"重新评估"。
 - **只升不回退**：级别 id 持久化在 `localStorage` 键 `qzAutoLevelState`；只有"重新评估级别"（数据页 `qzReevaluateLevel` 标记）允许回退。
 - **挂起（待攻克）**：Skip 累计 3 次自动挂起，不阻塞升级；恢复时清零 Skip 并复位该词 `lapses`（否则会因 lapses ≥ 4 立即重新挂起）。
 - **容错**：状态 JSON 损坏/字段类型异常按默认值降级解析；localStorage 不可用或写入失败时返回 `persisted=false` 并派发 `qz-auto-level-state-error` 事件，不静默丢档；词库加载失败（抛错或空词表）标记 `error='load-failed'`，不判完成、不推进级别。
 - **迁移**：首次使用/无持久化状态时，按"第一个仍有未学词的级别"反推，避免老用户升级后被拉回第 1 级；数据页显式重评则按"第一个未完成级别"定位。
+
+#### 4.4.1 掺入下一级词（v9.11）
+
+本级"已见 100% 但掌握不足毕业线"时新词池为空，出词会全部落到到期池（死区）。v9.11 起在本级掌握度到 70% 后，按概率把**下一级**的未学词掺进练习流：只展示/记录，不改 `levelId`，不参与本级完成判定。
+
+常量（`src/utils/autoLevel.ts`）：
+
+| 常量 | 值 | 含义 |
+| --- | --- | --- |
+| `MASTERY_RATIO` | 0.85 | 毕业线（v9.11 起；原 0.90） |
+| `MIX_START` | 0.70 | 开始掺入的掌握度 |
+| `MIX_FULL` | 0.85 | 掺入比例封顶点，与毕业线对齐 |
+| `MIX_MIN` | 0.10 | 70% 时的掺入概率 |
+| `MIX_MAX` | 0.30 | 85% 及以上的掺入概率 |
+| `MIX_MIN_REQUIRED` | 20 | `required < 20` 的小级别不掺入（样本太少、掌握度抖动大） |
+| `MIX_WINDOW_CAP` / `MIX_WINDOW_SIZE` | 6 / 20 | 会话滑动窗口：最近 20 次取词最多 6 次掺入 |
+
+公式（`getMixRatio(mastered, required)`，纯函数，不读状态不掷骰）：
+
+```
+m = mastered / required
+m <  0.70                  → 0
+0.70 <= m < 0.85           → 0.10 + 0.20 × (m − 0.70) / (0.85 − 0.70)
+m >= 0.85                  → 0.30
+required < 20 或 = 0       → 0
+末级（无下一级）            → 0
+```
+
+采样（`required = 100`）：69% → 0；70% → 0.10；75% → 0.1667；80% → 0.2333；84% → 0.2867；85% 及以上 → 0.30。
+
+**不变式**：`MIX_MAX === MIX_WINDOW_CAP / MIX_WINDOW_SIZE`（0.30 === 6/20）。概率封顶与窗口封顶必须恒等，只改一边会让概率上限永远达不到；门禁断言 `B-19.capAligned` 检查这条。窗口是硬约束，因此长期实测掺入率略低于名义值（m = 84% 时实测 22.8%，名义 28.7%）。
+
+**为什么是 30% + 6/20（实测，非直觉）**：`audit/mix70-sim.mjs --mode=all`（3 种子均值）——
+
+| 场景 | v9.9 基线（0.90、无掺入） | v9.11（0.85 + 掺入） |
+| --- | --- | --- |
+| S1：100 词 / 每天 20 次 / 80% 正确，升级日 | 38.00 天 | **40.33 天（+6.1%）** |
+| S2：392 词 / 每天 60 次 / 85% 正确，升级日 | 44.33 天 | **44.33 天（持平）** |
+| 死区最后 200 次取词中"下一级词"占比（S1 / S2） | 0.3% / 0% | **46.5% / 29.2%** |
+
+机理：掺入降低本级复习密度 → 80~85% 正确率下复习越密集 lapse 越多 → 稀疏后稳态掌握率反而更高。所以封顶要按实测选，不能按"掺入越少越快毕业"的直觉选。
 
 ### 4.5 动态出词（`src/utils/memory.ts` 的 `pickDynamicWord`）
 
@@ -167,8 +209,17 @@ qwerty-learner/
 1. **会话内错词重现**：若重练队列中有到期词，优先返回（标注"再练一次"）。
 2. **随机回顾**：按 `refreshChance` 概率从未到期词中抽一个（答对只刷新记忆、不延长间隔，标注"随机回顾"）。
 3. **新词**：按 `newRatio` 概率（或当前无到期词）进入新词流程；自动模式下先解析当前级别，只从本级未学词中取；新词在"本级未学前 20 个（按词库文件顺序）"里随机，保留教材/词频顺序。
-4. **到期复习**：从到期池随机取（按 `memoryKey` 去重，排除已挂起与最近 12 词）。
-5. **兜底**：全部学完/没有新词时随机回顾未到期词。
+4. **掺入的下一级词（v9.11）**：本级新词出完后，若 `auto` 模式、`dueCount > 0`、调用方给的 `previewBudget > 0`、且 `getMixRatio() > 0`，按该概率掷骰，命中则从下一级未学词里抽 1 个（`preview=true`）。**注入位置固定在错词 requeue 之后、到期兜底之前**。
+5. **到期复习**：从到期池随机取（按 `memoryKey` 去重，排除已挂起与最近 12 词）。
+6. **兜底**：全部学完/没有新词时随机回顾未到期词。
+
+掺入分支的边界（`src/utils/memory.ts` 的 `pickPreviewWord`）：
+
+- 候选池：`LEARNING_PATH[index + 1]` 的 `newWords`（已排除 suspended），按词归一化去重、排除 recent 窗口，取文件顺序前 20 个再随机。
+- **fallthrough 规则**：末级（无下一级）／下一级词库加载失败／下一级没有新词／候选全落在 recent 窗口 → `pickPreviewWord` 返回 `null`，`pickDynamicWord` **必须继续走第 5 步**，绝不把 `null` 抛给调用方。
+- `previewBudget <= 0` 或 `mix <= 0` 时**不掷骰**（不调用 `Math.random()`），以保证既有确定性断言的随机序列不位移。
+- 返回的 `level` 仍是本级进度信息，顶栏与进度条不会跳到下一级。
+- 会话窗口（`src/pages/Typing/hooks/useWordList.ts`）：`previewWindowRef` 记录最近 20 次取词是否为掺入词，`previewBudget = max(0, 6 − 窗口内掺入数)`；切词库/新会话时与 `recentRef` 一起清空。
 
 动态配比（`autoLevel.getNewRatio` / `getRefreshChance`，按到期词数 `due`）：
 
@@ -183,6 +234,17 @@ qwerty-learner/
 - 到期词多时自动降低新词比例、关闭随机回顾，优先清理复习债。
 - "是否学过"跨词库按**单词**去重（`normalizeWordName`：trim + 小写）；SRS 记录 key 按**保留大小写**的词（`normalizeWordKeyWord`），因此 `March` 与 `march` 是两条独立记录。
 - 不设每日新词硬上限；设置中的每日目标只用于统计/提醒。
+
+### 4.6 打字判定（分隔符等价，v9.10）
+
+`src/pages/Typing/components/WordPanel/components/Word/displayWord.ts`、`Word/index.tsx`：
+
+- **唯一判定点**：`Word/index.tsx` 的结算 effect（按 `inputWord` 增量判 `displayWord[i]`），字符级比较通过 `charsMatch(input, expected, isIgnoreCase)`。
+- **等价类**：`SEPARATOR_CLASS = { ' ', '␣'(EXPLICIT_SPACE), '-', '/' }`。同一位置的两个分隔符视为相同：`t-shirt` 打 `t shirt`、`a/an` 打 `a an`、`ice cream` 打 `ice-cream` 均通过。
+- **不参与等价**：`_`（程序类词库标识符）、`.`（缩写 `a.m.`）、`'`（`don't`）、`&`（`AT&T`）；否则 `a m` / `dont` 会被误判为正确。
+- **不变**：长度与下标 1:1（`t shirt` 与 `t-shirt` 同为 7 位），`letterMistake` 下标、结果页导出、落库 key 全部不受影响；`isIgnoreCase` 语义不变。
+- **生效范围**（`isSeparatorEquivalenceEnabled`）：仅 `language ∈ {en, de}` 且 `languageCategory !== 'code'`。romaji 的 `-` 是长音符（`taima-`）；程序类词库的 `-` `/` `_` 是语法字符。
+- **数据依据**：`public/dicts` 385 个词库 / 457,031 词中，含 `-` 3,301 条、含 `/` 359 条、含 `_` 73 条（后者全部落在程序类词库）。
 
 ## 5. 数据表与迁移
 
@@ -365,7 +427,7 @@ pwsh -File scripts/dsh-release.ps1
 
 | 位置 | 含义 | 当前值 |
 | --- | --- | --- |
-| `local-fork/package.json` `version` | **应用版本唯一来源** | `1.0.0-enhanced-v9.9` |
+| `local-fork/package.json` `version` | **应用版本唯一来源** | `1.0.0-enhanced-v9.11` |
 | `main.js` / preload / 注入面板 | 运行时读取上面的版本（`app:version-sync`、`window.__QZ_VERSION__`） | 自动 |
 | 根 `package.json` `version` | 上游网页工程版本，**不用于桌面版本** | `0.1.0`（保持上游，不改） |
 | Git tag | 里程碑标记 | `vX.Y-dsh-local` |
@@ -380,7 +442,7 @@ pwsh -File scripts/dsh-release.ps1
 
 注意：
 
-- 本分支版本号（v1~v9.9、`1.0.0-enhanced-vX.Y`）与上游 release 版本**没有对应关系**，不要按上游版本号比较。
+- 本分支版本号（v1~v9.11、`1.0.0-enhanced-vX.Y`）与上游 release 版本**没有对应关系**，不要按上游版本号比较。
 - 历史上有多个小版本合并进同一提交（v9.1+v9.2、v9.4+v9.5），因此不是每个数字都有独立 tag。
 - exe 文件版本元数据只在运行时升级时更新，可能与应用内版本不一致，这属于已知限制。
 
@@ -442,11 +504,13 @@ pwsh -File scripts/dsh-release.ps1
 | 版本口径 | 断言数 | 组成 |
 | --- | --- | --- |
 | v9.3 ~ v9.6 | 248 | SRS + 自动进阶 |
-| v9.7 ~ v9.9（交付记录） | **253** | 120 SRS + 133 自动进阶 |
+| v9.7 ~ v9.9 | 253 | 120 SRS + 133 自动进阶 |
+| v9.11（交付记录） | **309** | 120 SRS + 189 自动进阶 |
 
-- 覆盖方向：新词/到期/循环回顾、refresh、封顶、成熟词降档、时钟回拨、日粒度、迁移、Skip、leech、删除清理、影子调度；自动进阶的掌握度、全错、Skip、跨级、同名、配比、清债、持久化、阈值、加载失败、due key 等。
-- 确定性：同 seed 重复运行结果一致。
-- **重要**：仿真脚本、断言计划与报告位于作者本机独立审计目录，**不在本仓库内**。干净 clone 上 `quality-gate.ps1 -WithSim` 会因脚本缺失而 SKIP；253/253 是作者本机验收记录，不是公开 CI 结果。
+- 覆盖方向：新词/到期/循环回顾、refresh、封顶、成熟词降档、时钟回拨、日粒度、迁移、Skip、leech、删除清理、影子调度；自动进阶的掌握度、全错、Skip、跨级、同名、配比、清债、持久化、阈值、加载失败、due key、**70% 掺入曲线与窗口封顶**等。
+- 确定性：同 seed 重复运行结果一致（v9.11 起两个 sim 各跑两遍逐字节比对）。
+- 打字判定另有两组用例（不在 309 内）：`wordmatch-src.mjs` **29/29**（esbuild 打包真实 `src`）、`word-judgment-sim.mjs` **42/42**（等价状态机，v9.10 前为 32）。
+- **重要**：仿真脚本、断言计划与报告位于作者本机独立审计目录，**不在本仓库内**。干净 clone 上 `quality-gate.ps1 -WithSim` 会因脚本缺失而 SKIP；309/309 是作者本机验收记录，不是公开 CI 结果。
 
 ### 10.3 E2E 与冒烟
 
@@ -457,6 +521,8 @@ pwsh -File scripts/dsh-release.ps1
 | 外壳安全探针 | CSP、gtag 未加载、剪贴板最小 API、备份 IPC、迷你模式/置顶、托盘、快捷键注册、日志无 crash | 19/19 |
 
 > 跳过项为已下线的旧流程（v9.9 清理了不可达页面/组件），不是失败。
+>
+> **v9.10 / v9.11 的 CDP 冒烟为手工执行**：脚本内 `-Smoke` 在构建会话里被 GPU 崩溃拦住（`gpu_process_host: exit_code=-1073741819` → `NO_PAGE`），改用 `--disable-gpu --no-sandbox` + 隔离 profile 手工跑同一脚本，v9.10/v9.11 测试安装与 v9.11 已安装版均 **11/11**（`logs\smoke-1.0.0-enhanced-v9.11-installed.txt`）；安装日志的 `smoke=false` 只表示安装步骤未带 `-Smoke`。
 
 ### 10.4 手工验收建议
 
@@ -470,7 +536,7 @@ pwsh -File scripts/dsh-release.ps1
 
 1. **非官方分支**：不受上游支持；上游更新不会自动进入本分支（见 [`FORK-NOTICE.md`](../FORK-NOTICE.md) 第 5 节）。
 2. **平台**：桌面外壳只在 Windows 11（26100）实测；macOS/Linux 未验证。
-3. **回归不可一键复现**：核心算法仿真与审计报告未随仓库发布；公开仓库无法直接复现 248/253 断言、确定性、19 项安全探针等作者本机结果。
+3. **回归不可一键复现**：核心算法仿真与审计报告未随仓库发布；公开仓库无法直接复现 248/253/309 断言、确定性、19 项安全探针等作者本机结果。
 4. **Electron EOL**：43.8.3 / Chromium 150.0.7871.250，43.x 于 2027-01-05 EOL；升级运行时是手工步骤（含 rcedit 品牌化），不在发布脚本内。
 5. **版本元数据滞后**：exe FileVersion 可能落后于应用内版本（运行时升级时才更新）。
 6. **无代码签名**：Windows SmartScreen 可能提示未知发布者。

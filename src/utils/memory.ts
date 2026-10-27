@@ -59,7 +59,7 @@ export type PickResult = {
   /** v8：retry=会话内错词重练，review=随机回顾 */
   hint?: 'retry' | 'review'
   /**
-   * v9.10：true = 本级掌握度达 70% 后掺入的 **下一级** 词（只展示/记录，不推进 levelId）。
+   * v9.11：true = 本级掌握度达 70% 后掺入的 **下一级** 词（只展示/记录，不推进 levelId）。
    * 调用方据此维护会话窗口（见 autoLevel.MIX_WINDOW_CAP），不需要区分时可忽略。
    */
   preview?: boolean
@@ -590,7 +590,7 @@ function levelInfoFromState(): LevelInfo | null {
 }
 
 /**
- * v9.10：「70% 掌握即掺入上级词」的抽词实现。
+ * v9.11：「70% 掌握即掺入上级词」的抽词实现。
  *
  * 从 **下一级**（LEARNING_PATH[index+1]，末级 cet6 无下一级）的未学词里抽 1 个：
  * - 词表加载失败 / 没有新词 / 全部落在 recent 窗口内 → 返回 null（调用方必须 fallthrough，不能直接返回 null）；
@@ -632,7 +632,7 @@ async function pickPreviewWord(
  * 3. 到期优先，剩余概率取新词；只有取新词时才计算/推进自动级别；
  * 4. 新词从本级未学词按文件顺序前 20 个随机（保留教材/词频顺序）。
  *
- * v9.10：本级没有新词可出时，若掌握度达 70% 且调用方给了 previewBudget（会话窗口剩余额度），
+ * v9.11：本级没有新词可出时，若掌握度达 70% 且调用方给了 previewBudget（会话窗口剩余额度），
  * 按 getMixRatio() 的概率掺入 1 个下一级的未学词（preview=true，不影响本级完成判定）。
  */
 export async function pickDynamicWord(opts: {
@@ -642,7 +642,7 @@ export async function pickDynamicWord(opts: {
   manualDict?: string
   manualWords?: Word[]
   /**
-   * v9.10：本次允许掺入上级词的额度（会话窗口 MIX_WINDOW_CAP - 窗口内已掺入次数）。
+   * v9.11：本次允许掺入上级词的额度（会话窗口 MIX_WINDOW_CAP - 窗口内已掺入次数）。
    * 缺省 0 = 不掺入（未接入窗口的调用方保持既有确定性：不掷骰、不消耗随机序列）。
    */
   previewBudget?: number
@@ -727,7 +727,7 @@ export async function pickDynamicWord(opts: {
     }
   }
 
-  // v9.10：本级新词出完之后，按掌握度掺入下一级词。
+  // v9.11：本级新词出完之后，按掌握度掺入下一级词。
   // 注意：只有 mix>0 时才掷骰——mix<=0 绝不调用 Math.random()，否则既有确定性随机序列整体位移。
   if (opts.mode === 'auto' && dueCount > 0 && (opts.previewBudget || 0) > 0) {
     const p = await ensureProgress()

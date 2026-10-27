@@ -9,7 +9,7 @@
 - 上游基线：commit `1182426f2bd0a28c95302c33f9e19136b1262a70`
 - 许可证：**GNU GPL v3.0**（与上游一致，见根目录 `LICENSE`）
 
-详细技术说明见 [`docs/DSH-FORK.md`](docs/DSH-FORK.md)（英文精简版 [`docs/DSH-FORK_EN.md`](docs/DSH-FORK_EN.md)），版本里程碑见 [`docs/RELEASE-NOTES-v9.9.md`](docs/RELEASE-NOTES-v9.9.md)。
+详细技术说明见 [`docs/DSH-FORK.md`](docs/DSH-FORK.md)（英文精简版 [`docs/DSH-FORK_EN.md`](docs/DSH-FORK_EN.md)），版本里程碑见 [`docs/RELEASE-NOTES-v9.11.md`](docs/RELEASE-NOTES-v9.11.md)（含 v9.10）与 [`docs/RELEASE-NOTES-v9.9.md`](docs/RELEASE-NOTES-v9.9.md)（首次公开）。
 
 ## 目录
 
@@ -36,14 +36,22 @@
 | 上游在线站点 | <https://qwerty.kaiyi.cool/>（本分支不部署、不运营该站点） |
 | 本分支仓库 | <https://github.com/menlieyijin/qwerty-learner>（GitHub fork） |
 | 本分支名称 | `dsh-local-v8` |
-| 相对上游的提交 | 21 个（`git log --oneline origin/master..dsh-local-v8` 可复核） |
-| 里程碑 tag | `v7.1-dsh-local`、`v8.9-dsh-local`、`v9.0-dsh-local`、`v9.2-dsh-local`、`v9.3-dsh-local`、`v9.5-dsh-local`、`v9.6-dsh-local`、`v9.7-dsh-local`、`v9.8-dsh-local`、`v9.9-dsh-local` |
+| 相对上游的提交 | 24 个（`git rev-list --count 1182426..dsh-local-v8` 可复核；v9.9 文档记为 21 个，实际当时为 22 个） |
+| 里程碑 tag | `v7.1-dsh-local`、`v8.9-dsh-local`、`v9.0-dsh-local`、`v9.2-dsh-local`、`v9.3-dsh-local`、`v9.5-dsh-local`、`v9.6-dsh-local`、`v9.7-dsh-local`、`v9.8-dsh-local`、`v9.9-dsh-local`（v9.10 / v9.11 尚未打 tag） |
 
 说明：
 
 - 本分支从上游基线 `1182426` 分出，**没有** merge / rebase 上游后续提交，因此基线之后的官方新功能与修复默认不在本分支内。
 - v9.1 与 v9.2、v9.4 与 v9.5 分别合并在同一提交中完成，因此没有单独的 `v9.1` / `v9.4` tag；功能仍包含在对应提交里。
 - 本分支是"从上游源码自建"的桌面增强版本，只保留上游的网页源码结构；桌面外壳（`local-fork/electron/`）为本分支自行添加。
+
+最近三个版本（完整历史见 release notes）：
+
+| 版本 | 提交 | 内容 | 产物 |
+| --- | --- | --- | --- |
+| v9.9 | `f18e723` | 首次公开：死代码清理、真实 e2e、Electron 43.8.3、IDB 强杀实测 | `app.asar` 86,383,823 B |
+| v9.10 | `8767c15` | 打字判定：空格 / `-` / `/` 同位置等价（仅 en/de 非 code） | `app.asar` 86,400,986 B（中间版本，内容已含于 v9.11） |
+| v9.11 | `27f73e1` | 自动进阶：掌握 70% 起掺入下一级词（10%→30%）、毕业线 90%→85% | `app.asar` 86,402,263 B |
 
 ## 2. 版权与许可证
 
@@ -62,10 +70,10 @@
 | 项 | 内容 |
 | --- | --- |
 | 修改者 | **dsh（DeepSeek Harness）** |
-| 提交作者 / 署名 | `dsh <dsh@dsh.local>`；**部分提交**带 `Signed-off-by: dsh <dsh@dsh.local>`（v9.3 起的 6 个提交为 git 可识别的正式 trailer；更早提交在提交说明中署名 dsh） |
-| 本地修改时间 | 2026-10-21 ~ 2026-10-27（本分支 git 提交日期 2026-10-25 ~ 2026-10-27） |
-| 本地版本迭代 | v1 ~ v9.9 |
-| 当前应用版本 | `1.0.0-enhanced-v9.9`（唯一来源：`local-fork/package.json`） |
+| 提交作者 / 署名 | `dsh <dsh@dsh.local>`；**部分提交**带 `Signed-off-by: dsh <dsh@dsh.local>`（v9.3 起陆续加入，当前 12 个提交带正式 trailer；更早提交在提交说明中署名 dsh） |
+| 本地修改时间 | 2026-10-21 ~ 2026-10-28（本分支 git 提交日期 2026-10-25 ~ 2026-10-28） |
+| 本地版本迭代 | v1 ~ v9.11 |
+| 当前应用版本 | `1.0.0-enhanced-v9.11`（唯一来源：`local-fork/package.json`） |
 
 约定：
 
@@ -91,13 +99,15 @@
 - 新词比例与回顾概率随到期词数量动态调整（见 `autoLevel.getNewRatio` / `getRefreshChance`）；不设每日新词硬上限。
 - 到期池按 `memoryKey` 去重；"是否学过"按单词跨词库去重；最近 12 个词不重复出现。
 - 本次会话答错的词隔 3 个其他词重现（同词最多 2 次），并标注"再练一次"；随机回顾标注"随机回顾"。
+- v9.11：本级掌握度达 70% 后，按 10%→30% 的概率把**下一级**的未学词掺进练习流（标注为提前尝鲜，不推进级别）；注入位置在错词重现之后、到期兜底之前，抽不到时继续按原顺序出词。
 
 ### 4.3 自动进阶
 
 - 代码：`src/utils/autoLevel.ts`、`src/utils/learningPath.ts`
 - 13 级学习路径：小学一年级 → 初中 → 高中必修 → 高频基础词 → 大学四级 → 大学六级；练习时无需手动选章节。
 - 级别状态持久化在 `localStorage` 键 `qzAutoLevelState`，只升不回退；显式"重新评估级别"是唯一允许回退的入口。
-- 升级判据：本级 required（总量 − 已挂起）**已见 100% 且掌握率 ≥ 90%**；"掌握"要求答对 ≥2 次、档位 ≥2 且最近一次不是答错。
+- 升级判据：本级 required（总量 − 已挂起）**已见 100% 且掌握率 ≥ 85%**（v9.11 起；v9.9 为 90%）；"掌握"要求答对 ≥2 次、档位 ≥2 且最近一次不是答错。最多 15% 未掌握词随升级带走，它们仍在记忆库里作为到期词复习，只是不再阻塞本级毕业。
+- **掺入下一级词（v9.11）**：本级掌握度 `m = 已掌握 / required` 达 **70%** 后开始掺入，掺入概率 `p = 0.10 + 0.20 × (m − 0.70) / (0.85 − 0.70)`，即 70% → 10%、80% → 23.3%、85% 及以上 → 30%（封顶）；`required < 20`、`required = 0` 或已是末级时不掺入。会话内另有硬窗口：最近 20 次取词最多 6 次掺入（6/20 = 30%，与概率上限恒等）。掺入词不改 `levelId`、不计入本级完成判定，只提前尝鲜。
 - Skip 累计 3 次自动挂起为"待攻克"，不阻塞升级；连续遗忘（lapses ≥ 4）也会自动挂起；词库加载失败不判完成、不推进级别。
 
 ### 4.4 本地数据表与迁移
@@ -128,9 +138,10 @@
 ### 4.8 测试与验收记录
 
 - 静态门禁：`tsc --noEmit` 0 error、`eslint src --max-warnings 0` 0 error / 0 warning。
-- 核心算法回归：作者本机 v9.9 交付记录为 **253/253**（120 条 SRS + 133 条自动进阶；v9.3 ~ v9.6 的旧口径为 248 条，v9.7 起增至 253 条）。
+- 核心算法回归：作者本机 v9.11 交付记录为 **309/309**（120 条 SRS + 189 条自动进阶）；历史口径为 v9.3 ~ v9.6 **248** 条、v9.7 ~ v9.9 **253** 条（120 + 133）。v9.10 另有两组判定用例：`wordmatch-src` 29/29（直接打包真实源码）、`word-judgment-sim` 42/42。
 - Playwright 本地模式：12 passed / 5 skipped（跳过项为已下线的旧流程）。
 - CDP 冒烟 11/11；外壳安全探针 19/19（v9.9 本机验收记录）。
+- **v9.10 / v9.11 的 CDP 冒烟为手工执行**：脚本内 `-Smoke` 在构建会话里被 GPU 崩溃拦住（`NO_PAGE`），改用 `--disable-gpu --no-sandbox` + 隔离 profile 手工跑同一 `scripts/dsh-smoke.mjs`，v9.10/v9.11 测试安装与 v9.11 已安装版均 **11/11**（`logs\smoke-1.0.0-enhanced-v9.11-installed.txt`）；安装日志里的 `smoke=false` 表示安装步骤本身未带 `-Smoke`。
 - 上述数字来自作者本机审计产物；回归脚本与报告**未随本仓库发布**，公开仓库默认无法一键复现（见第 7 节）。
 
 ## 5. 上游冻结策略
@@ -198,9 +209,9 @@ pwsh -File scripts/dsh-rollback.ps1
 
 1. **非官方分支**：本分支不受上游项目支持；上游不会处理本分支的专属问题，上游的修复也不会自动进入本分支。
 2. **仅 Windows 实测**：桌面外壳只在 Windows 11（26100）上验证；未经 macOS / Linux 验证，Electron 外壳为 Windows 定制。网页部分理论上可跨平台运行。
-3. **回归脚本未随仓库发布**：SRS / 自动进阶的仿真脚本、审计报告与 248/253 断言结果位于作者本机的独立审计目录，不在本仓库内；在干净 clone 上 `quality-gate.ps1 -WithSim` 会跳过缺失脚本。文档中的断言数量与通过结论是作者本机验收记录，不是公开可复现的 CI 结果。
+3. **回归脚本未随仓库发布**：SRS / 自动进阶的仿真脚本、审计报告与 248/253/309 断言结果位于作者本机的独立审计目录，不在本仓库内；在干净 clone 上 `quality-gate.ps1 -WithSim` 会跳过缺失脚本。文档中的断言数量与通过结论是作者本机验收记录，不是公开可复现的 CI 结果。
 4. **Electron 运行时 EOL**：当前为 Electron 43.8.3（Chromium 150.0.7871.250），43.x 官方支持至 2027-01-05；到期前需要升级运行时。运行时升级是手工步骤（含 rcedit 品牌化），不在发布脚本流水线内。
-5. **版本元数据可能滞后**：应用内版本以 `local-fork/package.json` 为唯一来源；安装程序 exe 的文件版本元数据在运行时升级时才更新，可能与应用内版本不完全一致（当前 FileVersion 为 9.8.0.0，应用版本为 v9.9）。
+5. **版本元数据可能滞后**：应用内版本以 `local-fork/package.json` 为唯一来源；安装程序 exe 的文件版本元数据在运行时升级时才更新，可能与应用内版本不完全一致（当前 FileVersion 为 9.8.0.0，应用版本为 v9.11）。
 6. **无代码签名**：本分支不提供代码签名的安装包，Windows SmartScreen 可能提示"未知发布者"。
 7. **词库与数据版权**：内置词库及释义数据版权归上游及原始数据来源（如 kajweb 等）所有；本分支补回的 5 本旧版词库（AWL / NAWL / NGSL / google-10000 / google-20000）在当前上游仓库中已不存在（2026-10-27 经 GitHub contents API 核实 `master` / `dev` / `gh-pages` 均为 404），来自旧版本地构建，逐本来源与许可见 [`docs/THIRD-PARTY.md`](docs/THIRD-PARTY.md)。使用者应自行确认所在地区与用途的合规性。
 8. **无每日新词硬上限**：出词按到期量和动态比例调节，不设强制每日上限；一次可能引入较多新词。设置里的每日目标用于统计与提醒，不是硬限制。
@@ -227,6 +238,7 @@ pwsh -File scripts/dsh-rollback.ps1
 | --- | --- |
 | [`docs/DSH-FORK.md`](docs/DSH-FORK.md) | 本分支详细技术文档：功能差异、架构、核心算法、构建、数据迁移、安全设计、测试、限制 |
 | [`docs/DSH-FORK_EN.md`](docs/DSH-FORK_EN.md) | English concise version of the fork documentation |
+| [`docs/RELEASE-NOTES-v9.11.md`](docs/RELEASE-NOTES-v9.11.md) | v9.10（分隔符等价）+ v9.11（70% 掺入 + 85% 毕业线）变更、验证与回滚 |
 | [`docs/RELEASE-NOTES-v9.9.md`](docs/RELEASE-NOTES-v9.9.md) | v8.9 → v9.9 里程碑与首次公开说明 |
 | [`docs/THIRD-PARTY.md`](docs/THIRD-PARTY.md) | 第三方组件与数据来源/许可披露（内置词库、补回词表、图标、截图、Electron 运行时、在线服务） |
 | [`docs/Backup-Restore.md`](docs/Backup-Restore.md) | 备份 / 导出 / 跨设备恢复说明 |
