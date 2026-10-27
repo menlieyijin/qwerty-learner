@@ -889,7 +889,7 @@
               <button class="btn ghost" id="btn-auto-reeval">重新评估级别</button>
               <button class="btn ghost" id="btn-auto-resume">恢复全部待攻克</button>
             </div>
-            <div class="muted" style="margin-top:8px">升级条件：本级已见 100%（待攻克除外）+ 掌握 ≥90%；Skip ≥3 次的词进入「待攻克」，不阻塞升级。重新评估是唯一允许级别回退的入口。</div>
+            <div class="muted" style="margin-top:8px">升级条件：本级已见 100%（待攻克除外）+ 掌握 ≥85%（v9.11 由 90% 下调）；掌握达 70% 后会按 10%→30% 的比例掺入下一级新词（只提前尝鲜，不影响本级毕业）。Skip ≥3 次的词进入「待攻克」，不阻塞升级。重新评估是唯一允许级别回退的入口。</div>
           </div>
           <div class="sec">
             <h4>到期复习（v9.0）</h4>

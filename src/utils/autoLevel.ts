@@ -4,7 +4,7 @@
  * 设计依据：v9.3 自动进阶修复设计（见 docs/DSH-FORK.md）一、三章。
  * 目标（修复 v9.2 审计 P0）：
  * 1. 级别持久化在 localStorage `qzAutoLevelState`，不再每次从第 0 级反推 → 删除记录不回退；
- * 2. 升级判据从「见过」改为「已见 100% 且掌握 ≥90%」（掌握 = srsRules.isMastered）；
+ * 2. 升级判据从「见过」改为「已见 100% 且掌握 ≥85%」（掌握 = srsRules.isMastered；v9.11 起 85%，原 90%）；
  * 3. Skip 累计 3 次 → suspended，不阻塞升级、进「待攻克」；
  * 4. 记录按 word 取最优（跨级/跨词库同词去重），不按 memoryKey 的 dict 限定；
  * 5. 词库加载失败（抛错或空级别）标记 error，不判完成。
@@ -93,7 +93,7 @@ export type LevelProgress = {
   unseen: number
   /** 本级未学词（newWords，已排除 suspended；dict 沿用词库加载结果） */
   newWords: Word[]
-  /** 完成：required === 0，或 seen === required 且 mastered / required >= 0.9 */
+  /** 完成：required === 0，或 seen === required 且 mastered / required >= MASTERY_RATIO（v9.11：0.85） */
   done: boolean
   /** 词库加载失败标记：此时不判完成，调用方应提示用户 */
   error?: 'load-failed'
@@ -120,7 +120,65 @@ export type AdvanceResult = {
   state: AutoLevelState
 }
 
-const MASTERY_RATIO = 0.9
+/**
+ * 毕业线：本级「已见 100%」前提下，掌握率达到此比例即升级（只升不回退）。
+ *
+ * v9.11：0.90 → 0.85。原因：用户实测「进阶难度太大了，一直在重复同一批」——只加混级
+ * （v9.10 的 70% 起掺入）会把毕业推迟约 30 天（S1 38→68 天），0.85 把升级日拉回基线附近，
+ * 且让「70% 起掺入 → 85% 毕业」成为一条连续进度轴（MIX_FULL 与 MASTERY_RATIO 对齐）。
+ * 代价（明确接受）：最多 15% 未掌握词随升级带走——它们仍在记忆库里，会作为到期词
+ * 继续复习（只是不再阻塞本级毕业）；「只升不回退」的语义不变，回退仍只能靠显式「重新评估」。
+ */
+const MASTERY_RATIO = 0.85
+
+/**
+ * v9.10「70% 掌握即掺入上级词」：
+ * 本级掌握度到 MIX_START 后，每次取词有 getMixRatio() 的概率落到 **下一级** 的一个未学词
+ * （只展示/记录，不改 levelId，不参与本级完成判定）；到 MIX_FULL 时比例封顶 MIX_MAX。
+ * 语义：getMixRatio 返回的是「本次取词落到下一级的概率」，由 memory.pickDynamicWord 在
+ * 本级没有新词可出时按此概率掷骰（会话内另有 MIX_WINDOW_CAP 窗口上限负责限流）。
+ */
+export const MIX_START = 0.7
+/** 掺入比例封顶点：与毕业线 MASTERY_RATIO(0.85) 对齐，等价于「快毕业时先尝鲜下一级」 */
+export const MIX_FULL = 0.85
+export const MIX_MIN = 0.1
+/**
+ * 掺入概率上限 30%。
+ *
+ * 自洽约束（invariant）：**两套封顶必须恒等** —— `MIX_MAX === MIX_WINDOW_CAP / MIX_WINDOW_SIZE`
+ * （0.30 === 6/20）。v9.10 曾出现「概率封顶 0.30 / 窗口封顶 4÷20=0.20」两套互相矛盾的封顶值，
+ * 概率上限永远达不到，等于悄悄把掺入率砍到 20%；v9.11 把两者统一成一个数，改任何一个都必须同时改另一个
+ * （门禁 B-19.capAligned 断言这一点）。
+ *
+ * 为什么是 30% 而不是 20%（实测，见 audit/mix70-sim.mjs 三联对照，2 场景 × 3 种子，200 次/天固定参数）：
+ * - 0.30 + 6/20：升级日 S1 40.33（无混级基线 38.00，+6.1%）、S2 44.33（= 基线 44.33）；
+ * - 0.20 + 4/20：升级日 S1 49.67（+30.8%）、S2 45.33。
+ * 掺入不是「线性挤占」本级练习：它降低了本级词的复习密度，而 80~85% 正确率下复习越密集 lapse 越多，
+ * 掌握率的**稳态**反而更低。所以封顶值要按实测选，不能按「掺入越少越快毕业」的直觉选。
+ *
+ * 注意窗口仍是硬约束（最近 20 次里已掺入 6 次后额度归零，要等旧掺入词滑出窗口才恢复），
+ * 因此**实测**长期掺入率略低于名义值：84% 掌握时 22.8%（nominal 28.7%），见 audit B-20.longRunRate。
+ */
+export const MIX_MAX = 0.3
+/** 小级别（required < 20）样本太少，掌握度抖动大，不掺入 */
+export const MIX_MIN_REQUIRED = 20
+/** 会话滑动窗口：最近 20 次取词里最多 6 次是下一级掺入词（6/20 = 30%，与 MIX_MAX 恒等） */
+export const MIX_WINDOW_CAP = 6
+export const MIX_WINDOW_SIZE = 20
+
+/**
+ * 掺入比例（0 表示不掺入）：required 为 0/过小 → 0；m<70% → 0；m>=85% → 0.30；
+ * 中间线性插值 0.10 → 0.30（m=75% → 0.1667、m=80% → 0.2333、m=84% → 0.2867）。
+ * 曲线与「70% 起、85% 毕业」的进度轴对齐。纯函数，不读状态不掷骰，便于断言。
+ */
+export function getMixRatio(mastered: number, required: number): number {
+  const req = sanitizeNonNegativeInt(required)
+  if (!req || req < MIX_MIN_REQUIRED) return 0
+  const m = sanitizeNonNegativeInt(mastered) / req
+  if (m < MIX_START) return 0
+  if (m >= MIX_FULL) return MIX_MAX
+  return MIX_MIN + (MIX_MAX - MIX_MIN) * ((m - MIX_START) / (MIX_FULL - MIX_START))
+}
 
 // ---------------------------------------------------------------------------
 // 基础工具
@@ -804,7 +862,7 @@ function buildCachedInfo(progress: LevelProgress, due: number): AutoLevelCachedI
  * 判据（v9.3）：
  * - required = 本级词 - suspended（按 word 匹配，任意 dict）；
  * - required.length === 0 → done；
- * - seen === required 且 mastered / required >= 0.9 → done；
+ * - seen === required 且 mastered / required >= MASTERY_RATIO（v9.11：0.85）→ done；
  * - 词库加载失败 → error='load-failed' 且 done=false（不判完成）。
  */
 export async function computeLevelProgress(
@@ -1013,7 +1071,7 @@ export async function reevaluateLevel(
   let progress = await computeLevelProgress(records, firstLevel.id)
   let index = progress.index
   // v9.3 设计：首次迁移（migrate=true）按「第一个仍有未学词的级别」定位（旧逻辑）；
-  // 数据页显式重评（migrate=false）按「第一个未完成的级别」（已见 100% + 掌握≥90%）定位。
+  // 数据页显式重评（migrate=false）按「第一个未完成的级别」（已见 100% + 掌握≥85%）定位。
   // 之前实现忽略了 options.migrate（参数成死参数），导致 B-07a 迁移路径与门禁 B-07a.migrateNote 不符。
   const migrate = options.migrate === true
 

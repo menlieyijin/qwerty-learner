@@ -1,6 +1,6 @@
 import { autoLevelInfoAtom, currentDictInfoAtom, customDictInfoAtom, learningModeAtom, reviewModeInfoAtom } from '@/store'
 import type { Word, WordWithIndex } from '@/typings/index'
-import { reevaluateLevel, resolveCurrentLevel } from '@/utils/autoLevel'
+import { MIX_WINDOW_CAP, MIX_WINDOW_SIZE, reevaluateLevel, resolveCurrentLevel } from '@/utils/autoLevel'
 import { ensureMemoryMigrated, getMemoryRecords, normalizeWordName, pickDynamicWord } from '@/utils/memory'
 import { clearSessionRequeue } from '@/utils/sessionRequeue'
 import { wordListFetcher } from '@/utils/wordListFetcher'
@@ -12,6 +12,15 @@ export type UseWordListResult = {
   isLoading: boolean
   error: Error | undefined
   nextWord: (answered?: Word) => Promise<WordWithIndex | null>
+}
+
+/** v9.10：会话滑动窗口里还能掺入几个上级词（MIX_WINDOW_CAP - 最近 MIX_WINDOW_SIZE 次已掺入数） */
+function previewBudgetOf(window: boolean[]): number {
+  return Math.max(0, MIX_WINDOW_CAP - window.filter(Boolean).length)
+}
+
+function pushPreviewWindow(window: boolean[], preview?: boolean): boolean[] {
+  return [...window, !!preview].slice(-MIX_WINDOW_SIZE)
 }
 
 function toIndexWord(word: Word, dict?: string, index = 0, hint?: Word['hint'], refresh?: boolean): WordWithIndex {
@@ -45,6 +54,8 @@ export function useWordList(): UseWordListResult {
   const [isLoading, setIsLoading] = useState(true)
   const [error] = useState<Error | undefined>(undefined)
   const recentRef = useRef<string[]>([])
+  // v9.10：最近 MIX_WINDOW_SIZE 次取词是否为「掺入的上级词」（会话级，随 recentRef 一起重置）
+  const previewWindowRef = useRef<boolean[]>([])
   const manualWordsRef = useRef<Word[] | null>(null)
   const reviewWords = reviewRecord?.words
   // v8.9：用内容指纹（名称+词数+首尾词）做依赖，同名词库替换词表后也能触发重载
@@ -68,6 +79,7 @@ export function useWordList(): UseWordListResult {
   useEffect(() => {
     let cancelled = false
     recentRef.current = []
+    previewWindowRef.current = []
     // v8.9：切换词库/模式/新会话时清空会话级状态，避免错词队列跨词库串场
     clearSessionRequeue()
     if (isReviewMode) {
@@ -110,9 +122,11 @@ export function useWordList(): UseWordListResult {
           mode: learningMode,
           manualDict: learningMode === 'custom' ? `custom:${customDict?.name || '自定义'}` : currentDictInfo.id,
           manualWords,
+          previewBudget: previewBudgetOf(previewWindowRef.current),
         })
         if (cancelled) return
         if (pick) {
+          previewWindowRef.current = pushPreviewWindow(previewWindowRef.current, pick.preview)
           setWords([toIndexWord(pick.word, pick.dict, 0, pick.hint, pick.refresh)])
           // v8.9：错词重练（requeue）不带级别信息，不能让顶栏级别闪回「准备中」
           if (pick.level) setLevelInfo(pick.level)
@@ -161,11 +175,13 @@ export function useWordList(): UseWordListResult {
             mode: learningMode,
             manualDict: learningMode === 'custom' ? `custom:${customDict?.name || '自定义'}` : currentDictInfo.id,
             manualWords: manualWords || undefined,
+            previewBudget: previewBudgetOf(previewWindowRef.current),
           })
           if (!pick) {
             setLevelInfo(null)
             return null
           }
+          previewWindowRef.current = pushPreviewWindow(previewWindowRef.current, pick.preview)
           if (pick.level) setLevelInfo(pick.level)
           return toIndexWord(pick.word, pick.dict, 0, pick.hint, pick.refresh)
         } catch (e) {
