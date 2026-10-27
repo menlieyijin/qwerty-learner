@@ -60,6 +60,52 @@ export function hasUntypableChar(displayWord: string): boolean {
 }
 
 /**
+ * v9.10（TYP-013，dsh）：分隔符在**判定期**互相等价。
+ *
+ * 背景（用户实测）：词条 `t-shirt` 必须打 `-`、`a/an` 必须打 `/`，用户习惯打空格 → 同一位置被判错；
+ * 反向也有：词条本身是空格（`ice cream`）时用户打 `-`/`/` 同样应通过。
+ *
+ * 为什么放在「比较期」而不改 normalizeDisplayWord：
+ * 归一化只影响展示，把 `/` 归一成 `␣` 会让 `a/an` 显示成 `a␣an`（语义错），
+ * 而且会改变 displayWord 的字符内容，污染 letterMistake 记下的 expected 字符与结果页导出。
+ * 这里只放宽「字符是否算相同」，长度与下标保持 1:1（`t shirt` 与 `t-shirt` 同为 7 位）。
+ *
+ * 等价类只含：普通空格、EXPLICIT_SPACE（归一化后的空格）、`-`、`/`。
+ * 为什么**不含** `_` `.` `'` `&`：
+ * - `_` 只出现在程序类词库（languageCategory=code），而 code 语义下 `_` 是标识符的一部分，不与空格等价；
+ * - `.` 是句读/缩写标记（`a.m.`、`U.S.`），若与空格等价，`a.m.` 打 `a m` 就会误判为正确；
+ * - `'` 是词内撇号（`don't`、`it's`），与空格不等价，否则 `dont` 这类漏撇号输入会被放过；
+ * - `&` 是实义符号（`AT&T`、`R&D`），保留严格匹配。
+ */
+export const SEPARATOR_CLASS: Set<string> = new Set([' ', EXPLICIT_SPACE, '-', '/'])
+
+export function isSeparatorChar(ch: string): boolean {
+  return SEPARATOR_CLASS.has(ch)
+}
+
+/**
+ * 单字符比较（判定期唯一入口）。
+ *
+ * 顺序很关键：分隔符等价必须在 toLowerCase **之前**独立判断，
+ * 否则 isIgnoreCase=false 时会走到 `return false` 分支，等价被吞掉。
+ */
+export function charsMatch(input: string, expected: string, isIgnoreCase: boolean): boolean {
+  if (input === expected) return true
+  if (isSeparatorChar(input) && isSeparatorChar(expected)) return true
+  return isIgnoreCase ? input.toLowerCase() === expected.toLowerCase() : false
+}
+
+/**
+ * 分隔符等价是否生效：仅英/德文等拉丁词库，且不含程序类词库。
+ * - romaji / hapin：`-` 是长音符（`taima-`），`/` 有特殊含义，不能放宽；
+ * - languageCategory=code（含 language='en' 的 OI_XCPC 等）：`-` `_` `/` 是语法字符，语义不同。
+ */
+export function isSeparatorEquivalenceEnabled(language: string, languageCategory?: string): boolean {
+  if (languageCategory === 'code') return false
+  return language === 'en' || language === 'de'
+}
+
+/**
  * v9.5（TYP-012）：把 letterMistake 的下标（**displayWord 下标**）映射成可读字符，供结果页导出/展示。
  *
  * 不能再用 `word.name[index]`：displayWord 与 name 的位置/长度可能不同（空格 → ␣、`…` → `..`、

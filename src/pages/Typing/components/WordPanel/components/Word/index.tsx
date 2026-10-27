@@ -3,7 +3,7 @@ import InputHandler from '../InputHandler'
 import Letter from './Letter'
 import Notation from './Notation'
 import { TipAlert } from './TipAlert'
-import { hasUntypableChar, normalizeDisplayWord } from './displayWord'
+import { charsMatch, hasUntypableChar, isSeparatorEquivalenceEnabled, normalizeDisplayWord } from './displayWord'
 import style from './index.module.css'
 import { initialWordState } from './type'
 import type { WordState } from './type'
@@ -82,6 +82,8 @@ export default function WordComponent({ word, onFinish }: { word: Word; onFinish
   const currentLanguage = useAtomValue(currentDictInfoAtom).language
   const currentLanguageCategory = useAtomValue(currentDictInfoAtom).languageCategory
   const currentChapter = useAtomValue(currentChapterAtom)
+  // v9.10（TYP-013，dsh）：空格 / `-` / `/` 在同一位置互相等价（仅英/德拉丁词库，排除程序类词库）
+  const allowSepEquiv = isSeparatorEquivalenceEnabled(currentLanguage, currentLanguageCategory)
 
   const [showTipAlert, setShowTipAlert] = useState(false)
   const [wrongHint, setWrongHint] = useState('')
@@ -365,7 +367,13 @@ export default function WordComponent({ word, onFinish }: { word: Word; onFinish
       const correctChar = wordState.displayWord[i]
       let isEqual = false
       if (inputChar != undefined && correctChar != undefined) {
-        isEqual = isIgnoreCase ? inputChar.toLowerCase() === correctChar.toLowerCase() : inputChar === correctChar
+        // v9.10（TYP-013，dsh）：分隔符等价（空格 / - / / 同一位置互换），只在英/德拉丁词库生效；
+        // 其余词库（romaji 长音符、程序类词库）走原严格比较，语义不变。
+        isEqual = allowSepEquiv
+          ? charsMatch(inputChar, correctChar, isIgnoreCase)
+          : isIgnoreCase
+            ? inputChar.toLowerCase() === correctChar.toLowerCase()
+            : inputChar === correctChar
       }
       if (!isEqual) {
         mismatch = i
@@ -435,6 +443,13 @@ export default function WordComponent({ word, onFinish }: { word: Word; onFinish
     if (currentChapter === 0 && state.chapterData.index === 0 && wordState.wrongCount >= 3) {
       setShowTipAlert(true)
     }
+    // 依赖数组只保留 inputWord：判定是「增量结算」，每跑一次就会把 from..inputLength 的字符
+    // 计成 correct + 推进 judgedLength。若把 currentLanguage / allowSepEquiv 加进依赖，每次 render
+    // （切库时的 atom 变化、以及这些值的新引用）都会重跑本 effect，而 judgedLength 已等于
+    // inputWord.length 时虽不再计数，但一旦 token 抖动导致 inputWord 相同而 effect 重跑，
+    // 就会重复 playKeySound / 重复写 letterTimeArray，判定与音效都会失真。
+    // 换词库必然伴随换词（word 变化 → displayWord 重置、judgedLength 归零），届时本 effect 自然重跑，
+    // 因此 allowSepEquiv 的取值变化不需要单独触发判定。
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wordState.inputWord])
 
