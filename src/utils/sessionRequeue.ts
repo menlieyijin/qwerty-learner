@@ -65,11 +65,6 @@ export function takeRequeueWord(): { word: Word; dict: string } | null {
   return null
 }
 
-/** 仅供调试/测试：当前队列长度。 */
-export function getSessionRequeueCount(): number {
-  return queue.length
-}
-
 /** 删除某词时把它从会话重练队列中移除（避免删完 30 分钟内又被拉回） */
 export function removeFromRequeue(dict: string, word: string): void {
   const key = memoryKey(dict, word)

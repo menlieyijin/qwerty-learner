@@ -2,8 +2,6 @@ export const EXPLICIT_SPACE = '␣'
 
 export const CHAPTER_LENGTH = 20
 
-export const DISMISS_START_CARD_DATE_KEY = 'dismissStartCardDate'
-
 /**
  * v9.12（M2-011）：localStorage 会话状态键的唯一来源。
  *

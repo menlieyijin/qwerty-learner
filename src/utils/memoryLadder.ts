@@ -37,20 +37,6 @@ export function ladderDays(stage: number): number {
   return MEMORY_LADDER[clampStage(stage)]
 }
 
-export function ladderText(stage: number): string {
-  return MEMORY_LADDER_TEXT[clampStage(stage)]
-}
-
-/**
- * 下一档（新词 undefined → 3 档）。
- * @deprecated v9.3.1（SRS-007）：src 内已无调用点（db 用的是 `clampStage(stage + 1)` + `MEMORY_GRADUATE_STAGE`）。
- * 保留导出只为不破坏本地 audit 回归入口（`_v93-entry.ts`）的 re-export（删除会让门禁 bundle 构建失败）；
- * 等审计入口同步移除后再删除本函数。
- */
-export function nextStage(prevStage: number | undefined): number {
-  return prevStage === undefined ? MEMORY_GRADUATE_STAGE : clampStage(prevStage + 1)
-}
-
 export type AdaptiveInput = {
   stage: number
   ease?: number

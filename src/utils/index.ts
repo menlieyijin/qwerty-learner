@@ -1,6 +1,5 @@
 import { CHAPTER_LENGTH } from '@/constants'
 import dayjs from 'dayjs'
-import type { Howl } from 'howler'
 
 // 不再转出 mixpanel：那个 barrel 透出会把 mixpanel（import store / pages 类型）拖进所有
 // 使用本 barrel 的模块的依赖图，形成 dictionary → utils → mixpanel → store → dictionary 大环。
@@ -105,12 +104,6 @@ export const IS_MAC_OS = navigator.userAgent.indexOf('Macintosh') !== -1
 
 export const CTRL = IS_MAC_OS ? 'Control' : 'Ctrl'
 
-export function addHowlListener(howl: Howl, ...args: Parameters<Howl['on']>) {
-  howl.on(...args)
-
-  return () => howl.off(...args)
-}
-
 export function getCurrentDate() {
   const date = new Date()
   const year = date.getFullYear()
@@ -146,15 +139,6 @@ export function getUTCUnixTimestamp() {
       now.getUTCMilliseconds(),
     ) / 1000,
   )
-}
-
-export function timeStamp2String(timestamp: number) {
-  const date = new Date(timestamp * 1000)
-
-  const dateString = date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })
-  const timeString = date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false })
-
-  return `${dateString} ${timeString}`
 }
 
 /**

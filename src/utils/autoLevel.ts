@@ -351,15 +351,8 @@ export function applyLearningStartChoice(choice: LearningStartChoice): boolean {
   return loadAutoLevelState().levelId === levelId
 }
 
-/** 状态持久化失败计数（v9.3.1 / SRS-006：供测试与数据页展示，不参与业务判定） */
-let persistFailureCount = 0
-/** 已发生的状态持久化失败次数（成功写入不清零，方便用户发现问题后仍能看到历史） */
-export function getStatePersistFailures(): number {
-  return persistFailureCount
-}
-
+/** 持久化失败时发出诊断日志与事件（v9.18：计数变量及其 getter 已随死代码清理删除） */
 function reportStatePersistFailure(reason: string, error?: unknown): void {
-  persistFailureCount += 1
   try {
     console.warn(`[autoLevel] qzAutoLevelState 持久化失败（${reason}），自动进阶进度可能会丢失`, error)
   } catch {
@@ -578,13 +571,6 @@ function buildSuspendedWordSet(state: AutoLevelState): Set<string> {
     if (word) set.add(word)
   }
   return set
-}
-
-/** 该词是否已挂起（按 memoryKey 精确匹配） */
-export function isSuspended(dict: string, word: string): boolean {
-  const key = memoryKey(dict, word)
-  const state = loadAutoLevelState()
-  return state.suspended.indexOf(key) >= 0
 }
 
 /** 全部挂起词的 memoryKey 列表（供「待攻克」列表/数据页） */
@@ -1166,13 +1152,3 @@ export function getLevelIndex(levelId: string): number {
   return findLevelIndex(levelId)
 }
 
-/** 供测试/调试：删除持久化状态（UI 不调用） */
-export function clearAutoLevelState(): void {
-  const storage = getStorage()
-  if (!storage) return
-  try {
-    storage.removeItem(AUTO_LEVEL_STORAGE_KEY)
-  } catch {
-    // ignore
-  }
-}
