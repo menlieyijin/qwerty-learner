@@ -37,7 +37,7 @@
 
 ## 部署
 
-见 [`docs/QUICKSTART.md`](docs/QUICKSTART.md)：开发 2 条命令、构建 1 条命令；桌面版另有发布脚本与环境变量说明。
+见 [`docs/QUICKSTART.md`](docs/QUICKSTART.md)：开发 2 条命令、构建 1 条命令（全部 npm）；桌面版另有发布脚本与环境变量说明。
 
 ## 文档索引
 

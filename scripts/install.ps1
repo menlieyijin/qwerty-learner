@@ -1,4 +1,4 @@
-# 定义函数
+﻿# 定义函数
 function Test-CommandInstalled([string]$CommandName) {
     $command = Get-Command $CommandName -ErrorAction SilentlyContinue
     if ($command) {
@@ -26,7 +26,7 @@ if (!(Test-CommandInstalled node)) {
     Write-Host "已安装nodejs!"
     Set-Location ..
     Write-Host "开始安装依赖..."
-    yarn install --registry=https://registry.npmmirror.com
+    npm ci --registry=https://registry.npmmirror.com
     Write-Host "依赖安装完成，启动程序..."
     
     Start-Job -ScriptBlock {

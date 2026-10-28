@@ -7,28 +7,28 @@
 | 项 | 版本 | 检查命令 |
 | --- | --- | --- |
 | Node.js | 18.x 或 20.x（`engines` 已锁 `>=18 <23`，`.nvmrc`=20） | `node -v` |
-| yarn | 1.22+（仓库有 `yarn.lock`） | `yarn -v` |
+| npm | 9+（仓库有 `package-lock.json`，安装走 `npm ci`） | `npm -v` |
 
 > 没有 Node？用 [nvm](https://github.com/nvm-sh/nvm) 或 [nvm-windows](https://github.com/coreybutler/nvm-windows)：`nvm install 20 && nvm use 20`。
 
 ## 1. 网页版：跑起来（2 条命令）
 
 ```bash
-yarn install --frozen-lockfile   # 按 lockfile 安装，不升级依赖
-yarn dev                         # http://localhost:5173
+npm ci                           # 按 package-lock.json 安装，不升级依赖
+npm run dev                      # http://localhost:5173
 ```
 
 ## 2. 网页版：构建（1 条命令）
 
 ```bash
-yarn build                       # 静态产物在 build/
+npm run build                    # 静态产物在 build/
 ```
 
 ## 3. 桌面版（Electron，Windows）
 
 ```bash
-yarn install --frozen-lockfile
-yarn build
+npm ci
+npm run build
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\dsh-release.ps1 -Version 1.0.0-enhanced-local
 ```
 
@@ -48,8 +48,8 @@ $env:QZ_INSTALL_DIRS='D:\qwerty\app'        # 要替换 app.asar 的安装目录
 
 | 现象 | 处理 |
 | --- | --- |
-| `yarn install` 慢或失败 | `yarn config set registry https://registry.npmmirror.com`（`scripts/install.*` 已内置） |
-| `yarn dev` 端口占用 | `yarn dev --port 5174` |
+| `npm ci` 慢或失败 | `npm config set registry https://registry.npmmirror.com`（`scripts/install.*` 已内置） |
+| `npm run dev` 端口占用 | `npm run dev -- --port 5174` |
 | 桌面冒烟 `NO_PAGE` | 个别机器 GPU 进程崩溃：启动加 `--disable-gpu --no-sandbox`，并清除 `NODE_OPTIONS` 与 `ELECTRON_RUN_AS_NODE` |
 | 构建报 Node 版本错误 | 确认 `node -v` 在 18–22 之间（`engines` 会拦截） |
 | 打包要联网 | 首次会通过 `npx` 下载固定版本 `@electron/asar@4.3.1`，之后走缓存 |

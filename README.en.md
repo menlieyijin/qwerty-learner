@@ -21,9 +21,9 @@
 See [`docs/QUICKSTART.md`](docs/QUICKSTART.md): two commands for development, one for a production build, plus the desktop packaging script and the `QZ_*` environment variables it needs on machines that are not the author's.
 
 ```bash
-yarn install --frozen-lockfile
-yarn dev          # http://localhost:5173
-yarn build        # static output in build/
+npm ci
+npm run dev          # http://localhost:5173
+npm run build        # static output in build/
 ```
 
 ## Docs
