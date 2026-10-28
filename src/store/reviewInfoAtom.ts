@@ -1,5 +1,6 @@
 import { safeStorage } from './storage'
 import type { ReviewRecord } from '@/utils/db/record'
+import { REVIEW_MODE_INFO_STORAGE_KEY } from '@/constants'
 import { atom } from 'jotai'
 import { atomWithStorage } from 'jotai/utils'
 
@@ -12,7 +13,8 @@ type TReviewInfoAtomData = {
 
 export function reviewInfoAtom(initialValue: TReviewInfoAtomData) {
   // M6-003：整份复习词表每次翻词都会重写，配额满时必须只告警不抛错（键名/序列化不变）
-  const storageAtom = atomWithStorage('reviewModeInfo', initialValue, safeStorage<TReviewInfoAtomData>())
+  // v9.12（M2-011）：键名改由 `@/constants` 的常量提供，与 data-export 导入后的清理共用同一来源
+  const storageAtom = atomWithStorage(REVIEW_MODE_INFO_STORAGE_KEY, initialValue, safeStorage<TReviewInfoAtomData>())
 
   return atom(
     (get) => {

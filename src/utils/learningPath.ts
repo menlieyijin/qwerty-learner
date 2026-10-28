@@ -60,6 +60,7 @@ export async function loadLevelWords(level: LearningLevel): Promise<Word[]> {
   if (cachedLevel) return cachedLevel
   const seen = new Set<string>()
   const out: Word[] = []
+  const failed: string[] = []
   for (const file of level.files) {
     try {
       const dictId = fileToDictId.get(file) || file.replace(/\.json$/i, '')
@@ -72,8 +73,13 @@ export async function loadLevelWords(level: LearningLevel): Promise<Word[]> {
       }
     } catch (e) {
       console.error('load level word list failed', file, e)
+      failed.push(file)
     }
   }
+  // v9.13（M1-001）：只要有文件没读到，这一级的词表就是残缺的——不能当作完整词表使用。
+  // 不写 levelCache（下次调用重试），抛给调用方：autoLevel.loadLevelWordList 会统一映射为
+  // error='load-failed'（不判完成、不推进 levelId），与设计文档「抛错或空词表」语义一致。
+  if (failed.length) throw new Error(`词库加载不完整（${failed.length}/${level.files.length} 个文件失败）: ${failed.join(', ')}`)
   levelCache.set(level.id, out)
   return out
 }

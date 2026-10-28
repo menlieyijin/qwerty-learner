@@ -2,6 +2,8 @@ import type * as PakoModule from 'pako'
 import Dexie from 'dexie'
 import { db } from '.'
 import { getCurrentDate } from '..'
+import { DUE_REVIEW_WORDS_STORAGE_KEY, REVALUATE_LEVEL_STORAGE_KEY, REVIEW_MODE_INFO_STORAGE_KEY } from '@/constants'
+import { AUTO_LEVEL_STORAGE_KEY } from '@/utils/autoLevel'
 import { cleanupStaleTempImportDbs, createTempImportDbName } from './temp-import-db'
 import { MEMORY_KEY_CASE_MIGRATED_KEY, MEMORY_MIGRATED_KEY } from '../memory'
 import { clearMemoryCache } from '../memoryCache'
@@ -11,12 +13,16 @@ export type ExportProgress = {
   totalRows?: number
   completedRows: number
   done: boolean
+  /** v9.12（M2-002）：仅在 `done` 时出现；true 表示本次导出失败，UI 不要把进度条推到 100% */
+  failed?: boolean
 }
 
 export type ImportProgress = {
   totalRows?: number
   completedRows: number
   done: boolean
+  /** v9.12（M2-007）：仅在 `done` 时出现；true 表示本次导入失败（已回滚/主库未动） */
+  failed?: boolean
 }
 
 /** v9.4：写入主库时每次 bulkPut 的行数（太大容易让单个 IDB 请求过重，太小则事务回调过多） */
@@ -35,22 +41,41 @@ function ungzipToBlob(pako: typeof PakoModule, compressed: ArrayBuffer): Blob {
   return new Blob([json])
 }
 
+/**
+ * v9.12（M2-009）：导出文件名时间戳 `YYYYMMDD-HHmmss`（补零风格与 `getCurrentDate` 一致）。
+ * 只加时分秒，扩展名与下载目录不变；同一天多次导出不再得到无法区分/排序的两份备份。
+ */
+function exportFileStamp(): string {
+  const now = new Date()
+  const pad = (value: number) => ('0' + value).slice(-2)
+  return `${getCurrentDate()}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`
+}
+
 export async function exportDatabase(callback: (exportProgress: ExportProgress) => boolean) {
-  const [pako, { saveAs }] = await Promise.all([import('pako'), import('file-saver'), import('dexie-export-import')])
+  try {
+    const [pako, { saveAs }] = await Promise.all([import('pako'), import('file-saver'), import('dexie-export-import')])
 
-  const blob = await db.export({
-    progressCallback: ({ totalRows, completedRows, done }) => {
-      return callback({ totalRows, completedRows, done })
-    },
-  })
-  const [wordCount, chapterCount] = await Promise.all([db.wordRecords.count(), db.chapterRecords.count()])
+    const blob = await db.export({
+      progressCallback: ({ totalRows, completedRows, done }) => {
+        return callback({ totalRows, completedRows, done })
+      },
+    })
+    const [wordCount, chapterCount] = await Promise.all([db.wordRecords.count(), db.chapterRecords.count()])
 
-  const json = await blob.text()
-  const compressed = pako.gzip(json)
-  const compressedBlob = new Blob([compressed])
-  const currentDate = getCurrentDate()
-  saveAs(compressedBlob, `Qwerty-Learner-User-Data-${currentDate}.gz`)
-  recordDataAction({ type: 'export', size: compressedBlob.size, wordCount, chapterCount })
+    const json = await blob.text()
+    const compressed = pako.gzip(json)
+    const compressedBlob = new Blob([compressed])
+    saveAs(compressedBlob, `Qwerty-Learner-User-Data-${exportFileStamp()}.gz`)
+    recordDataAction({ type: 'export', size: compressedBlob.size, wordCount, chapterCount })
+  } catch (error) {
+    // v9.12（M2-002）：db.export 之后还有 count / text() / gzip / saveAs 四个可能抛错的步骤，
+    // 原先没有任何 catch —— 任一抛错都会让 DataSetting 的 isExporting 停在 true（导出按钮永久禁用）
+    // 且进度条停在中间值、无提示。这里只补失败路径（成功路径与之前逐字相同）。
+    console.error('数据导出失败：', error)
+    window.alert(`导出失败：${String((error as Error)?.message || error)}\n\n练习数据未受影响，可重试。`)
+    // 复位按钮与进度条；failed=true 让 UI 不要把失败显示成 100%（与 M2-007 同一处类型追加）
+    callback({ totalRows: 0, completedRows: 0, done: true, failed: true })
+  }
 }
 
 /**
@@ -167,7 +192,8 @@ export async function importDatabase(onStart: () => void, callback: (importProgr
     } catch (error) {
       console.error('数据导入失败：', error)
       const reason = String((error as Error)?.message || error)
-      callback({ totalRows: 0, completedRows: 0, done: true })
+      // v9.12（M2-007）：失败也要"结束"（复位按钮），但不能把进度条显示成 100%（failed 由 UI 消费）
+      callback({ totalRows: 0, completedRows: 0, done: true, failed: true })
       if (error instanceof ImportFileError || !mainWriteStarted) {
         // 解压失败 / 不是有效备份 / 临时库导入失败：主库一个字节都没动
         window.alert(`导入失败：${reason}\n\n当前数据未做任何改动。`)
@@ -210,10 +236,11 @@ export async function importDatabase(onStart: () => void, callback: (importProgr
     clearMemoryCache()
     // v9.3：导入后清掉本机的自动进阶/复习会话状态，让新数据重建级别，避免沿用旧机器的 skip/级别
     try {
-      localStorage.removeItem('qzAutoLevelState')
-      localStorage.removeItem('qzReevaluateLevel')
-      localStorage.removeItem('qzDueReviewWords')
-      localStorage.removeItem('reviewModeInfo')
+      // v9.12（M2-011）：键名一律用常量，避免改键名后这里的清理静默失效（沿用旧机器的 skip/级别状态）
+      localStorage.removeItem(AUTO_LEVEL_STORAGE_KEY)
+      localStorage.removeItem(REVALUATE_LEVEL_STORAGE_KEY)
+      localStorage.removeItem(DUE_REVIEW_WORDS_STORAGE_KEY)
+      localStorage.removeItem(REVIEW_MODE_INFO_STORAGE_KEY)
       // v9.5（DATA-003）：导入的是旧机器数据，memoryKey 大小写迁移可能尚未在本机跑过；
       // 清掉标记让 reload 后重新执行迁移（只复制不删旧记录，幂等）。
       localStorage.removeItem(MEMORY_KEY_CASE_MIGRATED_KEY)

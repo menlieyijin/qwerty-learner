@@ -101,19 +101,6 @@ export class ChapterRecord implements IChapterRecord {
     this.wordNumber = wordNumber
     this.wordRecordIds = wordRecordIds
   }
-
-  get wpm() {
-    return Math.round((this.wordCount / this.time) * 60)
-  }
-
-  get inputAccuracy() {
-    const total = this.correctCount + this.wrongCount
-    return total > 0 ? Math.round((this.correctCount / total) * 100) : 0
-  }
-
-  get wordAccuracy() {
-    return Math.round((this.correctWordIndexes.length / this.wordNumber) * 100)
-  }
 }
 
 export interface IReviewRecord {
@@ -146,34 +133,15 @@ export class ReviewRecord implements IReviewRecord {
   }
 }
 
-export interface IRevisionDictRecord {
-  dict: string
-  revisionIndex: number
-  createdTime: number
-}
-
-export class RevisionDictRecord implements IRevisionDictRecord {
-  dict: string
-  revisionIndex: number
-  createdTime: number
-
-  constructor(dict: string, revisionIndex: number, createdTime: number) {
-    this.dict = dict
-    this.revisionIndex = revisionIndex
-    this.createdTime = createdTime
-  }
-}
-
-export interface IRevisionWordRecord {
-  word: string
-  timeStamp: number
-  dict: string
-  errorCount: number
-}
-
 /** v7 记忆曲线记录（与官方 wordRecords 独立，不改动原有表结构） */
 export interface IMemoryRecord {
-  /** `${dict}::${word.toLowerCase()}` */
+  /**
+   * 记忆曲线主键：`${dict}::${normalizeWordKeyWord(word)}`
+   *
+   * v9.5（DATA-003）起**保留大小写**（只收敛首尾空白），`March` / `march` 是两条独立记录；
+   * 旧记录（v9.4 及之前）是 trim + lower 口径，读取时由 `memoryKey.legacyMemoryKey` 兼容回退。
+   * 不要再把这里"统一成小写"——那会让 DATA-003 复发（两个拼写共用一条 SRS 记录）。
+   */
   key: string
   word: string
   dict: string
@@ -200,18 +168,4 @@ export interface IMemoryRecord {
   /** v8.3 影子调度：自适应到期时间（毫秒） */
   shadowDue?: number
   shadowAt?: number
-}
-
-export class RevisionWordRecord implements IRevisionWordRecord {
-  word: string
-  timeStamp: number
-  dict: string
-  errorCount: number
-
-  constructor(word: string, dict: string, errorCount: number) {
-    this.word = word
-    this.timeStamp = getUTCUnixTimestamp()
-    this.dict = dict
-    this.errorCount = errorCount
-  }
 }

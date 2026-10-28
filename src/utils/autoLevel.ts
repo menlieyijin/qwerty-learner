@@ -57,7 +57,7 @@ export type AutoLevelState = {
   /** 当前级别 id（持久化；只升不回退） */
   levelId: string
   startedAt: number
-  /** memoryKey(`${dict}::${word.toLowerCase()}`) -> 累计 Skip 次数（全局） */
+  /** memoryKey(dict, word) = `${dict}::${保留大小写的 word}`（v9.5 起大小写敏感，见 memoryKey.ts） -> 累计 Skip 次数（全局） */
   skipped: Record<string, number>
   /** 达阈值或手动挂起的 memoryKey 列表 */
   suspended: string[]
@@ -136,7 +136,8 @@ const MASTERY_RATIO = 0.85
  * 本级掌握度到 MIX_START 后，每次取词有 getMixRatio() 的概率落到 **下一级** 的一个未学词
  * （只展示/记录，不改 levelId，不参与本级完成判定）；到 MIX_FULL 时比例封顶 MIX_MAX。
  * 语义：getMixRatio 返回的是「本次取词落到下一级的概率」，由 memory.pickDynamicWord 在
- * 本级没有新词可出时按此概率掷骰（会话内另有 MIX_WINDOW_CAP 窗口上限负责限流）。
+ * 本次没有出到本级新词时（到期词/回顾占了抽样，或本级新词已出完）按此概率掷骰
+ * （会话内另有 MIX_WINDOW_CAP 窗口上限负责限流）。
  */
 export const MIX_START = 0.7
 /** 掺入比例封顶点：与毕业线 MASTERY_RATIO(0.85) 对齐，等价于「快毕业时先尝鲜下一级」 */
@@ -645,7 +646,7 @@ export function resumeWord(dict: string, word: string): boolean {
     }
     return dirty
   })
-  if (changed) void resetLapsesAfterResume(key)
+  if (changed) void resetLapsesByKey(key)
   return changed
 }
 
@@ -670,11 +671,6 @@ async function resetLapsesByKey(key: string): Promise<boolean> {
     console.warn('[autoLevel] 恢复待攻克时复位 lapses 失败（下次答错仍可能立即重新挂起）', e)
     return false
   }
-}
-
-/** 兼容旧名（resumeWord 内部使用） */
-async function resetLapsesAfterResume(key: string): Promise<void> {
-  await resetLapsesByKey(key)
 }
 
 /**

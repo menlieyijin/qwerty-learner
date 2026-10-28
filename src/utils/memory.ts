@@ -5,6 +5,7 @@ import { idDictionaryMap } from '@/resources/dictionary'
 import { LEARNING_PATH, loadDictWords, loadLevelWords } from './learningPath'
 import { clearMemoryCache, getMemoryCache, setMemoryCache } from './memoryCache'
 import { legacyMemoryKey, memoryKey, normalizeWordKeyWord, normalizeWordName } from './memoryKey'
+import { MEMORY_LADDER } from './memoryLadder'
 import {
   applyPendingResumeLapses,
   computeLevelProgress,
@@ -21,9 +22,14 @@ import {
 } from './autoLevel'
 import type { LevelProgress } from './autoLevel'
 import { takeRequeueWord } from './sessionRequeue'
-import { computeDue, correctClockRollback, effectiveDueOf, migrateStage } from './srsRules'
+import { computeDue, correctClockRollback, effectiveDueOf, migrateStage, shouldCountSlow } from './srsRules'
 
-export { memoryKey, normalizeWordName }
+/**
+ * v9.13（M1-017）：删掉历史兼容的 `memoryKey` 再导出（grep 反证：src 内无任何 `from '@/utils/memory'`
+ * 取 memoryKey 的调用点，审计入口也是从 `@/utils/memoryKey` 导入）。key 的唯一出口是 memoryKey.ts，
+ * 这里只保留仍在使用的 `normalizeWordName`（useWordList.ts 从这里取）。
+ */
+export { normalizeWordName }
 
 export const MEMORY_MIGRATED_KEY = 'memoryMigratedV1'
 /** v9.3.1（SRS-002）：时钟回拨/未来 due 的一次性校准标记（记录最近一次校准时间，仅用于避免重复扫描） */
@@ -217,7 +223,9 @@ export async function migrateMemoryKeyCase(): Promise<number> {
  * - `march` 与 `March` 的 canonical key 不同 → 两条都会保留（这正是本次修复的目标）。
  */
 export function canonicalizeMemoryRecords(records: IMemoryRecord[]): IMemoryRecord[] {
-  if (!Array.isArray(records) || records.length === 0) return records || []
+  // v9.13（M1-016）：非法输入（undefined / 对象 / 旧缓存注入）一律返回空数组，不再把非数组原样透出给
+  // 调用方去 `.map/.filter`（备份恢复、旧缓存注入时会在 UI 里直接 TypeError）。
+  if (!Array.isArray(records) || records.length === 0) return []
   const byCanonicalKey = new Map<string, IMemoryRecord>()
   const order: string[] = []
   for (const rec of records) {
@@ -234,7 +242,14 @@ export function canonicalizeMemoryRecords(records: IMemoryRecord[]): IMemoryReco
       byCanonicalKey.set(canonicalKey, rec)
     }
   }
-  return order.map((key) => byCanonicalKey.get(key) as IMemoryRecord)
+  // v9.13（M1-016）：显式过滤取代 `as IMemoryRecord` 断言——`order` 的 key 一定在 Map 里是自证的，
+  // 但读代码的人不必自己再证一遍，也不会在将来改成别的遍历方式时留下非空断言隐患。
+  const out: IMemoryRecord[] = []
+  for (const key of order) {
+    const rec = byCanonicalKey.get(key)
+    if (rec) out.push(rec)
+  }
+  return out
 }
 
 // ---------------------------------------------------------------------------
@@ -289,7 +304,9 @@ export async function correctFutureDueRecords(): Promise<number> {
       fixed.push(rec)
     }
     if (fixed.length) {
-      await db.memoryRecords.bulkPut(fixed)
+      // v9.13（M1-003）：只写本函数负责的字段（due）。用 bulkPut 整对象写回会把 toArray 时的旧快照
+      // 覆盖上去，把扫描期间并发发生的作答（attempts/correct/stage/due/lastSeen）一并回退。
+      for (const rec of fixed) await db.memoryRecords.update(rec.key, { due: rec.due })
       clearMemoryCache()
       console.info(`[memory] 时钟回拨校准：${fixed.length} 条记录 due 压回 now+interval`)
     }
@@ -352,9 +369,34 @@ async function migrateMemoryRecords(): Promise<void> {
   try {
     existingCount = await db.memoryRecords.count()
   } catch { /* ignore */ }
-  const marker = localStorage.getItem(MEMORY_MIGRATED_KEY)
+  // v9.13（M1-002）：localStorage 可能整体不可用（无痕/被策略禁用/第三方 iframe 抛 SecurityError）。
+  // 这里只读写「迁移标记」，不可用时不能抛错——否则 ensureMemoryMigrated 的 promise 会变成 rejected
+  // 并被缓存，本会话里 key 大小写迁移 / 时钟回拨校准 / 外部恢复对账全部跳过。
+  let storageWarned = false
+  const readMarker = (): string | null => {
+    try {
+      return localStorage.getItem(MEMORY_MIGRATED_KEY)
+    } catch (e) {
+      if (!storageWarned) {
+        storageWarned = true
+        console.warn('[memory] localStorage 不可用，迁移标记读取/写入已跳过（迁移本身继续执行）', e)
+      }
+      return null
+    }
+  }
+  const writeMarker = (): void => {
+    try {
+      localStorage.setItem(MEMORY_MIGRATED_KEY, String(Date.now()))
+    } catch (e) {
+      if (!storageWarned) {
+        storageWarned = true
+        console.warn('[memory] localStorage 不可用，迁移标记读取/写入已跳过（迁移本身继续执行）', e)
+      }
+    }
+  }
+  const marker = readMarker()
   if (existingCount > 0) {
-    if (!marker) localStorage.setItem(MEMORY_MIGRATED_KEY, String(Date.now()))
+    if (!marker) writeMarker()
     return
   }
   try {
@@ -374,7 +416,7 @@ async function migrateMemoryRecords(): Promise<void> {
       prev.wrong += Math.max(0, Number(r.wrongCount) || 0)
       // v9.3：迁移时补慢词统计，方便后续 shadow/报告分析
       const totalMs = Array.isArray(r.timing) ? r.timing.reduce((acc, cur) => acc + (Number(cur) || 0), 0) : 0
-      if (totalMs > 6000) prev.slow += 1
+      if (shouldCountSlow(totalMs)) prev.slow += 1
       if (ts) {
         prev.lastSeen = Math.max(prev.lastSeen, ts)
         if (!prev.created || ts < prev.created) prev.created = ts
@@ -387,7 +429,9 @@ async function migrateMemoryRecords(): Promise<void> {
     for (const a of agg.values()) {
       if (existing.has(a.key)) continue
       const stage = migrateStage(a.wrong)
-      const interval = [10 / 1440, 30 / 1440, 0.5, 1, 2, 4, 7, 15, 30, 60, 120, 240][stage]
+      // v9.13（M1-004）：阶梯只有 memoryLadder 一个来源；这里再抄一份字面量会让「调阶梯」后迁移出的
+      // interval 与 stage 悄悄分叉（迁移/影子调度里才可见）。
+      const interval = MEMORY_LADDER[stage] ?? MEMORY_LADDER[0]
       const lastSeen = a.lastSeen || now
       // v9.3：旧记录按 lastSeen + interval 算 due；已过期的摊到未来 14 天（避免首课复习雪崩）
       let due = lastSeen + interval * 24 * 3600 * 1000
@@ -415,7 +459,7 @@ async function migrateMemoryRecords(): Promise<void> {
     if (records.length) await db.memoryRecords.bulkPut(records)
     clearMemoryCache()
     // v8.9：只有真正成功才写「已迁移」标记；之前失败也会写，导致进度永远补不回来
-    localStorage.setItem(MEMORY_MIGRATED_KEY, String(Date.now()))
+    writeMarker()
   } catch (e) {
     console.error('migrate memory records failed', e)
   }
@@ -426,14 +470,24 @@ export async function getMemoryRecords(): Promise<IMemoryRecord[]> {
   // v9.5（DATA-003）：返回前按 canonical key 去重（legacy 旧记录 + 新记录并存时只算一次）
   const cached = getMemoryCache()
   if (cached) return canonicalizeMemoryRecords(cached)
+  let records: IMemoryRecord[]
   try {
-    const records = await db.memoryRecords.toArray()
-    await fillMissingTransInRecords(records)
-    setMemoryCache(records)
-    return canonicalizeMemoryRecords(records)
-  } catch {
+    records = await db.memoryRecords.toArray()
+  } catch (e) {
+    // v9.13（M1-008）：「读失败」与「空表」是两回事，但本函数的调用方（pages/Typing/hooks/useWordList.ts）
+    // 只按数组消费、且属跨域改动，本轮不改签名：**保留返回空表**，但必须打出与「新用户/空库」可区分的日志，
+    // 否则 IndexedDB 读取失败（配额满/被其它标签页阻塞/隐私模式）看起来就像「学习进度被清空」。
+    console.error('[memory] 读取记忆记录失败，本次返回空表（数据仍在库里，不代表已清空；到期池/已学词将为空）', e)
     return []
   }
+  // 补释义会回写库（trans/phone），它失败不该让整次读取退化成「没有任何记录」
+  try {
+    await fillMissingTransInRecords(records)
+  } catch (e) {
+    console.warn('[memory] 补释义失败（不影响本次读取）', e)
+  }
+  setMemoryCache(records)
+  return canonicalizeMemoryRecords(records)
 }
 
 /**
@@ -519,10 +573,16 @@ async function fillMissingTransInRecords(records: IMemoryRecord[]): Promise<void
     if (stillMissing.length) {
       const fallback = new Map<string, Word>()
       for (let i = 0; i < Math.min(6, LEARNING_PATH.length); i++) {
-        const words = await loadLevelWords(LEARNING_PATH[i])
-        for (const w of words) {
-          const k = normalizeWordName(w.name)
-          if (!fallback.has(k)) fallback.set(k, w)
+        try {
+          const words = await loadLevelWords(LEARNING_PATH[i])
+          for (const w of words) {
+            const k = normalizeWordName(w.name)
+            if (!fallback.has(k)) fallback.set(k, w)
+          }
+        } catch (e) {
+          // v9.13（M1-001）：loadLevelWords 现在对「部分文件失败」抛错（不缓存残缺词表）；
+          // 兜底释义只是锦上添花，逐级跳过失败的级别，不能让它把整次读取打成失败。
+          console.warn('[memory] 兜底释义词表加载失败，已跳过该级别', LEARNING_PATH[i].id, e)
         }
       }
       for (const rec of stillMissing) {
@@ -534,7 +594,9 @@ async function fillMissingTransInRecords(records: IMemoryRecord[]): Promise<void
         }
       }
     }
-    if (updated.length) await db.memoryRecords.bulkPut(updated)
+    // v9.13（M1-003）：只写本函数负责的字段（trans/phone），避免把读快照里的旧计数整对象写回、
+    // 覆盖期间并发发生的作答；记录已被删除时 update 静默跳过（比 bulkPut 复活整条更正确）。
+    for (const rec of updated) await db.memoryRecords.update(rec.key, { trans: rec.trans, phone: rec.phone })
   } finally {
     fillingTrans = false
   }
@@ -632,8 +694,9 @@ async function pickPreviewWord(
  * 3. 到期优先，剩余概率取新词；只有取新词时才计算/推进自动级别；
  * 4. 新词从本级未学词按文件顺序前 20 个随机（保留教材/词频顺序）。
  *
- * v9.11：本级没有新词可出时，若掌握度达 70% 且调用方给了 previewBudget（会话窗口剩余额度），
- * 按 getMixRatio() 的概率掺入 1 个下一级的未学词（preview=true，不影响本级完成判定）。
+ * v9.11：本次取词没有落到「本级新词」时（到期词/回顾占了抽样，或本级新词已出完），若本次仍有到期词
+ * 且调用方给了 previewBudget（会话窗口剩余额度），按 getMixRatio()（掌握度 70% 起，到 85% 封顶 30%）
+ * 的概率掺入 1 个下一级的未学词（preview=true，不影响本级完成判定）。
  */
 export async function pickDynamicWord(opts: {
   records: IMemoryRecord[]
@@ -682,14 +745,16 @@ export async function pickDynamicWord(opts: {
   }
   const due = Array.from(dueByKey.values())
   const dueCount = due.length
-  const randOf = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)]
+  // v9.13（M1-015）：空数组返回 undefined，类型如实标注（T | undefined），调用点一律判空；
+  // 保持「一次调用只掷一次骰」不变（确定性门禁依赖 Math.random 的调用次数与顺序）。
+  const randOf = <T,>(arr: readonly T[]): T | undefined => arr[Math.floor(Math.random() * arr.length)]
   const refreshChance = getRefreshChance(dueCount)
   const newRatio = getNewRatio(dueCount)
 
   // 随机回顾：答对只刷新不升档；due 积压多时概率自动降为 0
   if (refreshRecords.length > 0 && Math.random() < refreshChance) {
     const rec = randOf(refreshRecords)
-    return { word: recordToWord(rec), dict: rec.dict, level: levelInfoFromState(), refresh: true, hint: 'review' }
+    if (rec) return { word: recordToWord(rec), dict: rec.dict, level: levelInfoFromState(), refresh: true, hint: 'review' }
   }
 
   const wantNew = dueCount === 0 || Math.random() < newRatio
@@ -713,7 +778,7 @@ export async function pickDynamicWord(opts: {
         if (newWords.length) {
           const batch = newWords.slice(0, 20)
           const w = randOf(batch)
-          return { word: w, dict: w.dict || `auto:${p.levelId}`, level: progressToInfo(p), refresh: false }
+          if (w) return { word: w, dict: w.dict || `auto:${p.levelId}`, level: progressToInfo(p), refresh: false }
         }
       }
     } else {
@@ -722,12 +787,13 @@ export async function pickDynamicWord(opts: {
       )
       if (manualNew.length) {
         const w = randOf(manualNew)
-        return { word: w, dict: w.dict || opts.manualDict || 'manual', level: null, refresh: false }
+        if (w) return { word: w, dict: w.dict || opts.manualDict || 'manual', level: null, refresh: false }
       }
     }
   }
 
-  // v9.11：本级新词出完之后，按掌握度掺入下一级词。
+  // v9.11：本次取词没有落到「本级新词」时（可能是到期词/回顾占了抽样，也可能是本级新词已出完），
+  // 若本次仍有到期词（dueCount>0）且会话窗口还有额度，则按掌握度掺入 1 个下一级的词。
   // 注意：只有 mix>0 时才掷骰——mix<=0 绝不调用 Math.random()，否则既有确定性随机序列整体位移。
   if (opts.mode === 'auto' && dueCount > 0 && (opts.previewBudget || 0) > 0) {
     const p = await ensureProgress()
@@ -743,14 +809,16 @@ export async function pickDynamicWord(opts: {
 
   if (dueCount > 0) {
     const rec = randOf(due)
-    const p = opts.mode === 'auto' ? progress || (await ensureProgress()) : null
-    return { word: recordToWord(rec), dict: rec.dict, level: p ? progressToInfo(p) : levelInfoFromState(), refresh: false }
+    if (rec) {
+      const p = opts.mode === 'auto' ? progress || (await ensureProgress()) : null
+      return { word: recordToWord(rec), dict: rec.dict, level: p ? progressToInfo(p) : levelInfoFromState(), refresh: false }
+    }
   }
 
   // 全部学完/没有新词：随机回顾兜底
   if (refreshRecords.length > 0) {
     const rec = randOf(refreshRecords)
-    return { word: recordToWord(rec), dict: rec.dict, level: levelInfoFromState(), refresh: true, hint: 'review' }
+    if (rec) return { word: recordToWord(rec), dict: rec.dict, level: levelInfoFromState(), refresh: true, hint: 'review' }
   }
   return null
 }

@@ -12,8 +12,9 @@ import { TypingContext, TypingStateActionType, initialState, typingReducer } fro
 import type { TypingSettleFn } from './store'
 import Header from '@/components/Header'
 import Tooltip from '@/components/Tooltip'
+import { DUE_REVIEW_WORDS_STORAGE_KEY } from '@/constants'
 import { idDictionaryMap } from '@/resources/dictionary'
-import { currentDictIdAtom, isReviewModeAtom, reviewModeInfoAtom } from '@/store'
+import { currentChapterAtom, currentDictIdAtom, isReviewModeAtom, reviewModeInfoAtom } from '@/store'
 import { IsDesktop, isLegal } from '@/utils'
 import { recordSkip } from '@/utils/autoLevel'
 import { removeFromRequeue } from '@/utils/sessionRequeue'
@@ -30,6 +31,7 @@ const App: React.FC = () => {
   const { words, isLoading, nextWord } = useWordList()
 
   const [currentDictId, setCurrentDictId] = useAtom(currentDictIdAtom)
+  const currentChapter = useAtomValue(currentChapterAtom)
   const chapterLogUploader = useMixPanelChapterLogUploader(state)
   const saveChapterRecord = useSaveChapterRecord()
 
@@ -46,9 +48,9 @@ const App: React.FC = () => {
   // v9.0：增强面板「到期复习」通过 localStorage 桥接一批到期词；进入复习模式后按每个词自己的 dict 写回记忆曲线
   useEffect(() => {
     try {
-      const raw = localStorage.getItem('qzDueReviewWords')
+      const raw = localStorage.getItem(DUE_REVIEW_WORDS_STORAGE_KEY)
       if (!raw) return
-      localStorage.removeItem('qzDueReviewWords')
+      localStorage.removeItem(DUE_REVIEW_WORDS_STORAGE_KEY)
       const words = JSON.parse(raw)
       if (Array.isArray(words) && words.length > 0) {
         setReviewModeInfo({
@@ -201,11 +203,13 @@ const App: React.FC = () => {
     })
   }, [state, state.isTyping, state.chapterData.wordCount, isReviewMode, saveChapterRecord])
 
-  // 切换词库/进入复习时开启新的会话记录
+  // 切换词库/进入复习/切换章节时开启新的会话记录
+  // v9.12（M2-001）：加上 currentChapter —— 否则第 N 章的暂停行 id 会被第 N+1 章复用
+  // （saveChapterRecord 的 update 会把 chapter 一起改成当前章号，等于改写上一章的快照）。
   useEffect(() => {
     sessionChapterIdRef.current = undefined
     savedPartialRef.current = 0
-  }, [currentDictId, isReviewMode])
+  }, [currentDictId, isReviewMode, currentChapter])
 
   useEffect(() => {
     let intervalId: number

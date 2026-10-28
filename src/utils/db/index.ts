@@ -1,4 +1,4 @@
-import type { IChapterRecord, IMemoryRecord, IReviewRecord, IRevisionDictRecord, IWordRecord, LetterMistakes } from './record'
+import type { IChapterRecord, IMemoryRecord, IReviewRecord, IWordRecord } from './record'
 import { ChapterRecord, ReviewRecord, WordRecord } from './record'
 import { MEMORY_GRADUATE_STAGE, adaptiveDaysFromRecord, clampStage, ladderDays } from '@/utils/memoryLadder'
 import { removeMemoryCache, upsertMemoryCache } from '@/utils/memoryCache'
@@ -12,9 +12,6 @@ class RecordDB extends Dexie {
   chapterRecords!: Table<IChapterRecord, number>
   reviewRecords!: Table<IReviewRecord, number>
   memoryRecords!: Table<IMemoryRecord, string>
-
-  revisionDictRecords!: Table<IRevisionDictRecord, number>
-  revisionWordRecords!: Table<IWordRecord, number>
 
   constructor() {
     super('RecordDB')
@@ -225,13 +222,12 @@ export async function updateMemoryProgress(
     }
     await finalize()
   } catch (e) {
+    // v9.12（M2-004）：内层不再吞错——本函数必须在失败时 reject，否则调用方
+    // （useSaveWordRecord 的 try/catch）永远是死防御，将来"给用户失败提示"也没有入口。
+    // 用户可见行为不变：调用方仍只记日志、不弹窗。
     console.error('update memory progress failed', e)
+    throw e
   }
-}
-
-export type WordKeyLogger = {
-  letterTimeArray: number[]
-  letterMistake: LetterMistakes
 }
 
 /**
@@ -257,6 +253,8 @@ export async function deferMemoryDue(dict: string, word: string, days = 1): Prom
     await db.memoryRecords.put(rec)
     upsertMemoryCache(rec)
   } catch (e) {
+    // v9.12（M2-004）：同上，不吞错（调用方的 try/catch 才是兜底；这里保留一条带上下文的日志）
     console.error('defer memory due failed', e)
+    throw e
   }
 }

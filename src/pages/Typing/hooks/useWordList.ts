@@ -1,5 +1,6 @@
 import { autoLevelInfoAtom, currentDictInfoAtom, customDictInfoAtom, learningModeAtom, reviewModeInfoAtom } from '@/store'
 import type { Word, WordWithIndex } from '@/typings/index'
+import { REVALUATE_LEVEL_STORAGE_KEY } from '@/constants'
 import { MIX_WINDOW_CAP, MIX_WINDOW_SIZE, reevaluateLevel, resolveCurrentLevel } from '@/utils/autoLevel'
 import { ensureMemoryMigrated, getMemoryRecords, normalizeWordName, pickDynamicWord } from '@/utils/memory'
 import { clearSessionRequeue } from '@/utils/sessionRequeue'
@@ -111,8 +112,8 @@ export function useWordList(): UseWordListResult {
         }
         // v9.3：数据页「重新评估级别」通过 localStorage 标记触发（唯一允许回退的入口）
         try {
-          if (localStorage.getItem('qzReevaluateLevel')) {
-            localStorage.removeItem('qzReevaluateLevel')
+          if (localStorage.getItem(REVALUATE_LEVEL_STORAGE_KEY)) {
+            localStorage.removeItem(REVALUATE_LEVEL_STORAGE_KEY)
             await reevaluateLevel(records, { migrate: false })
           }
         } catch { /* ignore */ }

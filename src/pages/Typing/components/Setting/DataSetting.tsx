@@ -12,10 +12,11 @@ export default function DataSetting() {
   const [isImporting, setIsImporting] = useState(false)
   const [importProgress, setImportProgress] = useState(0)
 
-  const exportProgressCallback = useCallback(({ totalRows, completedRows, done }: ExportProgress) => {
+  const exportProgressCallback = useCallback(({ totalRows, completedRows, done, failed }: ExportProgress) => {
     if (done) {
+      // v9.12（M2-002）：完成即恢复按钮；失败时把进度条清回 0，避免"导出失败 + 100%"的误导
       setIsExporting(false)
-      setExportProgress(100)
+      setExportProgress(failed ? 0 : 100)
       return true
     }
     if (totalRows) {
@@ -28,13 +29,15 @@ export default function DataSetting() {
   const onClickExport = useCallback(() => {
     setExportProgress(0)
     setIsExporting(true)
+    // exportDatabase 自己 try/catch + alert，并在 finally 里回调复位（不会再出现按钮永久禁用）
     exportDatabase(exportProgressCallback)
   }, [exportProgressCallback])
 
-  const importProgressCallback = useCallback(({ totalRows, completedRows, done }: ImportProgress) => {
+  const importProgressCallback = useCallback(({ totalRows, completedRows, done, failed }: ImportProgress) => {
     if (done) {
+      // v9.12（M2-007）：失败只复位按钮，不显示 100%
       setIsImporting(false)
-      setImportProgress(100)
+      setImportProgress(failed ? 0 : 100)
       return true
     }
     if (totalRows) {
