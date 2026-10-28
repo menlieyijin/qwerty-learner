@@ -37,7 +37,7 @@
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const fmtNum = (n) => Number(n || 0).toLocaleString('zh-CN');
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
-  const nowIso = () => new Date().toISOString();
+  // v9.15（dsh，M5-010）：删除只定义无引用的 nowIso（grep 全仓库仅此一处）
   function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
 
   // v9.2：版本号单一来源——主进程在注入脚本前设置 window.__QZ_VERSION__（来自 package.json）
@@ -103,7 +103,7 @@
       } catch (e) { reject(e); }
     });
   }
-  function idbGetAll(db, store) { return idbAll(db, store); }
+  // v9.15（dsh，M5-010）：删除 `idbGetAll`（仅是 idbAll 的别名，全仓库无引用）
   function idbDelete(db, store, key) {
     return new Promise((resolve) => {
       try { const tx = db.transaction(store, 'readwrite'); tx.objectStore(store).delete(key); tx.oncomplete = resolve; tx.onerror = resolve; } catch { resolve(); }
@@ -429,10 +429,7 @@
       const s = appStats && appStats.today === TODAY() && Date.now() - (appStats.at || 0) < 30000 ? appStats : await collectStats();
       appStats = s;
       api.sendStats({ date: s.today, words: s.words, goal: s.goal, streak: s.streak, ratio: s.ratio });
-      const chip = shadow.getElementById('qz-chip-text');
-      if (chip) chip.textContent = `今日 ${s.words}/${s.goal} · 连续 ${s.streak} 天`;
-      const badge = shadow.getElementById('qz-badge');
-      if (badge) badge.style.display = s.words > 0 ? 'block' : 'none';
+      // v9.15（dsh，M5-010）：删除对已隐藏悬浮球/今日条（#qz-chip-text / #qz-badge）的每 60 秒 DOM 写入
       if (panelOpen) renderStatsToPanel(s);
     } catch (e) { console.warn('[QZ] pushStats', e); }
   }
@@ -541,7 +538,6 @@
     --qz-input-bg: #ffffff;
     --qz-mask: rgba(15, 23, 42, 0.28);
     --qz-shadow: 0 10px 30px rgba(15, 23, 42, 0.10);
-    --qz-fab-bg: rgba(255, 255, 255, 0.92);
   }
   :host(.qz-dark) {
     --qz-bg: #1e293b;
@@ -558,16 +554,12 @@
     --qz-input-bg: #0f172a;
     --qz-mask: rgba(2, 6, 23, 0.55);
     --qz-shadow: 0 14px 34px rgba(2, 6, 23, 0.45);
-    --qz-fab-bg: rgba(30, 41, 59, 0.92);
   }
   button { outline: none; }
   button:focus-visible { outline: 2px solid var(--qz-accent); outline-offset: 2px; }
   * { box-sizing: border-box; font-family: -apple-system, 'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif; }
 
-  /* ---------- 悬浮入口：v7 已改为顶栏「工具」入口，隐藏旧 Q+ 悬浮球 ---------- */
-  .fab { display: none !important; }
-  .chip { display: none !important; }
-  .fab .dot { display: none; }
+  /* ---------- 悬浮入口：v7 起改为顶栏「工具」入口；v9.15（dsh，M5-010）删除隐藏的 .fab/.chip 规则 ---------- */
 
   /* ---------- 工具页（全屏，替代旧悬浮小窗） ---------- */
   .panel { position: fixed; inset: 0; right: auto; bottom: auto; width: 100%; max-width: none;
@@ -752,15 +744,8 @@
   shadow.appendChild(styleEl);
 
   const wrap = document.createElement('div');
+  // v9.15（dsh，M5-010）：删除自 v7 起就被 display:none 隐藏的悬浮球(#qz-fab)与今日条(#qz-chip) DOM
   wrap.innerHTML = `
-    <button class="fab" id="qz-fab" title="Qwerty Plus 增强面板 (Ctrl+Alt+Q 显隐窗口)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M4 7h9"/><circle cx="16.5" cy="7" r="2"/><path d="M18.5 7H20"/>
-        <path d="M4 17h5"/><circle cx="11.5" cy="17" r="2"/><path d="M13.5 17H20"/>
-      </svg>
-      <span class="dot" id="qz-badge" style="display:none"></span>
-    </button>
-    <div class="chip" id="qz-chip" title="点击打开增强面板"><span id="qz-chip-text">今日 0/30 · 连续 0 天</span></div>
     <div class="panel" id="qz-panel">
       <div class="ph">
         <div class="t">增强工具 <small>Qwerty Plus ${APP_VERSION_SHORT}</small></div>
@@ -1138,7 +1123,7 @@
   shadow.appendChild(wrap);
 
   const $ = (sel) => shadow.querySelector(sel);
-  const fab = $('#qz-fab'), panel = $('#qz-panel'), chip = $('#qz-chip');
+  const panel = $('#qz-panel'); // v9.15（dsh，M5-010）：随 #qz-fab / #qz-chip 一并移除
 
   function toast(msg, ms = 2600) {
     const box = $('#qz-toasts');
@@ -1159,8 +1144,7 @@
     setTimeout(() => { const first = panel.querySelector('.tabs button.active'); first && first.focus && first.focus(); }, 30);
   }
   function closePanel() { panelOpen = false; panel.classList.remove('open'); }
-  fab.addEventListener('click', () => { panelOpen ? closePanel() : openPanel(); });
-  chip.addEventListener('click', () => openPanel('data'));
+  // v9.15（dsh，M5-010）：删除 fab / chip 的点击绑定（DOM 已移除；入口仍是顶栏「工具」与 Ctrl+Alt+Q）
   window.addEventListener('qz-open-enhance', (e) => {
     const tab = e && e.detail && e.detail.tab;
     if (!panelOpen) openPanel(tab || 'general');

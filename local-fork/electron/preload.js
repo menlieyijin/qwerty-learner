@@ -27,7 +27,8 @@ contextBridge.exposeInMainWorld('qwertyEnhance', {
   // —— 设置 ——
   getSettings: () => ipcRenderer.invoke('app:getSettings'),
   updateSettings: (patch) => ipcRenderer.invoke('app:updateSettings', patch),
-  onSettings: (cb) => { if (typeof cb === 'function') ipcRenderer.on('app:settings', (_e, s) => cb(s)); },
+  // v9.15（dsh，M5-011）：删除幽灵通道 onSettings('app:settings') —— 主进程从未发送该通道，
+  //   设置变更统一走 enhance:event（{type:'settings'}），见 main.js sendEvent('settings', ...)。
   // —— 事件（迷你模式 / 打开面板 / 设置）——
   onEvent,
   // —— A 层窗口控制 ——
@@ -84,8 +85,8 @@ contextBridge.exposeInMainWorld('qwertyEnhance', {
     ipcRenderer.on('pron:precache-progress', (_e, payload) => { try { cb(payload); } catch { /* ignore */ } });
   },
   // —— 剪贴板 / 发音缓存 ——
-  getClipboard: () => ipcRenderer.invoke('clipboard:get'),
-  closeClipboard: () => ipcRenderer.invoke('clipboard:close'),
+  // v9.15（dsh，M5-011）：删除 getClipboard / closeClipboard —— 主窗口业务从不使用（全仓库无调用），
+  //   且剪贴板能力已在 v9.6 收敛到 preload-clipboard.js（专供剪贴板小窗）。保留 onClipboardWord。
   onClipboardWord,
   pronStats: () => ipcRenderer.invoke('pron:stats'),
   clearPronCache: () => ipcRenderer.invoke('pron:clear'),

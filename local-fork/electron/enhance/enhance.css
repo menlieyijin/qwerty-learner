@@ -83,7 +83,4 @@ html.qz-font-round #root [class*='text-4xl'] {
   font-family: 'Comic Sans MS', 'Segoe UI', 'Microsoft YaHei', sans-serif !important;
 }
 
-/* 关掉页面滚动条带来的布局跳动（增强面板使用自己的滚动条） */
-body.qz-no-scroll {
-  overflow: hidden;
-}
+/* v9.15（dsh，M5-010）：删除 body.qz-no-scroll 规则 —— 全仓库无任何写入该 class 的代码（增强面板用自己的滚动条） */

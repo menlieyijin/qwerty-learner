@@ -371,5 +371,9 @@
  "google-20000-english": "google-20000-english.json",
  "NGSL": "NGSL.json",
  "NAWL": "NAWL.json",
- "AWL": "AWL.json"
+ "AWL": "AWL.json",
+ "ket": "ket2021.json",
+ "Yilin1": "YiLin_1.json",
+ "Yilin2": "YiLin_2.json",
+ "Yilin3": "YiLin_3.json"
 }

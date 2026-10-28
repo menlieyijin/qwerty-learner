@@ -3738,5 +3738,45 @@
    "学术"
   ],
   "length": 570
+ },
+ "ket2021.json": {
+  "id": "ket",
+  "name": "KET",
+  "description": "KET 2021单词",
+  "category": "国际考试",
+  "tags": [
+   "KET"
+  ],
+  "length": 1147
+ },
+ "YiLin_1.json": {
+  "id": "Yilin1",
+  "name": "高中必修1",
+  "description": "译林版高中必修1",
+  "category": "青少年英语",
+  "tags": [
+   "译林版"
+  ],
+  "length": 276
+ },
+ "YiLin_2.json": {
+  "id": "Yilin2",
+  "name": "高中必修2",
+  "description": "译林版高中必修2",
+  "category": "青少年英语",
+  "tags": [
+   "译林版"
+  ],
+  "length": 297
+ },
+ "YiLin_3.json": {
+  "id": "Yilin3",
+  "name": "高中必修3",
+  "description": "译林版高中必修3",
+  "category": "青少年英语",
+  "tags": [
+   "译林版"
+  ],
+  "length": 295
  }
 }

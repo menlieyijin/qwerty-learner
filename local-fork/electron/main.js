@@ -45,14 +45,29 @@ try {
   const pkg = require(path.join(__dirname, '..', 'package.json'));
   if (pkg && pkg.version) APP_VERSION = String(pkg.version);
 } catch { /* 保持 unknown */ }
+// v9.15（dsh，M5-008）：app.getPath() 在「文档/漫游目录被重定向到不可用位置」时会直接抛错，
+//   而这些调用原本裸奔在模块顶层 —— 抛错即在 require 阶段结束进程（窗口/托盘/日志都来不及创建）。
+//   统一走 safeGetPath：失败记入 pathFallbacks（logError 定义后再落盘），并逐级回退。
+const pathFallbacks = [];
+function safeGetPath(name, fallback) {
+  try {
+    const p = app.getPath(name);
+    if (p) return p;
+    pathFallbacks.push(`${name}: empty`);
+  } catch (e) {
+    pathFallbacks.push(`${name}: ${(e && e.message) || e}`);
+  }
+  return fallback;
+}
+const APP_DATA_DIR = safeGetPath('appData', safeGetPath('home', __dirname));
 const PLUS_DIR = process.env.QZ_PLUS_DIR
   ? path.resolve(process.env.QZ_PLUS_DIR)
-  : path.join(app.getPath('appData'), 'qwerty-learner-plus');
+  : path.join(APP_DATA_DIR, 'qwerty-learner-plus');
 const LOG_DIR = path.join(PLUS_DIR, 'logs');
 const BACKUP_DIR = path.join(PLUS_DIR, 'backups');
 const CACHE_DIR = path.join(PLUS_DIR, 'cache');
 const AUDIO_CACHE_DIR = path.join(CACHE_DIR, 'audio');
-const EXPORTS_DIR = path.join(app.getPath('documents'), 'QwertyLearnerPlus', 'exports');
+const EXPORTS_DIR = path.join(safeGetPath('documents', safeGetPath('home', __dirname)), 'QwertyLearnerPlus', 'exports');
 const UPDATE_DIR = path.join(PLUS_DIR, 'dicts-update'); // 在线更新词库下载目录（删除即回滚）
 const SETTINGS_FILE = path.join(PLUS_DIR, 'enhanced-settings.json');
 const STATE_FILE = path.join(PLUS_DIR, 'window-state.json');
@@ -62,7 +77,7 @@ function logStamp(d = new Date()) {
   return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
 }
 function logFilePath(kind) { return path.join(LOG_DIR, `${kind}-${logStamp()}.log`); }
-const USER_DATA = app.getPath('userData'); // %APPDATA%\qwerty-learner（只读备份源）
+const USER_DATA = safeGetPath('userData', path.join(APP_DATA_DIR, 'qwerty-learner')); // %APPDATA%\qwerty-learner（只读备份源）
 
 for (const d of [PLUS_DIR, LOG_DIR, BACKUP_DIR, CACHE_DIR, AUDIO_CACHE_DIR, EXPORTS_DIR, UPDATE_DIR]) {
   try { fs.mkdirSync(d, { recursive: true }); } catch (e) { /* 记录在 logError 前，忽略 */ }
@@ -194,6 +209,9 @@ function logRenderer(tag, message) { writeLog('renderer', tag, message); }
 process.on('uncaughtException', (err) => { logError('uncaughtException', err); });
 process.on('unhandledRejection', (err) => { logError('unhandledRejection', err); });
 
+// v9.15（dsh，M5-008）：模块顶层 app.getPath 的回退明细在这里落盘（此时 LOG_DIR 已建、logError 已可用）
+if (pathFallbacks.length) logError('get-path-fallback', pathFallbacks.join('; '));
+
 // ---------------------------------------------------------------------------
 // 全局状态
 // ---------------------------------------------------------------------------
@@ -284,10 +302,10 @@ function appIconPath() {
 // ---------------------------------------------------------------------------
 // 注入增强脚本（B 层 UI）
 // ---------------------------------------------------------------------------
-let enhanceInjectedFor = null;
+// v9.15（dsh，M5-010）：删除只写不读的 `enhanceInjectedFor`（无任何「注入去重」逻辑在读它，
+//   重复注入实际由注入脚本自身的 window.__QZ_ENHANCED__ 拦下）
 function injectEnhance(win) {
   if (!win || win.isDestroyed()) return;
-  const id = win.webContents.id;
   const cssPath = path.join(__dirname, 'enhance/enhance.css');
   const jsPath = path.join(__dirname, 'enhance/enhance.js');
   let css = '';
@@ -320,7 +338,6 @@ function injectEnhance(win) {
   win.webContents.executeJavaScript(payload, true)
     .then((r) => logRenderer('inject', `inject result: ${r}`))
     .catch((e) => logError('inject-enhance', e));
-  enhanceInjectedFor = id;
 }
 
 // ---------------------------------------------------------------------------
@@ -915,6 +932,8 @@ async function downloadDictUpdate(name, downloadUrl) {
         const buf = await fetchDictFile(url);
         const target = path.join(UPDATE_DIR, file);
         fs.writeFileSync(target, buf);
+        // v9.15（dsh，M5-006）：新文件已落盘 → 失效内存缓存，使「记忆曲线 / 更新检查」立即按新词库工作
+        invalidateDictCaches();
         logRenderer('dict-download', `${file} <- ${String(url).replace(/^https:\/\/([^/]+).*$/, '$1')} (${buf.length} B)`);
         return { ok: true, file, path: target, size: buf.length, url };
       } catch (e) { lastErr = e; }
@@ -924,6 +943,19 @@ async function downloadDictUpdate(name, downloadUrl) {
     logError('dict-download', e);
     return { ok: false, error: String(e.message || e) };
   }
+}
+// v9.15（dsh，M5-006）：词库「下载更新 / 清空更新」后必须失效主进程侧内存缓存，
+//   否则「记忆曲线」(dicts:read) 继续用旧词库、「检查更新」继续按旧 sha 判「已是最新」，直到重启应用。
+//   说明：dictDataCache / dictCountCache 在本文件稍后声明（const），此处只在 IPC 调用时执行，不存在 TDZ。
+function invalidateDictCaches() {
+  try {
+    dictListCache = null;
+    dictShaCache.clear();
+    dictContentCache.clear();
+    dictDataCache.clear();
+    dictCountCache.clear();
+    logRenderer('dict-cache', 'invalidated (dict download/clear)');
+  } catch (e) { logError('dict-cache', e); }
 }
 function dictOverrideExists(name) {
   try {
@@ -1686,11 +1718,22 @@ function createWindow() {
   hardenWebContents(mainWindow.webContents);
 
   // 窗口变化时持久化位置尺寸
-  const save = () => saveWindowState(mainWindow);
+  // v9.15（dsh，M5-003）：move/resize 在拖动过程中会持续触发，原实现每次都 writeFileSync + renameSync，
+  //   一次拖拽即数十至上百次同步写盘（主进程阻塞、杀软环境下 rename 可能抛 EPERM）。改为 400ms 尾部去抖，
+  //   关闭窗口前同步 flush 一次，状态文件格式不变（{x,y,width,height,maximized}）。
+  let stateTimer = null;
+  const save = () => {
+    if (stateTimer) clearTimeout(stateTimer);
+    stateTimer = setTimeout(() => { stateTimer = null; saveWindowState(mainWindow); }, 400);
+  };
+  const flushState = () => {
+    if (stateTimer) { clearTimeout(stateTimer); stateTimer = null; }
+    saveWindowState(mainWindow);
+  };
   mainWindow.on('resize', save);
   mainWindow.on('move', save);
   mainWindow.on('close', (e) => {
-    save();
+    flushState();
     if (!isQuitting && settings.closeToTray && tray) {
       e.preventDefault();
       mainWindow.hide();
@@ -1746,12 +1789,35 @@ function registerIpc() {
   // v9.2：沙箱化 preload 无法读 package.json，用同步 IPC 把单一版本号交给 preload
   // v9.4：改由 registerVersionChannel() 在 createWindow() 之前注册（带来源白名单），此处不再重复注册
   handle('app:getSettings', () => publicSettings());
+  // v9.15（dsh，M5-012）：app:updateSettings 原来只做键白名单，任何类型都能写进并持久化
+  //   （典型入口：导入全量数据 JSON 里的 settings 直通此处 → dailyGoal:"abc" 之类脏值重启后仍在）。
+  //   这里按 DEFAULT_SETTINGS 的声明类型逐键守卫：类型不符 → 忽略并 warn；数字必须是有限数；
+  //   opacity / zoom 额外收敛到界面允许的范围（与 win:setOpacity / win:setZoom 一致）。
+  const SETTING_NUM_CLAMP = { opacity: [0.3, 1], zoom: [0.6, 1.6] };
+  const isPlainObject = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
+  function settingValueAccepted(key, value) {
+    const def = DEFAULT_SETTINGS[key];
+    if (def === null) return typeof value === 'boolean';          // darkMode: boolean（null 表示跟随系统，见下）
+    if (typeof def === 'number') return typeof value === 'number' && Number.isFinite(value);
+    if (typeof def === 'boolean') return typeof value === 'boolean';
+    if (typeof def === 'string') return typeof value === 'string';
+    if (Array.isArray(def)) return Array.isArray(value);
+    if (isPlainObject(def)) return isPlainObject(value);
+    return false;
+  }
   handle('app:updateSettings', (_e, patch) => {
     if (patch && typeof patch === 'object') {
       const allowed = Object.keys(DEFAULT_SETTINGS);
       for (const k of Object.keys(patch)) {
         if (!allowed.includes(k)) continue;
-        settings[k] = patch[k];
+        // darkMode 的历史语义是「null = 跟随系统」，因此这里显式放行 null
+        const okValue = (k === 'darkMode' && patch[k] === null) || settingValueAccepted(k, patch[k]);
+        if (!okValue) {
+          logError('settings-invalid', `${k}: ${patch[k] === null ? 'null' : typeof patch[k]}`);
+          continue;
+        }
+        const range = SETTING_NUM_CLAMP[k];
+        settings[k] = range ? Math.min(range[1], Math.max(range[0], patch[k])) : patch[k];
       }
       saveSettings();
       // 即时生效的设置
@@ -1863,7 +1929,8 @@ function registerIpc() {
     } catch (e) { logError('notify', e); return { ok: false, error: String(e.message || e) }; }
   });
   handle('app:quit', () => { isQuitting = true; app.quit(); });
-  handle('clipboard:get', () => { try { return clipboard.readText(); } catch { return ''; } });
+  // v9.15（dsh，M5-011）：删除 `clipboard:get`（返回完整剪贴板文本）—— 主窗口 preload 已不再暴露，
+  //   剪贴板小窗用的是 preload-clipboard.js（只有 free:lookup / onClipboardWord / clipboard:close）。
   handle('clipboard:close', (e) => {
     if (clipboardWin && !clipboardWin.isDestroyed() && e.sender === clipboardWin.webContents) clipboardWin.hide();
     return { ok: true };
@@ -1952,6 +2019,8 @@ function registerIpc() {
   handle('dicts:clearUpdates', () => {
     try {
       for (const f of fs.readdirSync(UPDATE_DIR)) fs.rmSync(path.join(UPDATE_DIR, f), { force: true, recursive: true });
+      // v9.15（dsh，M5-006）：文件已清除 → 失效内存缓存，避免记忆曲线/更新检查继续沿用下载版
+      invalidateDictCaches();
       return { ok: true };
     } catch (e) { return { ok: false, error: String(e.message || e) }; }
   });

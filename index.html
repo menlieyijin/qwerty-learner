@@ -16,11 +16,15 @@
 
     <script>
       // Dark mode init（本地 fork：仅保留应用所需的深色模式初始化，删除营销/统计脚本）
-      if (
-        ('state' in localStorage && JSON.parse(localStorage.state).darkMode) ||
-        (!('state' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)
-      ) {
-        document.documentElement.classList.add('dark')
+      // v9.15（dsh，M5-004）：原读 localStorage.state 已无写入方（恒不命中），改为读真实键
+      //   src/store/index.ts:112 `atomWithStorage('isOpenDarkModeAtom', ...)` 的原始字符串（'true'/'false'），
+      //   并包 try/catch；这里只决定首帧是否加 .dark 类，主题切换逻辑（src/index.tsx）不变。
+      try {
+        var rawDark = localStorage.getItem('isOpenDarkModeAtom')
+        var isDark = rawDark == null ? window.matchMedia('(prefers-color-scheme: dark)').matches : rawDark === 'true'
+        if (isDark) document.documentElement.classList.add('dark')
+      } catch (e) {
+        /* 首帧主题仅为防闪，读写失败时保持默认（浅色），交给 React 挂载后应用 */
       }
     </script>
   </head>

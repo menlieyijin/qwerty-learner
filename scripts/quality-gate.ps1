@@ -65,10 +65,11 @@ function Add-Result([string]$name, [string]$status, [string]$detail) {
     [void]$results.Add([pscustomobject]@{ Step = $name; Status = $status; Detail = $detail })
 }
 
-function Invoke-Node([string]$label, [string[]]$arguments) {
+function Invoke-Node([string[]]$arguments) {
     # 用 node_modules 里已装的可执行文件，避免依赖全局 npx 解析差异。
     # 注意：子进程的 stdout/stderr 必须经 Write-Host 转发（信息流），否则会被当成函数返回值，
     # 导致 $code 变成一整段 lint 文本而不是退出码。
+    # v9.15（dsh，M5-010）：删除从未使用的 $label 形参
     $npx = Join-Path $repoRoot 'node_modules\.bin\npx.cmd'
     if (-not (Test-Path $npx)) { $npx = 'npx.cmd' }
     & $npx @arguments 2>&1 | ForEach-Object { Write-Host $_ }
@@ -89,7 +90,7 @@ try {
     }
     else {
         Write-Step 'TypeScript 类型检查：tsc --noEmit -p tsconfig.json'
-        $code = Invoke-Node 'tsc' @('tsc', '--noEmit', '-p', 'tsconfig.json')
+        $code = Invoke-Node -arguments @('tsc', '--noEmit', '-p', 'tsconfig.json')
         if ($code -ne 0) {
             Write-Fail "tsc 有类型错误（exit $code）"
             Add-Result 'tsc' 'failed' "exit $code"
@@ -108,7 +109,7 @@ try {
     }
     else {
         Write-Step 'ESLint 严格模式：eslint src --ext .ts,.tsx --max-warnings 0'
-        $code = Invoke-Node 'eslint' @('eslint', 'src', '--ext', '.ts,.tsx', '--max-warnings', '0')
+        $code = Invoke-Node -arguments @('eslint', 'src', '--ext', '.ts,.tsx', '--max-warnings', '0')
         if ($code -ne 0) {
             Write-Fail "eslint 未通过（exit $code；warning 也算失败）"
             Add-Result 'eslint' 'failed' "exit $code"

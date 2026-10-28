@@ -5,6 +5,7 @@
 #   pwsh -File scripts\dsh-rollback.ps1                            # 回滚到“与当前版本不同的最近备份”
 #   pwsh -File scripts\dsh-rollback.ps1 -AsarPath <xxx.asar>       # 回滚到指定 asar
 #   pwsh -File scripts\dsh-rollback.ps1 -List -All                 # 列出全部历史 asar（含非 before-*）
+#   pwsh -File scripts\dsh-rollback.ps1 ... -Force                 # 目标与当前内容相同时默认中止；-Force 才重放一次替换
 # 说明：回滚前会把当前已安装 asar 自动备份为 app.asar.pre-rollback-<stamp>.asar，
 #       因此回滚本身也可“重做/撤销”；失败会自动恢复回滚前版本。
 # 路径覆盖：下列路径参数均保留内置默认值（作者本机布局），优先级 = 显式参数 > 环境变量 > 内置默认：
@@ -101,7 +102,8 @@ if (-not $AsarPath) {
   if (-not $pick) {
     if ($candidates) {
       $pick = $candidates | Select-Object -First 1
-      Write-Warn '所有备份内容都与当前安装相同（回滚将是无操作）'
+      # v9.15（dsh，M5-017）：该分支随后会在第 3 步按「目标与当前相同」中止，这里提示 -Force 才能重放
+      Write-Warn '所有备份内容都与当前安装相同（回滚将是无操作；如确需重放请加 -Force）'
     } else { throw "没有找到可回滚的备份（$BackupDir）" }
   }
   $AsarPath = $pick.Path
@@ -112,7 +114,14 @@ if ($targetFile.Length -lt 10MB) { throw "备份文件大小异常（<10MB），
 $targetHash = Get-Sha256 $AsarPath
 Write-Step "回滚目标：$($targetFile.FullName)"
 Write-Host "    version=$(Get-VersionFromName $targetFile.Name) sha256=$targetHash size=$($targetFile.Length)"
-if ($targetHash -eq $currentHash -and -not $Force) { Write-Warn '目标与当前版本内容相同（无实际变化）；如确认继续请加 -Force' }
+if ($targetHash -eq $currentHash -and -not $Force) {
+  # v9.15（dsh，M5-017）：原来只 Write-Warn 就继续执行 —— 会白跑一次「备份当前版本 + 原子替换」，
+  #   既消耗一份 86MB 的 pre-rollback 备份，又把当前版本降级成 pre-rollback 文件污染备份清单。
+  #   改为默认中止（退出码 0），确需「重放一次替换」时显式加 -Force。
+  Write-Warn '目标与当前安装内容相同，已中止（无实际变化）。如确需重放一次替换请加 -Force'
+  exit 0
+}
+if ($targetHash -eq $currentHash) { Write-Warn '目标与当前版本内容相同（-Force 已指定）：将重放一次原子替换' }
 
 # ---------------------------------------------------------------------------
 # 4. 退出应用

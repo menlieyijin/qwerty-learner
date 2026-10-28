@@ -42,14 +42,19 @@ function Get-Sha256([string]$path) { (Get-FileHash -LiteralPath $path -Algorithm
 
 function Copy-FileAtomic([string]$source, [string]$target) {
   # 同卷原子替换：先复制到同目录临时文件并校验大小，再 Move-Item -Force 覆盖
+  # v9.15（dsh，M5-016）：Move-Item 失败（目标被占用/权限不足）时删除临时文件，避免在安装目录残留 86MB 级 .tmp-*
   $dir = Split-Path -Parent $target
   $tmp = Join-Path $dir ('.tmp-' + [guid]::NewGuid().ToString('N') + '-' + (Split-Path -Leaf $target))
   Copy-Item -LiteralPath $source -Destination $tmp -Force
-  if ((Get-Item -LiteralPath $tmp).Length -ne (Get-Item -LiteralPath $source).Length) {
+  try {
+    if ((Get-Item -LiteralPath $tmp).Length -ne (Get-Item -LiteralPath $source).Length) {
+      throw "临时文件大小不一致：$source"
+    }
+    Move-Item -LiteralPath $tmp -Destination $target -Force
+  } catch {
     Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue
-    throw "临时文件大小不一致：$source"
+    throw
   }
-  Move-Item -LiteralPath $tmp -Destination $target -Force
 }
 
 function Wait-Cdp([int]$port, [int]$timeoutMs = 30000) {
@@ -187,34 +192,42 @@ if (-not (Test-Path 'build\index.html')) { throw '缺少 build/index.html，无�
 # ---------------------------------------------------------------------------
 # 5. 组装 staging 并打包 asar
 # ---------------------------------------------------------------------------
+# v9.15（dsh，M5-016）：组装/打包阶段失败时清理本次 staging（半成品 86MB 级目录），成功则保留为产物。
+#   注意用 catch 而不是 finally：staging 里的 app.asar / release-info.json / SHA256SUMS 是成功产物，成功不能删。
 Write-Step '组装 staging（package.json + electron/ + build/ + GPL 材料）'
 New-Item -ItemType Directory -Force -Path $stage | Out-Null
-Copy-Item 'local-fork\package.json' (Join-Path $stage 'package.json') -Force
-Copy-Item 'local-fork\electron' (Join-Path $stage 'electron') -Recurse -Force
-Copy-Item 'build' (Join-Path $stage 'build') -Recurse -Force
-foreach ($f in @('LICENSE', 'FORK-NOTICE.md')) {
-  if (Test-Path $f) { Copy-Item $f (Join-Path $stage $f) -Force }
-}
-
-Write-Step '打包 app.asar（npx @electron/asar）'
 $asarOut = Join-Path $stage 'app.asar'
-& cmd.exe /c ('npx --yes @electron/asar pack "' + $stage + '" "' + $asarOut + '" 2>&1')
-if ($LASTEXITCODE -ne 0) { throw "asar pack 失败（exit $LASTEXITCODE）" }
-$hash = Get-Sha256 $asarOut
-$size = (Get-Item $asarOut).Length
-Write-Step "产物：$asarOut"
-Write-Ok "size=$size sha256=$hash"
-$info = [ordered]@{
-  version     = $ver
-  gitSha      = "$gitSha"
-  builtAt     = (Get-Date).ToString('o')
-  asar        = $asarOut
-  size        = $size
-  sha256      = $hash
-  installDirs = $InstallDirs
+try {
+  Copy-Item 'local-fork\package.json' (Join-Path $stage 'package.json') -Force
+  Copy-Item 'local-fork\electron' (Join-Path $stage 'electron') -Recurse -Force
+  Copy-Item 'build' (Join-Path $stage 'build') -Recurse -Force
+  foreach ($f in @('LICENSE', 'FORK-NOTICE.md')) {
+    if (Test-Path $f) { Copy-Item $f (Join-Path $stage $f) -Force }
+  }
+
+  Write-Step '打包 app.asar（npx @electron/asar）'
+  & cmd.exe /c ('npx --yes @electron/asar pack "' + $stage + '" "' + $asarOut + '" 2>&1')
+  if ($LASTEXITCODE -ne 0) { throw "asar pack 失败（exit $LASTEXITCODE）" }
+  $hash = Get-Sha256 $asarOut
+  $size = (Get-Item $asarOut).Length
+  Write-Step "产物：$asarOut"
+  Write-Ok "size=$size sha256=$hash"
+  $info = [ordered]@{
+    version     = $ver
+    gitSha      = "$gitSha"
+    builtAt     = (Get-Date).ToString('o')
+    asar        = $asarOut
+    size        = $size
+    sha256      = $hash
+    installDirs = $InstallDirs
+  }
+  $info | ConvertTo-Json -Depth 4 | Set-Content (Join-Path $stage 'release-info.json') -Encoding UTF8
+  "$hash  app.asar" | Set-Content (Join-Path $stage 'SHA256SUMS') -Encoding UTF8
+} catch {
+  Write-Warn "组装/打包失败，清理本次 staging：$stage"
+  try { Remove-Item -LiteralPath $stage -Recurse -Force -ErrorAction SilentlyContinue } catch { }
+  throw
 }
-$info | ConvertTo-Json -Depth 4 | Set-Content (Join-Path $stage 'release-info.json') -Encoding UTF8
-"$hash  app.asar" | Set-Content (Join-Path $stage 'SHA256SUMS') -Encoding UTF8
 
 # ---------------------------------------------------------------------------
 # 6. 测试安装（原子替换）
@@ -282,6 +295,13 @@ if ($Install) {
     foreach ($item in $installed) {
       try { Copy-FileAtomic -source $backupPath -target $item.target } catch { Write-Warn "回滚失败：$($item.target)" }
     }
+    # v9.15（dsh，M5-016）：清掉失败瞬间可能残留的 .tmp-*（Copy-FileAtomic 已自清，这里防御性兜底）
+    foreach ($dir in $InstallDirs) {
+      $resDir = Join-Path $dir 'resources'
+      Get-ChildItem -LiteralPath $resDir -File -Filter '.tmp-*' -ErrorAction SilentlyContinue |
+        ForEach-Object { try { Remove-Item -LiteralPath $_.FullName -Force -ErrorAction SilentlyContinue } catch { } }
+    }
+    Write-Warn "本次 staging 保留（内含已通过校验的 app.asar，可直接重试 -SkipBuild -Install）：$stage"
     throw
   }
 
