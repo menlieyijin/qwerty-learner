@@ -9,10 +9,10 @@ An **unofficial fork** of [Qwerty Learner](https://github.com/RealKai42/qwerty-l
 | Item | Value |
 | --- | --- |
 | Upstream baseline | `1182426f2bd0a28c95302c33f9e19136b1262a70` (upstream `master`) |
-| Fork commits | 24 (`git rev-list --count 1182426..dsh-local-v8`) |
+| Fork commits | 29 (`git rev-list --count 1182426..dsh-local-v8`) |
 | License | GNU GPL v3.0 (same as upstream; `LICENSE` kept intact) |
-| App version | `1.0.0-enhanced-v9.11` (single source: `local-fork/package.json`) |
-| Author of fork changes | `dsh <dsh@dsh.local>`; 12 commits carry a `Signed-off-by` trailer (added from v9.3 onwards); earlier commits credit dsh in the commit message |
+| App version | `1.0.0-enhanced-v9.15` (single source: `local-fork/package.json`) |
+| Author of fork changes | `dsh <dsh@dsh.local>`; 17 commits carry a `Signed-off-by` trailer (added from v9.3 onwards); earlier commits credit dsh in the commit message |
 | Desktop runtime | Electron 43.8.3 / Chromium 150.0.7871.250 (Windows) |
 
 It is a desktop-first study app: the upstream typing / pronunciation / dictation / error-book / statistics / dictionary-gallery features are kept, while the vocabulary workflow is replaced by an Ebbinghaus-style SRS scheduler, dynamic word picking and automatic level progression. An Electron shell is added on top of the web app.
@@ -45,6 +45,21 @@ It is **not** an official repository, not endorsed by upstream, and not tracking
 - **Renderer** (Vite/React in `build/`): typing / gallery / analysis / error book; `memory.ts` (word picking + SRS write) → `autoLevel.ts` (level state) → Dexie `RecordDB`.
 - **Injected enhancement UI** (`enhance.js`, Shadow DOM): does not modify `build/` output.
 - Shell-private data (settings/logs/backups/caches) lives in `%APPDATA%\qwerty-learner-plus`; study records stay in the app's IndexedDB.
+
+### 3.1 Dependency layering and cycle gate (v9.12+)
+
+Before v9.12, `import '@/utils'` pulled in the jotai store, mixpanel and 377 dictionary objects, and `utils/db` embedded React hooks that depended back on `pages/Typing/store` — four static cycles, so layering could only be a verbal convention. v9.12 broke the cycles; the layers are now a checkable rule:
+
+```
+typings / constants (0) < resources (1) < utils (2) < store (3) < hooks (4) < components (5) < pages (6)
+```
+
+- Only lower layers may be imported by higher ones; **`src/index.tsx` is the single exemption** (bootstrap must assemble the router).
+- Dynamic `await import()` edges are excluded (`utils/db/index.ts ↔ utils/autoLevel.ts` is a deliberate TDZ workaround); the script lists them separately (7 edges today).
+- **Detection**: `audit/v912/M6-shared/repro/scan-graph.mjs` (not shipped) parses static imports into a file-level graph, runs **Tarjan SCC** to find cycles, then counts "low → high" edges against the table above. Run: `node scan-graph.mjs <src>`; the first line is `files=… edges=… scc(>1)=…`.
+- **Current state** (HEAD `1fb2b0f`, 125 files / 355 static edges): `scc(>1)=0` (was 4). Reverse dependencies: **3 remaining**, down from 6 — `utils/mixpanel.ts` → `@/store` (value) and → `pages/Typing/store/type` (type-only), plus `resources/dictionary.ts` → `@/utils` (`calcChapterCount`). None forms a cycle.
+- **Honest caveat**: this is a documented rule plus an audit-script check only. `.eslintrc.cjs` has no `no-restricted-imports` rule, `quality-gate.ps1` has no `-WithArch` switch, and the script does not exit non-zero — it is a reproducible acceptance record, not a hard CI gate.
+- Also in v9.12: `utils/db` no longer imports `pages/**` (the data layer is reusable without React), and `@/utils` no longer has side effects for store/mixpanel (17 → 13 importers). Removed as dead code: `components/Drawer`, 8 `components/ui/*` components (`avatar`, `button`, `dialog`, `scroll-area`, `table`, `tabs`, `toggle-group`, `toggle`), `utils/range.ts` and (in v9.14) `hooks/useIntersectionObserver.ts`.
 
 ## 4. Core algorithms (source of truth)
 
@@ -140,7 +155,7 @@ Dexie `RecordDB` schema v4:
 
 `memoryRecords` fields: `key` (`${dict}::${word}`, case preserved since v9.5, legacy lower-case keys read-compatible), `word`/`dict`/`trans`/`phone`, `stage`/`interval`/`ease`, `due`/`lastSeen`/`createdAt`, `attempts`/`correct`/`wrong`/`slow`/`lapses`, `lastResult`, plus `shadowInterval`/`shadowDue`/`shadowAt` (shadow scheduling: recorded, not used for actual due).
 
-Migration highlights: v7 adds the table; v9.3 one-time migration from `wordRecords` (stage by historical wrong count: 0 → 3, 1–2 → 2, ≥3 → 1); v9.4 atomic import; v9.5 case-preserving keys; v9.6 auto-level state key migration; v9.9 startup cleanup of `RecordDB-import-*` leftovers. Backup/restore details: [`Backup-Restore.md`](Backup-Restore.md).
+Migration highlights: v7 adds the table; v9.3 one-time migration from `wordRecords` (stage by historical wrong count: 0 → 3, 1–2 → 2, ≥3 → 1); v9.4 atomic import; v9.5 case-preserving keys; v9.6 auto-level state key migration; v9.9 startup cleanup of `RecordDB-import-*` leftovers. v9.13 only renames the full-JSON export to `Qwerty-Learner-User-Data-YYYYMMDD-HHmmss.gz` (payload unchanged). Backup/restore details: [`Backup-Restore.md`](Backup-Restore.md).
 
 ## 6. Build & run
 
@@ -164,17 +179,17 @@ pwsh -File scripts/dsh-rollback.ps1 -List
 pwsh -File scripts/dsh-rollback.ps1
 ```
 
-- Release script stages `local-fork/package.json` + `electron/` + `build/` + `LICENSE` + `FORK-NOTICE.md`, packs with `npx @electron/asar`, and verifies SHA256 before/after install.
+- Release script stages `local-fork/package.json` + `electron/` + `build/` + `LICENSE` + `FORK-NOTICE.md`, packs with `npx @electron/asar`, and verifies SHA256 before/after install. Since v9.15 the rollback script aborts by default when the selected backup is identical to the current `app.asar`; add `-Force` to replay it anyway.
 - Path parameters `-StageRoot`, `-BackupDir`, `-AuditRoot`, `-TestAppDir`, `-InstallDirs` **must be overridden** outside the author's machine; defaults reflect the author's local layout. The scripts are Windows-only.
 - `yarn start` serves the web app only; tray/backup/enhancement panel require the Electron shell.
 - Electron runtime upgrades are separate, manual steps (official zip + rcedit branding + verified replacement); see [`Electron-EOL.md`](Electron-EOL.md). Electron 43.x EOL: 2027-01-05.
 
 ## 7. Versioning
 
-- App version single source: `local-fork/package.json` → `1.0.0-enhanced-v9.11` (read by main process, preload via `app:version-sync`, injected panel via `window.__QZ_VERSION__`).
+- App version single source: `local-fork/package.json` → `1.0.0-enhanced-v9.15` (read by main process, preload via `app:version-sync`, injected panel via `window.__QZ_VERSION__`).
 - Root `package.json` stays at upstream `0.1.0` and is not the desktop version.
-- Milestone tags: `vX.Y-dsh-local` (v7.1, v8.9, v9.0, v9.2, v9.3, v9.5, v9.6, v9.7, v9.8, v9.9; v9.10 and v9.11 are not tagged yet). v9.1/v9.2 and v9.4/v9.5 were released in shared commits, so no separate tags.
-- Installer exe metadata is written by rcedit only during runtime upgrades and may lag the app version (currently FileVersion 9.8.0.0 while the app is v9.11).
+- Milestone tags: `vX.Y-dsh-local` (v7.1, v8.9, v9.0, v9.2, v9.3, v9.5, v9.6, v9.7, v9.8, v9.9; v9.10–v9.15 are not tagged yet). v9.1/v9.2 and v9.4/v9.5 were released in shared commits, so no separate tags.
+- Installer exe metadata is written by rcedit only during runtime upgrades and may lag the app version (currently FileVersion 9.8.0.0 while the app is v9.15).
 
 ## 8. Security design
 
@@ -190,9 +205,18 @@ pwsh -File scripts/dsh-rollback.ps1
 ## 9. Testing
 
 - Static gates: `tsc --noEmit` 0 errors; `eslint --max-warnings 0` clean.
-- Core-algorithm regression: real `src` bundled with esbuild, Node stubs, fixed seed and injected clock, `--strict`. Results: **248 assertions** in v9.3–v9.6; **253** in v9.7–v9.9; **309/309** (120 SRS + 189 auto-level) in v9.11, plus a determinism check (both sims run twice, byte-identical). Typing-judgement cases live outside that gate: `wordmatch-src` 29/29 (bundles the real source) and `word-judgment-sim` 42/42.
+- Core-algorithm regression: real `src` bundled with esbuild, Node stubs, fixed seed and injected clock, `--strict`. Results: **248 assertions** in v9.3–v9.6; **253** in v9.7–v9.9; **309/309** (120 SRS + 189 auto-level) in v9.11 and again in every batch of v9.12–v9.15, plus a determinism check (both sims run twice, byte-identical). Typing-judgement cases live outside that gate: `wordmatch-src` 29/29 (bundles the real source) and `word-judgment-sim` 42/42.
+
+| Version | Commit | Assertions | `app.asar` (size / SHA256 prefix) | CDP smoke |
+| --- | --- | --- | --- | --- |
+| v9.9 | `f18e723` | 253 | 86,383,823 B / — | 11/11 |
+| v9.11 | `27f73e1` | 309 | 86,402,263 B / `831E3E92` | 11/11 |
+| v9.12 | `f7f2c99` | 309 | 86,395,797 B / `8E92FC59` | 11/11 (test install) |
+| v9.13 | `d5064fd` | 309 | 86,396,101 B / `F2DC7F4A` | 11/11 (test install) |
+| v9.14 | `980bb5a` | 309 | 86,398,061 B / `850D5E2C` | 11/11 (test install) |
+| v9.15 | `1fb2b0f` | 309 | 86,400,877 B / `10129D9D` | 11/11 (test + installed) |
 - Playwright (local mode): 12 passed / 5 skipped (skips are retired legacy flows).
-- CDP smoke: 11/11; shell security probes: 19/19 (author-machine v9.9 record). For v9.10 / v9.11 the smoke was run **manually**: the in-script `-Smoke` hit a GPU crash in the build session (`NO_PAGE`), so the same `scripts/dsh-smoke.mjs` was executed with `--disable-gpu --no-sandbox` and an isolated profile — 11/11 for both test installs and for the **installed** v9.11 build (`logs\smoke-1.0.0-enhanced-v9.11-installed.txt`). `smoke=false` in the install logs only means the install step itself ran without `-Smoke`.
+- CDP smoke: 11/11; shell security probes: 19/19 (author-machine v9.9 record). For v9.10 / v9.11 the smoke was run **manually**: the in-script `-Smoke` hit a GPU crash in the build session (`NO_PAGE`), so the same `scripts/dsh-smoke.mjs` was executed with `--disable-gpu --no-sandbox` and an isolated profile — 11/11 for both test installs and for the **installed** v9.11 build (`logs\smoke-1.0.0-enhanced-v9.11-installed.txt`). `smoke=false` in the install logs only means the install step itself ran without `-Smoke`. For v9.12–v9.15 all four batches passed 11/11 with an isolated profile (test installs; v9.15 also the installed build) — see `logs\smoke-1.0.0-enhanced-v9.15-{testinstall,installed}.txt`. v9.15 added a 15 s per-step CDP timeout and a 90 s watchdog to the script.
 - The regression scripts and reports live in the author's separate audit directory and are **not shipped** in this repository. A clean clone will SKIP the `-WithSim` gate; the numbers above are local acceptance records, not public CI results.
 
 ## 10. Known limitations
@@ -211,6 +235,8 @@ pwsh -File scripts/dsh-rollback.ps1
 12. No guarantee of forward/backward data compatibility with upstream future versions; importer must be ≥ exporter version.
 13. Release/quality-gate scripts have author-machine default paths and are Windows-only.
 14. No telemetry UI switch yet (localStorage/console only).
+15. Layering is not a hard gate yet: cycles are 0 but 3 reverse edges remain (see 3.1), and the rule has no ESLint/`quality-gate` enforcement.
+16. Four user-visible changes in v9.12–v9.15: two Tailwind class typos fixed (light-mode card description black → grey; first-paint Loading overlay transparent → opaque), export file name now carries `-HHmmss`, no-op rollback requires `-Force`, and `app:updateSettings` drops invalid values instead of persisting them.
 
 ## 11. License & credits
 
@@ -218,4 +244,4 @@ GPL-3.0; upstream `LICENSE` preserved untouched; redistributions must include fu
 
 Credits: RealKai42 and all Qwerty Learner contributors; dictionary/data sources (kajweb and community contributors); Youdao/dictionaryapi.dev/MyMemory for lookup/pronunciation services; Electron/Chromium/React/Vite/Dexie/Tailwind CSS; **DeepSeek Harness (dsh)** for the toolchain used to develop, audit and document this fork (tooling attribution, not an endorsement).
 
-*See also: [`FORK-NOTICE.md`](../FORK-NOTICE.md) · [`DSH-FORK.md`](DSH-FORK.md) · [`RELEASE-NOTES-v9.11.md`](RELEASE-NOTES-v9.11.md) · [`RELEASE-NOTES-v9.9.md`](RELEASE-NOTES-v9.9.md) · [`Backup-Restore.md`](Backup-Restore.md) · [`Electron-EOL.md`](Electron-EOL.md).*
+*See also: [`FORK-NOTICE.md`](../FORK-NOTICE.md) · [`DSH-FORK.md`](DSH-FORK.md) · [`RELEASE-NOTES-v9.15.md`](RELEASE-NOTES-v9.15.md) · [`RELEASE-NOTES-v9.11.md`](RELEASE-NOTES-v9.11.md) · [`RELEASE-NOTES-v9.9.md`](RELEASE-NOTES-v9.9.md) · [`Backup-Restore.md`](Backup-Restore.md) · [`Electron-EOL.md`](Electron-EOL.md).*

@@ -1,6 +1,6 @@
 # DSH Fork 技术文档（Qwerty Learner Plus）
 
-> 本文档描述 Qwerty Learner 的 **dsh 非官方分支**（分支 `dsh-local-v8`，应用版本 `1.0.0-enhanced-v9.11`）。
+> 本文档描述 Qwerty Learner 的 **dsh 非官方分支**（分支 `dsh-local-v8`，应用版本 `1.0.0-enhanced-v9.15`）。
 > 上游项目：[RealKai42/qwerty-learner](https://github.com/RealKai42/qwerty-learner)，基线 commit `1182426`，GPL-3.0。
 > 分支声明、GPL 合规与已知限制的**权威版本**见仓库根目录 [`FORK-NOTICE.md`](../FORK-NOTICE.md)；本文档补充实现细节。
 
@@ -114,6 +114,68 @@ qwerty-learner/
 ├─ LICENSE                     # GPL-3.0 原文（不改）
 └─ package.json                # 上游网页工程配置（版本号保持 0.1.0）
 ```
+
+**v9.12–v9.15 从 `src/` 移除的模块**（删除后全仓零引用，`tsc` 兜底通过）：
+
+| 模块 | 说明 |
+| --- | --- |
+| `src/components/Drawer/` | 章节列表抽屉，v7 起流程下线后无引用 |
+| `src/components/ui/` 下 8 个组件 | `avatar` / `button` / `dialog` / `scroll-area` / `table` / `tabs` / `toggle-group` / `toggle`（`toggle` 仅被 `toggle-group` 引用，属连锁死代码；页面需要滚动区时直接用 `@radix-ui/react-scroll-area`） |
+| `src/utils/range.ts` | `toFinite` / `baseRange`，无引用（`clamp` 仍有引用，保留在 `utils/clamp.ts`） |
+| `src/hooks/useIntersectionObserver.ts` | 已学计数改为页面统一统计后失去引用（v9.14 随 M4-011 删除） |
+
+同时删除 4 个零引用 atom（`pronunciationIsTransReadAtom` / `isShowSkipAtom` / `isInDevModeAtom` / `dismissStartCardDateAtom`）与 `revision*` 表声明（从未写入，移除不加 Dexie 版本，已装库文件不动）。
+
+### 3.3 依赖分层与门禁（v9.12 起）
+
+**为什么需要**：v9.11 之前 `import '@/utils'` 会顺带初始化 jotai store、mixpanel 与 377 条词库对象；`utils/db/index.ts` 内嵌 3 个 React hook 反向依赖 `pages/Typing/store`。结果是 4 个静态依赖环（最大 7 节点，`dictionary → utils/index → utils/mixpanel → store/index → dictionary`），分层规则无法成立，Node 侧仿真必须给 4 个模块打 stub。
+
+**规则**（数字越小越底层，只允许**低层 → 高层**的静态 import）：
+
+| 层 | 目录 | 允许依赖 |
+| --- | --- | --- |
+| L0 | `src/typings/**`、`src/constants/**`、`src/@types/**` | L0（`typings` 内部只做 type-only，且不得成环） |
+| L1 | `src/resources/**` | L0 |
+| L2 | `src/utils/**` | L0、L1 |
+| L3 | `src/store/**` | L0–L2 |
+| L4 | `src/hooks/**` | L0–L3 |
+| L5 | `src/components/**` | L0–L4 |
+| L6 | `src/pages/**` | L0–L5；页面之间只允许 `pages/X → pages/X/...` 自己的子树 |
+| 入口 | `src/index.tsx` | 任意（**唯一豁免**） |
+
+- `resources` 放在 `utils` 之下，是因为它是静态数据、`utils` 是代码；`utils/memory.ts`、`utils/learningPath.ts`、`utils/sounds/keySounds.ts` 读 `resources` 属顺向。
+- **动态 `await import()` 不计入**：`utils/db/index.ts ↔ utils/autoLevel.ts` 的双向边是为规避 TDZ 的刻意设计（脚本单独列出，当前 7 条）。
+
+**如何检测（Tarjan）**：脚本 `audit/v912/M6-shared/repro/scan-graph.mjs`（未随仓库发布）做三件事——
+
+1. 遍历 `src/**/*.ts|tsx`，用正则抽出静态 `import` / `export from`（支持多行），解析 `@/` 别名与目录 `index` 到**文件**，同时把动态 `import()` 标 `dynamic` 并排除在环统计外；
+2. 对邻接表跑 **Tarjan** 求强连通分量，只报大小 > 1 的分量（自环另计）；
+3. 按上表层次统计 `层号(目标) < 层号(来源)` 的边，即"逆向依赖"，逐条打印来源行与语句。
+
+```bash
+node audit/v912/M6-shared/repro/scan-graph.mjs D:/整理/qwerty-src/src
+# 首行：files=… edges=… scc(>1)=…
+# 之后："## 逆向依赖（低层 -> 高层）" 明细与 total back-edges=N
+```
+
+**当前结果**（HEAD = `1fb2b0f`，125 文件 / 355 条静态边）：
+
+| 指标 | 审计前（v9.11） | 现在 |
+| --- | --- | --- |
+| `scc(>1)`（静态环） | 4 | **0** |
+| 逆向依赖（按本表层次） | 6 | **3** |
+
+剩余 3 条不构成环，但仍是规则违例：
+
+| 逆向边 | 类型 | 说明 |
+| --- | --- | --- |
+| `utils/mixpanel.ts` → `@/store`（8 个 atom） | value | M6-001 只拆了 `@/utils` 的聚合导出，未搬 mixpanel 的 atom 读取；后续应把 hook 形态的使用迁到 hooks 层 |
+| `utils/mixpanel.ts` → `pages/Typing/store/type` | type-only | 同上，类型可由 `store` 层提供 |
+| `resources/dictionary.ts` → `@/utils`（`calcChapterCount`） | value | 计划中的"`calcChapterCount` 下沉到 `resources`"未落地 |
+
+**落地程度（如实说明）**：分层目前是**文档规则 + 审计脚本复核**，`.eslintrc.cjs` 尚无 `no-restricted-imports` 规则，`scripts/quality-gate.ps1` 也没有 `-WithArch` 开关，脚本不返回非零退出码。也就是说，它现在是可复核的验收记录，不是 CI 硬门禁；落地路径见 [`RELEASE-NOTES-v9.15.md`](RELEASE-NOTES-v9.15.md) 第 7 节。
+
+**相关结构变化**：`utils/db` 不再 import `pages/**`（数据层可脱离 React 复用）；`@/utils` 不再隐式初始化 store 与 mixpanel，引用 `@/utils` 的文件由 17 降到 13。
 
 ## 4. 核心算法
 
@@ -301,6 +363,7 @@ required < 20 或 = 0       → 0
 - **跨设备恢复优先**用"工具 → 数据 → 导出全量数据 JSON / 导入全量数据"；它覆盖 RecordDB、`QwertyPlusDB.dicts`、localStorage 与外壳设置。
 - 上游"设置 → 数据 → 导出/导入数据库"只导 Dexie（`RecordDB`），不含 localStorage 与外壳设置；本分支未改上游页面，只在工具页提示。
 - 自动备份每天一次（面板/托盘可手动触发），保留最近 7 份；目录副本 + `data.json` 逻辑快照（单份上限 64 MB，8 秒超时；超时不影响目录副本）。
+- 全量 JSON 导出文件名自 v9.13 起为 `Qwerty-Learner-User-Data-YYYYMMDD-HHmmss.gz`（原来只有日期，同日多次导出会重名覆盖）。字段与结构未变，导入方仍按内容解析。
 
 ## 6. 开发与构建
 
@@ -382,6 +445,7 @@ pwsh -File scripts/dsh-rollback.ps1         # 回滚到"与当前版本不同的
 ```
 
 - 回滚前会先把当前版本另存为 redo 点，回滚后可再切回。
+- v9.15 起：若选中备份与当前 `app.asar` 内容相同，脚本**默认中止**（提示加 `-Force`），避免"无操作回滚"白占备份空间、污染清单；确需重放时加 `-Force`。
 - 正式安装的备份是 `app.asar` 文件级备份；安装日志在 `logs/` 下记录版本、SHA256、安装目录。
 
 ## 7. Electron 外壳构建与安装
@@ -427,7 +491,7 @@ pwsh -File scripts/dsh-release.ps1
 
 | 位置 | 含义 | 当前值 |
 | --- | --- | --- |
-| `local-fork/package.json` `version` | **应用版本唯一来源** | `1.0.0-enhanced-v9.11` |
+| `local-fork/package.json` `version` | **应用版本唯一来源** | `1.0.0-enhanced-v9.15` |
 | `main.js` / preload / 注入面板 | 运行时读取上面的版本（`app:version-sync`、`window.__QZ_VERSION__`） | 自动 |
 | 根 `package.json` `version` | 上游网页工程版本，**不用于桌面版本** | `0.1.0`（保持上游，不改） |
 | Git tag | 里程碑标记 | `vX.Y-dsh-local` |
@@ -442,7 +506,7 @@ pwsh -File scripts/dsh-release.ps1
 
 注意：
 
-- 本分支版本号（v1~v9.11、`1.0.0-enhanced-vX.Y`）与上游 release 版本**没有对应关系**，不要按上游版本号比较。
+- 本分支版本号（v1~v9.15、`1.0.0-enhanced-vX.Y`）与上游 release 版本**没有对应关系**，不要按上游版本号比较。
 - 历史上有多个小版本合并进同一提交（v9.1+v9.2、v9.4+v9.5），因此不是每个数字都有独立 tag。
 - exe 文件版本元数据只在运行时升级时更新，可能与应用内版本不一致，这属于已知限制。
 
@@ -501,14 +565,21 @@ pwsh -File scripts/dsh-release.ps1
 
 作者本机的 SRS / 自动进阶仿真采用 **esbuild 打包真实 `src` 源码 + Node stub（dexie/react/store 等）**、固定 seed 与注入时钟的方式运行，`--strict` 下失败即非零退出：
 
-| 版本口径 | 断言数 | 组成 |
-| --- | --- | --- |
-| v9.3 ~ v9.6 | 248 | SRS + 自动进阶 |
-| v9.7 ~ v9.9 | 253 | 120 SRS + 133 自动进阶 |
-| v9.11（交付记录） | **309** | 120 SRS + 189 自动进阶 |
+| 版本口径 | 提交 | 断言数 | `app.asar`（大小 / SHA256 前 8 位） | CDP 冒烟 |
+| --- | --- | --- | --- | --- |
+| v9.3 ~ v9.6 | — | 248 | — | — |
+| v9.7 ~ v9.9 | `f18e723`（v9.9） | 253（120 SRS + 133 自动进阶） | 86,383,823 B / — | 11/11（v9.9 记录） |
+| v9.10 | `8767c15` | 253（另有判定用例 29/29、42/42） | 86,400,986 B / `92979793` | 11/11 |
+| v9.11 | `27f73e1` | 309（120 + 189） | 86,402,263 B / `831E3E92` | 11/11 |
+| v9.12 | `f7f2c99` | 309 | 86,395,797 B / `8E92FC59` | 11/11（测试安装） |
+| v9.13 | `d5064fd` | 309 | 86,396,101 B / `F2DC7F4A` | 11/11（测试安装） |
+| v9.14 | `980bb5a` | 309 | 86,398,061 B / `850D5E2C` | 11/11（测试安装） |
+| v9.15 | `1fb2b0f` | 309 | 86,400,877 B / `10129D9D` | 11/11（测试安装 + 已安装版） |
+
+- v9.12–v9.15 是同一轮审计的四批修复（架构基座 / 核心与数据 / 交互与页面 / 外壳与工程），断言集未改，每批重跑 309/309；完整哈希与构建目录见 [`RELEASE-NOTES-v9.15.md`](RELEASE-NOTES-v9.15.md)。
 
 - 覆盖方向：新词/到期/循环回顾、refresh、封顶、成熟词降档、时钟回拨、日粒度、迁移、Skip、leech、删除清理、影子调度；自动进阶的掌握度、全错、Skip、跨级、同名、配比、清债、持久化、阈值、加载失败、due key、**70% 掺入曲线与窗口封顶**等。
-- 确定性：同 seed 重复运行结果一致（v9.11 起两个 sim 各跑两遍逐字节比对）。
+- 确定性：同 seed 重复运行结果一致（v9.11 起两个 sim 各跑两遍逐字节比对；v9.12–v9.15 沿用同一门禁）。
 - 打字判定另有两组用例（不在 309 内）：`wordmatch-src.mjs` **29/29**（esbuild 打包真实 `src`）、`word-judgment-sim.mjs` **42/42**（等价状态机，v9.10 前为 32）。
 - **重要**：仿真脚本、断言计划与报告位于作者本机独立审计目录，**不在本仓库内**。干净 clone 上 `quality-gate.ps1 -WithSim` 会因脚本缺失而 SKIP；309/309 是作者本机验收记录，不是公开 CI 结果。
 
@@ -523,6 +594,8 @@ pwsh -File scripts/dsh-release.ps1
 > 跳过项为已下线的旧流程（v9.9 清理了不可达页面/组件），不是失败。
 >
 > **v9.10 / v9.11 的 CDP 冒烟为手工执行**：脚本内 `-Smoke` 在构建会话里被 GPU 崩溃拦住（`gpu_process_host: exit_code=-1073741819` → `NO_PAGE`），改用 `--disable-gpu --no-sandbox` + 隔离 profile 手工跑同一脚本，v9.10/v9.11 测试安装与 v9.11 已安装版均 **11/11**（`logs\smoke-1.0.0-enhanced-v9.11-installed.txt`）；安装日志的 `smoke=false` 只表示安装步骤未带 `-Smoke`。
+>
+> **v9.12–v9.15**：四批均以隔离 profile 跑冒烟 11/11（v9.12–v9.14 为测试安装，v9.15 测试安装与已安装版各 11/11），日志 `logs\smoke-1.0.0-enhanced-v9.15-{testinstall,installed}.txt`。v9.15 的 M5-001/002 给脚本补了单次 CDP 超时（15 s）与全局看门狗（90 s），脚本悬挂不再表现为"卡住不结束"。
 
 ### 10.4 手工验收建议
 
@@ -548,6 +621,8 @@ pwsh -File scripts/dsh-release.ps1
 12. **数据兼容**：不承诺从上游未来版本迁移；导入方应用版本应 ≥ 导出方。
 13. **发布脚本路径**：`dsh-release.ps1` / `quality-gate.ps1` 的默认路径是作者本机布局，公开仓库使用前必须用参数覆盖；脚本面向 Windows。
 14. **无遥测 UI 开关**：桌面遥测只能用 `localStorage` / 控制台切换，暂无设置界面（代码注释已标注为后续版本）。
+15. **分层门禁未硬性化**：依赖环已为 0，但逆向依赖剩 3 条（见第 3.3 节），且分层规则尚未落成 ESLint 规则或发布脚本开关——目前靠人工跑 `scan-graph.mjs` 复核。
+16. **两处像素与两处行为变化**：v9.14 修正两处 Tailwind 类名拼写（浅色卡片简介由黑转灰、首屏 Loading 遮罩由透明转不透明）；v9.13 导出文件名带时分秒。逐条说明见 [`RELEASE-NOTES-v9.15.md`](RELEASE-NOTES-v9.15.md) 第 2.5 节。
 
 ## 12. 许可证与合规
 

@@ -9,7 +9,7 @@
 - 上游基线：commit `1182426f2bd0a28c95302c33f9e19136b1262a70`
 - 许可证：**GNU GPL v3.0**（与上游一致，见根目录 `LICENSE`）
 
-详细技术说明见 [`docs/DSH-FORK.md`](docs/DSH-FORK.md)（英文精简版 [`docs/DSH-FORK_EN.md`](docs/DSH-FORK_EN.md)），版本里程碑见 [`docs/RELEASE-NOTES-v9.11.md`](docs/RELEASE-NOTES-v9.11.md)（含 v9.10）与 [`docs/RELEASE-NOTES-v9.9.md`](docs/RELEASE-NOTES-v9.9.md)（首次公开）。
+详细技术说明见 [`docs/DSH-FORK.md`](docs/DSH-FORK.md)（英文精简版 [`docs/DSH-FORK_EN.md`](docs/DSH-FORK_EN.md)），版本里程碑见 [`docs/RELEASE-NOTES-v9.15.md`](docs/RELEASE-NOTES-v9.15.md)（含 v9.12–v9.14 四批审计修复）、[`docs/RELEASE-NOTES-v9.11.md`](docs/RELEASE-NOTES-v9.11.md)（含 v9.10）与 [`docs/RELEASE-NOTES-v9.9.md`](docs/RELEASE-NOTES-v9.9.md)（首次公开）。
 
 ## 目录
 
@@ -36,8 +36,8 @@
 | 上游在线站点 | <https://qwerty.kaiyi.cool/>（本分支不部署、不运营该站点） |
 | 本分支仓库 | <https://github.com/menlieyijin/qwerty-learner>（GitHub fork） |
 | 本分支名称 | `dsh-local-v8` |
-| 相对上游的提交 | 24 个（`git rev-list --count 1182426..dsh-local-v8` 可复核；v9.9 文档记为 21 个，实际当时为 22 个） |
-| 里程碑 tag | `v7.1-dsh-local`、`v8.9-dsh-local`、`v9.0-dsh-local`、`v9.2-dsh-local`、`v9.3-dsh-local`、`v9.5-dsh-local`、`v9.6-dsh-local`、`v9.7-dsh-local`、`v9.8-dsh-local`、`v9.9-dsh-local`（v9.10 / v9.11 尚未打 tag） |
+| 相对上游的提交 | 29 个（`git rev-list --count 1182426..dsh-local-v8` 可复核；v9.9 文档记为 21 个，实际当时为 22 个） |
+| 里程碑 tag | `v7.1-dsh-local`、`v8.9-dsh-local`、`v9.0-dsh-local`、`v9.2-dsh-local`、`v9.3-dsh-local`、`v9.5-dsh-local`、`v9.6-dsh-local`、`v9.7-dsh-local`、`v9.8-dsh-local`、`v9.9-dsh-local`（v9.10 – v9.15 尚未打 tag；v9.12–v9.15 各批开工前有 `v9.1x-pre-batchX` 打点，仅用于批次回看） |
 
 说明：
 
@@ -45,13 +45,19 @@
 - v9.1 与 v9.2、v9.4 与 v9.5 分别合并在同一提交中完成，因此没有单独的 `v9.1` / `v9.4` tag；功能仍包含在对应提交里。
 - 本分支是"从上游源码自建"的桌面增强版本，只保留上游的网页源码结构；桌面外壳（`local-fork/electron/`）为本分支自行添加。
 
-最近三个版本（完整历史见 release notes）：
+最近版本（完整历史见 release notes）：
 
 | 版本 | 提交 | 内容 | 产物 |
 | --- | --- | --- | --- |
 | v9.9 | `f18e723` | 首次公开：死代码清理、真实 e2e、Electron 43.8.3、IDB 强杀实测 | `app.asar` 86,383,823 B |
 | v9.10 | `8767c15` | 打字判定：空格 / `-` / `/` 同位置等价（仅 en/de 非 code） | `app.asar` 86,400,986 B（中间版本，内容已含于 v9.11） |
 | v9.11 | `27f73e1` | 自动进阶：掌握 70% 起掺入下一级词（10%→30%）、毕业线 90%→85% | `app.asar` 86,402,263 B |
+| v9.12 | `f7f2c99` | 架构基座：依赖环 4→0、死代码 536 行（数据层脱 React、`@/utils` 聚合导出收敛） | `app.asar` 86,395,797 B |
+| v9.13 | `d5064fd` | 核心与数据层 19 项：部分加载失败不再判"本级完成"（P1）、SRS 字段级更新、导出失败可见 | `app.asar` 86,396,101 B |
+| v9.14 | `980bb5a` | 交互与页面 22 项：超长输入越界、渲染期重查、可访问性；2 处像素变化 | `app.asar` 86,398,061 B |
+| v9.15 | `1fb2b0f` | 外壳与工程 11 项：冒烟悬挂、首帧主题、词库缓存失效、脏设置、失败清理 | `app.asar` 86,400,877 B |
+
+> v9.12–v9.15 是同一轮审计的四批连续修复，装 v9.15 即包含全部内容；各版 SHA256 见 [`docs/RELEASE-NOTES-v9.15.md`](docs/RELEASE-NOTES-v9.15.md)。
 
 ## 2. 版权与许可证
 
@@ -70,10 +76,10 @@
 | 项 | 内容 |
 | --- | --- |
 | 修改者 | **dsh（DeepSeek Harness）** |
-| 提交作者 / 署名 | `dsh <dsh@dsh.local>`；**部分提交**带 `Signed-off-by: dsh <dsh@dsh.local>`（v9.3 起陆续加入，当前 12 个提交带正式 trailer；更早提交在提交说明中署名 dsh） |
+| 提交作者 / 署名 | `dsh <dsh@dsh.local>`；**部分提交**带 `Signed-off-by: dsh <dsh@dsh.local>`（v9.3 起陆续加入，当前 17 个提交带正式 trailer；更早提交在提交说明中署名 dsh） |
 | 本地修改时间 | 2026-10-21 ~ 2026-10-28（本分支 git 提交日期 2026-10-25 ~ 2026-10-28） |
-| 本地版本迭代 | v1 ~ v9.11 |
-| 当前应用版本 | `1.0.0-enhanced-v9.11`（唯一来源：`local-fork/package.json`） |
+| 本地版本迭代 | v1 ~ v9.15 |
+| 当前应用版本 | `1.0.0-enhanced-v9.15`（唯一来源：`local-fork/package.json`） |
 
 约定：
 
@@ -114,7 +120,7 @@
 
 - `memoryRecords` 为新增表；`memoryKey` 为 `${dict}::${word}`（v9.5 起保留大小写），并保留旧 key（`trim + lower`）读写兼容与一次性迁移。
 - 数据库导入改为"临时库 + 行数校验 + 主库单事务"的原子流程；v9.9 起启动时清理"导入中途被强杀"残留的临时库。
-- 每日自动备份同时写逻辑快照 `data.json`（RecordDB 全表 + 自定义词库 + localStorage + 外壳设置），另有全量 JSON 导出/导入；细节见 [`docs/Backup-Restore.md`](docs/Backup-Restore.md)。
+- 每日自动备份同时写逻辑快照 `data.json`（RecordDB 全表 + 自定义词库 + localStorage + 外壳设置），另有全量 JSON 导出/导入；细节见 [`docs/Backup-Restore.md`](docs/Backup-Restore.md)。全量 JSON 的导出文件名自 v9.13 起为 `Qwerty-Learner-User-Data-YYYYMMDD-HHmmss.gz`（补时分秒，同日多次导出不再重名）。
 
 ### 4.5 Electron 增强外壳
 
@@ -122,6 +128,7 @@
 - 托盘、全局快捷键、迷你模式、窗口置顶、透明度/缩放、开机自启、关闭到托盘、每日自动备份、日志轮转与脱敏。
 - 剪贴板查词小窗、免 Key 释义/翻译（本地词库优先，在线接口可关）、发音缓存（`qzcache` 协议，仅放行有道 `dictvoice` 音频）、词库在线更新、注入式"工具"面板。
 - 主进程/预加载与网页源码一起打包为 `app.asar`；不修改 `build/` 产物本身。
+- 外壳设置写入（`app:updateSettings`）自 v9.15 起按默认值的声明类型逐键校验：类型不符的值被忽略并记日志，`opacity` / `zoom` 收敛到界面允许范围（导入全量 JSON 时脏值不再持久化）。
 
 ### 4.6 去营销 UI
 
@@ -131,18 +138,37 @@
 ### 4.7 构建、回滚与质量门禁
 
 - `scripts/dsh-release.ps1`：tsc → 核心算法回归 → Vite build → 组装 staging + asar → `SHA256SUMS` / `release-info.json` → 可选测试安装 + 隔离 profile CDP 冒烟 → 可选正式安装（双目录哈希预检 → 备份 → 原子替换 → 校验 → 安装日志）。
-- `scripts/dsh-rollback.ps1`：列出备份、自动选择"与当前版本不同的最近备份"、回滚前自动存 redo 点。
+- `scripts/dsh-rollback.ps1`：列出备份、自动选择"与当前版本不同的最近备份"、回滚前自动存 redo 点；v9.15 起**选中备份与当前 `app.asar` 内容相同时默认中止**（要重放须加 `-Force`）。
 - `scripts/quality-gate.ps1`：`tsc --noEmit` + `eslint --max-warnings 0`；`-WithSim` 追加 SRS/自动进阶回归，`-WithSmoke` 追加 CDP 冒烟。
 - `scripts/dsh-smoke.mjs`：11 项 CDP 冒烟（版本、页面、开始、面板、数据、练习、备份、统计、错题本、无异常等）。
 
 ### 4.8 测试与验收记录
 
 - 静态门禁：`tsc --noEmit` 0 error、`eslint src --max-warnings 0` 0 error / 0 warning。
-- 核心算法回归：作者本机 v9.11 交付记录为 **309/309**（120 条 SRS + 189 条自动进阶）；历史口径为 v9.3 ~ v9.6 **248** 条、v9.7 ~ v9.9 **253** 条（120 + 133）。v9.10 另有两组判定用例：`wordmatch-src` 29/29（直接打包真实源码）、`word-judgment-sim` 42/42。
+- 核心算法回归：作者本机 v9.11 交付记录为 **309/309**（120 条 SRS + 189 条自动进阶），v9.12–v9.15 四批在同一口径下重跑仍为 **309/309**（断言集未改）；历史口径为 v9.3 ~ v9.6 **248** 条、v9.7 ~ v9.9 **253** 条（120 + 133）。v9.10 另有两组判定用例：`wordmatch-src` 29/29（直接打包真实源码）、`word-judgment-sim` 42/42。
 - Playwright 本地模式：12 passed / 5 skipped（跳过项为已下线的旧流程）。
 - CDP 冒烟 11/11；外壳安全探针 19/19（v9.9 本机验收记录）。
 - **v9.10 / v9.11 的 CDP 冒烟为手工执行**：脚本内 `-Smoke` 在构建会话里被 GPU 崩溃拦住（`NO_PAGE`），改用 `--disable-gpu --no-sandbox` + 隔离 profile 手工跑同一 `scripts/dsh-smoke.mjs`，v9.10/v9.11 测试安装与 v9.11 已安装版均 **11/11**（`logs\smoke-1.0.0-enhanced-v9.11-installed.txt`）；安装日志里的 `smoke=false` 表示安装步骤本身未带 `-Smoke`。
+- **v9.12–v9.15**：四批均以隔离 profile 跑 CDP 冒烟 11/11（v9.12–v9.14 为测试安装，v9.15 测试安装与已安装版各 11/11），日志见 `logs\smoke-1.0.0-enhanced-v9.15-{testinstall,installed}.txt`。
 - 上述数字来自作者本机审计产物；回归脚本与报告**未随本仓库发布**，公开仓库默认无法一键复现（见第 7 节）。
+
+### 4.9 架构分层与依赖门禁（v9.12 起）
+
+v9.12 之前，`import '@/utils'` 会顺带初始化 jotai store、mixpanel 与 377 条词库对象，`utils/db` 又内嵌 React hook 反向依赖页面 store，形成 4 个依赖环——分层只能靠口头约定。本轮先断开环，再把层次写成可检测的规则。
+
+**目标层次**（数字越小越底层，只允许低层 → 高层引用）：
+
+```
+typings / constants (0) < resources (1) < utils (2) < store (3) < hooks (4) < components (5) < pages (6)
+```
+
+- **唯一豁免**：入口 `src/index.tsx`（应用引导点，路由表必须在最外层组装）。
+- **不计入环**：动态 `await import()` 边（`utils/db/index.ts ↔ utils/autoLevel.ts` 的双向边是为规避 TDZ 的刻意设计），脚本单独列出。
+- **检测方法**：把 `src/**` 的静态 import/export 解析成文件级依赖图，用 **Tarjan 强连通分量**求环，再按上表统计"低层 → 高层"的逆向边。作者本机脚本为 `audit/v912/M6-shared/repro/scan-graph.mjs`，输出首行 `files=… edges=… scc(>1)=…`。
+- **当前结果**：`scc(>1)=0`（审计前 4 个环）；**逆向依赖未完全归零**，实测剩 3 条（`utils/mixpanel.ts` → `@/store`、→ `pages/Typing/store/type`，`resources/dictionary.ts` → `@/utils`），均不构成环，已列入已知限制与后续。
+- **落地程度**：分层规则目前只在文档与审计脚本层面成立——`.eslintrc.cjs` 未加 `no-restricted-imports`，`quality-gate.ps1` 无对应开关，脚本不随仓库发布。因此它是"可复核的验收记录"，还不是 CI 硬门禁。
+
+同时，v9.12 让数据层（`utils/db`）不再 import `pages/**`，SRS 仿真不必再为页面 store 打 stub；`@/utils` 也不再顺带初始化 store 与 mixpanel（引用处由 17 降到 13）。
 
 ## 5. 上游冻结策略
 
@@ -209,9 +235,9 @@ pwsh -File scripts/dsh-rollback.ps1
 
 1. **非官方分支**：本分支不受上游项目支持；上游不会处理本分支的专属问题，上游的修复也不会自动进入本分支。
 2. **仅 Windows 实测**：桌面外壳只在 Windows 11（26100）上验证；未经 macOS / Linux 验证，Electron 外壳为 Windows 定制。网页部分理论上可跨平台运行。
-3. **回归脚本未随仓库发布**：SRS / 自动进阶的仿真脚本、审计报告与 248/253/309 断言结果位于作者本机的独立审计目录，不在本仓库内；在干净 clone 上 `quality-gate.ps1 -WithSim` 会跳过缺失脚本。文档中的断言数量与通过结论是作者本机验收记录，不是公开可复现的 CI 结果。
+3. **回归脚本未随仓库发布**：SRS / 自动进阶的仿真脚本、审计报告与 248/253/309 断言结果位于作者本机的独立审计目录，不在本仓库内；在干净 clone 上 `quality-gate.ps1 -WithSim` 会跳过缺失脚本。文档中的断言数量与通过结论是作者本机验收记录，不是公开可复现的 CI 结果。v9.12–v9.15 四批均在同一口径下重跑：**309/309**（120 SRS + 189 自动进阶）、determinism pass、CDP 冒烟 11/11（每版隔离 profile，v9.15 另测已安装版），逐版 asar 大小与 SHA256 见 [`docs/RELEASE-NOTES-v9.15.md`](docs/RELEASE-NOTES-v9.15.md)。
 4. **Electron 运行时 EOL**：当前为 Electron 43.8.3（Chromium 150.0.7871.250），43.x 官方支持至 2027-01-05；到期前需要升级运行时。运行时升级是手工步骤（含 rcedit 品牌化），不在发布脚本流水线内。
-5. **版本元数据可能滞后**：应用内版本以 `local-fork/package.json` 为唯一来源；安装程序 exe 的文件版本元数据在运行时升级时才更新，可能与应用内版本不完全一致（当前 FileVersion 为 9.8.0.0，应用版本为 v9.11）。
+5. **版本元数据可能滞后**：应用内版本以 `local-fork/package.json` 为唯一来源；安装程序 exe 的文件版本元数据在运行时升级时才更新，可能与应用内版本不完全一致（当前 FileVersion 为 9.8.0.0，应用版本为 v9.15）。
 6. **无代码签名**：本分支不提供代码签名的安装包，Windows SmartScreen 可能提示"未知发布者"。
 7. **词库与数据版权**：内置词库及释义数据版权归上游及原始数据来源（如 kajweb 等）所有；本分支补回的 5 本旧版词库（AWL / NAWL / NGSL / google-10000 / google-20000）在当前上游仓库中已不存在（2026-10-27 经 GitHub contents API 核实 `master` / `dev` / `gh-pages` 均为 404），来自旧版本地构建，逐本来源与许可见 [`docs/THIRD-PARTY.md`](docs/THIRD-PARTY.md)。使用者应自行确认所在地区与用途的合规性。
 8. **无每日新词硬上限**：出词按到期量和动态比例调节，不设强制每日上限；一次可能引入较多新词。设置里的每日目标用于统计与提醒，不是硬限制。
@@ -219,6 +245,7 @@ pwsh -File scripts/dsh-rollback.ps1
 10. **备份一致性**：自动备份的"目录副本"是在应用运行期间复制的，LevelDB 可能处于写入中；跨设备恢复请优先使用"导出全量数据 JSON"或备份中的 `data.json`（见 `docs/Backup-Restore.md`）。
 11. **第三方在线能力**：在线释义/翻译、发音音频等依赖第三方服务，可能受网络、服务可用性与隐私政策影响；可在设置中关闭在线释义。
 12. **不保证反向兼容**：不承诺从上游未来版本迁移数据，也不承诺旧版本应用能读取新版本导出的数据（导入方版本应 ≥ 导出方）。
+13. **分层门禁未进 CI**：v9.12 起依赖环为 0（`scc(>1)=0`），但"低层 → 高层"的逆向边仍有 3 条（`utils/mixpanel.ts` 的两处历史导入、`resources/dictionary.ts` 对 `@/utils` 的一处依赖），且分层规则尚未落成 ESLint 规则或发布脚本开关，属人工复核项（详见第 4.9 节）。
 
 **免责声明**：本分支按"现状"提供，不附带任何明示或暗示担保（包括但不限于适销性、特定用途适用性与不侵权）。使用本分支造成的数据丢失、学习记录异常或其他损失，由使用者自行承担；请注意自行备份。GPL-3.0 中的免责条款同样适用。
 
@@ -238,6 +265,7 @@ pwsh -File scripts/dsh-rollback.ps1
 | --- | --- |
 | [`docs/DSH-FORK.md`](docs/DSH-FORK.md) | 本分支详细技术文档：功能差异、架构、核心算法、构建、数据迁移、安全设计、测试、限制 |
 | [`docs/DSH-FORK_EN.md`](docs/DSH-FORK_EN.md) | English concise version of the fork documentation |
+| [`docs/RELEASE-NOTES-v9.15.md`](docs/RELEASE-NOTES-v9.15.md) | v9.12–v9.15 四批审计修复：架构基座 / 核心与数据 / 交互与页面 / 外壳与工程，含行为变化、验证与回滚 |
 | [`docs/RELEASE-NOTES-v9.11.md`](docs/RELEASE-NOTES-v9.11.md) | v9.10（分隔符等价）+ v9.11（70% 掺入 + 85% 毕业线）变更、验证与回滚 |
 | [`docs/RELEASE-NOTES-v9.9.md`](docs/RELEASE-NOTES-v9.9.md) | v8.9 → v9.9 里程碑与首次公开说明 |
 | [`docs/THIRD-PARTY.md`](docs/THIRD-PARTY.md) | 第三方组件与数据来源/许可披露（内置词库、补回词表、图标、截图、Electron 运行时、在线服务） |
