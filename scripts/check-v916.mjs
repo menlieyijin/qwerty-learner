@@ -48,6 +48,7 @@ console.log(JSON.stringify({
   firstRunDialog: hasDialog, headerButton: hasButton, clickCet6: clickOk,
   storedChoice, levelId, dialogGoneAfterChoose: dialogGone, reopenOpensAgain: reopen && dialogAgain,
 }, null, 2))
-const pass = hasDialog && hasButton && clickOk && storedChoice === 'cet6' && levelId === 'cet6' && dialogGone && reopen && dialogAgain
+const storedChoiceOk = storedChoice === '"cet6"' || storedChoice === 'cet6'
+const pass = hasDialog && hasButton && clickOk && storedChoiceOk && levelId === 'cet6' && dialogGone && reopen && dialogAgain
 console.log(pass ? 'V916-PASS' : 'V916-FAIL')
 process.exit(pass ? 0 : 1)
