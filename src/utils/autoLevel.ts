@@ -322,6 +322,35 @@ export function hasAutoLevelState(): boolean {
   return readStoredState() !== null
 }
 
+// ---------------------------------------------------------------------------
+// v9.16（dsh，目标-2）：首次打开的「词汇水平起点选择」
+// ---------------------------------------------------------------------------
+
+/** 首启起点选项（从未学过 / 初中 / 高中 / 四级 / 六级） */
+export type LearningStartChoice = 'never' | 'junior' | 'senior' | 'cet4' | 'cet6'
+
+/** 选项 → LEARNING_PATH 级别。个性化路线本身仍由 LEARNING_PATH + 自动进阶驱动，
+ * 这里只是把用户声明的起点写进唯一状态源（qzAutoLevelState.levelId）。 */
+const LEARNING_START_LEVEL: Record<LearningStartChoice, string> = {
+  never: 'primary-1',
+  junior: 'junior-1',
+  senior: 'senior-1',
+  cet4: 'cet4',
+  cet6: 'cet6',
+}
+
+/**
+ * 应用用户的起点选择：直接把 levelId 定到对应级别（含向前跳级）。
+ * 与 `reevaluateLevel` 不同：那是按掌握数据反推，这是用户显式声明，不扫描记录。
+ * 返回是否成功落盘（级别不存在或写失败均为 false，调用方据此提示）。
+ */
+export function applyLearningStartChoice(choice: LearningStartChoice): boolean {
+  const levelId = LEARNING_START_LEVEL[choice]
+  if (!levelId || findLevelIndex(levelId) < 0) return false
+  patchState({ levelId })
+  return loadAutoLevelState().levelId === levelId
+}
+
 /** 状态持久化失败计数（v9.3.1 / SRS-006：供测试与数据页展示，不参与业务判定） */
 let persistFailureCount = 0
 /** 已发生的状态持久化失败次数（成功写入不清零，方便用户发现问题后仍能看到历史） */
