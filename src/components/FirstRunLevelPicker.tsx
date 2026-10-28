@@ -1,7 +1,7 @@
 import { learningStartChoiceAtom, learningStartPickerOpenAtom } from '@/store/learningStart'
 import { applyLearningStartChoice, hasAutoLevelState } from '@/utils/autoLevel'
 import type { LearningStartChoice } from '@/utils/autoLevel'
-import { useAtom, useAtomValue } from 'jotai'
+import { useAtom } from 'jotai'
 import { useEffect } from 'react'
 
 /**
@@ -25,7 +25,7 @@ const OPTIONS: Array<{ value: LearningStartChoice; title: string; desc: string }
 const POSTPONE_KEY = 'qz-start-postponed'
 
 export default function FirstRunLevelPicker() {
-  const choice = useAtomValue(learningStartChoiceAtom)
+  const [choice, setChoice] = useAtom(learningStartChoiceAtom)
   const [open, setOpen] = useAtom(learningStartPickerOpenAtom)
 
   useEffect(() => {
@@ -46,7 +46,10 @@ export default function FirstRunLevelPicker() {
   }
 
   const choose = (value: LearningStartChoice) => {
+    // 两件事都要做：写 qzAutoLevelState.levelId（个性化路线生效）+ 持久化选择本身
+    // （否则下次启动 choice 仍为空、弹卡会再次出现——V916 首验抓到的回归）。
     applyLearningStartChoice(value)
+    setChoice(value)
     setOpen(false)
   }
 
