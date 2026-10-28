@@ -1,4 +1,4 @@
-# Qwerty Learner Plus (dsh fork)
+# Qwerty Learner Plus (v10, dsh fork)
 
 > **Unofficial fork** of [Qwerty Learner](https://github.com/RealKai42/qwerty-learner) (GPL-3.0, base commit `1182426`).
 > Maintained by **dsh** on branch `dsh-local-v8`. Not affiliated with, endorsed by, or maintained by the upstream authors.
