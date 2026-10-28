@@ -1,4 +1,5 @@
 import purple from './purple.json'
+import ChartEmpty from '@/components/ChartEmpty'
 import useWindowSize from '@/hooks/useWindowSize'
 import { isOpenDarkModeAtom } from '@/store'
 import { LineChart } from 'echarts/charts'
@@ -78,7 +79,9 @@ const LineCharts: FC<LineChartsProps> = ({ data, title, suffix, name }) => {
     return () => {
       instance.dispose()
     }
-  }, [data, hasData, title, suffix, name, isOpenDarkMode])
+  // v9.14（dsh，M4-014）：依赖数组去掉 `title`——它只用于 JSX 标题、不进 ECharts option，
+  // 留在依赖里会在标题变化时触发一次无意义的 dispose/init。
+  }, [data, hasData, suffix, name, isOpenDarkMode])
 
   useEffect(() => {
     if (!chartRef.current) return
@@ -93,7 +96,8 @@ const LineCharts: FC<LineChartsProps> = ({ data, title, suffix, name }) => {
         <div style={{ width: '100%', height: '100%' }} ref={chartRef} className="line-chart flex-grow"></div>
       ) : (
         // PAGES-007：无数据时给出占位文案，不再直接 return 留白（用户无法区分“无数据”与“加载失败”）
-        <div className="flex flex-grow items-center justify-center text-sm text-gray-400 dark:text-gray-500">暂无数据</div>
+        // v9.14（dsh，M4-015）：占位抽到 ChartEmpty，与柱状图共用一份实现
+        <ChartEmpty />
       )}
     </div>
   )

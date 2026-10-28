@@ -133,7 +133,13 @@ const PronunciationSwitcher = () => {
                 <div className="flex w-full  flex-col  items-start gap-2 py-0">
                   <span className="text-sm font-normal leading-5 text-gray-900 dark:text-white dark:text-opacity-60">开关音标显示</span>
                   <div className="flex w-full flex-row items-center justify-between">
-                    <Switch checked={phoneticConfig.isOpen} onChange={onChangePhoneticIsOpen} className="switch-root">
+                    {/* v9.14（dsh，M3-005）：Switch 渲染成 role="switch"，面板里的文案未与控件关联，补可访问名 */}
+                    <Switch
+                      aria-label="音标显示开关"
+                      checked={phoneticConfig.isOpen}
+                      onChange={onChangePhoneticIsOpen}
+                      className="switch-root"
+                    >
                       <span aria-hidden="true" className="switch-thumb" />
                     </Switch>
                     <span className="text-right text-xs font-normal leading-tight text-gray-600">{`音标已${
@@ -144,7 +150,12 @@ const PronunciationSwitcher = () => {
                 <div className="flex w-full  flex-col  items-start gap-2 py-0">
                   <span className="text-sm font-normal leading-5 text-gray-900 dark:text-white dark:text-opacity-60">开关单词发音</span>
                   <div className="flex w-full flex-row items-center justify-between">
-                    <Switch checked={pronunciationConfig.isOpen} onChange={onChangePronunciationIsOpen} className="switch-root">
+                    <Switch
+                      aria-label="单词发音开关"
+                      checked={pronunciationConfig.isOpen}
+                      onChange={onChangePronunciationIsOpen}
+                      className="switch-root"
+                    >
                       <span aria-hidden="true" className="switch-thumb" />
                     </Switch>
                     <span className="text-right text-xs font-normal leading-tight text-gray-600">{`发音已${
@@ -156,7 +167,12 @@ const PronunciationSwitcher = () => {
                   <div className="flex w-full  flex-col  items-start gap-2 py-0">
                     <span className="text-sm font-normal leading-5 text-gray-900 dark:text-white dark:text-opacity-60">开关释义发音</span>
                     <div className="flex w-full flex-row items-center justify-between">
-                      <Switch checked={pronunciationConfig.isTransRead} onChange={onChangePronunciationIsTransRead} className="switch-root">
+                      <Switch
+                        aria-label="释义发音开关"
+                        checked={pronunciationConfig.isTransRead}
+                        onChange={onChangePronunciationIsTransRead}
+                        className="switch-root"
+                      >
                         <span aria-hidden="true" className="switch-thumb" />
                       </Switch>
                       <span className="text-right text-xs font-normal leading-tight text-gray-600">{`发音已${
@@ -178,7 +194,12 @@ const PronunciationSwitcher = () => {
                   <div className="flex w-full  flex-col  items-start gap-2 py-0">
                     <span className="text-sm font-normal leading-5 text-gray-900 dark:text-white dark:text-opacity-60">开关循环发音</span>
                     <div className="flex w-full flex-row items-center justify-between">
-                      <Switch checked={pronunciationConfig.isLoop} onChange={onChangePronunciationIsLoop} className="switch-root">
+                      <Switch
+                        aria-label="循环发音开关"
+                        checked={pronunciationConfig.isLoop}
+                        onChange={onChangePronunciationIsLoop}
+                        className="switch-root"
+                      >
                         <span aria-hidden="true" className="switch-thumb" />
                       </Switch>
                       <span className="text-right text-xs font-normal leading-tight text-gray-600">{`循环已${

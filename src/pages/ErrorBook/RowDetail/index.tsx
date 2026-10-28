@@ -7,6 +7,7 @@ import DataTag from './DataTag'
 import RowPagination from './RowPagination'
 import type { WordPronunciationIconRef } from '@/components/WordPronunciationIcon'
 import { WordPronunciationIcon } from '@/components/WordPronunciationIcon'
+import CloseButton from '@/components/CloseButton'
 import Phonetic from '@/pages/Typing/components/WordPanel/components/Phonetic'
 import Letter from '@/pages/Typing/components/WordPanel/components/Word/Letter'
 import { idDictionaryMap } from '@/resources/dictionary'
@@ -17,7 +18,6 @@ import HashtagIcon from '~icons/heroicons/chart-pie-20-solid'
 import CheckCircle from '~icons/heroicons/check-circle-20-solid'
 import ClockIcon from '~icons/heroicons/clock-20-solid'
 import XCircle from '~icons/heroicons/x-circle-20-solid'
-import IconX from '~icons/tabler/x'
 
 type RowDetailProps = {
   currentRowDetail: groupedWordRecords
@@ -106,7 +106,7 @@ const RowDetail: React.FC<RowDetailProps> = ({ currentRowDetail, allRecords }) =
   return (
     <div className="absolute inset-0 flex  flex-col items-center  justify-center ">
       <div className="my-card relative z-10 flex h-[32rem] min-w-[26rem] select-text flex-col items-center justify-around rounded-2xl bg-white px-3 py-10 dark:bg-gray-900">
-        <IconX className="absolute right-3 top-3  h-6 w-6 cursor-pointer text-gray-400" onClick={onClose} />
+        <CloseButton className="absolute right-3 top-3 h-6 w-6" label="关闭" onClose={onClose} />
         <div className="flex flex-col items-center justify-start">
           <div>
             {currentRowDetail.word.split('').map((t, index) => (

@@ -2,15 +2,15 @@ import HeatmapCharts from './components/HeatmapCharts'
 import KeyboardWithBarCharts from './components/KeyboardWithBarCharts'
 import LineCharts from './components/LineCharts'
 import { useWordStats } from './hooks/useWordStats'
+import CloseButton from '@/components/CloseButton'
 import Layout from '@/components/Layout'
 import { isOpenDarkModeAtom } from '@/store'
 import * as ScrollArea from '@radix-ui/react-scroll-area'
 import dayjs from 'dayjs'
 import { useAtom } from 'jotai'
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { useHotkeys } from 'react-hotkeys-hook'
 import { useNavigate } from 'react-router-dom'
-import IconX from '~icons/tabler/x'
 
 const Analysis = () => {
   const navigate = useNavigate()
@@ -35,18 +35,31 @@ const Analysis = () => {
 
   useHotkeys('enter,esc', onBack, { preventDefault: true })
 
-  const { isEmpty, exerciseRecord, wordRecord, wpmRecord, accuracyRecord, wrongTimeRecord } = useWordStats(
-    dayjs().subtract(1, 'year').unix(),
-    dayjs().unix(),
+  // v9.14（dsh，M4-002）：统计区间只在挂载时求值一次。
+  // 旧实现在渲染期调 dayjs()：秒级时间戳每次重渲染都会变，等价于「换了查询区间」，
+  // 于是任何一次重渲染（如 Ctrl+D 切主题）都会重跑整年 IndexedDB 查询 + 5 个图表重建。
+  const [statsRange] = useState(() => ({
+    start: dayjs().subtract(1, 'year').unix(),
+    end: dayjs().unix(),
+  }))
+
+  const { isEmpty, hasError, exerciseRecord, wordRecord, wpmRecord, accuracyRecord, wrongTimeRecord } = useWordStats(
+    statsRange.start,
+    statsRange.end,
   )
 
   return (
     <Layout>
       <div className="flex w-full flex-1 flex-col overflow-y-auto pl-20 pr-20 pt-20">
-        <IconX className="absolute right-20 top-10 mr-2 h-7 w-7 cursor-pointer text-gray-400" onClick={onBack} />
+        <CloseButton className="absolute right-20 top-10 mr-2 h-7 w-7" onClose={onBack} />
         <ScrollArea.Root className="flex-1 overflow-y-auto">
           <ScrollArea.Viewport className="h-full w-auto pb-[20rem] [&>div]:!block">
-            {isEmpty ? (
+            {hasError ? (
+              // v9.14（dsh，M4-003）：查询失败时复用空态盒子明确报错，不再假装「暂无练习数据」
+              <div className="align-items-center m-4 grid h-80 w-auto place-content-center overflow-hidden rounded-lg shadow-lg dark:bg-gray-600">
+                <div className="text-2xl text-gray-400">统计读取失败，请重试</div>
+              </div>
+            ) : isEmpty ? (
               <div className="align-items-center m-4 grid h-80 w-auto place-content-center overflow-hidden rounded-lg shadow-lg dark:bg-gray-600">
                 <div className="text-2xl text-gray-400">暂无练习数据</div>
               </div>
@@ -72,7 +85,6 @@ const Analysis = () => {
           </ScrollArea.Viewport>
           <ScrollArea.Scrollbar className="flex touch-none select-none bg-transparent " orientation="vertical"></ScrollArea.Scrollbar>
         </ScrollArea.Root>
-        <div className="overflow-y-auto"></div>
       </div>
     </Layout>
   )

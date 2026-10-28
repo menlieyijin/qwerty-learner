@@ -4,6 +4,7 @@ import { currentDictInfoAtom, wordDictationConfigAtom } from '@/store'
 import { CTRL } from '@/utils'
 import { useAtomValue } from 'jotai'
 import { useCallback, useContext, useMemo } from 'react'
+import type { KeyboardEvent } from 'react'
 import IconPrev from '~icons/tabler/arrow-narrow-left'
 import IconNext from '~icons/tabler/arrow-narrow-right'
 
@@ -30,6 +31,18 @@ export default function PrevAndNextWord({ type, onSkip }: LastAndNextWordProps) 
     if (type === 'next') dispatch({ type: TypingStateActionType.SKIP_2_WORD_INDEX, newIndex })
   }, [type, dispatch, newIndex, word, onSkip])
 
+  // v9.14（dsh，M3-006）：div onClick 既不进 Tab 序也没有键盘事件，键盘用户只能用快捷键跳词。
+  // 只补 role/tabIndex + Enter/Space，不改结构与样式；热键系统（Ctrl+Shift+方向键 / Tab 看答案）不受影响。
+  const onKeyDownWord = useCallback(
+    (e: KeyboardEvent<HTMLDivElement>) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault()
+        onClickWord()
+      }
+    },
+    [onClickWord],
+  )
+
   const headWord = useMemo(() => {
     if (!word) return ''
 
@@ -47,7 +60,11 @@ export default function PrevAndNextWord({ type, onSkip }: LastAndNextWordProps) 
       {word ? (
         <Tooltip content={`快捷键: ${shortCutKey}`}>
           <div
+            role="button"
+            tabIndex={0}
+            aria-label={type === 'prev' ? '跳过：上一个单词' : '跳过：下一个单词'}
             onClick={onClickWord}
+            onKeyDown={onKeyDownWord}
             className="flex max-w-xs cursor-pointer select-none items-center text-gray-700 opacity-60 duration-200 ease-in-out hover:opacity-100 dark:text-gray-400"
           >
             {type === 'prev' && <IconPrev className="mr-4 shrink-0 grow-0 text-2xl" />}

@@ -66,13 +66,14 @@ const App: React.FC = () => {
 
   useEffect(() => {
     // 检测用户设备
-    if (!IsDesktop()) {
-      setTimeout(() => {
-        alert(
-          ' Qwerty Learner 目的为提高键盘工作者的英语输入效率，目前暂未适配移动端，希望您使用桌面端浏览器访问。如您使用的是 Ipad 等平板电脑设备，可以使用外接键盘使用本软件。',
-        )
-      }, 500)
-    }
+    // v9.14（dsh，M3-011）：原来 setTimeout 没有 cleanup，移动端 500ms 内切走路由仍会弹出阻塞式 alert
+    if (IsDesktop()) return
+    const timer = window.setTimeout(() => {
+      alert(
+        ' Qwerty Learner 目的为提高键盘工作者的英语输入效率，目前暂未适配移动端，希望您使用桌面端浏览器访问。如您使用的是 Ipad 等平板电脑设备，可以使用外接键盘使用本软件。',
+      )
+    }, 500)
+    return () => window.clearTimeout(timer)
   }, [])
 
   // 当前词库不存在时重置为默认词库

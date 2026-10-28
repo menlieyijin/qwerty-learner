@@ -1,4 +1,4 @@
-import type { IChapterRecord, IMemoryRecord, IReviewRecord, IWordRecord } from './record'
+import type { IChapterRecord, IMemoryRecord, IReviewRecord } from './record'
 import { ChapterRecord, ReviewRecord, WordRecord } from './record'
 import { MEMORY_GRADUATE_STAGE, adaptiveDaysFromRecord, clampStage, ladderDays } from '@/utils/memoryLadder'
 import { removeMemoryCache, upsertMemoryCache } from '@/utils/memoryCache'
@@ -8,7 +8,10 @@ import type { Table } from 'dexie'
 import Dexie from 'dexie'
 
 class RecordDB extends Dexie {
-  wordRecords!: Table<IWordRecord, number>
+  // v9.14（dsh，M4-017）：wordRecords 挂载了 mapToClass(WordRecord)（见下方），
+  // 读出的每条记录本来就是 WordRecord 实例（带 totalTime getter），表类型与运行时保持一致，
+  // 调用方不再需要用 `as WordRecord` 把 IWordRecord 硬转成类实例。
+  wordRecords!: Table<WordRecord, number>
   chapterRecords!: Table<IChapterRecord, number>
   reviewRecords!: Table<IReviewRecord, number>
   memoryRecords!: Table<IMemoryRecord, string>

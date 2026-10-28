@@ -178,7 +178,8 @@ export default function SharePicDialog({ showState, setShowState, randomChoose }
                     </button>
                     <div className="h-152 w-116">
                       {imageURL ? (
-                        <img src={imageURL} className="h-auto w-full" />
+                        // v9.14（dsh，M3-006）：分享图是弹窗主内容，缺 alt 时读屏完全拿不到结果信息
+                        <img src={imageURL} className="h-auto w-full" alt="本次练习成绩分享图" />
                       ) : loadError ? (
                         <div className="flex h-full w-full flex-col items-center justify-center gap-4 rounded-lg border-2 border-dashed border-red-200 px-6 text-sm text-gray-500">
                           <span className="text-center">{loadError}</span>
@@ -241,7 +242,8 @@ export default function SharePicDialog({ showState, setShowState, randomChoose }
               <div className="ml-5 mt-2 self-start text-xs text-gray-600">{`第 ${currentChapter + 1} 章`}</div>
             </div>
             <div className="absolute -right-9 bottom-10 ">
-              <img src={shareImage} className="w-48" width={186} height={122} />
+              {/* v9.14（dsh，M3-006）：纯装饰贴图，显式 alt="" 表示读屏跳过（比缺 alt 更明确） */}
+              <img src={shareImage} className="w-48" width={186} height={122} alt="" />
             </div>
           </div>
         </div>

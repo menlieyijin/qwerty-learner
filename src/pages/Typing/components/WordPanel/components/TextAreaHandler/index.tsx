@@ -1,6 +1,6 @@
 import type { WordUpdateAction } from '../types'
 import { TypingContext } from '@/pages/Typing/store'
-import type { FormEvent } from 'react'
+import type { FormEvent, KeyboardEvent } from 'react'
 import { useCallback, useContext, useEffect, useRef } from 'react'
 
 export default function TextAreaHandler({ updateInput }: { updateInput: (updateObj: WordUpdateAction) => void }) {
@@ -34,6 +34,14 @@ export default function TextAreaHandler({ updateInput }: { updateInput: (updateO
     }
   }
 
+  const onKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    // v9.14（dsh，M3-002）：TYP-010 的 e.repeat 过滤此前只加在 KeyEventHandler（en/de/romaji 路径），
+    // code 词库走 textarea，而 InputEvent 上没有 repeat 字段（Word.updateInput 的 'repeat' in evt 也拦不住），
+    // 长按会把自动重复的字符一个个累积成错字并连判 4 次错。可打印字符的插入默认行为挂在 keydown 上，
+    // 这里对 repeat 的 keydown 做 preventDefault 即不产生 input 事件，语义与 en 路径「长按只算第一个字符」对齐。
+    if (e.repeat) e.preventDefault()
+  }
+
   const onBlur = useCallback(() => {
     if (!textareaRef.current) return
 
@@ -49,6 +57,7 @@ export default function TextAreaHandler({ updateInput }: { updateInput: (updateO
       autoFocus
       spellCheck="false"
       onInput={onInput}
+      onKeyDown={onKeyDown}
       onBlur={onBlur}
       onCompositionStart={() => {
         alert('您正在使用输入法，请关闭输入法。')

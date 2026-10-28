@@ -1,4 +1,5 @@
 import { CHAPTER_LENGTH } from '@/constants'
+import dayjs from 'dayjs'
 import type { Howl } from 'howler'
 
 // 不再转出 mixpanel：那个 barrel 透出会把 mixpanel（import store / pages 类型）拖进所有
@@ -171,4 +172,14 @@ export function timeStamp2String(timestamp: number) {
   const timeString = date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false })
 
   return `${dateString} ${timeString}`
+}
+
+/**
+ * v9.14（dsh，M4-015）：导出文件名用的「日期时间」格式化。
+ *
+ * 输出与原先 `DropdownExport` 内手写的 getFullYear/getMonth/... 逐字符一致（时分秒仍用 `-` 分隔，
+ * 因为文件名里不能出现 `:`），只是改用已有的 dayjs。
+ */
+export function formatDate(date: Date) {
+  return dayjs(date).format('YYYY-MM-DD HH-mm-ss')
 }

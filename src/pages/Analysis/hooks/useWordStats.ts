@@ -100,17 +100,34 @@ export function useWordStats(startTimeStamp: number, endTimeStamp: number) {
     accuracyRecord: [],
     wrongTimeRecord: [],
   })
+  // v9.14（dsh，M4-003）：区分「没有数据」与「读取失败」；此前无 catch，失败会被渲染成空热力图
+  const [hasError, setHasError] = useState(false)
 
   useEffect(() => {
+    // v9.14（dsh，M4-003）：区间变化时丢弃过期查询的结果，避免乱序返回的旧结果覆盖新结果
+    let cancelled = false
+    setHasError(false)
+
     const fetchWordStats = async () => {
-      const stats = await getChapterStats(startTimeStamp, endTimeStamp)
-      setWordStats(stats)
+      try {
+        const stats = await getChapterStats(startTimeStamp, endTimeStamp)
+        if (cancelled) return
+        setWordStats(stats)
+      } catch (error) {
+        if (cancelled) return
+        console.error('统计读取失败：', error)
+        setHasError(true)
+      }
     }
 
     fetchWordStats()
+
+    return () => {
+      cancelled = true
+    }
   }, [startTimeStamp, endTimeStamp])
 
-  return wordStats
+  return { ...wordStats, hasError }
 }
 
 async function getChapterStats(startTimeStamp: number, endTimeStamp: number): Promise<IWordStats> {
@@ -137,13 +154,21 @@ async function getChapterStats(startTimeStamp: number, endTimeStamp: number): Pr
     .reduce((acc, curr) => ({ ...acc, ...curr }), {})
 
   for (let i = 0; i < records.length; i++) {
-    const date = dayjs(records[i].timeStamp * 1000).format('YYYY-MM-DD')
+    const record = records[i]
+    // v9.14（dsh，M4-003）：备份导入路径不校验列，旧备份可能缺 timeStamp/word/timing/mistakes；
+    // 逐条容错跳过脏记录，避免一条坏数据让整页统计抛 TypeError。
+    if (!record || typeof record.word !== 'string' || !record.word) continue
+    if (typeof record.timeStamp !== 'number' || !Number.isFinite(record.timeStamp)) continue
+    const date = dayjs(record.timeStamp * 1000).format('YYYY-MM-DD')
+    const bucket = data[date]
+    if (!bucket) continue
 
-    data[date].exerciseTime = data[date].exerciseTime + 1
-    data[date].words = [...data[date].words, records[i].word]
-    data[date].totalTime = data[date].totalTime + records[i].timing.reduce((acc, curr) => acc + curr, 0)
-    data[date].wrongCount = data[date].wrongCount + records[i].wrongCount
-    data[date].wrongKeys = [...(data[date].wrongKeys || []), ...(Object.values(records[i].mistakes).flat() || [])]
+    bucket.exerciseTime += 1
+    bucket.words = [...bucket.words, record.word]
+    const timing = Array.isArray(record.timing) ? record.timing : []
+    bucket.totalTime += timing.reduce((acc, curr) => acc + (Number(curr) || 0), 0)
+    bucket.wrongCount += Number(record.wrongCount) || 0
+    bucket.wrongKeys = [...bucket.wrongKeys, ...Object.values(record.mistakes ?? {}).flat()]
   }
 
   const RecordArray = Object.entries(data)

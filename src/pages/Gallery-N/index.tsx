@@ -3,6 +3,8 @@ import DictRequest from './DictRequest'
 import { LanguageTabSwitcher } from './LanguageTabSwitcher'
 import { GalleryContext, initialGalleryState } from './context'
 import type { GalleryState } from './context'
+import { useLearnedCounts } from './useLearnedCounts'
+import CloseButton from '@/components/CloseButton'
 import Layout from '@/components/Layout'
 import { dictionaries } from '@/resources/dictionary'
 import { currentDictInfoAtom, learningModeAtom } from '@/store'
@@ -15,7 +17,6 @@ import { useHotkeys } from 'react-hotkeys-hook'
 import { useNavigate } from 'react-router-dom'
 import { useImmer } from 'use-immer'
 import IconInfo from '~icons/ic/outline-info'
-import IconX from '~icons/tabler/x'
 
 export type { GalleryState } from './context'
 
@@ -23,6 +24,8 @@ export default function GalleryPage() {
   const [galleryState, setGalleryState] = useImmer<GalleryState>(initialGalleryState)
   const navigate = useNavigate()
   const currentDictInfo = useAtomValue(currentDictInfoAtom)
+  // v9.14（dsh，M4-011）：已学词数在这里算一次，卡片只做 Map 查找（原先每张卡片各跑一次全量去重）
+  const learnedCounts = useLearnedCounts()
 
   const { groupedByCategoryAndTag } = useMemo(() => {
     const currentLanguageCategoryDicts = dictionaries.filter((dict) => dict.languageCategory === galleryState.currentLanguageTab)
@@ -60,7 +63,7 @@ export default function GalleryPage() {
     <Layout>
       <GalleryContext.Provider value={{ state: galleryState, setState: setGalleryState }}>
         <div className="relative mb-auto mt-auto flex w-full flex-1 flex-col overflow-y-auto pl-20">
-          <IconX className="absolute right-20 top-10 mr-2 h-7 w-7 cursor-pointer text-gray-400" onClick={onBack} />
+          <CloseButton className="absolute right-20 top-10 mr-2 h-7 w-7" onClose={onBack} />
           <button
             className="absolute left-20 top-10 rounded-full border border-indigo-300 bg-white px-4 py-1.5 text-sm text-indigo-600 shadow-sm hover:bg-indigo-50 dark:border-indigo-500 dark:bg-gray-800 dark:text-indigo-300"
             onClick={goAuto}
@@ -77,7 +80,7 @@ export default function GalleryPage() {
                 <ScrollArea.Viewport className="h-full w-full ">
                   <div className="mr-4 flex flex-1 flex-col items-start justify-start gap-14 overflow-y-auto">
                     {groupedByCategoryAndTag.map(([category, groupeByTag]) => (
-                      <DictionaryGroup key={category} groupedDictsByTag={groupeByTag} />
+                      <DictionaryGroup key={category} groupedDictsByTag={groupeByTag} learnedCounts={learnedCounts} />
                     ))}
                   </div>
                   <div className="flex items-center justify-center pb-10 pt-[20rem] text-gray-500">

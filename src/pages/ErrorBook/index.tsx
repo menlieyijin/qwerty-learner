@@ -6,21 +6,21 @@ import Pagination, { ITEM_PER_PAGE } from './Pagination'
 import RowDetail from './RowDetail'
 import { currentRowDetailAtom } from './store'
 import type { groupedWordRecords } from './type'
+import CloseButton from '@/components/CloseButton'
 import { LoadingUI } from '@/components/Loading'
 import { idDictionaryMap } from '@/resources/dictionary'
 import { currentDictIdAtom, reviewModeInfoAtom } from '@/store'
 import type { Word } from '@/typings'
 import { useDeleteWordRecord } from '@/hooks/useRecordMutations'
 import { db } from '@/utils/db'
-import type { WordRecord } from '@/utils/db/record'
 import { ReviewRecord } from '@/utils/db/record'
 import { memoryKey } from '@/utils/memoryKey'
 import { wordListFetcher } from '@/utils/wordListFetcher'
 import * as ScrollArea from '@radix-ui/react-scroll-area'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useHotkeys } from 'react-hotkeys-hook'
 import { useNavigate } from 'react-router-dom'
-import IconX from '~icons/tabler/x'
 
 /** v9.3：词典显示名（自定义词库不在 idDictionaryMap 里，回退显示命名空间） */
 function dictDisplayName(dict: string): string {
@@ -94,6 +94,18 @@ export function ErrorBook() {
     navigate('/')
   }, [navigate])
 
+  // v9.14（dsh，M4-004）：错题本此前没有任何键盘返回途径（其它页面都有 esc 返回）。
+  // 详情弹层打开时它自己的 esc 负责关闭，这里让出，避免一次 esc 同时关详情 + 跳首页。
+  useHotkeys(
+    'esc',
+    () => {
+      if (currentRowDetail) return
+      onBack()
+    },
+    { preventDefault: true },
+    [currentRowDetail, onBack],
+  )
+
   const setPage = useCallback(
     (page: number) => {
       if (page < 1 || page > totalPages) return
@@ -139,14 +151,20 @@ export function ErrorBook() {
       .then((records) => {
         if (cancelled) return
         const groups: groupedWordRecords[] = []
+        // v9.14（dsh，M4-012）：分组从 groups.find（O(n·m)）改为 Map 索引；
+        // key 用 \u0000 分隔，避免 dict+word 直接拼接撞键。插入顺序与结果集合不变。
+        const groupMap = new Map<string, groupedWordRecords>()
 
         records.forEach((record) => {
-          let group = groups.find((g) => g.word === record.word && g.dict === record.dict)
+          const key = `${record.dict}\u0000${record.word}`
+          let group = groupMap.get(key)
           if (!group) {
             group = { word: record.word, dict: record.dict, records: [], wrongCount: 0 }
+            groupMap.set(key, group)
             groups.push(group)
           }
-          group.records.push(record as WordRecord)
+          // v9.14（dsh，M4-017）：db.wordRecords 已是 Table<WordRecord>，无需再 as
+          group.records.push(record)
         })
 
         groups.forEach((group) => {
@@ -197,7 +215,13 @@ export function ErrorBook() {
       alert('词库读取失败')
       return
     }
-    const words = groups.map((g) => list.find((w) => w.name === g.word)).filter(Boolean) as Word[]
+    // v9.14（dsh，M4-012/M4-017）：list.find（O(n·m)）改为按词名建 Map，并用类型守卫取代 `as Word[]`。
+    // 部分词库存在同名词条，这里保留「首次出现」（与原先 list.find 取第一条的语义一致）。
+    const wordsByName = new Map<string, Word>()
+    for (const word of list) {
+      if (!wordsByName.has(word.name)) wordsByName.set(word.name, word)
+    }
+    const words = groups.map((g) => wordsByName.get(g.word)).filter((word): word is Word => !!word)
     if (!words.length) {
       alert('没有可复习的错题')
       return
@@ -208,7 +232,7 @@ export function ErrorBook() {
 
   return (
     <>
-      <div className={`relative flex h-screen w-full flex-col items-center pb-4 ease-in ${currentRowDetail && 'blur-sm'}`}>
+      <div className={`relative flex h-screen w-full flex-col items-center pb-4 ease-in ${currentRowDetail ? 'blur-sm' : ''}`}>
         <div className="mr-8 mt-4 flex w-auto items-center justify-center self-end">
           <button
             className="my-btn-primary mr-6 rounded-lg bg-indigo-500 px-4 py-1.5 text-sm text-white hover:bg-indigo-400"
@@ -217,7 +241,7 @@ export function ErrorBook() {
             错题回顾练习
           </button>
           <h1 className="font-lighter mr-4 w-auto self-end text-gray-500 opacity-70">Tip: 点击错误单词查看详细信息 </h1>
-          <IconX className="h-7 w-7 cursor-pointer text-gray-400" onClick={onBack} />
+          <CloseButton className="h-7 w-7" onClose={onBack} />
         </div>
 
         <div className="flex w-full flex-1 select-text items-start justify-center overflow-hidden">

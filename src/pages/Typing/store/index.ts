@@ -235,7 +235,9 @@ export const typingReducer = (state: TypingState, action: TypingStateAction) => 
 
       state.timerData.time = newTime
       state.timerData.accuracy = Math.round((state.chapterData.correctCount / inputSum) * 100)
-      state.timerData.wpm = Math.round((state.chapterData.wordCount / newTime) * 60)
+      // v9.14（dsh，M3-010）：整章在首个 tick 之前结束时 newTime 仍是 0，除零会算出 Infinity，
+      // 结果页 / 分享图直接印出 "Infinity"。只在 time === 0 这一条边界上兜底为 0，其余路径逐字不变。
+      state.timerData.wpm = newTime > 0 ? Math.round((state.chapterData.wordCount / newTime) * 60) : 0
       break
     }
     case TypingStateActionType.ADD_WORD_RECORD_ID: {

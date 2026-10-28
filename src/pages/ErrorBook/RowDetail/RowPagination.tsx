@@ -13,7 +13,7 @@ type IRowPaginationProps = {
   allRecords: groupedWordRecords[]
 }
 
-export const ITEM_PER_PAGE = 20
+// v9.14（dsh，M4-014）：删除本文件里从未被引用的 ITEM_PER_PAGE（分页常量只保留 Pagination.tsx 一处）
 
 const RowPagination: FC<IRowPaginationProps> = ({ className, allRecords }) => {
   const [currentRowDetail, setCurrentRowDetail] = useAtom(currentRowDetailAtom)

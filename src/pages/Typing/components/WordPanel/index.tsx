@@ -153,6 +153,13 @@ export default function WordPanel({
           dispatch({ type: TypingStateActionType.SKIP_2_WORD_INDEX, newIndex: prevIndex })
           return
         }
+        // v9.14（dsh，M3-003）：末词的「下一个」不会推进索引——nextIndex 在末尾被夹到自身，
+        // SKIP_2_WORD_INDEX 走到 else 分支等于把 index 写回原值（界面毫无反应），但下面仍会
+        // recordSkip / 顺延 due，连点 3 次该词就被挂起、从复习池消失。这种「点了但没动」不记 skip、
+        // 也不空转 dispatch（保持现状 UI：词不变）。动态出词分支（!isReviewMode && onNeedNextWord）
+        // 会真的换词，不受影响。
+        const willUseStaticIndex = isReviewMode || !onNeedNextWord
+        if (willUseStaticIndex && nextIndex === state.chapterData.index) return
         // v8.9：动态出词时「下一个」需要实时取词，不能只在已有词表里移动（末词会直接空白）
         if (currentWord) {
           // v9.3：跳过必须落状态（skipCount/suspended），否则该词永远 unseen、级别卡死
@@ -193,6 +200,8 @@ export default function WordPanel({
       currentDictId,
       settleRef,
       skipLockRef,
+      // v9.14（dsh，M3-003）：上面新增的「末词不记 skip」判断要读当前索引
+      state.chapterData.index,
     ],
   )
 

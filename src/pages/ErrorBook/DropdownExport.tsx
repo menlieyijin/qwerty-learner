@@ -1,5 +1,6 @@
 import { idDictionaryMap } from '@/resources/dictionary'
 import type { Word } from '@/typings'
+import { formatDate } from '@/utils'
 import { wordListFetcher } from '@/utils/wordListFetcher'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { saveAs } from 'file-saver'
@@ -20,17 +21,6 @@ type DropdownProps = {
 
 const DropdownExport: FC<DropdownProps> = ({ renderRecords }) => {
   const [isExporting, setIsExporting] = useState(false)
-
-  const formatTimestamp = (date: Date) => {
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, '0') // 月份从0开始
-    const day = String(date.getDate()).padStart(2, '0')
-    const hours = String(date.getHours()).padStart(2, '0')
-    const minutes = String(date.getMinutes()).padStart(2, '0')
-    const seconds = String(date.getSeconds()).padStart(2, '0')
-
-    return `${year}-${month}-${day} ${hours}-${minutes}-${seconds}`
-  }
 
   const handleExport = async (bookType: string) => {
     setIsExporting(true)
@@ -100,12 +90,12 @@ const DropdownExport: FC<DropdownProps> = ({ renderRecords }) => {
         blob = new Blob([excelBuffer], { type: 'application/octet-stream' })
       }
 
-      const timestamp = formatTimestamp(new Date())
+      // v9.14（dsh，M4-015）：日期格式化改用公共 formatDate（输出与原先手写实现逐字符一致）
+      const timestamp = formatDate(new Date())
       const fileName = `ErrorBook_${timestamp}.${bookType}`
 
-      if (blob && fileName) {
-        saveAs(blob, fileName)
-      }
+      // v9.14（dsh，M4-018）：blob 与 fileName 在上文两个分支都已赋值，原 `if (blob && fileName)` 是恒真判断
+      saveAs(blob, fileName)
     } catch (error) {
       console.error('Export failed:', error)
       alert('导出失败，请重试')

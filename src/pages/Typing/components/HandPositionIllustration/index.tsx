@@ -17,8 +17,10 @@ export default function HandPositionIllustration() {
 
   return (
     <>
+      {/* v9.14（dsh，M3-005）：图标按钮只有 <IconKeyboard/>，没有可访问名，读屏只会念「按钮」 */}
       <button
         type="button"
+        aria-label="查看指法图示"
         onClick={openModal}
         className={`flex items-center justify-center rounded p-[2px] text-lg text-indigo-500 outline-none transition-colors duration-300 ease-in-out hover:bg-indigo-400 hover:text-white  ${
           isOpen && 'bg-indigo-500 text-white'
@@ -60,7 +62,8 @@ export default function HandPositionIllustration() {
                     推荐打字指法图示
                   </Dialog.Title>
                   <div className="mt-8">
-                    <img className="block " src={standTypingHandPosition} alt="" />
+                    {/* v9.14（dsh，M3-006）：这张指法图是对话框的唯一内容，alt="" 会让读屏用户打开一个空对话框 */}
+                    <img className="block " src={standTypingHandPosition} alt="标准打字指法示意图" />
                   </div>
                 </Dialog.Panel>
               </Transition.Child>

@@ -56,8 +56,9 @@ export default function AdvancedSetting() {
           <div className={styles.section}>
             <span className={styles.sectionLabel}>章节乱序</span>
             <span className={styles.sectionDescription}>开启后，每次练习章节中单词会随机排序。下一章节生效</span>
+            {/* v9.14（dsh，M3-005）：Switch 渲染成 role="switch"，右侧状态文案未与控件关联，补可访问名 */}
             <div className={styles.switchBlock}>
-              <Switch checked={randomConfig.isOpen} onChange={onToggleRandom} className="switch-root">
+              <Switch aria-label="章节乱序开关" checked={randomConfig.isOpen} onChange={onToggleRandom} className="switch-root">
                 <span aria-hidden="true" className="switch-thumb" />
               </Switch>
               <span className="text-right text-xs font-normal leading-tight text-gray-600">{`随机已${
@@ -69,7 +70,12 @@ export default function AdvancedSetting() {
             <span className={styles.sectionLabel}>练习时展示上一个/下一个单词</span>
             <span className={styles.sectionDescription}>开启后，练习中会在上方展示上一个/下一个单词</span>
             <div className={styles.switchBlock}>
-              <Switch checked={isShowPrevAndNextWord} onChange={onToggleLastAndNextWord} className="switch-root">
+              <Switch
+                aria-label="展示上一个/下一个单词开关"
+                checked={isShowPrevAndNextWord}
+                onChange={onToggleLastAndNextWord}
+                className="switch-root"
+              >
                 <span aria-hidden="true" className="switch-thumb" />
               </Switch>
               <span className="text-right text-xs font-normal leading-tight text-gray-600">{`展示单词已${
@@ -81,7 +87,7 @@ export default function AdvancedSetting() {
             <span className={styles.sectionLabel}>是否忽略大小写</span>
             <span className={styles.sectionDescription}>开启后，输入时不区分大小写，如输入“hello”和“Hello”都会被认为是正确的</span>
             <div className={styles.switchBlock}>
-              <Switch checked={isIgnoreCase} onChange={onToggleIgnoreCase} className="switch-root">
+              <Switch aria-label="忽略大小写开关" checked={isIgnoreCase} onChange={onToggleIgnoreCase} className="switch-root">
                 <span aria-hidden="true" className="switch-thumb" />
               </Switch>
               <span className="text-right text-xs font-normal leading-tight text-gray-600">{`忽略大小写已${
@@ -93,7 +99,7 @@ export default function AdvancedSetting() {
             <span className={styles.sectionLabel}>是否允许选择文本</span>
             <span className={styles.sectionDescription}>开启后，可以通过鼠标选择文本 </span>
             <div className={styles.switchBlock}>
-              <Switch checked={isTextSelectable} onChange={onToggleTextSelectable} className="switch-root">
+              <Switch aria-label="允许选择文本开关" checked={isTextSelectable} onChange={onToggleTextSelectable} className="switch-root">
                 <span aria-hidden="true" className="switch-thumb" />
               </Switch>
               <span className="text-right text-xs font-normal leading-tight text-gray-600">{`选择文本已${
@@ -105,7 +111,12 @@ export default function AdvancedSetting() {
             <span className={styles.sectionLabel}>是否允许默写模式下显示提示</span>
             <span className={styles.sectionDescription}>开启后，可以通过鼠标 hover 单词显示正确答案 </span>
             <div className={styles.switchBlock}>
-              <Switch checked={isShowAnswerOnHover} onChange={onToggleShowAnswerOnHover} className="switch-root">
+              <Switch
+                aria-label="默写模式下显示提示开关"
+                checked={isShowAnswerOnHover}
+                onChange={onToggleShowAnswerOnHover}
+                className="switch-root"
+              >
                 <span aria-hidden="true" className="switch-thumb" />
               </Switch>
               <span className="text-right text-xs font-normal leading-tight text-gray-600">{`显示提示已${

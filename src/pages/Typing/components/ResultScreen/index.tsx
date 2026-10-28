@@ -16,6 +16,7 @@ import {
 import { Transition } from '@headlessui/react'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { useCallback, useContext, useEffect, useMemo } from 'react'
+import type { KeyboardEvent } from 'react'
 import { useHotkeys } from 'react-hotkeys-hook'
 import { useNavigate } from 'react-router-dom'
 import IexportWords from '~icons/icon-park-outline/excel'
@@ -69,6 +70,17 @@ const ResultScreen = () => {
         console.log('写入 xlsx 模块导入失败')
       })
   }, [currentChapter, currentDictInfo.name, state.chapterData])
+
+  // v9.14（dsh，M3-006）：导出图标是 svg，本身不可聚焦；补 role/tabIndex 后键盘仍需 Enter/Space 才能触发
+  const onExportKeyDown = useCallback(
+    (e: KeyboardEvent<SVGSVGElement>) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault()
+        exportWords()
+      }
+    },
+    [exportWords],
+  )
 
   const wrongWords = useMemo(() => {
     return state.chapterData.userInputLogs
@@ -208,7 +220,8 @@ const ResultScreen = () => {
             <div className="text-center font-sans text-xl font-normal text-gray-900 dark:text-gray-400 md:text-2xl">
               {`${currentDictInfo.name} ${isReviewMode ? '错题复习' : '第' + (currentChapter + 1) + '章'}`}
             </div>
-            <button className="absolute right-7 top-5" onClick={exitButtonHandler}>
+            {/* v9.14（dsh，M3-005）：关闭按钮只有图标，补可访问名 */}
+            <button className="absolute right-7 top-5" aria-label="关闭结果页" onClick={exitButtonHandler}>
               <IconX className="text-gray-400" />
             </button>
             <div className="mt-10 flex flex-row gap-2 overflow-hidden">
@@ -231,7 +244,17 @@ const ResultScreen = () => {
                 {!isReviewMode && (
                   <>
                     <ShareButton />
-                    <IexportWords fontSize={18} className="cursor-pointer text-gray-500" onClick={exportWords}></IexportWords>
+                    {/* v9.14（dsh，M3-006）：svg 不能聚焦也没有名字，补 role/tabIndex/aria-label + Enter/Space，
+                        不加 <button> 包裹是为了零视觉变化（避免默认按钮样式）。 */}
+                    <IexportWords
+                      role="button"
+                      tabIndex={0}
+                      aria-label="导出本章节成绩"
+                      fontSize={18}
+                      className="cursor-pointer text-gray-500"
+                      onClick={exportWords}
+                      onKeyDown={onExportKeyDown}
+                    ></IexportWords>
                   </>
                 )}
               </div>

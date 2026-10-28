@@ -101,11 +101,14 @@ export default function WordComponent({ word, onFinish }: { word: Word; onFinish
   const pendingKeysRef = useRef<string[]>([])
 
   // v8.1：错误分类提示（漏字/重复/错字/大小写），显示约 1.8 秒
+  // v9.14（dsh，M3-009）：同一错法拼出的 hint 字符串完全相同 → setWrongHint 命中 Object.is 相等不重渲染，
+  // 依赖若只有 wrongHint 则 effect 不重跑、旧 timer 不清除，第二次提示只剩「第一次的剩余时间」。
+  // wrongCount 每次出错 +1（换词归零）正好当 nonce，effect 体不变。
   useEffect(() => {
     if (!wrongHint) return
     const timer = setTimeout(() => setWrongHint(''), 1800)
     return () => clearTimeout(timer)
-  }, [wrongHint])
+  }, [wrongHint, wordState.wrongCount])
 
   /** 把自上次上报以来新增的按键/错字增量写入 chapterData（可重复调用，幂等） */
   const flushStats = useCallback(() => {
@@ -361,9 +364,14 @@ export default function WordComponent({ word, onFinish }: { word: Word; onFinish
 
     // v9.4（TYP-003）：一次 input 事件可能带多个字符（粘贴/输入法上屏/移动端联想），
     // 这里从 judgedLength 开始逐个校验，而不是只看最后一个字符。
+    // v9.14（dsh，M3-001）：校验上界必须夹到词长。原来上界用 inputLength，输入比词长多时（粘贴超长串 /
+    // 换词窗口 pendingKeys 重放）会拿 displayWord[词长] === undefined 去比对，必然判成错字，并把越界下标
+    // 写进 letterStates / letterMistake（数组被撑长、结果页导出成 "?"）。这里只校验到 min(词长, 输入长)。
+    const wordLength = wordState.displayWord.length
     const from = Math.min(wordState.judgedLength, inputLength)
+    const judgeEnd = Math.min(inputLength, wordLength)
     let mismatch = -1
-    for (let i = from; i < inputLength; i++) {
+    for (let i = from; i < judgeEnd; i++) {
       const inputChar = wordState.inputWord[i]
       const correctChar = wordState.displayWord[i]
       let isEqual = false
@@ -382,10 +390,18 @@ export default function WordComponent({ word, onFinish }: { word: Word; onFinish
       }
     }
 
+    // v9.14（dsh，M3-001）：词内字符全部匹配、但输入比词长多 → 超出部分是「多余/重复字符」，仍算一次错，
+    // 但定位下标夹到词内最后一位（wordLength >= 1，上面的 displayWord.length === 0 已提前返回），
+    // 因此 mismatch 恒落在 [0, 词长)，letterStates / letterMistake 永不越界。
+    const hasExtraInput = mismatch === -1 && inputLength > wordLength
+    if (hasExtraInput) mismatch = wordLength - 1
+
     if (mismatch === -1) {
       // 新增的输入全部正确
-      const judged = inputLength
-      const isNowFinished = inputLength >= wordState.displayWord.length
+      // v9.14（dsh，M3-001）：judged 同样夹到词长；isNowFinished 保持原式（judged >= 词长 ⇔ 输入 >= 词长），
+      // 非超长输入时 judged === inputLength，判定与音效逐字等价。
+      const judged = Math.min(inputLength, wordLength)
+      const isNowFinished = inputLength >= wordLength
       if (judged > from) {
         setWordState((state) => {
           for (let i = from; i < judged; i++) {
@@ -413,9 +429,15 @@ export default function WordComponent({ word, onFinish }: { word: Word; onFinish
     const expectedChar = wordState.displayWord[mismatch] || ''
     const nextChar = wordState.displayWord[mismatch + 1] || ''
     const prevChar = wordState.displayWord[mismatch - 1] || ''
-    const typedChar = wordState.inputWord[mismatch] || ''
+    // v9.14（dsh，M3-001）：超长输入的「错字」是词外的那个字符（inputWord[词长]），不是夹位后的词内字符
+    const typedChar = hasExtraInput ? wordState.inputWord[wordLength] || '' : wordState.inputWord[mismatch] || ''
     let hint = ''
-    if (expectedChar) {
+    if (hasExtraInput) {
+      // v9.14（dsh，M3-001）：沿用现有提示分类（漏字 / 重复 / 大小写 / 错字）的文案风格，
+      // 超出词长的部分归入「重复输入」或「多输入」——原来这里 expectedChar 为空，hint 直接是空串，
+      // 用户只听到蜂鸣却看不到任何说明。
+      hint = typedChar && typedChar.toLowerCase() === expectedChar.toLowerCase() ? `重复输入了「${typedChar}」` : `多输入了「${typedChar}」`
+    } else if (expectedChar) {
       if (typedChar && nextChar && typedChar.toLowerCase() === nextChar.toLowerCase()) {
         hint = `漏掉了「${expectedChar}」`
       } else if (typedChar && prevChar && typedChar.toLowerCase() === prevChar.toLowerCase()) {
@@ -501,7 +523,9 @@ export default function WordComponent({ word, onFinish }: { word: Word; onFinish
           className={`tooltip-info relative w-fit bg-transparent p-0 leading-normal shadow-none dark:bg-transparent ${
             wordDictationConfig.isOpen ? 'tooltip' : ''
           }`}
-          data-tip="按 Tab 快捷键显示完整单词"
+          // v9.14（dsh，M4-008）：原先只有 `data-tip`，而全仓没有任何 CSS/JS 读取该属性 → 提示永远不出现。
+          // 改用原生 `title`（悬停可见、读屏可播报），不引入新依赖；`tooltip-info` 类名保留，避免样式回归。
+          title={wordDictationConfig.isOpen ? '按 Tab 快捷键显示完整单词' : undefined}
         >
           <div
             onMouseEnter={() => handleHoverWord(true)}

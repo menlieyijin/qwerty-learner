@@ -1,15 +1,10 @@
 import bookCover from '@/assets/book-cover.png'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import useIntersectionObserver from '@/hooks/useIntersectionObserver'
 import { currentDictIdAtom, learningModeAtom, reviewModeInfoAtom } from '@/store'
 import type { Dictionary } from '@/typings'
-import type { IMemoryRecord } from '@/utils/db/record'
-import { db } from '@/utils/db'
-import { getMemoryCache } from '@/utils/memoryCache'
-import { canonicalizeMemoryRecords } from '@/utils/memory'
 import * as Progress from '@radix-ui/react-progress'
 import { useAtomValue, useSetAtom } from 'jotai'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo } from 'react'
 import type { KeyboardEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -83,50 +78,16 @@ export function getDictTotalWordCount(dict: Dictionary): number {
   return typeof unique === 'number' && unique > 0 ? unique : dict.length
 }
 
-/** 已学词数（按 canonical key 去重后的 memoryRecords，避免 legacy 旧记录把已学数翻倍） */
-export function useCanonicalLearnedCount(dictId: string, isVisible: boolean, reloadToken?: unknown): number | null {
-  const [learnedCount, setLearnedCount] = useState<number | null>(null)
-  useEffect(() => {
-    if (!isVisible) return
-    let cancelled = false
-    void (async () => {
-      try {
-        const rows = await loadMemoryRows()
-        if (cancelled) return
-        const records = canonicalizeMemoryRecords(rows)
-        let count = 0
-        for (const record of records) {
-          if (record && record.dict === dictId) count += 1
-        }
-        setLearnedCount(count)
-      } catch {
-        if (!cancelled) setLearnedCount(0)
-      }
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [dictId, isVisible, reloadToken])
-  return learnedCount
-}
-
-// 内存缓存优先（练习页已加载过全量记录时零 DB 读）；无缓存时读库并短暂复用，避免 385 张卡片各读一次全表
-let memoryRowsCache: { at: number; promise: Promise<IMemoryRecord[]> } | null = null
-function loadMemoryRows(): Promise<IMemoryRecord[]> {
-  const cached = getMemoryCache()
-  if (cached) return Promise.resolve(cached)
-  const now = Date.now()
-  if (!memoryRowsCache || now - memoryRowsCache.at > 5000) {
-    memoryRowsCache = { at: now, promise: db.memoryRecords.toArray().catch(() => [] as IMemoryRecord[]) }
-  }
-  return memoryRowsCache.promise
-}
+// v9.14（dsh，M4-011）：已学词数的统计（含 loadMemoryRows 的 5s 复用缓存）已提升到词库页，
+// 由 useLearnedCounts 统一算一次；卡片只按 id 查表，不再各自跑全量 canonicalize。
 
 interface Props {
   dictionary: Dictionary
+  /** v9.14（dsh，M4-011）：父级算好的已学词数；null 表示尚未读到（与原实现一样隐藏「已学 N」） */
+  learnedCount: number | null
 }
 
-export default function DictionaryComponent({ dictionary }: Props) {
+export default function DictionaryComponent({ dictionary, learnedCount }: Props) {
   const currentDictID = useAtomValue(currentDictIdAtom)
   const learningMode = useAtomValue(learningModeAtom)
   const setLearningMode = useSetAtom(learningModeAtom)
@@ -134,10 +95,6 @@ export default function DictionaryComponent({ dictionary }: Props) {
   const setReviewModeInfo = useSetAtom(reviewModeInfoAtom)
   const navigate = useNavigate()
 
-  const divRef = useRef<HTMLDivElement>(null)
-  const entry = useIntersectionObserver(divRef, {})
-  const isVisible = !!entry?.isIntersecting
-  const learnedCount = useCanonicalLearnedCount(dictionary.id, isVisible)
   const totalWords = getDictTotalWordCount(dictionary)
   const progress = useMemo(
     () => (learnedCount === null ? 0 : Math.min(100, Math.round((learnedCount / Math.max(1, totalWords)) * 100))),
@@ -162,7 +119,6 @@ export default function DictionaryComponent({ dictionary }: Props) {
 
   return (
     <div
-      ref={divRef}
       onClick={onChoose}
       onKeyDown={onKeyDown}
       title="开始记忆曲线练习（随机出词，不分章节）"
@@ -186,7 +142,7 @@ export default function DictionaryComponent({ dictionary }: Props) {
             <TooltipTrigger asChild>
               <p
                 className={`mb-1 max-w-full truncate ${
-                  isSelected ? 'text-white' : 'textdelayDuration-gray-600 dark:text-gray-200'
+                  isSelected ? 'text-white' : 'text-gray-600 dark:text-gray-200'
                 } whitespace-nowrap`}
               >
                 {dictionary.description}

@@ -14,7 +14,9 @@ export const LoadingUI: React.FC<{ className?: string }> = ({ className }) => {
 
 const Loading: React.FC = () => {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#faf9ff;]">
+    // v9.14（dsh，M4-016）：原 `bg-[#faf9ff;]` 多了一个分号，Tailwind 不生成该类，
+    // 首屏遮罩背景实际是透明的（与 ErrorBoundary 里的正确写法不一致）
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#faf9ff]">
       <div className="flex flex-col items-center justify-center ">
         <LoadingUI />
       </div>

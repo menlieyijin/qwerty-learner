@@ -1,6 +1,7 @@
 import Keyboard from './keyboard'
 import purple from './purple.json'
 import type { WrongKeyStat } from '../hooks/useWordStats'
+import ChartEmpty from '@/components/ChartEmpty'
 import useWindowSize from '@/hooks/useWindowSize'
 import { isOpenDarkModeAtom } from '@/store'
 import { BarChart, MapChart } from 'echarts/charts'
@@ -14,8 +15,9 @@ import { useEffect, useRef } from 'react'
 
 echarts.use([BarChart, CanvasRenderer, GeoComponent, MapChart, ToolboxComponent, TooltipComponent, UniversalTransition, VisualMapComponent])
 echarts.registerTheme('purple', purple)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-echarts.registerMap('Keyboard', Keyboard as any)
+// v9.14（dsh，M4-017）：keyboard.ts 是未声明类型的字面量，这里按 registerMap 形参收窄，
+// 不再用 `as any` + eslint-disable 掩盖类型缺口
+echarts.registerMap('Keyboard', Keyboard as unknown as Parameters<typeof echarts.registerMap>[1])
 
 const keyboardData = [
   { name: 'Q', value: 0 },
@@ -53,10 +55,9 @@ interface KeyboardWithBarChartsProps {
   title: string
   data: WrongKeyStat[]
   name: string
-  suffix?: string
 }
 
-const KeyboardWithBarCharts: FC<KeyboardWithBarChartsProps> = ({ data, title, suffix, name }) => {
+const KeyboardWithBarCharts: FC<KeyboardWithBarChartsProps> = ({ data, title, name }) => {
   const [isOpenDarkMode] = useAtom(isOpenDarkModeAtom)
 
   const chartRef = useRef<HTMLDivElement>(null)
@@ -81,7 +82,8 @@ const KeyboardWithBarCharts: FC<KeyboardWithBarChartsProps> = ({ data, title, su
     const visualMax = Math.max(1, mappedMax)
 
     // 柱状图：展示全量按键（字母 + 空格/数字/标点/特殊键）按错误次数排序的 TopN
-    const barData = [...data].sort((a, b) => b.value - a.value || a.label.localeCompare(b.label)).slice(0, BAR_TOP_N)
+    // v9.14（dsh，M4-014）：data 已由 buildWrongKeyStats 按同样规则排好序，这里不再二次排序（同值同序，结果等价）
+    const barData = data.slice(0, BAR_TOP_N)
 
     let chart = echarts.getInstanceByDom(chartRef.current)
     chart?.dispose()
@@ -186,7 +188,7 @@ const KeyboardWithBarCharts: FC<KeyboardWithBarChartsProps> = ({ data, title, su
     return () => {
       instance.dispose()
     }
-  }, [data, hasData, title, suffix, name, isOpenDarkMode])
+  }, [data, hasData, title, name, isOpenDarkMode])
 
   useEffect(() => {
     if (!chartRef.current) return
@@ -206,7 +208,8 @@ const KeyboardWithBarCharts: FC<KeyboardWithBarChartsProps> = ({ data, title, su
         <div style={{ width: '100%', height: '100%' }} ref={chartRef} className="line-chart flex-grow"></div>
       ) : (
         // PAGES-007：无数据时给出占位文案，避免整块图表区空白
-        <div className="flex flex-grow items-center justify-center text-sm text-gray-400 dark:text-gray-500">暂无数据</div>
+        // v9.14（dsh，M4-015）：占位抽到 ChartEmpty，与折线图共用一份实现
+        <ChartEmpty />
       )}
     </div>
   )
