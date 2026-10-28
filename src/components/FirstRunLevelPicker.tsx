@@ -51,6 +51,9 @@ export default function FirstRunLevelPicker() {
     applyLearningStartChoice(value)
     setChoice(value)
     setOpen(false)
+    // v9.18（dsh）：选择后立即刷新，让练习页按新起点重新解析级别并出词。
+    // 此前只写 levelId，当前已加载的词不会变，表现为「选完没反应」。
+    window.location.reload()
   }
 
   return (

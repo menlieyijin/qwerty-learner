@@ -111,23 +111,6 @@ export function addHowlListener(howl: Howl, ...args: Parameters<Howl['on']>) {
   return () => howl.off(...args)
 }
 
-/**
- * @deprecated v9.12（dsh，M6-015）：请改用 `@/utils/ui` 的 `cn`（内含 tailwind-merge，能确定性合并冲突类）。
- * 本实现只做 trim + 空格拼接，冲突类谁生效取决于 CSS 顺序。存量调用点（仅 `components/Tooltip`）暂不替换，
- * 因为两者合并策略不同，直接替换会改变样式结果。
- */
-export function classNames(...classNames: Array<string | void | null>) {
-  const finallyClassNames: string[] = []
-
-  for (const className of classNames) {
-    if (className) {
-      finallyClassNames.push(className.trim())
-    }
-  }
-
-  return finallyClassNames.join(' ')
-}
-
 export function getCurrentDate() {
   const date = new Date()
   const year = date.getFullYear()

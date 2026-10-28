@@ -1,5 +1,4 @@
 import { Dialog, Transition } from '@headlessui/react'
-import classNames from 'classnames'
 import type { ElementType, SVGProps } from 'react'
 import type React from 'react'
 import { Fragment } from 'react'
@@ -45,10 +44,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({ openState, title, onClose, icon: 
                 <div className="bg-white px-4 pb-4 pt-5 dark:bg-gray-800 sm:p-6 sm:pb-4">
                   <div className="sm:flex sm:items-start">
                     <div
-                      className={classNames(
-                        iconClassName,
-                        `mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full dark:bg-opacity-30 sm:mx-0 sm:h-10 sm:w-10`,
-                      )}
+                      className={`${iconClassName} mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full dark:bg-opacity-30 sm:mx-0 sm:h-10 sm:w-10`}
                     >
                       <Icon className="h-6 w-6 stroke-current dark:bg-opacity-100" />
                     </div>
@@ -61,7 +57,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({ openState, title, onClose, icon: 
                   </div>
                 </div>
                 <div className="bg-gray-50 px-4 py-3 dark:bg-gray-700  sm:flex sm:flex-row-reverse sm:px-6">
-                  <button type="button" className={classNames(buttonClassName, 'my-btn-info-panel ')} onClick={() => onClose()}>
+                  <button type="button" className={`${buttonClassName} my-btn-info-panel `} onClick={() => onClose()}>
                     关闭
                   </button>
                 </div>
