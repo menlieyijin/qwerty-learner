@@ -1,4 +1,3 @@
-import classNames from 'classnames'
 import type { ElementType, SVGAttributes } from 'react'
 import IconExclamationTriangle from '~icons/heroicons/exclamation-triangle-solid'
 import IconHandThumbUp from '~icons/heroicons/hand-thumb-up-solid'
@@ -33,7 +32,7 @@ const ConclusionBar = ({ mistakeLevel, mistakeCount }: ConclusionBarProps) => {
 
   return (
     <div className="flex h-10 flex-row items-center">
-      <Icon className={classNames(className, 'h-5 w-5')} />
+      <Icon className={`${className} h-5 w-5`} />
       <span className="ml-2 inline-block align-middle text-sm font-medium leading-10 text-gray-700 sm:text-sm md:text-base">
         {text(mistakeCount)}
       </span>

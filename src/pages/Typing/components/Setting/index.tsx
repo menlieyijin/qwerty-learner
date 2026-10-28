@@ -4,7 +4,6 @@ import DataSetting from './DataSetting'
 import SoundSetting from './SoundSetting'
 import ViewSetting from '@/pages/Typing/components/Setting/ViewSetting'
 import { Dialog, Tab, Transition } from '@headlessui/react'
-import classNames from 'classnames'
 import { Fragment, useContext, useState } from 'react'
 import IconCog6Tooth from '~icons/heroicons/cog-6-tooth-solid'
 import IconEye from '~icons/heroicons/eye-solid'
@@ -79,10 +78,7 @@ export default function Setting() {
                       <Tab.List className="flex h-full w-52 flex-col items-start space-y-3  border-r border-neutral-100 bg-stone-50 px-6 py-3 dark:border-transparent dark:bg-gray-900">
                         <Tab
                           className={({ selected }) =>
-                            classNames(
-                              'flex h-14 w-full cursor-pointer items-center gap-2 rounded-lg px-4 py-2 ring-0 focus:outline-none',
-                              selected && 'bg-gray-200 bg-opacity-50 dark:bg-gray-800',
-                            )
+                            `flex h-14 w-full cursor-pointer items-center gap-2 rounded-lg px-4 py-2 ring-0 focus:outline-none${selected ? ' bg-gray-200 bg-opacity-50 dark:bg-gray-800' : ''}`
                           }
                         >
                           <IconEar className="mr-2 text-neutral-500  dark:text-neutral-300" />
@@ -90,10 +86,7 @@ export default function Setting() {
                         </Tab>
                         <Tab
                           className={({ selected }) =>
-                            classNames(
-                              'flex h-14 w-full cursor-pointer items-center gap-2 rounded-lg px-4 py-2 ring-0 focus:outline-none',
-                              selected && 'bg-gray-200 bg-opacity-50 dark:bg-gray-800',
-                            )
+                            `flex h-14 w-full cursor-pointer items-center gap-2 rounded-lg px-4 py-2 ring-0 focus:outline-none${selected ? ' bg-gray-200 bg-opacity-50 dark:bg-gray-800' : ''}`
                           }
                         >
                           <IconAdjustmentsHorizontal className="mr-2 text-neutral-500  dark:text-neutral-300" />
@@ -101,10 +94,7 @@ export default function Setting() {
                         </Tab>
                         <Tab
                           className={({ selected }) =>
-                            classNames(
-                              'flex h-14 w-full cursor-pointer items-center gap-2 rounded-lg px-4 py-2 ring-0 focus:outline-none',
-                              selected && 'bg-gray-200 bg-opacity-50 dark:bg-gray-800',
-                            )
+                            `flex h-14 w-full cursor-pointer items-center gap-2 rounded-lg px-4 py-2 ring-0 focus:outline-none${selected ? ' bg-gray-200 bg-opacity-50 dark:bg-gray-800' : ''}`
                           }
                         >
                           <IconEye className="mr-2 text-neutral-500  dark:text-neutral-300" />
@@ -112,10 +102,7 @@ export default function Setting() {
                         </Tab>
                         <Tab
                           className={({ selected }) =>
-                            classNames(
-                              'flex h-14 w-full cursor-pointer items-center gap-2 rounded-lg px-4 py-2 ring-0 focus:outline-none',
-                              selected && 'bg-gray-200 bg-opacity-50 dark:bg-gray-800',
-                            )
+                            `flex h-14 w-full cursor-pointer items-center gap-2 rounded-lg px-4 py-2 ring-0 focus:outline-none${selected ? ' bg-gray-200 bg-opacity-50 dark:bg-gray-800' : ''}`
                           }
                         >
                           <IconDatabaseCog className="mr-2 text-neutral-500  dark:text-neutral-300" />

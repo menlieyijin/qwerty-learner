@@ -67,7 +67,7 @@ const ResultScreen = () => {
         writeFileXLSX(wb, `${currentDictInfo.name}第${currentChapter + 1}章.xlsx`)
       })
       .catch(() => {
-        console.log('写入 xlsx 模块导入失败')
+        console.warn('[ResultScreen] xlsx 动态导入失败，导出功能不可用')
       })
   }, [currentChapter, currentDictInfo.name, state.chapterData])
 

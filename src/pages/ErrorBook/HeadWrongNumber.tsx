@@ -1,4 +1,3 @@
-import classNames from 'classnames'
 import type { FC } from 'react'
 import { useCallback } from 'react'
 import DownIcon from '~icons/fa/sort-down'
@@ -27,16 +26,10 @@ const HeadWrongNumber: FC<IHeadWrongNumberProps> = ({ className, sortType, setSo
       错误次数
       <div className="absolute -right-2 bottom-0 top-0 flex flex-col items-center justify-center text-[12px]">
         <UPIcon
-          className={classNames('-mb-2 ', {
-            'text-indigo-500': sortType === 'asc',
-            'text-gray-400': sortType !== 'asc',
-          })}
+          className={`-mb-2  ${sortType === 'asc' ? 'text-indigo-500' : 'text-gray-400'}`}
         />
         <DownIcon
-          className={classNames({
-            'text-indigo-500': sortType === 'desc',
-            'text-gray-400': sortType !== 'desc',
-          })}
+          className={`${sortType === 'desc' ? 'text-indigo-500' : 'text-gray-400'}`}
         />
       </div>
     </span>
