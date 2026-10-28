@@ -20,7 +20,7 @@
 >
 > - 上游：[RealKai42/qwerty-learner](https://github.com/RealKai42/qwerty-learner)（基线 commit `1182426`，GPL-3.0）；本分支：`dsh-local-v8`，发布在 [menlieyijin/qwerty-learner](https://github.com/menlieyijin/qwerty-learner)。
 > - 相对上游的主要改动：艾宾浩斯记忆曲线 / SRS 调度、动态出词、自动进阶、无章节主流程、新增本地记忆数据表、Electron 增强外壳、去营销 UI、构建 / 回滚 / 质量门禁。上游冻结，不跟随官方更新。
-> - 首次使用前请先读 [FORK-NOTICE.md](./FORK-NOTICE.md)（分支声明、GPL 合规、已知限制）与 [docs/DSH-FORK.md](./docs/DSH-FORK.md)（技术细节）；版本说明见 [docs/RELEASE-NOTES-v9.9.md](./docs/RELEASE-NOTES-v9.9.md)。
+> - 首次使用前请先读 [FORK-NOTICE.md](./FORK-NOTICE.md)（分支声明、GPL 合规、已知限制）与 [docs/DSH-FORK.md](./docs/DSH-FORK.md)（技术细节）；版本说明见 [docs/RELEASE-NOTES-v9.16.md](./docs/RELEASE-NOTES-v9.16.md)（最新）与 [docs/RELEASE-NOTES-v9.15.md](./docs/RELEASE-NOTES-v9.15.md)（四批审计修复）。
 >
 > 下方为**上游原始 README 内容**（本分支未删改），其中提到的在线站点、官方安装包、VSCode 插件等均指上游项目，不代表本分支。
 

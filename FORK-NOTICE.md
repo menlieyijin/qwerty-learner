@@ -9,7 +9,7 @@
 - 上游基线：commit `1182426f2bd0a28c95302c33f9e19136b1262a70`
 - 许可证：**GNU GPL v3.0**（与上游一致，见根目录 `LICENSE`）
 
-详细技术说明见 [`docs/DSH-FORK.md`](docs/DSH-FORK.md)（英文精简版 [`docs/DSH-FORK_EN.md`](docs/DSH-FORK_EN.md)），版本里程碑见 [`docs/RELEASE-NOTES-v9.15.md`](docs/RELEASE-NOTES-v9.15.md)（含 v9.12–v9.14 四批审计修复）、[`docs/RELEASE-NOTES-v9.11.md`](docs/RELEASE-NOTES-v9.11.md)（含 v9.10）与 [`docs/RELEASE-NOTES-v9.9.md`](docs/RELEASE-NOTES-v9.9.md)（首次公开）。
+详细技术说明见 [`docs/DSH-FORK.md`](docs/DSH-FORK.md)（英文精简版 [`docs/DSH-FORK_EN.md`](docs/DSH-FORK_EN.md)），版本里程碑见 [`docs/RELEASE-NOTES-v9.16.md`](docs/RELEASE-NOTES-v9.16.md)（首启词汇水平起点选择）、[`docs/RELEASE-NOTES-v9.15.md`](docs/RELEASE-NOTES-v9.15.md)（v9.12–v9.15 四批审计修复）、[`docs/RELEASE-NOTES-v9.11.md`](docs/RELEASE-NOTES-v9.11.md)（含 v9.10）与 [`docs/RELEASE-NOTES-v9.9.md`](docs/RELEASE-NOTES-v9.9.md)（首次公开）。
 
 ## 目录
 
@@ -56,6 +56,7 @@
 | v9.13 | `d5064fd` | 核心与数据层 19 项：部分加载失败不再判"本级完成"（P1）、SRS 字段级更新、导出失败可见 | `app.asar` 86,396,101 B |
 | v9.14 | `980bb5a` | 交互与页面 22 项：超长输入越界、渲染期重查、可访问性；2 处像素变化 | `app.asar` 86,398,061 B |
 | v9.15 | `1fb2b0f` | 外壳与工程 11 项：冒烟悬挂、首帧主题、词库缓存失效、脏设置、失败清理 | `app.asar` 86,400,877 B |
+| v9.16 | `169f628` | 首启词汇水平起点选择（从未学过/初中/高中/四级/六级 → 个性化学习路线），可随时修改 | `app.asar` 86,409,286 B / `C2B5BC82…` |
 
 > v9.12–v9.15 是同一轮审计的四批连续修复，装 v9.15 即包含全部内容；各版 SHA256 见 [`docs/RELEASE-NOTES-v9.15.md`](docs/RELEASE-NOTES-v9.15.md)。
 
@@ -78,8 +79,8 @@
 | 修改者 | **dsh（DeepSeek Harness）** |
 | 提交作者 / 署名 | `dsh <dsh@dsh.local>`；**部分提交**带 `Signed-off-by: dsh <dsh@dsh.local>`（v9.3 起陆续加入，当前 17 个提交带正式 trailer；更早提交在提交说明中署名 dsh） |
 | 本地修改时间 | 2026-10-21 ~ 2026-10-28（本分支 git 提交日期 2026-10-25 ~ 2026-10-28） |
-| 本地版本迭代 | v1 ~ v9.15 |
-| 当前应用版本 | `1.0.0-enhanced-v9.15`（唯一来源：`local-fork/package.json`） |
+| 本地版本迭代 | v1 ~ v9.16 |
+| 当前应用版本 | `1.0.0-enhanced-v9.16`（唯一来源：`local-fork/package.json`） |
 
 约定：
 
