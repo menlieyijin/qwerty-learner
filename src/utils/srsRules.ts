@@ -195,17 +195,6 @@ export function effectiveDueOf(
 }
 
 /**
- * 该记录在当前时刻是否“已到期”（口径统一：`effectiveDueOf` + `isDue`）。
- * 与旧的 `Number(due) <= now` 相比，只多处理 `now < lastSeen` 的回拨记录。
- */
-export function isRecordDue(
-  now: number,
-  record: { due?: number | null; lastSeen?: number | null; interval?: number | null } | null | undefined,
-): boolean {
-  return isDue(now, effectiveDueOf(now, record))
-}
-
-/**
  * 旧 `wordRecords` → `memoryRecords` 迁移时的 stage 映射（保持 v9.2 语义不变）：
  * - 历史总错误数 0 → 3 档（1 天，等同 `MEMORY_GRADUATE_STAGE`）；
  * - 1~2 次 → 2 档（12 小时）；

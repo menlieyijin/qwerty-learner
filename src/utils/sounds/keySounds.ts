@@ -30,13 +30,3 @@ export function playKeySoundResource(soundResource: SoundResource, volume = 1) {
   }
 }
 
-/** 释放试听实例（切换音效资源/关闭面板时可选调用）。 */
-export function unloadKeySoundPreview() {
-  try {
-    previewHowl?.unload()
-  } catch {
-    /* ignore */
-  }
-  previewHowl = null
-  previewKey = ''
-}

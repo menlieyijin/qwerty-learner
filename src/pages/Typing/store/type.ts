@@ -32,15 +32,6 @@ export type TimerData = {
   wpm: number
 }
 
-export type WrongWordData = {
-  name: string
-  wrongCount: number
-  wrongLetters: Array<{
-    letter: string
-    count: number
-  }>
-}
-
 export type TypingState = {
   chapterData: ChapterData
   timerData: TimerData
