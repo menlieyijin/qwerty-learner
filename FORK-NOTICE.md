@@ -78,8 +78,8 @@
 | 修改者 | **dsh（DeepSeek Harness）** |
 | 提交作者 / 署名 | `dsh <dsh@dsh.local>`；**部分提交**带 `Signed-off-by: dsh <dsh@dsh.local>`（v9.3 起陆续加入，当前 17 个提交带正式 trailer；更早提交在提交说明中署名 dsh） |
 | 本地修改时间 | 2026-10-21 ~ 2026-10-28（本分支 git 提交日期 2026-10-25 ~ 2026-10-28） |
-| 本地版本迭代 | v1 ~ v9.15 |
-| 当前应用版本 | `1.0.0-enhanced-v9.15`（唯一来源：`local-fork/package.json`） |
+| 本地版本迭代 | v1 ~ v9.18 |
+| 当前应用版本 | `1.0.0-enhanced-v9.18`（唯一来源：`local-fork/package.json`） |
 
 约定：
 
@@ -149,7 +149,7 @@
 - Playwright 本地模式：12 passed / 5 skipped（跳过项为已下线的旧流程）。
 - CDP 冒烟 11/11；外壳安全探针 19/19（v9.9 本机验收记录）。
 - **v9.10 / v9.11 的 CDP 冒烟为手工执行**：脚本内 `-Smoke` 在构建会话里被 GPU 崩溃拦住（`NO_PAGE`），改用 `--disable-gpu --no-sandbox` + 隔离 profile 手工跑同一 `scripts/dsh-smoke.mjs`，v9.10/v9.11 测试安装与 v9.11 已安装版均 **11/11**（`logs\smoke-1.0.0-enhanced-v9.11-installed.txt`）；安装日志里的 `smoke=false` 表示安装步骤本身未带 `-Smoke`。
-- **v9.12–v9.15**：四批均以隔离 profile 跑 CDP 冒烟 11/11（v9.12–v9.14 为测试安装，v9.15 测试安装与已安装版各 11/11），日志见 `logs\smoke-1.0.0-enhanced-v9.15-{testinstall,installed}.txt`。
+- **v9.12–v9.15**：四批均以隔离 profile 跑 CDP 冒烟 11/11（v9.12–v9.14 为测试安装，v9.15 测试安装与已安装版各 11/11），日志见 `logs\smoke-1.0.0-enhanced-v9.18-{testinstall,installed}.txt`。
 - 上述数字来自作者本机审计产物；回归脚本与报告**未随本仓库发布**，公开仓库默认无法一键复现（见第 7 节）。
 
 ### 4.9 架构分层与依赖门禁（v9.12 起）

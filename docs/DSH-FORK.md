@@ -1,6 +1,6 @@
 # DSH Fork 技术文档（Qwerty Learner Plus）
 
-> 本文档描述 Qwerty Learner 的 **dsh 非官方分支**（分支 `dsh-local-v8`，应用版本 `1.0.0-enhanced-v9.15`）。
+> 本文档描述 Qwerty Learner 的 **dsh 非官方分支**（分支 `dsh-local-v8`，应用版本 `1.0.0-enhanced-v9.18`）。
 > 上游项目：[RealKai42/qwerty-learner](https://github.com/RealKai42/qwerty-learner)，基线 commit `1182426`，GPL-3.0。
 > 分支声明、GPL 合规与已知限制的**权威版本**见仓库根目录 [`FORK-NOTICE.md`](../FORK-NOTICE.md)；本文档补充实现细节。
 
