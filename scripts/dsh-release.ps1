@@ -206,7 +206,7 @@ try {
   }
 
   Write-Step '打包 app.asar（npx @electron/asar）'
-  & cmd.exe /c ('npx --yes @electron/asar pack "' + $stage + '" "' + $asarOut + '" 2>&1')
+  & cmd.exe /c ('npx --yes @electron/asar@4.3.1 pack "' + $stage + '" "' + $asarOut + '" 2>&1')
   if ($LASTEXITCODE -ne 0) { throw "asar pack 失败（exit $LASTEXITCODE）" }
   $hash = Get-Sha256 $asarOut
   $size = (Get-Item $asarOut).Length

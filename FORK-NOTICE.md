@@ -231,6 +231,12 @@ pwsh -File scripts/dsh-rollback.ps1
 - Electron 运行时不在本仓库构建；升级运行时需要单独下载官方二进制、用 rcedit 做品牌化并替换，步骤与风险见 [`docs/Electron-EOL.md`](docs/Electron-EOL.md)。
 - 发布脚本会把 `LICENSE` 与 `FORK-NOTICE.md` 复制到安装目录并打包进 asar。
 
+## 6.9 联网与隐私（发布前审计 M3 披露项）
+
+- **在线释义/整句翻译默认开启**：查词会把**单词**发送到 `dict.youdao.com`、`api.dictionaryapi.dev`、`api.mymemory.translated.net`；整句翻译会把**句子**发送到 `translate.googleapis.com`；发音音频来自 `dict.youdao.com`。可在增强面板设置中关闭 `onlineLookup`，关闭后仅用本地词库与本地缓存。
+- **遥测**：桌面端默认关闭（不向 mixpanel / Vercel 发送）；Web 构建默认开启，可用 `localStorage['qzTelemetryOptIn']='0'` 关闭。
+- 本分支不收集账号、不上传学习记录；学习数据仅存本机 `%APPDATA%\qwerty-learner-plus`。
+
 ## 7. 已知限制与免责声明
 
 1. **非官方分支**：本分支不受上游项目支持；上游不会处理本分支的专属问题，上游的修复也不会自动进入本分支。

@@ -17,10 +17,10 @@ Qwerty Learner 本地魔改版的 Electron 外壳源码：主进程（托盘/快
 # 只构建 + 打包（产出 app.asar / SHA256SUMS / release-info.json）
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\dsh-release.ps1
 
-# 本地质量门禁（tsc + eslint --max-warnings 0；-WithSim 追加 253 断言（旧口径 248）；-WithSmoke 追加冒烟）
+# 本地质量门禁（tsc + eslint --max-warnings 0；-WithSim 追加 309 断言（120 SRS + 189 自动进阶；旧口径 248/253）；-WithSmoke 追加冒烟）
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\quality-gate.ps1 -WithSim
 
-# 构建 + 测试安装 + 隔离 profile CDP 冒烟（默认先跑 tsc + 253 条核心回归）
+# 构建 + 测试安装 + 隔离 profile CDP 冒烟（默认先跑 tsc + 309 条核心回归）
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\dsh-release.ps1 -TestInstall -Smoke
 
 # 构建 + 正式安装（预检双目录哈希一致 → 备份（精确到秒）→ 原子替换 → 校验 → 写安装日志）
@@ -32,7 +32,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\dsh-rollback.ps1
 ```
 
 > 脚本兼容 Windows PowerShell 5.1 与 PowerShell 7（保存为 UTF-8 BOM 以兼容 PS5；`powershell -File` 与 `pwsh -File` 等价）。
-> `-SkipCheck` 跳过 tsc、`-SkipAudit` 跳过 253 条核心回归（旧口径 248）、`-SkipBuild` 复用现有 `build/`。
+> `-SkipCheck` 跳过 tsc、`-SkipAudit` 跳过 309 条核心回归（旧口径 248/253）、`-SkipBuild` 复用现有 `build/`。
 > 发版只需改本目录 `package.json` 的 `version`：主进程读取 package.json；preload 通过 `app:version-sync` 获取；注入的增强面板用主进程传入的 `window.__QZ_VERSION__`。
 > 旧的打包工作区已废弃，不再手工同步（脚本直接从本目录组装）。
 > 发布/安装/备份/回归目录的内置默认值见 `scripts\dsh-release.ps1` 与 `scripts\dsh-rollback.ps1` 的参数；
