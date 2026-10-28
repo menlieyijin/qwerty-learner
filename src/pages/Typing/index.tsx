@@ -12,6 +12,7 @@ import { TypingContext, TypingStateActionType, initialState, typingReducer } fro
 import type { TypingSettleFn } from './store'
 import Header from '@/components/Header'
 import Tooltip from '@/components/Tooltip'
+import FirstRunLevelPicker, { LearningStartButton } from '@/components/FirstRunLevelPicker'
 import { DUE_REVIEW_WORDS_STORAGE_KEY } from '@/constants'
 import { idDictionaryMap } from '@/resources/dictionary'
 import { currentChapterAtom, currentDictIdAtom, isReviewModeAtom, reviewModeInfoAtom } from '@/store'
@@ -227,12 +228,16 @@ const App: React.FC = () => {
   return (
     <TypingContext.Provider value={{ state: state, dispatch, settleRef, skipLockRef }}>
       {state.isFinished && isReviewMode && <ResultScreen />}
+      {/* v9.16（dsh，目标-2）：首启词汇水平起点选择卡（已选择/已推迟时不渲染） */}
+      <FirstRunLevelPicker />
       <Layout>
         <Header>
           <DictButton />
           <PronunciationSwitcher />
           <Switcher />
           <EnhanceButton />
+          {/* v9.16（dsh，目标-2）：学习路线起点入口（首启选择卡同款，可随时修改起点） */}
+          <LearningStartButton />
           <StartButton isLoading={isLoading} />
           <Tooltip content="跳过该词">
             <button
