@@ -1,5 +1,5 @@
-import type { WordUpdateAction } from '../InputHandler'
 import InputHandler from '../InputHandler'
+import type { WordUpdateAction } from '../types'
 import Letter from './Letter'
 import Notation from './Notation'
 import { TipAlert } from './TipAlert'
@@ -12,6 +12,7 @@ import type { WordPronunciationIconRef } from '@/components/WordPronunciationIco
 import { WordPronunciationIcon } from '@/components/WordPronunciationIcon'
 import { EXPLICIT_SPACE } from '@/constants'
 import useKeySounds from '@/hooks/useKeySounds'
+import { useSaveWordRecord } from '@/pages/Typing/hooks/useSaveRecord'
 import { TypingContext, TypingStateActionType } from '@/pages/Typing/store'
 import {
   currentChapterAtom,
@@ -23,9 +24,9 @@ import {
   wordDictationConfigAtom,
 } from '@/store'
 import type { Word } from '@/typings'
-import { CTRL, getUtcStringForMixpanel } from '@/utils'
+import { CTRL } from '@/utils'
 import type { LetterMistakes } from '@/utils/db/record'
-import { useSaveWordRecord } from '@/utils/db'
+import { getUtcStringForMixpanel } from '@/utils/mixpanel'
 import { useAtomValue } from 'jotai'
 import { useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { useHotkeys } from 'react-hotkeys-hook'

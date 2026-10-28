@@ -1,23 +1,6 @@
+// 语言/发音/音标/词库元数据类型统一定义在 resource.ts（它们本就是词库契约的一部分），
+// 这里只做转出，避免 index <-> resource 的 type 环与 PhoneticType/PronunciationType 双份定义。
 export * from './resource'
-
-export type PronunciationType = 'us' | 'uk' | 'romaji' | 'zh' | 'ja' | 'de' | 'hapin' | 'kk' | 'id'
-export type PhoneticType = 'us' | 'uk' | 'romaji' | 'zh' | 'ja' | 'de' | 'hapin' | 'kk' | 'id'
-export type LanguageType = 'en' | 'romaji' | 'zh' | 'ja' | 'code' | 'de' | 'kk' | 'hapin' | 'id'
-export type LanguageCategoryType = 'en' | 'ja' | 'de' | 'code' | 'kk' | 'id'
-
-type Pronunciation2PhoneticMap = Record<PronunciationType, PhoneticType>
-
-export const PRONUNCIATION_PHONETIC_MAP: Pronunciation2PhoneticMap = {
-  us: 'us',
-  uk: 'uk',
-  romaji: 'romaji',
-  zh: 'zh',
-  ja: 'ja',
-  de: 'de',
-  hapin: 'hapin',
-  kk: 'kk',
-  id: 'id',
-}
 
 export type Word = {
   name: string

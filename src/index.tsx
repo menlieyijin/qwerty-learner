@@ -1,6 +1,7 @@
 import Loading from './components/Loading'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import './index.css'
+import { LEGACY_FONT_SIZE_LIMIT, LEGACY_FONT_SIZE_REPAIR } from '@/constants'
 import { ErrorBook } from './pages/ErrorBook'
 import TypingPage from './pages/Typing'
 import { isOpenDarkModeAtom } from '@/store'
@@ -53,13 +54,18 @@ function Root() {
 const container = document.getElementById('root')
 
 // v7 简洁布局：首次升级时把旧版过大的字号收敛到合适大小（之后仍可在设置里调整）
+// 阈值与落值统一取自 @/constants（数值与原先的裸字面量逐字相同，行为不变）
 try {
   if (!localStorage.getItem('v7FontAdjusted')) {
     const raw = localStorage.getItem('fontsize')
     if (raw) {
       const f = JSON.parse(raw)
-      if (f && (Number(f.translateFont) > 30 || Number(f.foreignFont) > 80)) {
-        localStorage.setItem('fontsize', JSON.stringify({ foreignFont: 64, translateFont: 22 }))
+      if (
+        f &&
+        (Number(f.translateFont) > LEGACY_FONT_SIZE_LIMIT.translateFont ||
+          Number(f.foreignFont) > LEGACY_FONT_SIZE_LIMIT.foreignFont)
+      ) {
+        localStorage.setItem('fontsize', JSON.stringify(LEGACY_FONT_SIZE_REPAIR))
       }
     }
     localStorage.setItem('v7FontAdjusted', '1')

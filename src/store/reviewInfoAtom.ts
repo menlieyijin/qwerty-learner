@@ -1,3 +1,4 @@
+import { safeStorage } from './storage'
 import type { ReviewRecord } from '@/utils/db/record'
 import { atom } from 'jotai'
 import { atomWithStorage } from 'jotai/utils'
@@ -10,7 +11,8 @@ type TReviewInfoAtomData = {
 }
 
 export function reviewInfoAtom(initialValue: TReviewInfoAtomData) {
-  const storageAtom = atomWithStorage('reviewModeInfo', initialValue)
+  // M6-003：整份复习词表每次翻词都会重写，配额满时必须只告警不抛错（键名/序列化不变）
+  const storageAtom = atomWithStorage('reviewModeInfo', initialValue, safeStorage<TReviewInfoAtomData>())
 
   return atom(
     (get) => {

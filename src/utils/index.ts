@@ -1,7 +1,9 @@
 import { CHAPTER_LENGTH } from '@/constants'
 import type { Howl } from 'howler'
 
-export * from './mixpanel'
+// 不再转出 mixpanel：那个 barrel 透出会把 mixpanel（import store / pages 类型）拖进所有
+// 使用本 barrel 的模块的依赖图，形成 dictionary → utils → mixpanel → store → dictionary 大环。
+// 需要上报函数的模块请直接从 @/utils/mixpanel 导入。
 
 const bannedKeys = [
   'Enter',
@@ -108,6 +110,11 @@ export function addHowlListener(howl: Howl, ...args: Parameters<Howl['on']>) {
   return () => howl.off(...args)
 }
 
+/**
+ * @deprecated v9.12（dsh，M6-015）：请改用 `@/utils/ui` 的 `cn`（内含 tailwind-merge，能确定性合并冲突类）。
+ * 本实现只做 trim + 空格拼接，冲突类谁生效取决于 CSS 顺序。存量调用点（仅 `components/Tooltip`）暂不替换，
+ * 因为两者合并策略不同，直接替换会改变样式结果。
+ */
 export function classNames(...classNames: Array<string | void | null>) {
   const finallyClassNames: string[] = []
 

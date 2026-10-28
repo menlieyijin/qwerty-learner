@@ -1,4 +1,4 @@
-import type { WordUpdateAction } from '../InputHandler'
+import type { WordUpdateAction } from '../types'
 import { TypingContext } from '@/pages/Typing/store'
 import type { FormEvent } from 'react'
 import { useCallback, useContext, useEffect, useRef } from 'react'

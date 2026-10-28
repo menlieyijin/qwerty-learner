@@ -1,17 +1,11 @@
 import type { IChapterRecord, IMemoryRecord, IReviewRecord, IRevisionDictRecord, IWordRecord, LetterMistakes } from './record'
 import { ChapterRecord, ReviewRecord, WordRecord } from './record'
-import { TypingContext, TypingStateActionType } from '@/pages/Typing/store'
-import type { TypingState } from '@/pages/Typing/store/type'
-import { currentChapterAtom, currentDictIdAtom, isReviewModeAtom } from '@/store'
 import { MEMORY_GRADUATE_STAGE, adaptiveDaysFromRecord, clampStage, ladderDays } from '@/utils/memoryLadder'
 import { removeMemoryCache, upsertMemoryCache } from '@/utils/memoryCache'
 import { legacyMemoryKey, memoryKey, memoryKeyCandidates, normalizeWordKeyWord } from '@/utils/memoryKey'
 import { computeDue, evaluateWrong, shouldCountSlow } from '@/utils/srsRules'
-import { pushWrongWordRequeue, removeFromRequeue } from '@/utils/sessionRequeue'
 import type { Table } from 'dexie'
 import Dexie from 'dexie'
-import { useAtomValue } from 'jotai'
-import { useCallback, useContext } from 'react'
 
 class RecordDB extends Dexie {
   wordRecords!: Table<IWordRecord, number>
@@ -99,8 +93,10 @@ async function readMemoryRecordForWord(dict: string, word: string): Promise<IMem
  *
  * legacy key 可能已被「同名不同大小写的另一个词」占用（例如 `dict::march` 现在属于小写 march），
  * 所以只在「记录里的 word 与待删单词大小写一致」时才删 legacy；返回实际删除条数。
+ *
+ * 仅供 `@/hooks/useRecordMutations` 的 `useDeleteWordRecord` 使用（原为模块私有）。
  */
-async function deleteMemoryRecordForWord(dict: string, word: string): Promise<number> {
+export async function deleteMemoryRecordForWord(dict: string, word: string): Promise<number> {
   const target = normalizeWordKeyWord(word)
   let deleted = 0
   for (const key of memoryKeyCandidates(dict, word)) {
@@ -233,139 +229,9 @@ export async function updateMemoryProgress(
   }
 }
 
-export function useSaveChapterRecord() {
-  const currentChapter = useAtomValue(currentChapterAtom)
-  const isRevision = useAtomValue(isReviewModeAtom)
-  const dictID = useAtomValue(currentDictIdAtom)
-
-  const saveChapterRecord = useCallback(
-    async (typingState: TypingState, recordId?: number): Promise<number | undefined> => {
-      const {
-        chapterData: { correctCount, wrongCount, userInputLogs, wordCount, words, wordRecordIds },
-        timerData: { time },
-      } = typingState
-      const correctWordIndexes = userInputLogs.filter((log) => log.correctCount > 0 && log.wrongCount === 0).map((log) => log.index)
-
-      const chapterRecord = new ChapterRecord(
-        dictID,
-        isRevision ? -1 : currentChapter,
-        time,
-        correctCount,
-        wrongCount,
-        wordCount,
-        correctWordIndexes,
-        words.length,
-        wordRecordIds ?? [],
-      )
-      // v9.3：暂停保存改为“会话 upsert”，避免多次暂停把累计值重复相加
-      if (recordId) {
-        await db.chapterRecords.update(recordId, chapterRecord)
-        return recordId
-      }
-      return db.chapterRecords.add(chapterRecord)
-    },
-    [currentChapter, dictID, isRevision],
-  )
-
-  return saveChapterRecord
-}
-
 export type WordKeyLogger = {
   letterTimeArray: number[]
   letterMistake: LetterMistakes
-}
-
-export function useSaveWordRecord() {
-  const isRevision = useAtomValue(isReviewModeAtom)
-  const currentChapter = useAtomValue(currentChapterAtom)
-  const dictID = useAtomValue(currentDictIdAtom)
-
-  const { dispatch } = useContext(TypingContext) ?? {}
-
-  const saveWordRecord = useCallback(
-    async ({
-      word,
-      dict,
-      trans,
-      phone,
-      wrongCount,
-      letterTimeArray,
-      letterMistake,
-      isRefresh,
-    }: {
-      word: string
-      dict?: string
-      trans?: string[]
-      phone?: string
-      wrongCount: number
-      letterTimeArray: number[]
-      letterMistake: LetterMistakes
-      /** v9.3：本次作答来自随机回顾/错词重练（显式传递，不依赖全局标记） */
-      isRefresh?: boolean
-    }) => {
-      const timing = []
-      for (let i = 1; i < letterTimeArray.length; i++) {
-        const diff = letterTimeArray[i] - letterTimeArray[i - 1]
-        timing.push(diff)
-      }
-
-      const recordDict = dict || dictID
-      const wordRecord = new WordRecord(word, recordDict, isRevision ? -1 : currentChapter, timing, wrongCount, letterMistake)
-
-      let dbID = -1
-      try {
-        dbID = await db.wordRecords.add(wordRecord)
-      } catch (e) {
-        console.error(e)
-      }
-      // v7：写入/更新记忆曲线记录（按艾宾浩斯阶梯安排下一次复习）
-      const totalMs = timing.reduce((acc, cur) => acc + cur, 0)
-      try {
-        await updateMemoryProgress(recordDict, word, wrongCount, totalMs, trans, phone, !!isRefresh)
-      } catch (e) {
-        console.error('save memory progress failed', e)
-      }
-      // v8 错词当场重现：本次会话内隔几个词再练一次（不影响 memoryRecords 的 10 分钟档）
-      if (Number(wrongCount) > 0) {
-        try {
-          pushWrongWordRequeue(recordDict, word, trans, phone)
-        } catch (e) {
-          console.error('push requeue failed', e)
-        }
-      }
-      if (dispatch) {
-        dbID > 0 && dispatch({ type: TypingStateActionType.ADD_WORD_RECORD_ID, payload: dbID })
-        dispatch({ type: TypingStateActionType.SET_IS_SAVING_RECORD, payload: false })
-      }
-    },
-    [currentChapter, dictID, dispatch, isRevision],
-  )
-
-  return saveWordRecord
-}
-
-export function useDeleteWordRecord() {
-  const deleteWordRecord = useCallback(async (word: string, dict: string) => {
-    try {
-      const deletedCount = await db.wordRecords.where({ word, dict }).delete()
-      // v8.9：错词本删词时同步删记忆曲线记录，否则删掉的词仍按曲线出现、累计已学不减
-      try {
-        // v9.5（DATA-003）：新旧 key 都删，但只在记录的 word 与待删单词大小写一致时才删，
-        // 避免误删「同名不同大小写」的兄弟词条（如删 March 时删掉 march 的记录）。
-        await deleteMemoryRecordForWord(dict, word)
-        removeFromRequeue(dict, word)
-        const { clearSkip } = await import('@/utils/autoLevel')
-        clearSkip(dict, word)
-      } catch (e) {
-        console.error('删除记忆曲线记录失败：', e)
-      }
-      return deletedCount
-    } catch (error) {
-      console.error(`删除单词记录时出错：`, error)
-    }
-  }, [])
-
-  return { deleteWordRecord }
 }
 
 /**

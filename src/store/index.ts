@@ -1,6 +1,7 @@
 import atomForConfig from './atomForConfig'
 import { reviewInfoAtom } from './reviewInfoAtom'
-import { DISMISS_START_CARD_DATE_KEY, defaultFontSizeConfig } from '@/constants'
+import { safeStorage } from './storage'
+import { defaultFontSizeConfig } from '@/constants'
 import { idDictionaryMap } from '@/resources/dictionary'
 import { correctSoundResources, keySoundResources, wrongSoundResources } from '@/resources/soundResource'
 import type {
@@ -16,11 +17,16 @@ import type { ReviewRecord } from '@/utils/db/record'
 import { atom } from 'jotai'
 import { atomWithStorage } from 'jotai/utils'
 
-export const currentDictIdAtom = atomWithStorage('currentDict', 'cet4')
+// M6-003：以下 atomWithStorage 均传入 safeStorage（写失败只告警、读失败回默认），键名与序列化格式不变
+export const currentDictIdAtom = atomWithStorage('currentDict', 'cet4', safeStorage<string>())
 /** v7：自动进阶（默认）/ 手动选择词库 / v8.4 自定义词库 */
-export const learningModeAtom = atomWithStorage<'auto' | 'manual' | 'custom'>('learningMode', 'auto')
+export const learningModeAtom = atomWithStorage<'auto' | 'manual' | 'custom'>(
+  'learningMode',
+  'auto',
+  safeStorage<'auto' | 'manual' | 'custom'>(),
+)
 /** v8.4：增强面板导入的自定义词库（localStorage 桥接，供主练习流程读取） */
-export const customDictInfoAtom = atomWithStorage<CustomDict | null>('qzCustomDict', null)
+export const customDictInfoAtom = atomWithStorage<CustomDict | null>('qzCustomDict', null, safeStorage<CustomDict | null>())
 export type AutoLevelInfo = {
   id: string
   name: string
@@ -43,7 +49,7 @@ export const currentDictInfoAtom = atom<Dictionary>((get) => {
   return dict
 })
 
-export const currentChapterAtom = atomWithStorage('currentChapter', 0)
+export const currentChapterAtom = atomWithStorage('currentChapter', 0, safeStorage<number>())
 
 export const loopWordConfigAtom = atomForConfig<{ times: LoopWordTimesOption }>('loopWordConfig', {
   times: 1,
@@ -80,19 +86,17 @@ export const fontSizeConfigAtom = atomForConfig('fontsize', defaultFontSizeConfi
 
 export const pronunciationIsOpenAtom = atom((get) => get(pronunciationConfigAtom).isOpen)
 
-export const pronunciationIsTransReadAtom = atom((get) => get(pronunciationConfigAtom).isTransRead)
-
 export const randomConfigAtom = atomForConfig('randomConfig', {
   isOpen: false,
 })
 
-export const isShowPrevAndNextWordAtom = atomWithStorage('isShowPrevAndNextWord', true)
+export const isShowPrevAndNextWordAtom = atomWithStorage('isShowPrevAndNextWord', true, safeStorage<boolean>())
 
-export const isIgnoreCaseAtom = atomWithStorage('isIgnoreCase', true)
+export const isIgnoreCaseAtom = atomWithStorage('isIgnoreCase', true, safeStorage<boolean>())
 
-export const isShowAnswerOnHoverAtom = atomWithStorage('isShowAnswerOnHover', true)
+export const isShowAnswerOnHoverAtom = atomWithStorage('isShowAnswerOnHover', true, safeStorage<boolean>())
 
-export const isTextSelectableAtom = atomWithStorage('isTextSelectable', false)
+export const isTextSelectableAtom = atomWithStorage('isTextSelectable', false, safeStorage<boolean>())
 
 export const reviewModeInfoAtom = reviewInfoAtom({
   isReviewMode: false,
@@ -105,19 +109,14 @@ export const phoneticConfigAtom = atomForConfig('phoneticConfig', {
   type: 'us' as PhoneticType,
 })
 
-export const isOpenDarkModeAtom = atomWithStorage('isOpenDarkModeAtom', window.matchMedia('(prefers-color-scheme: dark)').matches)
-
-export const isShowSkipAtom = atom(false)
-
-export const isInDevModeAtom = atom(false)
+export const isOpenDarkModeAtom = atomWithStorage(
+  'isOpenDarkModeAtom',
+  window.matchMedia('(prefers-color-scheme: dark)').matches,
+  safeStorage<boolean>(),
+)
 
 export const wordDictationConfigAtom = atomForConfig('wordDictationConfig', {
   isOpen: false,
   type: 'hideAll' as WordDictationType,
   openBy: 'auto' as WordDictationOpenBy,
 })
-
-export const dismissStartCardDateAtom = atomWithStorage<Date | null>(DISMISS_START_CARD_DATE_KEY, null)
-
-// for dev test
-//   dismissStartCardDateAtom = atom<Date | null>(new Date())

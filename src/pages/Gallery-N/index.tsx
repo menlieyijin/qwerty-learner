@@ -1,33 +1,23 @@
 import DictionaryGroup from './CategoryDicts'
 import DictRequest from './DictRequest'
 import { LanguageTabSwitcher } from './LanguageTabSwitcher'
+import { GalleryContext, initialGalleryState } from './context'
+import type { GalleryState } from './context'
 import Layout from '@/components/Layout'
 import { dictionaries } from '@/resources/dictionary'
 import { currentDictInfoAtom, learningModeAtom } from '@/store'
-import type { Dictionary, LanguageCategoryType } from '@/typings'
+import type { Dictionary } from '@/typings'
 import groupBy, { groupByDictTags } from '@/utils/groupBy'
 import * as ScrollArea from '@radix-ui/react-scroll-area'
 import { useAtomValue, useSetAtom } from 'jotai'
-import { createContext, useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { useHotkeys } from 'react-hotkeys-hook'
 import { useNavigate } from 'react-router-dom'
-import type { Updater } from 'use-immer'
 import { useImmer } from 'use-immer'
 import IconInfo from '~icons/ic/outline-info'
 import IconX from '~icons/tabler/x'
 
-export type GalleryState = {
-  currentLanguageTab: LanguageCategoryType
-}
-
-const initialGalleryState: GalleryState = {
-  currentLanguageTab: 'en',
-}
-
-export const GalleryContext = createContext<{
-  state: GalleryState
-  setState: Updater<GalleryState>
-} | null>(null)
+export type { GalleryState } from './context'
 
 export default function GalleryPage() {
   const [galleryState, setGalleryState] = useImmer<GalleryState>(initialGalleryState)

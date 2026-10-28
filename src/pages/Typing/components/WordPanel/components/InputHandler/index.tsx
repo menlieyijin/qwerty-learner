@@ -1,8 +1,8 @@
 import KeyEventHandler from '../KeyEventHandler'
 import TextAreaHandler from '../TextAreaHandler'
+import type { WordUpdateAction } from '../types'
 import { currentDictInfoAtom } from '@/store'
 import { useAtomValue } from 'jotai'
-import type { FormEvent } from 'react'
 import { useMemo } from 'react'
 
 export default function InputHandler({ updateInput }: { updateInput: (updateObj: WordUpdateAction) => void }) {
@@ -24,22 +24,4 @@ export default function InputHandler({ updateInput }: { updateInput: (updateObj:
   }, [dictInfo.language, updateInput])
 
   return <>{handler}</>
-}
-export type WordUpdateAction = WordAddAction | WordDeleteAction | WordCompositionAction
-
-export type WordAddAction = {
-  type: 'add'
-  value: string
-  event: FormEvent<HTMLTextAreaElement> | KeyboardEvent
-}
-
-export type WordDeleteAction = {
-  type: 'delete'
-  length: number
-}
-
-// composition api is not ready yet
-export type WordCompositionAction = {
-  type: 'composition'
-  value: string
 }

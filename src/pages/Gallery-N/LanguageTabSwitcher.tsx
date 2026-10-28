@@ -1,4 +1,4 @@
-import { GalleryContext } from '.'
+import { GalleryContext } from './context'
 import codeFlag from '@/assets/flags/code.png'
 import deFlag from '@/assets/flags/de.png'
 import enFlag from '@/assets/flags/en.png'

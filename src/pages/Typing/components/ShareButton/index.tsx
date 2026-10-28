@@ -1,5 +1,5 @@
 import SharePicDialog from './SharePicDialog'
-import { recordShareAction } from '@/utils'
+import { recordShareAction } from '@/utils/mixpanel'
 import { useCallback, useMemo, useState } from 'react'
 import IconShare2 from '~icons/tabler/share-2'
 

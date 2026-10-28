@@ -1,3 +1,4 @@
+import { safeStorage } from './storage'
 import type { WritableAtom } from 'jotai'
 import { atom } from 'jotai'
 import { atomWithStorage } from 'jotai/utils'
@@ -9,7 +10,8 @@ export default function atomForConfig<T extends Record<string, unknown>>(
   key: string,
   defaultValue: T,
 ): WritableAtom<T, [SetStateActionWithReset<T>], void> {
-  const storageAtom = atomWithStorage(key, defaultValue)
+  // M6-003：写路径加保护（配额满/存储被禁时只告警，不再抛到 React 事件处理器）
+  const storageAtom = atomWithStorage(key, defaultValue, safeStorage<T>())
   return atom((get) => {
     // Get the underlying object
     const config = get(storageAtom) as unknown

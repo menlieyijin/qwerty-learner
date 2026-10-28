@@ -1,10 +1,11 @@
 import type * as PakoModule from 'pako'
 import Dexie from 'dexie'
 import { db } from '.'
-import { getCurrentDate, recordDataAction } from '..'
+import { getCurrentDate } from '..'
 import { cleanupStaleTempImportDbs, createTempImportDbName } from './temp-import-db'
 import { MEMORY_KEY_CASE_MIGRATED_KEY, MEMORY_MIGRATED_KEY } from '../memory'
 import { clearMemoryCache } from '../memoryCache'
+import { recordDataAction } from '../mixpanel'
 
 export type ExportProgress = {
   totalRows?: number

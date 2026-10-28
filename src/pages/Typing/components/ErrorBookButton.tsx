@@ -1,4 +1,4 @@
-import { recordErrorBookAction } from '@/utils'
+import { recordErrorBookAction } from '@/utils/mixpanel'
 import { useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import IconBook from '~icons/bxs/book'
