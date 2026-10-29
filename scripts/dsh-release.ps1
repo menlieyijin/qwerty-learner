@@ -222,7 +222,9 @@ try {
     sha256      = $hash
     installDirs = $InstallDirs
   }
-  $info | ConvertTo-Json -Depth 4 | Set-Content (Join-Path $stage 'release-info.json') -Encoding UTF8
+  # v10.2（dsh）：Set-Content -Encoding UTF8 在 5.1 下会写入 BOM，
+  # 让 node 的 JSON.parse 直接抛 Unexpected token。这里统一写无 BOM 的 UTF-8。
+  [System.IO.File]::WriteAllText((Join-Path $stage 'release-info.json'), ($info | ConvertTo-Json -Depth 4), (New-Object System.Text.UTF8Encoding($false)))
   "$hash  app.asar" | Set-Content (Join-Path $stage 'SHA256SUMS') -Encoding UTF8
 } catch {
   Write-Warn "组装/打包失败，清理本次 staging：$stage"
@@ -321,7 +323,7 @@ if ($Install) {
     smoke          = [bool]$Smoke
   }
   $installLogPath = Join-Path $logDir "qwerty-$ver-installed-$stamp.json"
-  $installLog | ConvertTo-Json -Depth 5 | Set-Content $installLogPath -Encoding UTF8
+  [System.IO.File]::WriteAllText($installLogPath, ($installLog | ConvertTo-Json -Depth 5), (New-Object System.Text.UTF8Encoding($false)))
   Write-Ok "安装日志：$installLogPath"
 }
 

@@ -109,6 +109,17 @@
 `attemptRef`、`dispatch`、`saveWordRecord` 互相引用，抽成 hook 需要对外暴露 6 个 ref/回调，接口比现状更宽；
 拆错的代价是统计与记忆曲线被污染。因此只动「看得见的部分」，状态机保留原位并加区块注释。
 
+| I | 本批（v10.2.0） | 修三个可验证缺陷：二次暂停丢更新（F5-003）、空词表 NaN（F5-005）、安装日志 BOM；`trans` 归一化 8 处中语义相同的 3 处合并（F5-004） | `test:typing` 增 5c（含反证）；`release-info`/安装日志无 BOM 且可 `JSON.parse`；`test:core` 309/309；四脚本 21/17/16/14；冒烟 11/11 |
+
+### 批次 I 逐条
+
+| # | 问题 | 根因 | 修复 | 验证 | 风险 |
+| --- | --- | --- | --- | --- | --- |
+| F5-003 | 继续练习后再次暂停，本次会话行**不更新**（正确/错误键数、用时丢失） | 暂停保存用 `wordCount` 判「有没有变化」；这一轮没练完新词时 `wordCount` 不变 → 整段跳过 | 改为「已完成词数 + 正确数 + 错误数 + 用时」的签名判重 | `test:typing` 5c：resume 后等 2.8s，`time` 1→3、`wordCount` 不变、行数仍为 1。**反证**：把判重回退成 `wordCount` 后同用例失败（`time` 停在 0） | 低：只在「同一会话内继续练」的路径上多写一次 upsert，仍是 update 不是 add |
+| F5-005 | 空词表时结果页正确率 `0/0 = NaN`，界面上会出现 `NaN%`，错误分级全落 else 分支 | 未对 `chapterLength === 0` 兜底 | `chapterLength <= 0` 时返回 0 | 静态修复；**无法构造稳定复现路径**（正常流程不会进空词表的结果页），未做运行期复现 | 低：仅影响空词表；有词时逐字不变 |
+| F5-004 | `trans` 归一化有 8 处各自实现，语义不一致 | 历史累积 | 新增 `utils/trans.ts` 的 `normalizeTrans`，合并**语义完全相同**的 3 处（learningPath / useWordList / DropdownExport）；其余 5 处保留并在文件头列了差异表 | `test:core` 309/309（learningPath 在算法路径上）；四脚本全过 | 中低：另 5 处「不过滤/不回退标量」的语义没动，仍是遗留 |
+| F5-006 | 安装日志与 `release-info.json` 带 UTF-8 BOM，`JSON.parse` 直接抛 `Unexpected token` | `Set-Content -Encoding UTF8` 在 5.1 下写 BOM | 改用 `[System.IO.File]::WriteAllText(..., UTF8Encoding($false))` | 新生成的 `release-info.json` 与安装日志均 `BOM: false` 且 `JSON.parse` 通过 | 低：只影响这两个产物的编码 |
+
 ---
 
 ## 六、遗留清单（未改或无法闭环，附具体差距）
@@ -118,13 +129,15 @@
 | L-1 | `WordPanel/Word/index.tsx` 拆分 | **部分闭环**（554 → 500 行） | 已抽出展示层与可见性纯函数；**状态机未拆**——抽 hook 需暴露 6 个 ref/回调，接口更宽，且缺更细的埋点用例（目前只到「整词完成/暂停」粒度） |
 | L-2 | `Setting/SoundSetting.tsx` | **已闭环** | 335 → 206 行 + 两个行级组件；由 `verify-typing` 的 6/6b/6c/6d 覆盖 |
 | L-3 | `trans` 归一化为 `string[]` 的逻辑重复 8 处（`learningPath` / `useWordList` / `Word` / `autoLevel` / `memory` / `sessionRequeue` / `useGetWord` / `DropdownExport`） | **未改** | 四处语义并不一致（有的过滤非字符串、有的 `String()` 兜底、有的不处理），统一会改变其中若干处的边界行为；需先统一口径再动 |
-| L-4 | 结果页在「词表为空」时 `correctCount / chapterLength` = `0/0` → `NaN`（`ResultScreen/index.tsx:99`） | **未改** | 无法构造稳定复现路径；且「空词表算 0% 还是 100%」是产品决策，不擅自定 |
-| L-5 | 暂停时若已完成词数未变，不重复 upsert 会话记录（`Typing/index.tsx:200`） | **未验证** | 需要「同一词多打几个字母后再次暂停」的埋点用例；目前只是读代码推断，按规则不当作缺陷处理 |
+| L-4 | 结果页空词表 `0/0 → NaN` | **已修（静态验证）** | 约定按 0% 处理（`chapterLength <= 0` 直接返回 0）。**差距**：无法构造稳定复现路径，只有代码级验证 |
+| L-5 | 暂停时若已完成词数未变，不重复 upsert | **已修 + 已反证** | 见 F5-003：改签名判重，`test:typing` 5c 覆盖，并将判重回退后确认用例会失败 |
 | L-6 | Electron CSP 解析失败时回退 `script-src 'self' 'unsafe-inline'`（AUDIT L2） | **接受风险** | 改 fail-closed 会在 `index.html` 结构变化时白屏；当前实测走 sha256 分支 |
 | L-7 | 发布脚本默认路径是作者本机布局（AUDIT M5） | **接受风险** | 全部支持 `QZ_*` 环境变量覆盖，`local-fork/README` 与 QUICKSTART 已说明；改默认值会破坏本机发布链 |
 | L-8 | 仓库是**浅克隆**（AUDIT S4） | **无法处理** | `fetch --unshallow` 会拉取上游全部历史，与「不拉取上游代码」的指令冲突；影响 5 本第三方词库的来源核验（`docs/THIRD-PARTY.md` 已按可查证据登记） |
 | L-9 | 309 条核心回归脚本不在仓库 | **已闭环** | 已迁入 `scripts/core-regression`（路径仓库相对、产物 gitignore、`npm run test:core`），发布脚本默认改指仓库内。**新差距**：它是 stub 化的纯算法仿真，不等于真实浏览器/Electron 环境 |
-| L-10 | 6 个提交**未推送**到 fork | **按指示未推** | 远端 `fork/dsh-local-v8` 仍停在 `8ae7577`；本地领先 17 个提交（含本次 6 个） |
+| L-10 | 提交**未推送**到 fork | **按指示未推** | 远端 `fork/dsh-local-v8` 仍停在 `8ae7577`；本地领先 20 个提交 |
+| L-11 | 全仓 prettier 未统一 | **未做** | `prettier --check src` 仍报 21 个文件（均为既有文件）。仓库配置含 `prettier-plugin-tailwindcss`，批量格式化会重排 class 顺序 → 需要视觉回归，本环境没有，按「不确定不改」保留 |
+| L-12 | 结果页空词表的正确率语义 | **待确认** | 现按 0%；若产品上希望「无词不算错」，应改成不展示该指标 |
 
 ---
 

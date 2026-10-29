@@ -1,5 +1,6 @@
-import type { Word } from '@/typings'
 import { dictionaryResources } from '@/resources/dictionary'
+import type { Word } from '@/typings'
+import { normalizeTrans } from '@/utils/trans'
 
 export type LearningLevel = {
   id: string
@@ -37,11 +38,8 @@ const levelCache = new Map<string, Word[]>()
 const fileToDictId = new Map(dictionaryResources.map((r) => [String(r.url).split('/').pop() || '', r.id]))
 
 function normalizeWord(w: Word): Word {
-  let trans: string[]
-  if (Array.isArray(w.trans)) trans = w.trans.filter((x) => typeof x === 'string')
-  else if (w.trans == null) trans = []
-  else trans = [String(w.trans)]
-  return { ...w, trans }
+  // v10.2（dsh，F5-004）：与 useWordList / DropdownExport 的同一段逻辑合并到 normalizeTrans
+  return { ...w, trans: normalizeTrans(w.trans) }
 }
 
 export async function loadDictWords(file: string): Promise<Word[]> {

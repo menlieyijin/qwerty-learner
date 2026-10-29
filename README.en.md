@@ -81,7 +81,7 @@ scripts/                 release / rollback / quality gate / CDP smoke / level-p
 | `npm run test:local` | 11-check CDP smoke (needs an instance started with `--remote-debugging-port=9472`) |
 | `npm run test:start-level` | 21-check behavioural test for the level picker (first-run dialog → pick → correct dictionary → persists across restart → edit from dictionary page → existing users are not interrupted) |
 | `npm run test:pages` | 17-check page regression (error book sort/detail/Esc/delete-cancel, settings panel, malformed payload does not white-screen) |
-| `npm run test:typing` | 15-check typing pipeline (input state, wrong letter marked, word advance, persistence, pause writes session, sound switches/sliders, dictation) |
+| `npm run test:typing` | 16-check typing pipeline (input state, wrong letter marked, word advance, persistence, pause writes session incl. second-pause upsert, sound switches/sliders, dictation) |
 | `npm run test:csv` | 14 assertions for CSV-export formula-injection hardening |
 | `npm run test:core` | **309 core-algorithm assertions** (120 SRS + 189 auto-advance) + determinism gate, simulated from real source |
 | `npm run quality` | PowerShell quality gate (tsc + eslint + core regression) |

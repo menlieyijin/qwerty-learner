@@ -1,6 +1,6 @@
 # v10.0.0 / v10.1.0 发布说明（dsh）
 
-> 版本字符串：`1.0.0-enhanced-v10.1.0`（唯一来源：`local-fork/package.json`；v10.0.0 为同一基线的首版）
+> 版本字符串：`1.0.0-enhanced-v10.2.0`（唯一来源：`local-fork/package.json`；v10.0.0 / v10.1.0 为同一基线的早期版本）
 > 基线：v9.15.1（`ce7eb79`）→ 本次重构 6 个提交 → v10.0.0
 > 逐条问题记录（根因 / 修复 / 验证 / 风险）见 [`REFACTOR-LOG.md`](./REFACTOR-LOG.md)
 
@@ -123,3 +123,77 @@ npm run test:core   # build-core → srs-sim → sim-autolevel → determinism �
 | `npm run test:csv` | 14/14 |
 | 隔离冒烟 | 11/11 |
 | 双目录安装 | asar SHA256 一致（见交付说明） |
+
+
+---
+
+# v10.2.0 追加（审计收尾：3 个可验证缺陷 + 1 处去重）
+
+## 修复
+
+| 编号 | 现象 | 影响 | 验证 |
+| --- | --- | --- | --- |
+| F5-003 | 暂停后继续练一会儿再暂停，**这次会话的记录不更新**（正确/错误键数、用时都丢） | 数据准确性：会话行的用时与正确数停在第一次暂停的时刻 | `test:typing` 新增 5c：resume 后等 2.8s，`time` 1→3、词数不变、行数仍为 1；**把判重回退后同用例失败**（`time` 停在 0） |
+| F5-005 | 空词表时结果页 `0/0 = NaN`，界面会出现 `NaN%` | 只影响空词表这一异常路径 | 代码级验证（无法构造稳定复现路径），约定按 0% 处理 |
+| F5-006 | `release-info.json` 与安装日志带 UTF-8 BOM，`JSON.parse` 直接抛异常 | 发版产物被脚本解析时会失败 | 新产物 `BOM: false` + `JSON.parse` 通过 |
+
+## 去重
+
+- `trans` 归一化原有 8 处实现、语义不一：把**语义完全相同**的 3 处（`learningPath` / `useWordList` /
+  `DropdownExport`）合并到 `src/utils/trans.ts` 的 `normalizeTrans`，其余 5 处在文件头列出差异表、**保持原样**。
+
+## 本版验证
+
+| 检查 | 结果 |
+| --- | --- |
+| tsc + eslint | 通过 |
+| `test:core` | 309/309 + determinism pass |
+| `test:start-level` | 21/21 |
+| `test:pages` | 17/17 |
+| `test:typing` | **16/16** |
+| `test:csv` | 14/14 |
+| 隔离冒烟 | 11/11 |
+| 双目录安装 | asar `8D4DF7C6…`，两目录一致 |
+
+## 仍未闭环（本版新增两条）
+
+- L-11 全仓 prettier 未统一：`prettier --check src` 仍报 21 个既有文件；仓库配置带
+  `prettier-plugin-tailwindcss`，批量格式化会重排 class 顺序，需要视觉回归，本环境没有 → 未做。
+- L-12 空词表正确率语义（0% vs 不展示）需产品确认，现按 0%。
+
+
+---
+
+# v10.2.0 追加（审计收尾：3 个可验证缺陷 + 1 处去重）
+
+## 修复
+
+| 编号 | 现象 | 影响 | 验证 |
+| --- | --- | --- | --- |
+| F5-003 | 暂停后继续练一会儿再暂停，**这次会话的记录不更新**（正确/错误键数、用时都丢） | 数据准确性：会话行的用时与正确数停在第一次暂停的时刻 | `test:typing` 新增 5c：resume 后等 2.8s，`time` 1→3、词数不变、行数仍为 1；**把判重回退后同用例失败**（`time` 停在 0） |
+| F5-005 | 空词表时结果页 `0/0 = NaN`，界面会出现 `NaN%` | 只影响空词表这一异常路径 | 代码级验证（无法构造稳定复现路径），约定按 0% 处理 |
+| F5-006 | `release-info.json` 与安装日志带 UTF-8 BOM，`JSON.parse` 直接抛异常 | 发版产物被脚本解析时会失败 | 新产物 `BOM: false` + `JSON.parse` 通过 |
+
+## 去重
+
+- `trans` 归一化原有 8 处实现、语义不一：把**语义完全相同**的 3 处（`learningPath` / `useWordList` /
+  `DropdownExport`）合并到 `src/utils/trans.ts` 的 `normalizeTrans`，其余 5 处在文件头列出差异表、**保持原样**。
+
+## 本版验证
+
+| 检查 | 结果 |
+| --- | --- |
+| tsc + eslint | 通过 |
+| `test:core` | 309/309 + determinism pass |
+| `test:start-level` | 21/21 |
+| `test:pages` | 17/17 |
+| `test:typing` | **16/16** |
+| `test:csv` | 14/14 |
+| 隔离冒烟 | 11/11 |
+| 双目录安装 | asar `8D4DF7C6…`，两目录一致 |
+
+## 仍未闭环（本版新增两条）
+
+- L-11 全仓 prettier 未统一：`prettier --check src` 仍报 21 个既有文件；仓库配置带
+  `prettier-plugin-tailwindcss`，批量格式化会重排 class 顺序，需要视觉回归，本环境没有 → 未做。
+- L-12 空词表正确率语义（0% vs 不展示）需产品确认，现按 0%。

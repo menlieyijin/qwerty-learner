@@ -1,10 +1,10 @@
 import Loading from './components/Loading'
-import ErrorBoundary from '@/components/ErrorBoundary'
-import { FirstRunLevelPicker } from '@/components/FirstRunLevelPicker'
 import './index.css'
-import { LEGACY_FONT_SIZE_LIMIT, LEGACY_FONT_SIZE_REPAIR } from '@/constants'
 import { ErrorBook } from './pages/ErrorBook'
 import TypingPage from './pages/Typing'
+import ErrorBoundary from '@/components/ErrorBoundary'
+import { FirstRunLevelPicker } from '@/components/FirstRunLevelPicker'
+import { LEGACY_FONT_SIZE_LIMIT, LEGACY_FONT_SIZE_REPAIR } from '@/constants'
 import { isOpenDarkModeAtom } from '@/store'
 import { initTelemetry } from '@/utils/telemetry'
 import 'animate.css'
@@ -65,8 +65,7 @@ try {
       const f = JSON.parse(raw)
       if (
         f &&
-        (Number(f.translateFont) > LEGACY_FONT_SIZE_LIMIT.translateFont ||
-          Number(f.foreignFont) > LEGACY_FONT_SIZE_LIMIT.foreignFont)
+        (Number(f.translateFont) > LEGACY_FONT_SIZE_LIMIT.translateFont || Number(f.foreignFont) > LEGACY_FONT_SIZE_LIMIT.foreignFont)
       ) {
         localStorage.setItem('fontsize', JSON.stringify(LEGACY_FONT_SIZE_REPAIR))
       }

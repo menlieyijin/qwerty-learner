@@ -5,6 +5,7 @@ import type { Word, WordWithIndex } from '@/typings/index'
 import { MIX_WINDOW_CAP, MIX_WINDOW_SIZE, reevaluateLevel, resolveCurrentLevel } from '@/utils/autoLevel'
 import { ensureMemoryMigrated, getMemoryRecords, normalizeWordName, pickDynamicWord } from '@/utils/memory'
 import { clearSessionRequeue } from '@/utils/sessionRequeue'
+import { normalizeTrans } from '@/utils/trans'
 import { wordListFetcher } from '@/utils/wordListFetcher'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -26,10 +27,8 @@ function pushPreviewWindow(window: boolean[], preview?: boolean): boolean[] {
 }
 
 function toIndexWord(word: Word, dict?: string, index = 0, hint?: Word['hint'], refresh?: boolean): WordWithIndex {
-  let trans: string[]
-  if (Array.isArray(word.trans)) trans = word.trans.filter((item) => typeof item === 'string')
-  else if (word.trans == null) trans = []
-  else trans = [String(word.trans)]
+  // v10.2（dsh，F5-004）：与 learningPath / DropdownExport 的同一段逻辑合并到 normalizeTrans
+  const trans = normalizeTrans(word.trans)
   return {
     ...word,
     trans,

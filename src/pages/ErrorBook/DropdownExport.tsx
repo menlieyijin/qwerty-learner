@@ -2,6 +2,7 @@ import { idDictionaryMap } from '@/resources/dictionary'
 import type { Word } from '@/typings'
 import { formatDate } from '@/utils'
 import { csvSafeCell } from '@/utils/csvSafe'
+import { normalizeTrans } from '@/utils/trans'
 import { wordListFetcher } from '@/utils/wordListFetcher'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { saveAs } from 'file-saver'
@@ -61,12 +62,8 @@ const DropdownExport: FC<DropdownProps> = ({ renderRecords }) => {
           const word = wordList.find((w) => w && w.name === item.word)
           // v9.4（数据层 P2 修复，原 DATA-005）：wordListFetcher 已把 trans 归一化为 string[]，
           // 这里再做一层防御（旧缓存/第三方词库可能仍是字符串或 null），避免整份导出抛 TypeError。
-          const rawTrans: unknown = word?.trans
-          const trans = Array.isArray(rawTrans)
-            ? rawTrans.filter((t): t is string => typeof t === 'string')
-            : rawTrans == null
-            ? []
-            : [String(rawTrans)]
+          // v10.2（dsh，F5-004）：与 learningPath / useWordList 的同一段逻辑合并到 normalizeTrans
+          const trans = normalizeTrans(word?.trans)
           translation = trans.join('；')
         }
 

@@ -1,6 +1,6 @@
 import { TypingContext, TypingStateActionType } from '../../store'
-import { getMistakeChar, normalizeDisplayWord } from '../WordPanel/components/Word/displayWord'
 import ShareButton from '../ShareButton'
+import { getMistakeChar, normalizeDisplayWord } from '../WordPanel/components/Word/displayWord'
 import ConclusionBar from './ConclusionBar'
 import RemarkRing from './RemarkRing'
 import WordChip from './WordChip'
@@ -96,6 +96,9 @@ const ResultScreen = () => {
   const correctRate = useMemo(() => {
     const chapterLength = state.chapterData.words.length
     const correctCount = chapterLength - wrongWords.length
+    // v10.2（dsh，F5-005）：空词表时 0/0 = NaN，会让错误分级判断全部落到 else 分支、界面上出现 NaN%。
+    // 约定：没有词就没有正确率可言，按 0% 处理（不影响任何有词的场景）。
+    if (chapterLength <= 0) return 0
     return Math.floor((correctCount / chapterLength) * 100)
   }, [state.chapterData.words.length, wrongWords.length])
 

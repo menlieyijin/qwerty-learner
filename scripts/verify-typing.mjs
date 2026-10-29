@@ -148,6 +148,22 @@ const dbCount = (store) =>
     }
   }))()`)
 
+const chapterRows = () =>
+  ev(`(() => new Promise((resolve) => {
+    const req = indexedDB.open('RecordDB')
+    req.onerror = () => resolve([])
+    req.onsuccess = () => {
+      const db = req.result
+      const tx = db.transaction('chapterRecords', 'readonly')
+      const cr = tx.objectStore('chapterRecords').getAll()
+      cr.onsuccess = () => {
+        resolve((cr.result || []).map((r) => ({ id: r.id, wordCount: r.wordCount, correctCount: r.correctCount, wrongCount: r.wrongCount, time: r.time })))
+      }
+      tx.oncomplete = () => db.close()
+      tx.onerror = () => { db.close(); resolve([]) }
+    }
+  }))()`)
+
 async function main() {
   try {
     execFileSync('taskkill', ['/IM', 'Qwerty Learner.exe', '/F'], { stdio: 'ignore' })
@@ -256,6 +272,23 @@ async function main() {
   const chapters = await dbCount('chapterRecords')
   check('5 Enter 可暂停（按钮回到「开始」）', paused === true)
   check('5b 暂停后写入会话记录 chapterRecords', chapters >= 1, chapters)
+
+  // 5c) F5-003：同一词继续练一会儿再暂停 —— 会话行必须被更新（修复前只比 wordCount，会整段跳过）
+  // 用「计时器走时」作为确定性信号：resume 后等 ~2.5s，time 必然增长而 wordCount 不变。
+  // 不依赖按键是否被计入（打字链路的按键已在 1-4 覆盖）。
+  const chapBefore = (await chapterRows())[0]
+  await ev(`(() => { const b = document.querySelector('button[aria-label="开始"]'); if (b) b.click(); return true })()`)
+  await until(async () => (await ev(`!!document.querySelector('button[aria-label="暂停"]')`)) === true, 8000, '恢复输入态')
+  await wait(2800)
+  await press('Enter')
+  await wait(1500)
+  const chapAfterRows = await chapterRows()
+  const chapAfter = chapAfterRows[0]
+  check(
+    '5c 同词继续练后暂停：会话行被更新且未新增行（F5-003）',
+    chapAfterRows.length === 1 && !!chapBefore && !!chapAfter && chapAfter.wordCount === chapBefore.wordCount && chapAfter.time > chapBefore.time,
+    { rows: chapAfterRows.length, before: chapBefore, after: chapAfter },
+  )
 
   // 6) 设置面板：开关与滑块 + 配置持久化
   await ev(`(() => { const b = document.querySelector('button[title="打开设置对话框"]'); if (b) b.click(); return true })()`)

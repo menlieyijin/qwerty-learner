@@ -214,13 +214,18 @@ const App: React.FC = () => {
   }, [state.isFinished, state.isSavingRecord])
 
   // v9.0/v9.3：动态模式不会自然结束；暂停时写/更新一条会话级 chapterRecord（upsert，不再累加）
-  const savedPartialRef = useRef(0)
+  // v10.2（dsh，F5-003）：从「上次保存的已完成词数」改为「上次保存的状态签名」
+  const savedPartialRef = useRef('')
   const sessionChapterIdRef = useRef<number | undefined>(undefined)
   useEffect(() => {
     if (isReviewMode || state.isTyping) return
-    const wordCount = state.chapterData.wordCount
-    if (wordCount <= 0 || wordCount === savedPartialRef.current) return
-    savedPartialRef.current = wordCount
+    const { wordCount, correctCount, wrongCount } = state.chapterData
+    // v10.2（dsh，F5-003）：原来只用 wordCount 判「有没有变化」。继续练习后再次暂停时，若这一轮没练完
+    // 一个新词，wordCount 不变 → 本次会话行不更新，但正确/错误键数与用时已经变了（暂停即丢更新）。
+    // 改用「已完成词数 + 按键数 + 用时」的签名判重：只有真的没有变化才跳过。
+    const signature = `${wordCount}:${correctCount}:${wrongCount}:${state.timerData.time}`
+    if (wordCount <= 0 || signature === savedPartialRef.current) return
+    savedPartialRef.current = signature
     void saveChapterRecord(state, sessionChapterIdRef.current).then((id) => {
       if (id) sessionChapterIdRef.current = id
     })
@@ -231,7 +236,7 @@ const App: React.FC = () => {
   // （saveChapterRecord 的 update 会把 chapter 一起改成当前章号，等于改写上一章的快照）。
   useEffect(() => {
     sessionChapterIdRef.current = undefined
-    savedPartialRef.current = 0
+    savedPartialRef.current = ''
   }, [currentDictId, isReviewMode, currentChapter])
 
   useEffect(() => {

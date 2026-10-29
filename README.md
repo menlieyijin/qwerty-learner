@@ -78,7 +78,7 @@ scripts/                 发布 / 回滚 / 质量门禁 / CDP 冒烟 / 起点选
 | `npm run test:local` | CDP 冒烟 11 项（需先启动带 `--remote-debugging-port=9472` 的实例） |
 | `npm run test:start-level` | 起点选择行为验证 21 项（首启弹窗 → 选档 → 出对应词 → 重启保持 → 词库页修改 → 老用户不打扰） |
 | `npm run test:pages` | 页面级回归 17 项（错题本排序/详情/Esc/删除取消、设置面板、脏 payload 不白屏） |
-| `npm run test:typing` | 打字主链路 15 项（进入输入态/错字标红/切词/落库/暂停写会话/音效开关与滑块/默写） |
+| `npm run test:typing` | 打字主链路 16 项（进入输入态/错字标红/切词/落库/暂停写会话与二次暂停 upsert/音效开关与滑块/默写） |
 | `npm run test:csv` | 错题本 CSV 导出公式注入防护 14 项断言 |
 | `npm run test:core` | **核心算法回归 309 条**（SRS 120 + 自动进阶 189）+ 确定性门禁，真实源码打包仿真 |
 | `npm run quality` | PowerShell 质量门禁（tsc + eslint + 核心回归） |
