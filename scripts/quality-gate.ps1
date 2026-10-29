@@ -46,7 +46,7 @@ param(
     [switch]$WithSim,
     [switch]$WithSmoke,
     [int]$SmokePort = 9472,
-    [string]$SimDir = $(if ($env:QZ_AUDIT_DIR) { $env:QZ_AUDIT_DIR } else { 'D:\整理\audit' })
+    [string]$SimDir = $(if ($env:QZ_AUDIT_DIR) { $env:QZ_AUDIT_DIR } else { (Join-Path $PSScriptRoot 'core-regression') })
 )
 
 $ErrorActionPreference = 'Continue'

@@ -69,6 +69,8 @@
     "test:start-level": "node scripts/verify-start-level.mjs",
     "test:pages": "node scripts/verify-pages.mjs",
     "test:csv": "node scripts/verify-csv-safe.mjs",
+    "test:typing": "node scripts/verify-typing.mjs",
+    "test:core": "node scripts/core-regression/run.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint .",
     "lint:strict": "eslint src --ext .ts,.tsx --max-warnings 0",

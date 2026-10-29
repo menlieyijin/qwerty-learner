@@ -97,19 +97,33 @@
 
 ---
 
+## 五之二、v10.1 追加三批（按同一套流程）
+
+| 批次 | 提交 | 内容 | 验证 |
+| --- | --- | --- | --- |
+| F | `724f75a` | 音效设置 335 → 206 行：抽出 `SoundSwitchRow` / `SoundVolumeRow`，8 个同构 `useCallback` 合并为 3 个通用写值包装 | 新增 `verify-typing`（15 项）：4 开关 / 5 滑块 / 开关落盘 / 滑块键盘左移后 volume 1→0.9；冒烟 11/11；asar `4FFE28C0…` |
+| G | `9334fe4` | Word 554 → 500 行：抽出 `WordDisplay.tsx`（展示层）与 `letterVisibility.ts`（可见性纯函数） | `verify-typing` 增 8/8b 默写模式（hideAll 全占位、关闭后恢复）；冒烟 11/11；asar `30B6FD37…` |
+| H | 本批 | 309 条核心回归**随仓库发布**（`scripts/core-regression`），`npm run test:core` 一条命令跑完；发布脚本与质量门禁的默认回归目录改指仓库内 | `npm run test:core`：309/309 + determinism pass；`dsh-release.ps1`（不加 `-SkipAudit`）实际调用仓库内脚本并通过 |
+
+**为什么 Word 状态机没有继续拆（G）**：`flushStats` / `persistOnce` / `settleAttempt` 与 `wordStateRef`、
+`attemptRef`、`dispatch`、`saveWordRecord` 互相引用，抽成 hook 需要对外暴露 6 个 ref/回调，接口比现状更宽；
+拆错的代价是统计与记忆曲线被污染。因此只动「看得见的部分」，状态机保留原位并加区块注释。
+
+---
+
 ## 六、遗留清单（未改或无法闭环，附具体差距）
 
 | # | 项 | 状态 | 差距 / 原因 |
 | --- | --- | --- | --- |
-| L-1 | `WordPanel/Word/index.tsx`（554 行）拆分 | **未做** | 输入状态机（`settleAttempt`/`flushStats`/`persistOnce` 相互引用），缺少逐操作页面用例；拆错会直接污染统计与落库 |
-| L-2 | `Setting/SoundSetting.tsx`（335 行）拆分 | **未做** | 11 个表单回调 + 受控滑块，改动面大而收益是「可读性」；无逐开关用例 |
+| L-1 | `WordPanel/Word/index.tsx` 拆分 | **部分闭环**（554 → 500 行） | 已抽出展示层与可见性纯函数；**状态机未拆**——抽 hook 需暴露 6 个 ref/回调，接口更宽，且缺更细的埋点用例（目前只到「整词完成/暂停」粒度） |
+| L-2 | `Setting/SoundSetting.tsx` | **已闭环** | 335 → 206 行 + 两个行级组件；由 `verify-typing` 的 6/6b/6c/6d 覆盖 |
 | L-3 | `trans` 归一化为 `string[]` 的逻辑重复 8 处（`learningPath` / `useWordList` / `Word` / `autoLevel` / `memory` / `sessionRequeue` / `useGetWord` / `DropdownExport`） | **未改** | 四处语义并不一致（有的过滤非字符串、有的 `String()` 兜底、有的不处理），统一会改变其中若干处的边界行为；需先统一口径再动 |
 | L-4 | 结果页在「词表为空」时 `correctCount / chapterLength` = `0/0` → `NaN`（`ResultScreen/index.tsx:99`） | **未改** | 无法构造稳定复现路径；且「空词表算 0% 还是 100%」是产品决策，不擅自定 |
 | L-5 | 暂停时若已完成词数未变，不重复 upsert 会话记录（`Typing/index.tsx:200`） | **未验证** | 需要「同一词多打几个字母后再次暂停」的埋点用例；目前只是读代码推断，按规则不当作缺陷处理 |
 | L-6 | Electron CSP 解析失败时回退 `script-src 'self' 'unsafe-inline'`（AUDIT L2） | **接受风险** | 改 fail-closed 会在 `index.html` 结构变化时白屏；当前实测走 sha256 分支 |
 | L-7 | 发布脚本默认路径是作者本机布局（AUDIT M5） | **接受风险** | 全部支持 `QZ_*` 环境变量覆盖，`local-fork/README` 与 QUICKSTART 已说明；改默认值会破坏本机发布链 |
 | L-8 | 仓库是**浅克隆**（AUDIT S4） | **无法处理** | `fetch --unshallow` 会拉取上游全部历史，与「不拉取上游代码」的指令冲突；影响 5 本第三方词库的来源核验（`docs/THIRD-PARTY.md` 已按可查证据登记） |
-| L-9 | 309 条 SRS / 自动进阶回归脚本不在仓库 | **无法闭环** | 位于作者本地审计目录；公开用户只能跑 `test:quality` / 冒烟 / 三个行为脚本 |
+| L-9 | 309 条核心回归脚本不在仓库 | **已闭环** | 已迁入 `scripts/core-regression`（路径仓库相对、产物 gitignore、`npm run test:core`），发布脚本默认改指仓库内。**新差距**：它是 stub 化的纯算法仿真，不等于真实浏览器/Electron 环境 |
 | L-10 | 6 个提交**未推送**到 fork | **按指示未推** | 远端 `fork/dsh-local-v8` 仍停在 `8ae7577`；本地领先 17 个提交（含本次 6 个） |
 
 ---
@@ -125,7 +139,10 @@
 | `v9.18-batchD` | `bb2ffb5` | README 项目化 + 英文版 | （产物未变） | 未重复安装 |
 | `v9.19-batchE` | `39d3dd4` | CSV 注入 + 脏 payload + 页面回归 | 11/11 | `4FF118FD…` |
 | `v9.19.1` | `56b9c04` | 格式化收尾 | 11/11 | `4FF118FD…` |
-| `v10.0.0` | 本次提交 | 版本号 + 发布说明 + 三份交付文档 | 11/11 | `F42835A7…` |
+| `v10.0.0` | `a8dc39e` | 版本号 + 发布说明 + 三份交付文档 | 11/11 | `F42835A7…` |
+| `v10.1-batchF` | `724f75a` | 音效设置拆分 + verify-typing | 11/11 | `4FFE28C0…` |
+| `v10.1-batchG` | `9334fe4` | Word 展示层拆分 | 11/11 | `30B6FD37…` |
+| `v10.1-batchH` | 本批 | 核心回归入仓 + 脚本默认路径 | `test:core` 309/309 | 见发布说明 |
 
 > 回滚点同时保存在 tag（`v9.16-batchA` … `v10.0.0`）与分支历史里；回退前的 HEAD 另存为
 > `archive/v10-baseline-20261029` / `backup/v10-baseline`（均为 `b97eb62`，即本次「回退到 v9.15 重做」之前的树），

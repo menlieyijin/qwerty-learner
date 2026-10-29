@@ -1,6 +1,6 @@
-# v10.0.0 发布说明（dsh）
+# v10.0.0 / v10.1.0 发布说明（dsh）
 
-> 版本字符串：`1.0.0-enhanced-v10.0.0`（唯一来源：`local-fork/package.json`）
+> 版本字符串：`1.0.0-enhanced-v10.1.0`（唯一来源：`local-fork/package.json`；v10.0.0 为同一基线的首版）
 > 基线：v9.15.1（`ce7eb79`）→ 本次重构 6 个提交 → v10.0.0
 > 逐条问题记录（根因 / 修复 / 验证 / 风险）见 [`REFACTOR-LOG.md`](./REFACTOR-LOG.md)
 
@@ -72,3 +72,54 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\dsh-release.ps1 -Ins
 
 ---
 *本版本的全部修改由 dsh 完成并署名；上游版权归 RealKai42 及贡献者，许可证 GPL-3.0。*
+
+
+---
+
+# v10.1.0 追加（结构收尾 + 回归入仓）
+
+在 v10.0.0 之上补完三件事，都属于「让项目更像一个正式开源项目」而不是加功能：
+
+## 1. 两个大文件收窄
+
+| 文件 | 之前 | 之后 | 做法 |
+| --- | --- | --- | --- |
+| `Setting/SoundSetting.tsx` | 335 行，11 个 `useCallback`、4 开关 + 5 滑块的 JSX 全在一处 | **206 行** + `sound/SoundSwitchRow.tsx`(29) + `sound/SoundVolumeRow.tsx`(55) | 行级展示组件化；8 个同构回调合并为 3 个通用写值包装 |
+| `WordPanel/.../Word/index.tsx` | 554 行，展示层与输入/结算状态机混在一起 | **500 行** + `WordDisplay.tsx` + `letterVisibility.ts` | 只抽展示层与「字母是否可见」的纯函数；状态机保留（拆 hook 会让接口更宽，见 REFACTOR-LOG） |
+
+## 2. 核心算法回归随仓库发布
+
+之前 309 条断言只在作者本机，公开用户无法复跑。现在：
+
+```bash
+npm run test:core   # build-core → srs-sim → sim-autolevel → determinism → aggregate
+```
+
+- 用 esbuild 打包**真实源码** `src/utils/*`（只把 dexie/react/jotai/网络换成 stub），不是复制一份算法；
+- 结果：**309/309**（SRS 120 + 自动进阶 189）+ 确定性门禁 pass；
+- `scripts/dsh-release.ps1` 与 `scripts/quality-gate.ps1` 的默认回归目录已改指仓库内
+  （`QZ_AUDIT_DIR` 仍可覆盖），发版不再依赖本机 `D://整理//audit`。
+
+## 3. 验证矩阵（现在共 4 个行为脚本）
+
+| 脚本 | 项数 | 覆盖 |
+| --- | --- | --- |
+| `test:local`（冒烟） | 11 | 应用能起、面板/数据/备份/分析/错题本能开、无异常 |
+| `test:start-level` | 21 | 首启起点选择全流程（含「选完立刻出对应词」「重启保持」「老用户不打扰」） |
+| `test:pages` | 17 | 错题本排序/详情/Esc/删除取消、设置面板、脏 payload 不白屏 |
+| `test:typing` | **15** | 进入输入态、错字标红、整词完成切词、记录落库、暂停写会话、音效开关/滑块、默写 hideAll |
+| `test:core` | **309** | 纯算法层（SRS / 自动进阶 / 确定性） |
+| `test:csv` | 14 | CSV 公式注入防护 |
+
+## 本版验证
+
+| 检查 | 结果 |
+| --- | --- |
+| tsc + eslint | 通过 |
+| `npm run test:core` | 309/309 + determinism pass |
+| `npm run test:typing` | 15/15 |
+| `npm run test:pages` | 17/17 |
+| `npm run test:start-level` | 21/21 |
+| `npm run test:csv` | 14/14 |
+| 隔离冒烟 | 11/11 |
+| 双目录安装 | asar SHA256 一致（见交付说明） |

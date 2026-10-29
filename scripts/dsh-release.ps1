@@ -24,7 +24,8 @@ param(
   [switch]$Smoke,
   [string]$StageRoot = $(if ($env:QZ_STAGE_ROOT) { $env:QZ_STAGE_ROOT } else { 'D:\整理\QwertyRelease' }),
   [string]$BackupDir = $(if ($env:QZ_BACKUP_DIR) { $env:QZ_BACKUP_DIR } else { 'D:\整理\Qwerty备份' }),
-  [string]$AuditRoot = $(if ($env:QZ_AUDIT_DIR) { $env:QZ_AUDIT_DIR } else { 'D:\整理\audit' }),
+  # v10.1（dsh）：核心回归脚本已随仓库发布（scripts/core-regression），默认值指向仓库内，不再依赖作者本机目录
+  [string]$AuditRoot = $(if ($env:QZ_AUDIT_DIR) { $env:QZ_AUDIT_DIR } else { (Join-Path $PSScriptRoot 'core-regression') }),
   [string]$TestAppDir = $(if ($env:QZ_TEST_APP_DIR) { $env:QZ_TEST_APP_DIR } else { 'D:\整理\qtest9\app' }),
   [string[]]$InstallDirs = $(if ($env:QZ_INSTALL_DIRS) { $env:QZ_INSTALL_DIRS -split '\s*;\s*' } else { @('D:\bangong\QwertyLearner-Plus', 'D:\bangong\新建文件夹 (2)\Qwerty Learner') }),
   [int]$KeepStaging = 5

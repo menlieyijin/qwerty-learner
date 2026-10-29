@@ -81,7 +81,9 @@ scripts/                 release / rollback / quality gate / CDP smoke / level-p
 | `npm run test:local` | 11-check CDP smoke (needs an instance started with `--remote-debugging-port=9472`) |
 | `npm run test:start-level` | 21-check behavioural test for the level picker (first-run dialog → pick → correct dictionary → persists across restart → edit from dictionary page → existing users are not interrupted) |
 | `npm run test:pages` | 17-check page regression (error book sort/detail/Esc/delete-cancel, settings panel, malformed payload does not white-screen) |
+| `npm run test:typing` | 15-check typing pipeline (input state, wrong letter marked, word advance, persistence, pause writes session, sound switches/sliders, dictation) |
 | `npm run test:csv` | 14 assertions for CSV-export formula-injection hardening |
+| `npm run test:core` | **309 core-algorithm assertions** (120 SRS + 189 auto-advance) + determinism gate, simulated from real source |
 | `npm run quality` | PowerShell quality gate (tsc + eslint + core regression) |
 | `scripts/dsh-release.ps1` | Pack asar / test install / isolated smoke / dual-directory install |
 | `scripts/dsh-rollback.ps1` | Roll back to the previous build (saves a redo point first) |
@@ -124,9 +126,11 @@ scripts/                 release / rollback / quality gate / CDP smoke / level-p
 ## Known limitations
 
 - The dictionary set is large (~79 MB), so clones are heavy — inherent to upstream data.
-- The 309-assertion SRS / auto-advance regression lives **outside this repository** (author's local audit directory);
-  public users can only run `test:quality` and the smoke test.
+- The 309-assertion core regression now ships with the repo (`scripts/core-regression`), but it is a **pure
+  algorithm-level simulation**: browser dependencies are stubbed and real `src/utils/*` is bundled with esbuild —
+  it is not a real browser/Electron run.
 - `scripts/*.ps1` default to the author's local layout; override with `QZ_*` environment variables (see QUICKSTART).
 - The clone is shallow, so upstream history cannot be verified locally (affects dictionary provenance, see THIRD-PARTY).
-- `Setting/SoundSetting.tsx` and `WordPanel/Word/index.tsx` are still large single files; the split plan is tracked in
-  the release notes' backlog.
+- `WordPanel/Word/index.tsx` is still ~500 lines (input + settlement state machine); only the display layer and the
+  letter-visibility rule were extracted. Further splitting needs finer-grained instrumentation — see
+  `docs/REFACTOR-LOG.md` backlog.

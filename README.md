@@ -78,7 +78,9 @@ scripts/                 发布 / 回滚 / 质量门禁 / CDP 冒烟 / 起点选
 | `npm run test:local` | CDP 冒烟 11 项（需先启动带 `--remote-debugging-port=9472` 的实例） |
 | `npm run test:start-level` | 起点选择行为验证 21 项（首启弹窗 → 选档 → 出对应词 → 重启保持 → 词库页修改 → 老用户不打扰） |
 | `npm run test:pages` | 页面级回归 17 项（错题本排序/详情/Esc/删除取消、设置面板、脏 payload 不白屏） |
+| `npm run test:typing` | 打字主链路 15 项（进入输入态/错字标红/切词/落库/暂停写会话/音效开关与滑块/默写） |
 | `npm run test:csv` | 错题本 CSV 导出公式注入防护 14 项断言 |
+| `npm run test:core` | **核心算法回归 309 条**（SRS 120 + 自动进阶 189）+ 确定性门禁，真实源码打包仿真 |
 | `npm run quality` | PowerShell 质量门禁（tsc + eslint + 核心回归） |
 | `scripts/dsh-release.ps1` | 打包 asar / 测试安装 / 隔离冒烟 / 双目录安装 |
 | `scripts/dsh-rollback.ps1` | 回滚到上一个版本（回滚前自动存 redo 点） |
@@ -118,8 +120,9 @@ scripts/                 发布 / 回滚 / 质量门禁 / CDP 冒烟 / 起点选
 ## 已知限制
 
 - 词库体积大（约 79 MB），clone 较重；由上游数据量决定。
-- SRS / 自动进阶的 309 条回归脚本**不在本仓库**（位于作者本地审计目录），公开用户无法复跑，只能跑
-  `test:quality` 与冒烟。
+- 核心算法回归（309 条）虽已随仓库发布（`scripts/core-regression`），但它是**纯算法层仿真**：
+  把浏览器依赖换成 stub 后用 esbuild 打包真实 `src/utils/*` 运行，不等于真实浏览器/Electron 环境。
 - `scripts/*.ps1` 的默认路径是作者本机布局，他人使用需用 `QZ_*` 环境变量覆盖（见 QUICKSTART）。
 - 仓库为浅克隆，无法在本地核验上游历史（影响第三方词库的来源追溯，见 THIRD-PARTY）。
-- `Setting/SoundSetting.tsx`、`WordPanel/Word/index.tsx` 仍是较大的单文件，拆分计划见发布说明的遗留清单。
+- `WordPanel/Word/index.tsx` 仍有约 500 行（输入与结算状态机），只把展示层与可见性规则抽了出去；
+  继续拆需要更细的埋点用例，见 `docs/REFACTOR-LOG.md` 的遗留清单。
