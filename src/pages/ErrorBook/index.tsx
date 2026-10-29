@@ -4,17 +4,16 @@ import type { ISortType } from './HeadWrongNumber'
 import HeadWrongNumber from './HeadWrongNumber'
 import Pagination, { ITEM_PER_PAGE } from './Pagination'
 import RowDetail from './RowDetail'
+import { buildDeleteConfirmText } from './deleteConfirm'
+import { useGroupedWrongRecords } from './hooks/useGroupedWrongRecords'
 import { currentRowDetailAtom } from './store'
-import type { groupedWordRecords } from './type'
 import CloseButton from '@/components/CloseButton'
 import { LoadingUI } from '@/components/Loading'
+import { useDeleteWordRecord } from '@/hooks/useRecordMutations'
 import { idDictionaryMap } from '@/resources/dictionary'
 import { currentDictIdAtom, reviewModeInfoAtom } from '@/store'
 import type { Word } from '@/typings'
-import { useDeleteWordRecord } from '@/hooks/useRecordMutations'
-import { db } from '@/utils/db'
 import { ReviewRecord } from '@/utils/db/record'
-import { memoryKey } from '@/utils/memoryKey'
 import { wordListFetcher } from '@/utils/wordListFetcher'
 import * as ScrollArea from '@radix-ui/react-scroll-area'
 import { useAtomValue, useSetAtom } from 'jotai'
@@ -22,57 +21,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useHotkeys } from 'react-hotkeys-hook'
 import { useNavigate } from 'react-router-dom'
 
-/** v9.3：词典显示名（自定义词库不在 idDictionaryMap 里，回退显示命名空间） */
-function dictDisplayName(dict: string): string {
-  const info = idDictionaryMap[dict]
-  if (info?.name) return info.name
-  if (dict.startsWith('custom:')) return `自定义词库「${dict.slice('custom:'.length)}」`
-  return dict || '未知词典'
-}
-
-/**
- * v9.3（数据层 P1）：删除前的影响预览（只读统计，不写库）。
- * 删除会同时移除该词在该词典下的全部 wordRecords 与对应 memoryRecord，
- * 因此这里明确列出条数与其他词典是否还有同词记录，避免误删不可恢复。
- */
-async function buildDeleteConfirmText(word: string, dict: string): Promise<string> {
-  let recordCount = 0
-  let hasMemoryRecord = false
-  let otherDicts: string[] = []
-  let statsOk = true
-  try {
-    const [count, memoryRecord, sameWordRecords] = await Promise.all([
-      db.wordRecords.where({ word, dict }).count(),
-      db.memoryRecords.get(memoryKey(dict, word)),
-      db.wordRecords.where('word').equals(word).toArray(),
-    ])
-    recordCount = count
-    hasMemoryRecord = !!memoryRecord
-    otherDicts = Array.from(new Set(sameWordRecords.map((record) => record.dict))).filter((item) => item !== dict)
-  } catch (error) {
-    // 统计失败不阻断删除流程，但不再展示条数，避免误导
-    statsOk = false
-    console.error('统计待删除记录失败：', error)
-  }
-  const lines = [
-    `确认从错题本删除「${word}」？`,
-    '',
-    `词典：${dictDisplayName(dict)}`,
-    statsOk
-      ? `将删除 ${recordCount} 条练习记录（含答对记录）${hasMemoryRecord ? ' + 1 条记忆曲线记录' : '（未找到记忆曲线记录）'}`
-      : '无法读取待删除记录数：仍会删除该词在该词典下的全部练习记录与记忆曲线记录',
-    '删除后该词的复习进度会丢失，并重新进入新词池；累计/今日/到期统计会同步减少，此操作不可恢复。',
-  ]
-  if (otherDicts.length > 0) {
-    lines.push(`注意：该单词在以下词典也有错题记录，本次只删除「${dictDisplayName(dict)}」：${otherDicts.map(dictDisplayName).join('、')}`)
-  }
-  return lines.join('\n')
-}
-
 export function ErrorBook() {
-  const [groupedRecords, setGroupedRecords] = useState<groupedWordRecords[]>([])
   const [currentPage, setCurrentPage] = useState(1)
-  const totalPages = useMemo(() => Math.ceil(groupedRecords.length / ITEM_PER_PAGE), [groupedRecords.length])
   const [sortType, setSortType] = useState<ISortType>('asc')
   const navigate = useNavigate()
   const currentRowDetail = useAtomValue(currentRowDetailAtom)
@@ -80,9 +30,9 @@ export function ErrorBook() {
   const setReviewModeInfo = useSetAtom(reviewModeInfoAtom)
   const { deleteWordRecord } = useDeleteWordRecord()
   const [reload, setReload] = useState(false)
-  // PAGES-006/013：区分“加载中 / 加载失败 / 确实没有错题”三种状态，避免数据库异常时永久空白
-  const [isLoading, setIsLoading] = useState(true)
-  const [loadError, setLoadError] = useState(false)
+  // PAGES-006/013：加载中 / 加载失败 / 确实没有错题 三态（读取逻辑见 hooks/useGroupedWrongRecords）
+  const { groupedRecords, isLoading, loadError } = useGroupedWrongRecords(reload)
+  const totalPages = useMemo(() => Math.ceil(groupedRecords.length / ITEM_PER_PAGE), [groupedRecords.length])
 
   // PAGES-005：删除或重新加载后总页数可能变小，把 currentPage 收敛到合法范围，
   // 避免停留在越界页导致列表空白、分页显示「2 / 1」。
@@ -138,59 +88,6 @@ export function ErrorBook() {
     const end = start + ITEM_PER_PAGE
     return sortedRecords.slice(start, end)
   }, [currentPage, sortedRecords])
-
-  useEffect(() => {
-    let cancelled = false
-    setIsLoading(true)
-    setLoadError(false)
-
-    db.wordRecords
-      .where('wrongCount')
-      .above(0)
-      .toArray()
-      .then((records) => {
-        if (cancelled) return
-        const groups: groupedWordRecords[] = []
-        // v9.14（dsh，M4-012）：分组从 groups.find（O(n·m)）改为 Map 索引；
-        // key 用 \u0000 分隔，避免 dict+word 直接拼接撞键。插入顺序与结果集合不变。
-        const groupMap = new Map<string, groupedWordRecords>()
-
-        records.forEach((record) => {
-          const key = `${record.dict}\u0000${record.word}`
-          let group = groupMap.get(key)
-          if (!group) {
-            group = { word: record.word, dict: record.dict, records: [], wrongCount: 0 }
-            groupMap.set(key, group)
-            groups.push(group)
-          }
-          // v9.14（dsh，M4-017）：db.wordRecords 已是 Table<WordRecord>，无需再 as
-          group.records.push(record)
-        })
-
-        groups.forEach((group) => {
-          group.wrongCount = group.records.reduce((acc, cur) => {
-            acc += cur.wrongCount
-            return acc
-          }, 0)
-        })
-
-        setGroupedRecords(groups)
-      })
-      .catch((error) => {
-        if (cancelled) return
-        // PAGES-013：IndexedDB 打不开/查询失败时给出可重试的错误态，而不是静默空白
-        console.error('错题本读取失败：', error)
-        setLoadError(true)
-        setGroupedRecords([])
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false)
-      })
-
-    return () => {
-      cancelled = true
-    }
-  }, [reload])
 
   const handleDelete = async (word: string, dict: string) => {
     // v9.3：先确认并展示影响（条数/词典/不可恢复），取消则不删
@@ -290,9 +187,7 @@ export function ErrorBook() {
             </ScrollArea.Root>
           </div>
         </div>
-        {totalPages > 0 && (
-          <Pagination className="pt-3" page={currentPage} setPage={setPage} totalPages={totalPages} />
-        )}
+        {totalPages > 0 && <Pagination className="pt-3" page={currentPage} setPage={setPage} totalPages={totalPages} />}
       </div>
       {currentRowDetail && <RowDetail currentRowDetail={currentRowDetail} allRecords={sortedRecords} />}
     </>

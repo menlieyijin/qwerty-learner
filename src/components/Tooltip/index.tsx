@@ -1,4 +1,4 @@
-import { classNames } from '@/utils'
+import { cn } from '@/utils/ui'
 import type { ReactNode } from 'react'
 import { useState } from 'react'
 
@@ -11,7 +11,7 @@ const Tooltip = ({ children, content, className, placement = 'top' }: TooltipPro
   }[placement]
 
   return (
-    <div className={classNames('relative', className)}>
+    <div className={cn('relative', className)}>
       <div onMouseEnter={() => setVisible(true)} onMouseLeave={() => setVisible(false)} onBlur={() => setVisible(false)}>
         {children}
       </div>
