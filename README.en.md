@@ -79,7 +79,9 @@ scripts/                 release / rollback / quality gate / CDP smoke / level-p
 | --- | --- |
 | `npm run test:quality` | `tsc --noEmit` + `eslint src --max-warnings 0` (same as CI) |
 | `npm run test:local` | 11-check CDP smoke (needs an instance started with `--remote-debugging-port=9472`) |
-| `node scripts/verify-start-level.mjs` | 21-check behavioural test for the level picker (first-run dialog → pick → correct dictionary → persists across restart → edit from dictionary page → existing users are not interrupted) |
+| `npm run test:start-level` | 21-check behavioural test for the level picker (first-run dialog → pick → correct dictionary → persists across restart → edit from dictionary page → existing users are not interrupted) |
+| `npm run test:pages` | 17-check page regression (error book sort/detail/Esc/delete-cancel, settings panel, malformed payload does not white-screen) |
+| `npm run test:csv` | 14 assertions for CSV-export formula-injection hardening |
 | `npm run quality` | PowerShell quality gate (tsc + eslint + core regression) |
 | `scripts/dsh-release.ps1` | Pack asar / test install / isolated smoke / dual-directory install |
 | `scripts/dsh-rollback.ps1` | Roll back to the previous build (saves a redo point first) |

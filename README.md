@@ -76,7 +76,9 @@ scripts/                 发布 / 回滚 / 质量门禁 / CDP 冒烟 / 起点选
 | --- | --- |
 | `npm run test:quality` | `tsc --noEmit` + `eslint src --max-warnings 0`（CI 同款） |
 | `npm run test:local` | CDP 冒烟 11 项（需先启动带 `--remote-debugging-port=9472` 的实例） |
-| `node scripts/verify-start-level.mjs` | 起点选择行为验证 21 项（首启弹窗 → 选档 → 出对应词 → 重启保持 → 词库页修改 → 老用户不打扰） |
+| `npm run test:start-level` | 起点选择行为验证 21 项（首启弹窗 → 选档 → 出对应词 → 重启保持 → 词库页修改 → 老用户不打扰） |
+| `npm run test:pages` | 页面级回归 17 项（错题本排序/详情/Esc/删除取消、设置面板、脏 payload 不白屏） |
+| `npm run test:csv` | 错题本 CSV 导出公式注入防护 14 项断言 |
 | `npm run quality` | PowerShell 质量门禁（tsc + eslint + 核心回归） |
 | `scripts/dsh-release.ps1` | 打包 asar / 测试安装 / 隔离冒烟 / 双目录安装 |
 | `scripts/dsh-rollback.ps1` | 回滚到上一个版本（回滚前自动存 redo 点） |

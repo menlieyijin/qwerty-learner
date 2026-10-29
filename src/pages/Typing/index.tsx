@@ -15,6 +15,7 @@ import Tooltip from '@/components/Tooltip'
 import { DUE_REVIEW_WORDS_STORAGE_KEY } from '@/constants'
 import { idDictionaryMap } from '@/resources/dictionary'
 import { currentChapterAtom, currentDictIdAtom, isReviewModeAtom, reviewModeInfoAtom } from '@/store'
+import type { Word } from '@/typings'
 import { IsDesktop, isLegal } from '@/utils'
 import { recordSkip } from '@/utils/autoLevel'
 import { removeFromRequeue } from '@/utils/sessionRequeue'
@@ -52,12 +53,21 @@ const App: React.FC = () => {
       if (!raw) return
       localStorage.removeItem(DUE_REVIEW_WORDS_STORAGE_KEY)
       const words = JSON.parse(raw)
-      if (Array.isArray(words) && words.length > 0) {
+      // v9.19（dsh，F5-002）：这条通道的 payload 来自 localStorage（增强面板写入 / 备份恢复 / 手改），
+      // 属于不可信输入。原来只判断「是不是非空数组」，元素形状不校验 —— 一个 null 或 {} 就会让
+      // WordPanel 读 word.name 时抛 TypeError，整页落到 ErrorBoundary（实测「页面出错了」）。
+      // 这里按 Word 的最小必要字段（name 为字符串）过滤，其余丢弃。
+      const validWords = Array.isArray(words)
+        ? words.filter((w): w is Word => !!w && typeof w === 'object' && typeof (w as Word).name === 'string' && !!(w as Word).name)
+        : []
+      if (validWords.length > 0) {
         setReviewModeInfo({
           isReviewMode: true,
           reviewKind: 'due',
-          reviewRecord: { dict: 'due-review', index: 0, createTime: Date.now(), isFinished: false, words },
+          reviewRecord: { dict: 'due-review', index: 0, createTime: Date.now(), isFinished: false, words: validWords },
         })
+      } else {
+        console.warn('due review payload 无有效词条，已忽略：', raw.slice(0, 120))
       }
     } catch (e) {
       console.error('consume due review words failed', e)

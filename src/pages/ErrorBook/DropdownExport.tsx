@@ -1,6 +1,7 @@
 import { idDictionaryMap } from '@/resources/dictionary'
 import type { Word } from '@/typings'
 import { formatDate } from '@/utils'
+import { csvSafeCell } from '@/utils/csvSafe'
 import { wordListFetcher } from '@/utils/wordListFetcher'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { saveAs } from 'file-saver'
@@ -83,7 +84,19 @@ const DropdownExport: FC<DropdownProps> = ({ renderRecords }) => {
         const content = ExportData.map((item) => `${item.单词}: ${item.释义}`).join('\n')
         blob = new Blob([content], { type: 'text/plain' })
       } else {
-        const worksheet = XLSX.utils.json_to_sheet(ExportData)
+        // v9.19（dsh，F5-001）：.csv 是纯文本、没有单元格类型，以 `=` `+` `-` `@` 开头的内容会被
+        // Excel / WPS 当成公式执行（CSV injection）；.xlsx 由 SheetJS 写成 t:"s" 字符串单元格（已实测），
+        // 不会被执行，因此只对 csv 加前缀，避免改变 xlsx 的内容。
+        const rows =
+          bookType === 'csv'
+            ? ExportData.map((item) => ({
+                单词: csvSafeCell(item.单词),
+                释义: csvSafeCell(item.释义),
+                错误次数: item.错误次数,
+                词典: csvSafeCell(item.词典),
+              }))
+            : ExportData
+        const worksheet = XLSX.utils.json_to_sheet(rows)
         const workbook = XLSX.utils.book_new()
         XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1')
         const excelBuffer = XLSX.write(workbook, { bookType: bookType as XLSX.BookType, type: 'array' })
