@@ -1,5 +1,5 @@
-import type { Word } from '@/typings'
 import { memoryKey } from './memoryKey'
+import type { Word } from '@/typings'
 
 /**
  * 会话内错词重现队列（v8）：

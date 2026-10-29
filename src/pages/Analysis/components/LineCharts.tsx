@@ -79,8 +79,8 @@ const LineCharts: FC<LineChartsProps> = ({ data, title, suffix, name }) => {
     return () => {
       instance.dispose()
     }
-  // v9.14（dsh，M4-014）：依赖数组去掉 `title`——它只用于 JSX 标题、不进 ECharts option，
-  // 留在依赖里会在标题变化时触发一次无意义的 dispose/init。
+    // v9.14（dsh，M4-014）：依赖数组去掉 `title`——它只用于 JSX 标题、不进 ECharts option，
+    // 留在依赖里会在标题变化时触发一次无意义的 dispose/init。
   }, [data, hasData, suffix, name, isOpenDarkMode])
 
   useEffect(() => {

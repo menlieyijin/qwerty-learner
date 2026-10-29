@@ -6,7 +6,14 @@ import Phonetic from './components/Phonetic'
 import Translation from './components/Translation'
 import WordComponent from './components/Word'
 import { usePrefetchPronunciationSound } from '@/hooks/usePronunciation'
-import { currentDictIdAtom, isReviewModeAtom, isShowPrevAndNextWordAtom, loopWordConfigAtom, phoneticConfigAtom, reviewModeInfoAtom } from '@/store'
+import {
+  currentDictIdAtom,
+  isReviewModeAtom,
+  isShowPrevAndNextWordAtom,
+  loopWordConfigAtom,
+  phoneticConfigAtom,
+  reviewModeInfoAtom,
+} from '@/store'
 import type { Word, WordWithIndex } from '@/typings'
 import { recordSkip } from '@/utils/autoLevel'
 import { deferMemoryDue } from '@/utils/db'
@@ -164,11 +171,23 @@ export default function WordPanel({
         if (currentWord) {
           // v9.3：跳过必须落状态（skipCount/suspended），否则该词永远 unseen、级别卡死
           const dict = currentWord.dict || currentDictId
-          try { recordSkip(dict, currentWord.name) } catch { /* ignore */ }
+          try {
+            recordSkip(dict, currentWord.name)
+          } catch {
+            /* ignore */
+          }
           // v9.4（SRS-001）：跳过的词不要再从「错词当场重现」队列里回来
-          try { removeFromRequeue(dict, currentWord.name) } catch { /* ignore */ }
+          try {
+            removeFromRequeue(dict, currentWord.name)
+          } catch {
+            /* ignore */
+          }
           // v9.4（SRS-001）：非复习模式同样顺延 due，否则被跳过的到期词下一轮立刻再出现
-          try { await deferMemoryDue(dict, currentWord.name, 1) } catch { /* ignore */ }
+          try {
+            await deferMemoryDue(dict, currentWord.name, 1)
+          } catch {
+            /* ignore */
+          }
         }
         if (!isReviewMode && onNeedNextWord) {
           const next = await onNeedNextWord()
@@ -253,7 +272,10 @@ export default function WordPanel({
   const fullTrans = useMemo(() => (currentWord?.trans || []).join('；'), [currentWord])
   // 简洁模式：只显示第一条释义，过长截断（悬停可看完整释义）
   const conciseTrans = useMemo(() => {
-    const first = String((currentWord?.trans || [])[0] || '').split(/[；;，,]/)[0]?.trim() || ''
+    const first =
+      String((currentWord?.trans || [])[0] || '')
+        .split(/[；;，,]/)[0]
+        ?.trim() || ''
     return first.length > 30 ? first.slice(0, 30) + '…' : first
   }, [currentWord])
 
@@ -281,7 +303,9 @@ export default function WordPanel({
                     <p className="mt-3 flex w-full select-none flex-wrap items-center justify-center gap-x-2.5 gap-y-1 text-sm font-medium leading-5 text-gray-600 dark:text-gray-300">
                       <span>
                         今日练习{' '}
-                        <b className="font-semibold tabular-nums text-gray-800 dark:text-gray-100">{summary.todayPracticed.toLocaleString()}</b>
+                        <b className="font-semibold tabular-nums text-gray-800 dark:text-gray-100">
+                          {summary.todayPracticed.toLocaleString()}
+                        </b>
                       </span>
                       <span className="text-gray-300 dark:text-gray-600">·</span>
                       <span>
@@ -305,7 +329,9 @@ export default function WordPanel({
                         >
                           {summary.due.toLocaleString()}
                         </b>
-                        {summary.due > 0 && <span className="text-[11px] text-amber-600/80 group-hover:underline dark:text-amber-400/80">去复习 →</span>}
+                        {summary.due > 0 && (
+                          <span className="text-[11px] text-amber-600/80 group-hover:underline dark:text-amber-400/80">去复习 →</span>
+                        )}
                       </button>
                       <span className="text-gray-300 dark:text-gray-600">·</span>
                       <span>

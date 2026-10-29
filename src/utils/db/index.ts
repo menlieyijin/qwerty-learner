@@ -1,8 +1,8 @@
 import type { IChapterRecord, IMemoryRecord, IReviewRecord } from './record'
 import { ChapterRecord, ReviewRecord, WordRecord } from './record'
-import { MEMORY_GRADUATE_STAGE, adaptiveDaysFromRecord, clampStage, ladderDays } from '@/utils/memoryLadder'
 import { removeMemoryCache, upsertMemoryCache } from '@/utils/memoryCache'
 import { legacyMemoryKey, memoryKey, memoryKeyCandidates, normalizeWordKeyWord } from '@/utils/memoryKey'
+import { MEMORY_GRADUATE_STAGE, adaptiveDaysFromRecord, clampStage, ladderDays } from '@/utils/memoryLadder'
 import { computeDue, evaluateWrong, shouldCountSlow } from '@/utils/srsRules'
 import type { Table } from 'dexie'
 import Dexie from 'dexie'
@@ -179,7 +179,9 @@ export async function updateMemoryProgress(
         const { clearSkip, suspendWord } = await import('@/utils/autoLevel')
         clearSkip(dict, word)
         if (!ok && rec.lapses >= 4) suspendWord(dict, word)
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
 
     if (isRefresh) {

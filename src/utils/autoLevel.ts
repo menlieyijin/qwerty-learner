@@ -13,13 +13,13 @@
  * （v9.3.1：`resumeWord` 里复位 lapses 需要写 indexDB，用**动态** `await import('@/utils/db')` 完成，
  *   与 db/index.ts 反向动态 import autoLevel 对称，不在模块初始化期形成 TDZ 循环。）
  */
+import { effectiveDueOf, isDue, isMastered } from './srsRules'
 import type { Word } from '@/typings'
 import type { IMemoryRecord } from '@/utils/db/record'
 import { LEARNING_PATH, loadLevelWords } from '@/utils/learningPath'
 import type { LearningLevel } from '@/utils/learningPath'
-import { memoryKey, normalizeWordName } from '@/utils/memoryKey'
 import { clearMemoryCache } from '@/utils/memoryCache'
-import { effectiveDueOf, isDue, isMastered } from './srsRules'
+import { memoryKey, normalizeWordName } from '@/utils/memoryKey'
 
 /** localStorage 键（随备份/导入迁移，见 enhance.js collectBackupSnapshot 的 localStorage 全量快照） */
 export const AUTO_LEVEL_STORAGE_KEY = 'qzAutoLevelState'
@@ -438,9 +438,7 @@ export type AutoLevelKeyMigrationResult = {
 }
 
 /** 把 Map / 普通对象形态的映射统一成只含「合法且非同值」条目的 Map（非法输入一律忽略） */
-function normalizeKeyRenameMap(
-  legacyToNewKeyMap: Map<string, string> | Record<string, string>,
-): Map<string, string> {
+function normalizeKeyRenameMap(legacyToNewKeyMap: Map<string, string> | Record<string, string>): Map<string, string> {
   const map = new Map<string, string>()
   if (!legacyToNewKeyMap || typeof legacyToNewKeyMap !== 'object') return map
   const entries: Array<[string, string]> =
@@ -475,9 +473,7 @@ function normalizeKeyRenameMap(
  *
  * @param legacyToNewKeyMap 旧 key → 新 key 映射；同值条目会被忽略
  */
-export function migrateAutoLevelStateKeys(
-  legacyToNewKeyMap: Map<string, string> | Record<string, string>,
-): AutoLevelKeyMigrationResult {
+export function migrateAutoLevelStateKeys(legacyToNewKeyMap: Map<string, string> | Record<string, string>): AutoLevelKeyMigrationResult {
   const renameMap = normalizeKeyRenameMap(legacyToNewKeyMap)
   const result: AutoLevelKeyMigrationResult = {
     changed: false,
@@ -516,9 +512,7 @@ export function migrateAutoLevelStateKeys(
   // 变化判定用序列化比较：改名/合并/去重任一发生即需写回
   const skippedChanged = JSON.stringify(skipped) !== JSON.stringify(state.skipped)
   const suspendedChanged = JSON.stringify(suspended.keys) !== JSON.stringify(state.suspended)
-  const snapshotChanged = snapshot
-    ? JSON.stringify(snapshot.keys) !== JSON.stringify(state.suspendedSnapshot)
-    : false
+  const snapshotChanged = snapshot ? JSON.stringify(snapshot.keys) !== JSON.stringify(state.suspendedSnapshot) : false
   if (!skippedChanged && !suspendedChanged && !snapshotChanged) return result
 
   result.suspendedMoved = suspended.moved
@@ -764,9 +758,7 @@ function makeWord(word: Word): Word {
 }
 
 /** 加载级别词表；把「抛错或空词表」视为加载失败（LEARNING_PATH 各级不应为空） */
-async function loadLevelWordList(
-  level: LearningLevel,
-): Promise<{ words: Word[]; error?: 'load-failed' }> {
+async function loadLevelWordList(level: LearningLevel): Promise<{ words: Word[]; error?: 'load-failed' }> {
   let loaded: Word[] = []
   try {
     loaded = await loadLevelWords(level)
@@ -861,10 +853,7 @@ function buildCachedInfo(progress: LevelProgress, due: number): AutoLevelCachedI
  * - seen === required 且 mastered / required >= MASTERY_RATIO（v9.11：0.85）→ done；
  * - 词库加载失败 → error='load-failed' 且 done=false（不判完成）。
  */
-export async function computeLevelProgress(
-  records: IMemoryRecord[],
-  levelId?: string,
-): Promise<LevelProgress> {
+export async function computeLevelProgress(records: IMemoryRecord[], levelId?: string): Promise<LevelProgress> {
   const state = loadAutoLevelState()
   const requestedLevelId = levelId || state.levelId
   let index = findLevelIndex(requestedLevelId)
@@ -931,10 +920,7 @@ export async function computeLevelProgress(
   }
 
   const required = requiredCount
-  const done =
-    required === 0
-      ? true
-      : seenCount === required && (masteredCount / required) >= MASTERY_RATIO
+  const done = required === 0 ? true : seenCount === required && masteredCount / required >= MASTERY_RATIO
 
   return {
     levelId: level.id,
@@ -1041,10 +1027,7 @@ type ReevaluateOptions = {
  * - migrate=false：第一个未完成的级别（新判据）。
  * 会覆盖持久化的 levelId（这是唯一允许回退的入口），不 dispatch 升级事件。
  */
-export async function reevaluateLevel(
-  records: IMemoryRecord[],
-  options: ReevaluateOptions = {},
-): Promise<LevelProgress> {
+export async function reevaluateLevel(records: IMemoryRecord[], options: ReevaluateOptions = {}): Promise<LevelProgress> {
   const state = loadAutoLevelState()
   const firstLevel = getLevelAt(0)
   if (!firstLevel) {

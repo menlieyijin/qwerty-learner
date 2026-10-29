@@ -1,6 +1,6 @@
 import { safeStorage } from './storage'
-import type { ReviewRecord } from '@/utils/db/record'
 import { REVIEW_MODE_INFO_STORAGE_KEY } from '@/constants'
+import type { ReviewRecord } from '@/utils/db/record'
 import { atom } from 'jotai'
 import { atomWithStorage } from 'jotai/utils'
 

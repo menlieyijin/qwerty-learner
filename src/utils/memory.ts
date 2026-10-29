@@ -1,11 +1,3 @@
-import type { Word } from '@/typings'
-import type { IMemoryRecord } from './db/record'
-import { db } from './db'
-import { idDictionaryMap } from '@/resources/dictionary'
-import { LEARNING_PATH, loadDictWords, loadLevelWords } from './learningPath'
-import { clearMemoryCache, getMemoryCache, setMemoryCache } from './memoryCache'
-import { legacyMemoryKey, memoryKey, normalizeWordKeyWord, normalizeWordName } from './memoryKey'
-import { MEMORY_LADDER } from './memoryLadder'
 import {
   applyPendingResumeLapses,
   computeLevelProgress,
@@ -21,8 +13,16 @@ import {
   resolveCurrentLevel,
 } from './autoLevel'
 import type { LevelProgress } from './autoLevel'
+import { db } from './db'
+import type { IMemoryRecord } from './db/record'
+import { LEARNING_PATH, loadDictWords, loadLevelWords } from './learningPath'
+import { clearMemoryCache, getMemoryCache, setMemoryCache } from './memoryCache'
+import { legacyMemoryKey, memoryKey, normalizeWordKeyWord, normalizeWordName } from './memoryKey'
+import { MEMORY_LADDER } from './memoryLadder'
 import { takeRequeueWord } from './sessionRequeue'
 import { computeDue, correctClockRollback, effectiveDueOf, migrateStage, shouldCountSlow } from './srsRules'
+import { idDictionaryMap } from '@/resources/dictionary'
+import type { Word } from '@/typings'
 
 /**
  * v9.13（M1-017）：删掉历史兼容的 `memoryKey` 再导出（grep 反证：src 内无任何 `from '@/utils/memory'`
@@ -368,7 +368,9 @@ async function migrateMemoryRecords(): Promise<void> {
   let existingCount = 0
   try {
     existingCount = await db.memoryRecords.count()
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   // v9.13（M1-002）：localStorage 可能整体不可用（无痕/被策略禁用/第三方 iframe 抛 SecurityError）。
   // 这里只读写「迁移标记」，不可用时不能抛错——否则 ensureMemoryMigrated 的 promise 会变成 rejected
   // 并被缓存，本会话里 key 大小写迁移 / 时钟回拨校准 / 外部恢复对账全部跳过。
@@ -405,7 +407,18 @@ async function migrateMemoryRecords(): Promise<void> {
     const existing = new Set((await db.memoryRecords.toArray()).map((r) => r.key))
     const agg = new Map<
       string,
-      { key: string; word: string; dict: string; trans?: string[]; phone?: string; attempts: number; wrong: number; lastSeen: number; created: number; slow: number }
+      {
+        key: string
+        word: string
+        dict: string
+        trans?: string[]
+        phone?: string
+        attempts: number
+        wrong: number
+        lastSeen: number
+        created: number
+        slow: number
+      }
     >()
     for (const r of rows) {
       if (!r || !r.word || !r.dict) continue
@@ -522,14 +535,21 @@ export async function getLearningSummary(): Promise<{ learned: number; due: numb
     // v9.0：与数据页/分析页统一为「今日练过的词（按单词去重）」，含复习
     let todayPracticed = 0
     try {
-      const rows = await db.wordRecords.where('timeStamp').aboveOrEqual(Math.floor(startTs / 1000)).toArray()
+      const rows = await db.wordRecords
+        .where('timeStamp')
+        .aboveOrEqual(Math.floor(startTs / 1000))
+        .toArray()
       const seen = new Set<string>()
       for (const row of rows) {
-        const name = String(row.word || '').trim().toLowerCase()
+        const name = String(row.word || '')
+          .trim()
+          .toLowerCase()
         if (name) seen.add(name)
       }
       todayPracticed = seen.size
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     return { learned: records.length, due, todayNew, todayPracticed }
   } catch {
     return { learned: 0, due: 0, todayNew: 0, todayPracticed: 0 }
@@ -566,7 +586,9 @@ async function fillMissingTransInRecords(records: IMemoryRecord[]): Promise<void
             updated.push(rec)
           }
         }
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
     // 个别旧词库（如 Google 高频词）缺少释义：到初级教材词表里找同名释义兜底
     const stillMissing = missing.filter((r) => !r.trans || r.trans.length === 0)
@@ -659,11 +681,7 @@ function levelInfoFromState(): LevelInfo | null {
  * - 池子与现有新词一致：排除 recent（按 word 归一化去重）、按文件顺序前 20 个随机，保留教材顺序；
  * - 返回的 level 仍是 **本级** 进度信息，避免顶栏/进度条跳到下一级（只标 preview=true）。
  */
-async function pickPreviewWord(
-  records: IMemoryRecord[],
-  progress: LevelProgress,
-  recentSet: Set<string>,
-): Promise<PickResult | null> {
+async function pickPreviewWord(records: IMemoryRecord[], progress: LevelProgress, recentSet: Set<string>): Promise<PickResult | null> {
   const nextLevel = LEARNING_PATH[progress.index + 1]
   if (!nextLevel) return null
   let next: LevelProgress
@@ -747,7 +765,7 @@ export async function pickDynamicWord(opts: {
   const dueCount = due.length
   // v9.13（M1-015）：空数组返回 undefined，类型如实标注（T | undefined），调用点一律判空；
   // 保持「一次调用只掷一次骰」不变（确定性门禁依赖 Math.random 的调用次数与顺序）。
-  const randOf = <T,>(arr: readonly T[]): T | undefined => arr[Math.floor(Math.random() * arr.length)]
+  const randOf = <T>(arr: readonly T[]): T | undefined => arr[Math.floor(Math.random() * arr.length)]
   const refreshChance = getRefreshChance(dueCount)
   const newRatio = getNewRatio(dueCount)
 

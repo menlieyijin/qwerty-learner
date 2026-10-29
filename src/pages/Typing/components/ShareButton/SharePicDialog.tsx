@@ -98,10 +98,7 @@ export default function SharePicDialog({ showState, setShowState, randomChoose }
         const { toPng } = await import('html-to-image')
         const width = node.offsetWidth
         const height = node.offsetHeight
-        const url = await withTimeout(
-          toPng(node, { canvasWidth: width * PIC_RATIO, canvasHeight: height * PIC_RATIO }),
-          SHARE_PNG_TIMEOUT,
-        )
+        const url = await withTimeout(toPng(node, { canvasWidth: width * PIC_RATIO, canvasHeight: height * PIC_RATIO }), SHARE_PNG_TIMEOUT)
         if (cancelled || !isMountedRef.current) return
         setImageURL(url)
       } catch (e) {

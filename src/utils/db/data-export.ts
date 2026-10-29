@@ -1,13 +1,13 @@
-import type * as PakoModule from 'pako'
-import Dexie from 'dexie'
 import { db } from '.'
 import { getCurrentDate } from '..'
-import { DUE_REVIEW_WORDS_STORAGE_KEY, REVALUATE_LEVEL_STORAGE_KEY, REVIEW_MODE_INFO_STORAGE_KEY } from '@/constants'
-import { AUTO_LEVEL_STORAGE_KEY } from '@/utils/autoLevel'
-import { cleanupStaleTempImportDbs, createTempImportDbName } from './temp-import-db'
 import { MEMORY_KEY_CASE_MIGRATED_KEY, MEMORY_MIGRATED_KEY } from '../memory'
 import { clearMemoryCache } from '../memoryCache'
 import { recordDataAction } from '../mixpanel'
+import { cleanupStaleTempImportDbs, createTempImportDbName } from './temp-import-db'
+import { DUE_REVIEW_WORDS_STORAGE_KEY, REVALUATE_LEVEL_STORAGE_KEY, REVIEW_MODE_INFO_STORAGE_KEY } from '@/constants'
+import { AUTO_LEVEL_STORAGE_KEY } from '@/utils/autoLevel'
+import Dexie from 'dexie'
+import type * as PakoModule from 'pako'
 
 export type ExportProgress = {
   totalRows?: number
@@ -137,9 +137,9 @@ export async function importDatabase(onStart: () => void, callback: (importProgr
       await cleanupStaleTempImportDbs()
       tempDbName = createTempImportDbName()
       tempDb = new Dexie(tempDbName)
-      tempDb.version(Number(meta.data.databaseVersion) || 1).stores(
-        Object.fromEntries(exportedTables.map((table) => [table.name, table.schema])),
-      )
+      tempDb
+        .version(Number(meta.data.databaseVersion) || 1)
+        .stores(Object.fromEntries(exportedTables.map((table) => [table.name, table.schema])))
       await tempDb.open()
 
       await importInto(tempDb, exportBlob, {

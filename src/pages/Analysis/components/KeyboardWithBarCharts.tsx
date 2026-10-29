@@ -1,6 +1,6 @@
+import type { WrongKeyStat } from '../hooks/useWordStats'
 import Keyboard from './keyboard'
 import purple from './purple.json'
-import type { WrongKeyStat } from '../hooks/useWordStats'
 import ChartEmpty from '@/components/ChartEmpty'
 import useWindowSize from '@/hooks/useWindowSize'
 import { isOpenDarkModeAtom } from '@/store'

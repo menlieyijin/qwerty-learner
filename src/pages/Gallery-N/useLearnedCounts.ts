@@ -1,5 +1,5 @@
-import type { IMemoryRecord } from '@/utils/db/record'
 import { db } from '@/utils/db'
+import type { IMemoryRecord } from '@/utils/db/record'
 import { canonicalizeMemoryRecords } from '@/utils/memory'
 import { getMemoryCache } from '@/utils/memoryCache'
 import { useEffect, useMemo, useState } from 'react'

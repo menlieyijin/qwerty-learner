@@ -31,11 +31,14 @@ const MASTERED_MIN_STAGE = 2
 const MS_PER_DAY = 24 * 3600 * 1000
 
 /** `evaluateWrong` 的输入记录（只读取需要的字段，便于测试与旧记录兼容）。 */
-export type WrongEvalInput = {
-  stage: number
-  ease: number
-  lapses: number
-} | null | undefined
+export type WrongEvalInput =
+  | {
+      stage: number
+      ease: number
+      lapses: number
+    }
+  | null
+  | undefined
 
 /** `evaluateWrong` 的返回值：新档位、新 ease、本次 lapse 增量、是否计入 lapse。 */
 export type WrongEvalResult = {
@@ -46,11 +49,14 @@ export type WrongEvalResult = {
 }
 
 /** `isMastered` 的输入记录（只读取需要的字段）。 */
-export type MasteryRecord = {
-  correct: number
-  stage: number
-  lastResult?: string
-} | null | undefined
+export type MasteryRecord =
+  | {
+      correct: number
+      stage: number
+      lastResult?: string
+    }
+  | null
+  | undefined
 
 /**
  * 计算下次到期时间。

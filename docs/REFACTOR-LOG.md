@@ -136,7 +136,7 @@
 | L-8 | 仓库是**浅克隆**（AUDIT S4） | **无法处理** | `fetch --unshallow` 会拉取上游全部历史，与「不拉取上游代码」的指令冲突；影响 5 本第三方词库的来源核验（`docs/THIRD-PARTY.md` 已按可查证据登记） |
 | L-9 | 309 条核心回归脚本不在仓库 | **已闭环** | 已迁入 `scripts/core-regression`（路径仓库相对、产物 gitignore、`npm run test:core`），发布脚本默认改指仓库内。**新差距**：它是 stub 化的纯算法仿真，不等于真实浏览器/Electron 环境 |
 | L-10 | 提交**未推送**到 fork | **按指示未推** | 远端 `fork/dsh-local-v8` 仍停在 `8ae7577`；本地领先 20 个提交 |
-| L-11 | 全仓 prettier 未统一 | **未做** | `prettier --check src` 仍报 21 个文件（均为既有文件）。仓库配置含 `prettier-plugin-tailwindcss`，批量格式化会重排 class 顺序 → 需要视觉回归，本环境没有，按「不确定不改」保留 |
+| L-11 | 全仓 prettier 未统一 | **已闭环**（v10.2.1） | 按仓库配置全量格式化 18 个文件（含 `prettier-plugin-tailwindcss` 的 class 排序）。验证：tsc + eslint + build + 冒烟 11/11 + 四脚本 21/17/16/14 + 核心回归 309/309 全过。**残余风险**：class 重排的视觉差异没有像素级回归手段 |
 | L-12 | 结果页空词表的正确率语义 | **待确认** | 现按 0%；若产品上希望「无词不算错」，应改成不展示该指标 |
 
 ---
