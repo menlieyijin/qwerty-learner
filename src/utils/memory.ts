@@ -13,6 +13,7 @@ import {
   resolveCurrentLevel,
 } from './autoLevel'
 import type { LevelProgress } from './autoLevel'
+import { normalizeTrans } from '@/utils/trans'
 import { db } from './db'
 import type { IMemoryRecord } from './db/record'
 import { LEARNING_PATH, loadDictWords, loadLevelWords } from './learningPath'
@@ -627,7 +628,7 @@ async function fillMissingTransInRecords(records: IMemoryRecord[]): Promise<void
 function recordToWord(rec: IMemoryRecord): Word {
   return {
     name: rec.word,
-    trans: Array.isArray(rec.trans) ? rec.trans : [],
+    trans: normalizeTrans(rec.trans),
     usphone: rec.phone || '',
     ukphone: rec.phone || '',
   }

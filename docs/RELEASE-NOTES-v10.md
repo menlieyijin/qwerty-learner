@@ -1,6 +1,6 @@
 # v10.0.0 / v10.1.0 发布说明（dsh）
 
-> 版本字符串：`1.0.0-enhanced-v10.2.0`（唯一来源：`local-fork/package.json`；v10.0.0 / v10.1.0 为同一基线的早期版本）
+> 版本字符串：`1.0.0-enhanced-v10.3.0`（唯一来源：`local-fork/package.json`；v10.0.0 / v10.1.0 / v10.2.x 为同一基线的早期版本）
 > 基线：v9.15.1（`ce7eb79`）→ 本次重构 6 个提交 → v10.0.0
 > 逐条问题记录（根因 / 修复 / 验证 / 风险）见 [`REFACTOR-LOG.md`](./REFACTOR-LOG.md)
 
@@ -197,3 +197,115 @@ npm run test:core   # build-core → srs-sim → sim-autolevel → determinism �
 - L-11 全仓 prettier 未统一：`prettier --check src` 仍报 21 个既有文件；仓库配置带
   `prettier-plugin-tailwindcss`，批量格式化会重排 class 顺序，需要视觉回归，本环境没有 → 未做。
 - L-12 空词表正确率语义（0% vs 不展示）需产品确认，现按 0%。
+
+
+---
+
+# v10.3.0 追加（结构收尾：状态机抽离 + 归一化全统一 + 完整历史核验）
+
+## 1. Word 组件最后一块也拆了
+
+`Word/index.tsx` **500 → 400 行**，`useAttemptSettlement.ts`（147 行）承接全部作答结算：
+
+| 迁出的东西 | 说明 |
+| --- | --- |
+| `AttemptMeta` / `createAttemptMeta` | 一次作答的结算元数据（已上报计数、错字下标长度、是否已落库/已结算） |
+| `flushStats()` | 增量上报（幂等）：只把「自上次上报以来」的按键与错字写进 chapterData |
+| `persistOnce()` | 每个 attempt 只落库一次，返回 Promise 供父级保序 |
+| `settleAttempt({persist})` | 组合入口：先 flush，必要时落库 |
+| `resetAttempt()` | 换词时重置 meta（原来在换词 effect 里直接赋值） |
+
+组件现在只剩：输入处理（`updateInput`）、渲染编排、settleRef 注册。
+
+## 2. `trans` 归一化 8/8 统一
+
+之前只合并了语义相同的 3 处，剩下 5 处语义各不相同（有的不过滤、有的不回退标量）。
+本版全部并入 `normalizeTrans`，并把「4 类旧语义 + 统一后的行为变化」写进 `src/utils/trans.ts` 头部。
+方向都是更健壮：`autoLevel`/`sessionRequeue`/`memory` 现在接受标量 `trans`；`Word`/`useGetWord`/`memory` 现在过滤非字符串。
+
+## 3. 测试补到逐字母粒度
+
+| 用例 | 断言 |
+| --- | --- |
+| 4c | 完成词后 `wordRecords.mistakes` 记录错误下标（逐字母错因） |
+| 5d | 敲对一个字母 → 暂停 → 恢复，该字母仍为「已答对」（暂停只停表、不丢进度） |
+
+## 4. 完整历史核验（原「浅克隆」限制解除）
+
+执行 `git fetch --unshallow` 补全上游历史（**未合并任何上游代码、未改工作树**），随后用 git 历史复核词库来源：
+
+- 5 本本地补回词库在上游历史中 **0 条提交**；
+- `git diff --stat 1182426 HEAD -- public/dicts` 仅显示这 **5 个文件新增（200,766 行）**，其余 380 本与基线逐字节一致。
+
+## 本版验证
+
+| 检查 | 结果 |
+| --- | --- |
+| tsc + eslint | 通过 |
+| `test:core` | 309/309 + determinism pass |
+| `test:start-level` | 21/21 |
+| `test:pages` | 17/17 |
+| `test:typing` | **18/18** |
+| `test:csv` | 14/14 |
+| 隔离冒烟 | 11/11 |
+| 双目录安装 | 两目录 asar SHA256 一致 |
+
+## 遗留（本版关闭 3 条：L-1 / L-3 / L-8）
+
+剩余：L-12 空词表正确率语义（已按 0% 实现，若产品口径不同需改）、以及「class 重排无像素级视觉回归」这一残余风险。
+
+
+---
+
+# v10.3.0 追加（结构收尾：状态机抽离 + 归一化全统一 + 完整历史核验）
+
+## 1. Word 组件最后一块也拆了
+
+`Word/index.tsx` **500 → 400 行**，`useAttemptSettlement.ts`（147 行）承接全部作答结算：
+
+| 迁出的东西 | 说明 |
+| --- | --- |
+| `AttemptMeta` / `createAttemptMeta` | 一次作答的结算元数据（已上报计数、错字下标长度、是否已落库/已结算） |
+| `flushStats()` | 增量上报（幂等）：只把「自上次上报以来」的按键与错字写进 chapterData |
+| `persistOnce()` | 每个 attempt 只落库一次，返回 Promise 供父级保序 |
+| `settleAttempt({persist})` | 组合入口：先 flush，必要时落库 |
+| `resetAttempt()` | 换词时重置 meta（原来在换词 effect 里直接赋值） |
+
+组件现在只剩：输入处理（`updateInput`）、渲染编排、settleRef 注册。
+
+## 2. `trans` 归一化 8/8 统一
+
+之前只合并了语义相同的 3 处，剩下 5 处语义各不相同（有的不过滤、有的不回退标量）。
+本版全部并入 `normalizeTrans`，并把「4 类旧语义 + 统一后的行为变化」写进 `src/utils/trans.ts` 头部。
+方向都是更健壮：`autoLevel`/`sessionRequeue`/`memory` 现在接受标量 `trans`；`Word`/`useGetWord`/`memory` 现在过滤非字符串。
+
+## 3. 测试补到逐字母粒度
+
+| 用例 | 断言 |
+| --- | --- |
+| 4c | 完成词后 `wordRecords.mistakes` 记录错误下标（逐字母错因） |
+| 5d | 敲对一个字母 → 暂停 → 恢复，该字母仍为「已答对」（暂停只停表、不丢进度） |
+
+## 4. 完整历史核验（原「浅克隆」限制解除）
+
+执行 `git fetch --unshallow` 补全上游历史（**未合并任何上游代码、未改工作树**），随后用 git 历史复核词库来源：
+
+- 5 本本地补回词库在上游历史中 **0 条提交**；
+- `git diff --stat 1182426 HEAD -- public/dicts` 仅显示这 **5 个文件新增（200,766 行）**，其余 380 本与基线逐字节一致。
+
+## 本版验证
+
+| 检查 | 结果 |
+| --- | --- |
+| tsc + eslint | 通过 |
+| `test:core` | 309/309 + determinism pass |
+| `test:start-level` | 21/21 |
+| `test:pages` | 17/17 |
+| `test:typing` | **18/18** |
+| `test:csv` | 14/14 |
+| 隔离冒烟 | 11/11 |
+| 双目录安装 | 两目录 asar SHA256 一致 |
+
+## 遗留（本版关闭 3 条：L-1 / L-3 / L-8）
+
+剩余：L-12 空词表正确率语义（已按 0% 实现，若产品口径不同需改）、以及「class 重排无像素级视觉回归」这一残余风险。

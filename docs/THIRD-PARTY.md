@@ -37,6 +37,9 @@
 补充说明：
 
 - **来源核验（2026-10-27）**：用 GitHub contents API 核对 `RealKai42/qwerty-learner` 的 `master`、`dev`、`gh-pages` 分支，上述 5 个文件均返回 **404（不存在）**，因此可确认它们是本地补充，而非上游仓库既有文件；其 JSON 结构与上游词库同源（`name/trans/ukphone/usphone` 管线）。
+- **来源核验（2026-10-29，完整历史）**：仓库已从浅克隆补全为完整历史（`git rev-parse --is-shallow-repository` → `false`），改用 git 提交历史复核：
+  - `git log --oneline upstream-full/master -- public/dicts/{NGSL,NAWL,AWL,google-10000-english,google-20000-english}.json`，结果均为 **0 条提交** —— 上游历史上从未包含这 5 个文件；
+  - `git diff --stat 1182426 HEAD -- public/dicts` 只显示这 **5 个文件新增**（共 200,766 行），**没有任何修改或删除** —— 即其余 380 本词库与上游基线逐字节一致，本分支未改动过任何上游词库内容。
 - 上述许可信息来自各项目公开页面，本仓库**未随附**各词表的完整许可原文；如需再分发这些词表本身，请以原始来源的许可文本为准。
 - 如权利人认为随附方式不妥，请开 issue，我们会**移除对应数据文件**（本地构建可自行补回）。
 

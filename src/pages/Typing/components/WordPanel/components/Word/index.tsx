@@ -5,6 +5,7 @@ import { WordDisplay } from './WordDisplay'
 import { charsMatch, hasUntypableChar, isSeparatorEquivalenceEnabled, normalizeDisplayWord } from './displayWord'
 import { isLetterVisible } from './letterVisibility'
 import { initialWordState } from './type'
+import { useAttemptSettlement } from './useAttemptSettlement'
 import type { WordState } from './type'
 import type { WordPronunciationIconRef } from '@/components/WordPronunciationIcon'
 import { EXPLICIT_SPACE } from '@/constants'
@@ -13,44 +14,11 @@ import { useSaveWordRecord } from '@/pages/Typing/hooks/useSaveRecord'
 import { TypingContext, TypingStateActionType } from '@/pages/Typing/store'
 import { currentChapterAtom, currentDictInfoAtom, isIgnoreCaseAtom, isShowAnswerOnHoverAtom, wordDictationConfigAtom } from '@/store'
 import type { Word } from '@/typings'
-import type { LetterMistakes } from '@/utils/db/record'
 import { getUtcStringForMixpanel } from '@/utils/mixpanel'
 import { useAtomValue } from 'jotai'
 import { useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { useHotkeys } from 'react-hotkeys-hook'
 import { useImmer } from 'use-immer'
-
-type AttemptMeta = {
-  index: number
-  name: string
-  dict?: string
-  trans: string[]
-  phone: string
-  isRefresh: boolean
-  // 已上报给 reducer 的按键数（增量上报，保证重复结算幂等）
-  reportedCorrect: number
-  reportedWrong: number
-  // 每个下标已上报的错误字母数（mergeLetterMistake 是拼接语义，必须只发增量）
-  mistakeLens: Record<number, number>
-  // 本次作答的词记录是否已落库（避免暂停/跳过/切词/卸载重复写）
-  persisted: boolean
-  // 是否已被父级「放弃式结算」（persist=true）过
-  settled: boolean
-}
-
-const createAttemptMeta = (index: number, word: Word): AttemptMeta => ({
-  index,
-  name: word.name,
-  dict: word.dict,
-  trans: Array.isArray(word.trans) ? word.trans : word.trans ? [String(word.trans)] : [],
-  phone: word.usphone || word.ukphone || '',
-  isRefresh: !!word.refresh,
-  reportedCorrect: 0,
-  reportedWrong: 0,
-  mistakeLens: {},
-  persisted: false,
-  settled: false,
-})
 
 export default function WordComponent({ word, onFinish }: { word: Word; onFinish: () => void }) {
   // eslint-disable-next-line  @typescript-eslint/no-non-null-assertion
@@ -77,9 +45,14 @@ export default function WordComponent({ word, onFinish }: { word: Word; onFinish
   // v9.4（TYP-006）：当前作答的「未完成结算」基础设施
   const wordStateRef = useRef(wordState)
   wordStateRef.current = wordState
-  const attemptRef = useRef<AttemptMeta>(createAttemptMeta(state.chapterData.index, word))
-  // 已发起的落库 Promise（父级 Skip 需要 await 它，保证 deferMemoryDue 在写记录之后执行）
-  const persistPromiseRef = useRef<Promise<void> | null>(null)
+  // v10.3（dsh）：结算逻辑（增量上报 / 一次性落库 / 组合入口）抽到 useAttemptSettlement
+  const { flushStats, persistOnce, settleAttempt, resetAttempt } = useAttemptSettlement({
+    word,
+    index: state.chapterData.index,
+    dispatch,
+    saveWordRecord,
+    wordStateRef,
+  })
   // v9.4（TYP-009）：词已完成、下一词尚未挂载的窗口期内按下的键先缓存，切词后重放到新词，
   // 既不会误判成当前词的越界错误，也不会把「下一词的第一个键」吞掉。
   const pendingKeysRef = useRef<string[]>([])
@@ -93,74 +66,6 @@ export default function WordComponent({ word, onFinish }: { word: Word; onFinish
     const timer = setTimeout(() => setWrongHint(''), 1800)
     return () => clearTimeout(timer)
   }, [wrongHint, wordState.wrongCount])
-
-  /** 把自上次上报以来新增的按键/错字增量写入 chapterData（可重复调用，幂等） */
-  const flushStats = useCallback(() => {
-    const meta = attemptRef.current
-    const ws = wordStateRef.current
-    const deltaCorrect = ws.correctCount - meta.reportedCorrect
-    const deltaWrong = ws.wrongCount - meta.reportedWrong
-    const deltaMistake: LetterMistakes = {}
-    for (const key of Object.keys(ws.letterMistake)) {
-      const idx = Number(key)
-      const arr = ws.letterMistake[idx] || []
-      const already = meta.mistakeLens[idx] ?? 0
-      if (arr.length > already) deltaMistake[idx] = arr.slice(already)
-      meta.mistakeLens[idx] = arr.length
-    }
-    meta.reportedCorrect = ws.correctCount
-    meta.reportedWrong = ws.wrongCount
-    if (deltaCorrect === 0 && deltaWrong === 0 && Object.keys(deltaMistake).length === 0) return
-    dispatch({
-      type: TypingStateActionType.REPORT_WORD_RESULT,
-      payload: { index: meta.index, correctCount: deltaCorrect, wrongCount: deltaWrong, letterMistake: deltaMistake },
-    })
-  }, [dispatch])
-
-  /** 落库当前作答（每个 attempt 只写一次）；返回落库 Promise 供父级 await 保序 */
-  const persistOnce = useCallback((): Promise<void> | undefined => {
-    const meta = attemptRef.current
-    if (meta.persisted) return persistPromiseRef.current ?? undefined
-    meta.persisted = true
-    const ws = wordStateRef.current
-    dispatch({ type: TypingStateActionType.SET_IS_SAVING_RECORD, payload: true })
-    persistPromiseRef.current = saveWordRecord({
-      word: meta.name,
-      dict: meta.dict,
-      trans: meta.trans,
-      phone: meta.phone,
-      wrongCount: ws.wrongCount,
-      letterTimeArray: ws.letterTimeArray,
-      letterMistake: ws.letterMistake,
-      // v9.3：显式传递本次作答是否为回顾/重练，避免全局 refresh 标记残留
-      isRefresh: meta.isRefresh,
-    }).catch((e) => {
-      console.error('save word record failed', e)
-    })
-    return persistPromiseRef.current
-  }, [dispatch, saveWordRecord])
-
-  /**
-   * 结算当前作答。
-   * - persist=false：只把按键统计刷新进 chapterData（暂停/失焦用；词还没结束，不能写记忆曲线）
-   * - persist=true：同时落库并标记本次作答已结算（Skip / 切词库 / 组件卸载用）
-   * 返回 Promise 时，父级 await 后即可保证记录已落库（Skip 的 deferMemoryDue 必须在落库之后，避免被覆盖）。
-   */
-  const settleAttempt = useCallback(
-    (options: { persist?: boolean } = {}): Promise<void> | undefined => {
-      const meta = attemptRef.current
-      const ws = wordStateRef.current
-      flushStats()
-      if (!options.persist) return undefined
-      let pending = persistPromiseRef.current ?? undefined
-      if (!meta.persisted && (ws.correctCount + ws.wrongCount > 0 || ws.hasMadeInputWrong)) {
-        pending = persistOnce() ?? pending
-      }
-      meta.settled = true
-      return pending
-    },
-    [flushStats, persistOnce],
-  )
 
   // 用 ref 转发，避免 settleAttempt 身份变化导致「卸载结算」effect 被反复清理/执行
   const settleFnRef = useRef(settleAttempt)
@@ -206,7 +111,7 @@ export default function WordComponent({ word, onFinish }: { word: Word; onFinish
     newWordState.startTime = getUtcStringForMixpanel()
     newWordState.randomLetterVisible = headword.split('').map(() => Math.random() > 0.4)
     setWordState(newWordState)
-    attemptRef.current = createAttemptMeta(state.chapterData.index, word)
+    resetAttempt(state.chapterData.index, word)
 
     // v9.4（TYP-009）：把上一词完成窗口期缓存的按键重放到新词，避免「下一词首键」被吞
     const pendingKeys = pendingKeysRef.current

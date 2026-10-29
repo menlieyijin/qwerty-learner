@@ -2,6 +2,7 @@ import type { Dictionary, Word } from '@/typings'
 import { db } from '@/utils/db'
 import { memoryKey } from '@/utils/memoryKey'
 import { wordListFetcher } from '@/utils/wordListFetcher'
+import { normalizeTrans } from '@/utils/trans'
 import { useEffect, useMemo, useState } from 'react'
 import useSWR from 'swr'
 
@@ -27,7 +28,7 @@ export default function useGetWord(name: string, dict: Dictionary | undefined, d
     if (wordList) {
       const found = wordList.find((item) => item.name === name)
       if (found) {
-        const trans = Array.isArray(found.trans) ? found.trans : found.trans ? [String(found.trans)] : []
+        const trans = normalizeTrans(found.trans)
         return { ...found, trans }
       }
     }

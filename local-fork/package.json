@@ -1,6 +1,6 @@
 {
   "name": "qwerty-learner",
-  "version": "1.0.0-enhanced-v10.2.0",
+  "version": "1.0.0-enhanced-v10.3.0",
   "main": "electron/main.js",
   "description": "Qwerty Learner 本地魔改版（v9.9，由 dsh 维护）：基于官方 Qwerty Learner commit 1182426 源码自建（无章节、随机出词 + 艾宾浩斯记忆曲线 + 错词当场重现、无每日上限）；官方打字/默写/音标/音效/错题本/数据统计/词库画廊等全部保留；v1~v6 增强收纳到顶栏「工具」全屏页。冻结上游，不跟随官方更新。",
   "author": "Qwerty Learner Contributors",

@@ -17,6 +17,7 @@ import { effectiveDueOf, isDue, isMastered } from './srsRules'
 import type { Word } from '@/typings'
 import type { IMemoryRecord } from '@/utils/db/record'
 import { LEARNING_PATH, loadLevelWords } from '@/utils/learningPath'
+import { normalizeTrans } from '@/utils/trans'
 import type { LearningLevel } from '@/utils/learningPath'
 import { clearMemoryCache } from '@/utils/memoryCache'
 import { memoryKey, normalizeWordName } from '@/utils/memoryKey'
@@ -745,7 +746,7 @@ function buildBestRecordMap(records: IMemoryRecord[]): Map<string, IMemoryRecord
 // ---------------------------------------------------------------------------
 
 function makeWord(word: Word): Word {
-  const trans = Array.isArray(word.trans) ? word.trans.filter((item) => typeof item === 'string') : []
+  const trans = normalizeTrans(word.trans)
   const result: Word = {
     name: String(word.name),
     trans,

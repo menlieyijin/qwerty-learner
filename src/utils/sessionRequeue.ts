@@ -1,4 +1,5 @@
 import { memoryKey } from './memoryKey'
+import { normalizeTrans } from '@/utils/trans'
 import type { Word } from '@/typings'
 
 /**
@@ -43,7 +44,7 @@ export function pushWrongWordRequeue(dict: string, word: string, trans?: string[
     skip: REQUEUE_GAP,
     word: {
       name,
-      trans: Array.isArray(trans) ? trans.filter((item) => typeof item === 'string') : [],
+      trans: normalizeTrans(trans),
       usphone: phone || '',
       ukphone: phone || '',
       dict,

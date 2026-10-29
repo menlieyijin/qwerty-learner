@@ -148,6 +148,22 @@ const dbCount = (store) =>
     }
   }))()`)
 
+const wordRows = () =>
+  ev(`(() => new Promise((resolve) => {
+    const req = indexedDB.open('RecordDB')
+    req.onerror = () => resolve([])
+    req.onsuccess = () => {
+      const db = req.result
+      const tx = db.transaction('wordRecords', 'readonly')
+      const cr = tx.objectStore('wordRecords').getAll()
+      cr.onsuccess = () => {
+        resolve((cr.result || []).map((r) => ({ word: r.word, wrongCount: r.wrongCount, mistakes: r.mistakes || {}, timing: (r.timing || []).length })))
+      }
+      tx.oncomplete = () => db.close()
+      tx.onerror = () => { db.close(); resolve([]) }
+    }
+  }))()`)
+
 const chapterRows = () =>
   ev(`(() => new Promise((resolve) => {
     const req = indexedDB.open('RecordDB')
@@ -264,6 +280,13 @@ async function main() {
     wordRecords: [before.word, afterWord],
     memoryRecords: [before.mem, afterMem],
   })
+  const doneRows = await wordRows()
+  const doneRow = doneRows.find((r) => r.word === lastWord) || doneRows[0]
+  check(
+    '4c 完成词后错误字母写入 wordRecords.mistakes（逐字母粒度）',
+    !!doneRow && Object.keys(doneRow.mistakes || {}).length > 0,
+    doneRow && { word: doneRow.word, wrongCount: doneRow.wrongCount, mistakeIndexes: Object.keys(doneRow.mistakes) },
+  )
 
   // 5) 暂停 → 写会话记录；再继续
   await press('Enter')
@@ -289,6 +312,29 @@ async function main() {
     chapAfterRows.length === 1 && !!chapBefore && !!chapAfter && chapAfter.wordCount === chapBefore.wordCount && chapAfter.time > chapBefore.time,
     { rows: chapAfterRows.length, before: chapBefore, after: chapAfter },
   )
+
+  // 5d) 用户可见不变式：敲对一个字母 → 暂停 → 恢复，这个字母必须仍然是「已答对」状态
+  // （暂停只应停表，不应丢进度；探针显示暂停时的 wordState.correctCount 与 DOM 不一致，故直接验 DOM）
+  await ev(`(() => { const b = document.querySelector('button[aria-label="开始"]'); if (b) b.click(); return true })()`)
+  await until(async () => (await ev(`!!document.querySelector('button[aria-label="暂停"]')`)) === true, 8000, '恢复输入态-2')
+  const sLetter = await readWordState()
+  const nextChar = sLetter.word[sLetter.correct]
+  if (nextChar) await press(nextChar.toLowerCase())
+  await wait(600)
+  const typed = await readWordState()
+  await ev(`(() => { const b = document.querySelector('button[aria-label="暂停"]'); if (b) b.click(); return true })()`)
+  await wait(800)
+  await ev(`(() => { const b = document.querySelector('button[aria-label="开始"]'); if (b) b.click(); return true })()`)
+  await wait(800)
+  const resumed = await readWordState()
+  check(
+    '5d 敲对一个字母后暂停再恢复：该字母仍为已答对',
+    typed.correct === 1 && resumed.correct === 1,
+    { char: nextChar, typedCorrect: typed.correct, resumedCorrect: resumed.correct, word: resumed.word },
+  )
+  // 收尾：再暂停，避免影响后面的设置面板断言
+  await ev(`(() => { const b = document.querySelector('button[aria-label="暂停"]'); if (b) b.click(); return true })()`)
+  await wait(400)
 
   // 6) 设置面板：开关与滑块 + 配置持久化
   await ev(`(() => { const b = document.querySelector('button[title="打开设置对话框"]'); if (b) b.click(); return true })()`)
