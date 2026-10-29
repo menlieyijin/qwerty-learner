@@ -103,7 +103,7 @@
 | --- | --- | --- | --- |
 | F | `724f75a` | 音效设置 335 → 206 行：抽出 `SoundSwitchRow` / `SoundVolumeRow`，8 个同构 `useCallback` 合并为 3 个通用写值包装 | 新增 `verify-typing`（15 项）：4 开关 / 5 滑块 / 开关落盘 / 滑块键盘左移后 volume 1→0.9；冒烟 11/11；asar `4FFE28C0…` |
 | G | `9334fe4` | Word 554 → 500 行：抽出 `WordDisplay.tsx`（展示层）与 `letterVisibility.ts`（可见性纯函数） | `verify-typing` 增 8/8b 默写模式（hideAll 全占位、关闭后恢复）；冒烟 11/11；asar `30B6FD37…` |
-| H | 本批 | 309 条核心回归**随仓库发布**（`scripts/core-regression`），`npm run test:core` 一条命令跑完；发布脚本与质量门禁的默认回归目录改指仓库内 | `npm run test:core`：309/309 + determinism pass；`dsh-release.ps1`（不加 `-SkipAudit`）实际调用仓库内脚本并通过 |
+| H | `6102282` | 309 条核心回归**随仓库发布**（`scripts/core-regression`），`npm run test:core` 一条命令跑完；发布脚本与质量门禁的默认回归目录改指仓库内 | `npm run test:core`：309/309 + determinism pass；`dsh-release.ps1`（不加 `-SkipAudit`）实际调用仓库内脚本并通过 |
 
 **为什么 Word 状态机没有继续拆（G）**：`flushStats` / `persistOnce` / `settleAttempt` 与 `wordStateRef`、
 `attemptRef`、`dispatch`、`saveWordRecord` 互相引用，抽成 hook 需要对外暴露 6 个 ref/回调，接口比现状更宽；
@@ -142,7 +142,7 @@
 | `v10.0.0` | `a8dc39e` | 版本号 + 发布说明 + 三份交付文档 | 11/11 | `F42835A7…` |
 | `v10.1-batchF` | `724f75a` | 音效设置拆分 + verify-typing | 11/11 | `4FFE28C0…` |
 | `v10.1-batchG` | `9334fe4` | Word 展示层拆分 | 11/11 | `30B6FD37…` |
-| `v10.1-batchH` | 本批 | 核心回归入仓 + 脚本默认路径 | `test:core` 309/309 | 见发布说明 |
+| `v10.1-batchH` | `6102282` | 核心回归入仓 + 脚本默认路径 | `test:core` 309/309 | `B5E03BA9…` |
 
 > 回滚点同时保存在 tag（`v9.16-batchA` … `v10.0.0`）与分支历史里；回退前的 HEAD 另存为
 > `archive/v10-baseline-20261029` / `backup/v10-baseline`（均为 `b97eb62`，即本次「回退到 v9.15 重做」之前的树），
