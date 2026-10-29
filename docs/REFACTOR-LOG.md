@@ -135,7 +135,7 @@
 | L-7 | 发布脚本默认路径是作者本机布局（AUDIT M5） | **接受风险** | 全部支持 `QZ_*` 环境变量覆盖，`local-fork/README` 与 QUICKSTART 已说明；改默认值会破坏本机发布链 |
 | L-8 | 仓库是**浅克隆**（AUDIT S4） | **无法处理** | `fetch --unshallow` 会拉取上游全部历史，与「不拉取上游代码」的指令冲突；影响 5 本第三方词库的来源核验（`docs/THIRD-PARTY.md` 已按可查证据登记） |
 | L-9 | 309 条核心回归脚本不在仓库 | **已闭环** | 已迁入 `scripts/core-regression`（路径仓库相对、产物 gitignore、`npm run test:core`），发布脚本默认改指仓库内。**新差距**：它是 stub 化的纯算法仿真，不等于真实浏览器/Electron 环境 |
-| L-10 | 提交**未推送**到 fork | **按指示未推** | 远端 `fork/dsh-local-v8` 仍停在 `8ae7577`；本地领先 20 个提交 |
+| L-10 | 提交推送 | **已闭环**（v10.2.1 后） | 已推 `dsh-local-v8`（`8ae7577..b58fa4e`）+ 37 个标签到 `menlieyijin/qwerty-learner`。**说明**：直连 github.com 可用但被本机 HTTP 代理拦（`CONNECT tunnel failed, 502`），本次临时 unset 全局 `url.*.insteadOf` 并清空 `*_PROXY` 后直连推送，完成后已恢复原配置；未使用 ghfast 代理（避免凭据经第三方） |
 | L-11 | 全仓 prettier 未统一 | **已闭环**（v10.2.1） | 按仓库配置全量格式化 18 个文件（含 `prettier-plugin-tailwindcss` 的 class 排序）。验证：tsc + eslint + build + 冒烟 11/11 + 四脚本 21/17/16/14 + 核心回归 309/309 全过。**残余风险**：class 重排的视觉差异没有像素级回归手段 |
 | L-12 | 结果页空词表的正确率语义 | **待确认** | 现按 0%；若产品上希望「无词不算错」，应改成不展示该指标 |
 
