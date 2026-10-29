@@ -11,8 +11,8 @@
 
 <p align="center">
   <a href="../README.md">中文</a>
-  <a href="./README_EN.md">English</a>
-  <a href="./README_JP.md">日本語</a>
+  <a href="./UPSTREAM-README_EN.md">English</a>
+  <a href="./UPSTREAM-README_JP.md">日本語</a>
 </p>
 
 <p align="center">
@@ -122,11 +122,11 @@ CET-4、CET-6、GMAT、GRE、IELTS、SAT、TOEFL、大学院英語、専門英�
 ### コードの貢献
 
 [Call for Contributor](https://github.com/Realkai42/qwerty-learner/issues/390)
-[貢献ガイドライン](./docs/CONTRIBUTING.md)
+[貢献ガイドライン](./CONTRIBUTING.md)
 
 ### 辞書の貢献
 
-[辞書のインポート](./docs/toBuildDict.md)
+[辞書のインポート](./toBuildDict.md)
 
 ## プロジェクトの実行
 
@@ -142,7 +142,7 @@ CET-4、CET-6、GMAT、GRE、IELTS、SAT、TOEFL、大学院英語、専門英�
 
 ### スクリプトの実行
 
-Windows ユーザーの場合、[install.ps1](scripts/install.ps1) スクリプトを直接実行して、依存関係を一括でインストールし、プロジェクトを起動できます。
+Windows ユーザーの場合、[install.ps1](../scripts/install.ps1) スクリプトを直接実行して、依存関係を一括でインストールし、プロジェクトを起動できます。
 
 1. PowerShell を開き、プロジェクトのルートディレクトリ内の `scripts` ディレクトリに移動します。
 2. コマンドラインで `.\install.ps1` を実行します。
@@ -151,7 +151,7 @@ Windows ユーザーの場合、[install.ps1](scripts/install.ps1) スクリプ�
 > 注記
 > スクリプトは `winget` を使用して node をインストールします。Windows 10 1709（バージョン 16299）以降でのみサポートされています！
 
-MacOS ユーザーの場合、[install.sh](scripts/install.sh) スクリプトを直接実行して、依存関係を一括でインストールし、プロジェクトを起動できます。
+MacOS ユーザーの場合、[install.sh](../scripts/install.sh) スクリプトを直接実行して、依存関係を一括でインストールし、プロジェクトを起動できます。
 
 1. ターミナルを開き、このプロジェクトのフォルダに移動します。
 2. コマンドラインで `scripts/install.sh` を実行します。

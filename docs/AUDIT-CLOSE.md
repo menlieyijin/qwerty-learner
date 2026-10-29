@@ -23,7 +23,7 @@
 | M5 | 脚本默认路径为本机布局 | **接受风险** | 默认值仍是作者布局，但全部支持 `QZ_*` 环境变量覆盖，且 `local-fork/README.md` 已说明；改默认值会破坏本机发布链，暂不调整 |
 | M6 | `Signed-off-by` 表述不实 | **已修** | 文案已改为“**部分提交**带 trailer（当前 17 个）”，与实际一致 |
 | M7 | 删除上游捐赠/推广 UI 的 GPL 说明 | **已修** | `docs/DSH-FORK.md` “去营销 UI”小节 + FORK-NOTICE 4.6 说明“删除营销 UI/远程二维码，版权与署名保留” |
-| M8 | 英文/日文 README 无 fork 声明 | **已修** | `docs/README_EN.md:1`、`docs/README_JP.md:1` 均有非官方分支声明 |
+| M8 | 英文/日文 README 无 fork 声明 | **已修** | `docs/README_EN.md:1`、`docs/README_JP.md:1` 均有非官方分支声明（v9.18 起两份上游存档改名为 `docs/UPSTREAM-README_EN.md` / `docs/UPSTREAM-README_JP.md`） |
 
 ## 低（P2）
 
