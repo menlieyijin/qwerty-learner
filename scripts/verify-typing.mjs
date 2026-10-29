@@ -307,6 +307,23 @@ async function main() {
     after: volAfter,
   })
 
+  // 8) 默写模式（hideAll）：字母占位为 `_`，直接检验 letterVisibility 抽出的规则
+  await ev(`localStorage.setItem('wordDictationConfig', JSON.stringify({ isOpen: true, type: 'hideAll', openBy: 'auto' })); true`)
+  await ev(`location.reload(); true`).catch(() => undefined)
+  await wait(1600)
+  await until(async () => (await ev(`!!document.querySelector('[data-testid="current-word"]')`)) === true, 25000, 'reload')
+  const hidden = await ev(`(() => {
+    const el = document.querySelector('[data-testid="current-word"]')
+    return el ? (el.textContent || '') : ''
+  })()`)
+  check('8 默写（hideAll）时当前词全部显示为占位符', hidden.length > 0 && /^_+$/.test(hidden.replace(/\s/g, '')), hidden)
+  await ev(`localStorage.removeItem('wordDictationConfig'); true`)
+  await ev(`location.reload(); true`).catch(() => undefined)
+  await wait(1500)
+  await until(async () => (await ev(`!!document.querySelector('[data-testid="current-word"]')`)) === true, 25000, 'reload-2')
+  const shown = await ev(`(() => { const el = document.querySelector('[data-testid="current-word"]'); return el ? (el.textContent || '') : '' })()`)
+  check('8b 关闭默写后当前词恢复可见', shown.length > 0 && !/_/.test(shown), shown)
+
   const noisy = results.consoleErrors.filter((e) => !/favicon|Autofill|React DevTools/i.test(e))
   check('7 全程无未捕获异常', results.exceptions.length === 0, results.exceptions.slice(0, 3))
   check('7b 全程无控制台错误', noisy.length === 0, noisy.slice(0, 3))

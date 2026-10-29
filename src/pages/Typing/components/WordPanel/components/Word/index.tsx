@@ -1,38 +1,24 @@
 import InputHandler from '../InputHandler'
 import type { WordUpdateAction } from '../types'
-import Letter from './Letter'
-import Notation from './Notation'
 import { TipAlert } from './TipAlert'
+import { WordDisplay } from './WordDisplay'
 import { charsMatch, hasUntypableChar, isSeparatorEquivalenceEnabled, normalizeDisplayWord } from './displayWord'
-import style from './index.module.css'
+import { isLetterVisible } from './letterVisibility'
 import { initialWordState } from './type'
 import type { WordState } from './type'
-import Tooltip from '@/components/Tooltip'
 import type { WordPronunciationIconRef } from '@/components/WordPronunciationIcon'
-import { WordPronunciationIcon } from '@/components/WordPronunciationIcon'
 import { EXPLICIT_SPACE } from '@/constants'
 import useKeySounds from '@/hooks/useKeySounds'
 import { useSaveWordRecord } from '@/pages/Typing/hooks/useSaveRecord'
 import { TypingContext, TypingStateActionType } from '@/pages/Typing/store'
-import {
-  currentChapterAtom,
-  currentDictInfoAtom,
-  isIgnoreCaseAtom,
-  isShowAnswerOnHoverAtom,
-  isTextSelectableAtom,
-  pronunciationIsOpenAtom,
-  wordDictationConfigAtom,
-} from '@/store'
+import { currentChapterAtom, currentDictInfoAtom, isIgnoreCaseAtom, isShowAnswerOnHoverAtom, wordDictationConfigAtom } from '@/store'
 import type { Word } from '@/typings'
-import { CTRL } from '@/utils'
 import type { LetterMistakes } from '@/utils/db/record'
 import { getUtcStringForMixpanel } from '@/utils/mixpanel'
 import { useAtomValue } from 'jotai'
 import { useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { useHotkeys } from 'react-hotkeys-hook'
 import { useImmer } from 'use-immer'
-
-const vowelLetters = ['A', 'E', 'I', 'O', 'U']
 
 type AttemptMeta = {
   index: number
@@ -72,13 +58,11 @@ export default function WordComponent({ word, onFinish }: { word: Word; onFinish
   const [wordState, setWordState] = useImmer<WordState>(structuredClone(initialWordState))
 
   const wordDictationConfig = useAtomValue(wordDictationConfigAtom)
-  const isTextSelectable = useAtomValue(isTextSelectableAtom)
   const isIgnoreCase = useAtomValue(isIgnoreCaseAtom)
   const isShowAnswerOnHover = useAtomValue(isShowAnswerOnHoverAtom)
   const saveWordRecord = useSaveWordRecord()
   // const wordLogUploader = useMixPanelWordLogUploader(state)
   const [playKeySound, playBeepSound, playHintSound] = useKeySounds()
-  const pronunciationIsOpen = useAtomValue(pronunciationIsOpenAtom)
   const [isHoveringWord, setIsHoveringWord] = useState(false)
   const currentLanguage = useAtomValue(currentDictInfoAtom).language
   const currentLanguageCategory = useAtomValue(currentDictInfoAtom).languageCategory
@@ -320,34 +304,14 @@ export default function WordComponent({ word, onFinish }: { word: Word; onFinish
   }, [word.name, state.isTyping])
 
   const getLetterVisible = useCallback(
-    (index: number) => {
-      if (wordState.letterStates[index] === 'correct' || (isShowAnswerOnHover && isHoveringWord)) return true
-
-      if (wordDictationConfig.isOpen) {
-        if (wordDictationConfig.type === 'hideAll') return false
-
-        const letter = wordState.displayWord[index]
-        if (wordDictationConfig.type === 'hideVowel') {
-          return vowelLetters.includes(letter.toUpperCase()) ? false : true
-        }
-        if (wordDictationConfig.type === 'hideConsonant') {
-          return vowelLetters.includes(letter.toUpperCase()) ? true : false
-        }
-        if (wordDictationConfig.type === 'randomHide') {
-          return wordState.randomLetterVisible[index]
-        }
-      }
-      return true
-    },
-    [
-      isHoveringWord,
-      isShowAnswerOnHover,
-      wordDictationConfig.isOpen,
-      wordDictationConfig.type,
-      wordState.displayWord,
-      wordState.letterStates,
-      wordState.randomLetterVisible,
-    ],
+    (index: number) =>
+      isLetterVisible(index, {
+        wordState,
+        dictation: wordDictationConfig,
+        showAnswerOnHover: isShowAnswerOnHover,
+        isHoveringWord,
+      }),
+    [wordState, wordDictationConfig, isShowAnswerOnHover, isHoveringWord],
   )
 
   useEffect(() => {
@@ -381,8 +345,8 @@ export default function WordComponent({ word, onFinish }: { word: Word; onFinish
         isEqual = allowSepEquiv
           ? charsMatch(inputChar, correctChar, isIgnoreCase)
           : isIgnoreCase
-            ? inputChar.toLowerCase() === correctChar.toLowerCase()
-            : inputChar === correctChar
+          ? inputChar.toLowerCase() === correctChar.toLowerCase()
+          : inputChar === correctChar
       }
       if (!isEqual) {
         mismatch = i
@@ -514,41 +478,16 @@ export default function WordComponent({ word, onFinish }: { word: Word; onFinish
   return (
     <>
       <InputHandler updateInput={updateInput} />
-      <div
-        lang={currentLanguageCategory !== 'code' ? currentLanguageCategory : 'en'}
-        className="flex flex-col items-center justify-center pb-1 pt-4"
-      >
-        {['romaji', 'hapin'].includes(currentLanguage) && word.notation && <Notation notation={word.notation} />}
-        <div
-          className={`tooltip-info relative w-fit bg-transparent p-0 leading-normal shadow-none dark:bg-transparent ${
-            wordDictationConfig.isOpen ? 'tooltip' : ''
-          }`}
-          // v9.14（dsh，M4-008）：原先只有 `data-tip`，而全仓没有任何 CSS/JS 读取该属性 → 提示永远不出现。
-          // 改用原生 `title`（悬停可见、读屏可播报），不引入新依赖；`tooltip-info` 类名保留，避免样式回归。
-          title={wordDictationConfig.isOpen ? '按 Tab 快捷键显示完整单词' : undefined}
-        >
-          <div
-            onMouseEnter={() => handleHoverWord(true)}
-            onMouseLeave={() => handleHoverWord(false)}
-            data-testid="current-word"
-            className={`flex items-center ${isTextSelectable && 'select-all'} justify-center ${wordState.hasWrong ? style.wrong : ''}`}
-          >
-            {wordState.displayWord.split('').map((t, index) => {
-              return <Letter key={`${index}-${t}`} letter={t} visible={getLetterVisible(index)} state={wordState.letterStates[index]} />
-            })}
-          </div>
-          {pronunciationIsOpen && (
-            <div className="absolute -right-12 top-1/2 h-9 w-9 -translate-y-1/2 transform ">
-              <Tooltip content={`快捷键${CTRL} + J`}>
-                <WordPronunciationIcon word={word} lang={currentLanguage} ref={wordPronunciationIconRef} className="h-full w-full" />
-              </Tooltip>
-            </div>
-          )}
-        </div>
-        {wrongHint && (
-          <div className="mt-3 text-center text-[15px] font-medium leading-6 text-red-500 dark:text-red-400">{wrongHint}</div>
-        )}
-      </div>
+      <WordDisplay
+        word={word}
+        wordState={wordState}
+        currentLanguage={currentLanguage}
+        currentLanguageCategory={currentLanguageCategory}
+        onHoverChange={handleHoverWord}
+        isLetterVisible={getLetterVisible}
+        wordPronunciationIconRef={wordPronunciationIconRef}
+        wrongHint={wrongHint}
+      />
       <TipAlert className="fixed bottom-10 right-3" show={showTipAlert} setShow={setShowTipAlert} />
     </>
   )
