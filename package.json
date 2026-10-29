@@ -71,6 +71,8 @@
     "test:csv": "node scripts/verify-csv-safe.mjs",
     "test:typing": "node scripts/verify-typing.mjs",
     "test:core": "node scripts/core-regression/run.mjs",
+    "test:stats": "node scripts/verify-stats.mjs",
+    "test:visual": "cross-env QZ_E2E_BASE_URL=http://127.0.0.1:5173 playwright test tests/e2e/visual.spec.ts --project=chromium --workers=1",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint .",
     "lint:strict": "eslint src --ext .ts,.tsx --max-warnings 0",

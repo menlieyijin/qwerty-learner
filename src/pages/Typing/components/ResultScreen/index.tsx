@@ -1,3 +1,4 @@
+import { computeCorrectRate, mistakeLevelOf } from './correctRate'
 import { TypingContext, TypingStateActionType } from '../../store'
 import ShareButton from '../ShareButton'
 import { getMistakeChar, normalizeDisplayWord } from '../WordPanel/components/Word/displayWord'
@@ -93,24 +94,13 @@ const ResultScreen = () => {
     return currentChapter >= currentDictInfo.chapterCount - 1
   }, [currentChapter, currentDictInfo])
 
-  const correctRate = useMemo(() => {
-    const chapterLength = state.chapterData.words.length
-    const correctCount = chapterLength - wrongWords.length
-    // v10.2（dsh，F5-005）：空词表时 0/0 = NaN，会让错误分级判断全部落到 else 分支、界面上出现 NaN%。
-    // 约定：没有词就没有正确率可言，按 0% 处理（不影响任何有词的场景）。
-    if (chapterLength <= 0) return 0
-    return Math.floor((correctCount / chapterLength) * 100)
-  }, [state.chapterData.words.length, wrongWords.length])
+  // v10.4（dsh，F5-005）：算法抽到 ./correctRate，空词表边界改为可单测（scripts/verify-stats.mjs）
+  const correctRate = useMemo(
+    () => computeCorrectRate(state.chapterData.words.length, wrongWords.length),
+    [state.chapterData.words.length, wrongWords.length],
+  )
 
-  const mistakeLevel = useMemo(() => {
-    if (correctRate >= 85) {
-      return 0
-    } else if (correctRate >= 70) {
-      return 1
-    } else {
-      return 2
-    }
-  }, [correctRate])
+  const mistakeLevel = useMemo(() => mistakeLevelOf(correctRate), [correctRate])
 
   const timeString = useMemo(() => {
     const seconds = state.timerData.time

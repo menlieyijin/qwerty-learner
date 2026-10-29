@@ -134,6 +134,18 @@
 > 因为生产构建会 drop `console.*`）发现暂停时 `wordState.correctCount` 为 0 —— 原因是那一刻已切换到新词，
 > 不是丢数据。于是把断言换成用户可见的不变式「暂停恢复后进度仍在」，实测通过。探针已全部移除。
 
+| K | v10.4.0 | 空词表正确率抽纯函数 + 15 条单测（L-12 闭环）；建立**视觉回归基线**（L-11 残余风险闭环）；审计 `enhance.js`（2660 行）与 `db/data-export.ts` | `test:stats` 15/15；`test:visual` 2/2（连跑 3 次稳定）；其余脚本全过 |
+
+### 批次 K 逐条
+
+| # | 内容 | 做法 | 验证 | 结论 |
+| --- | --- | --- | --- | --- |
+| K-1 | 结果页正确率/错误分级写在 `useMemo` 里，空词表边界只能靠"进到空词表的结果页"复现 | 抽到 `ResultScreen/correctRate.ts`：`computeCorrectRate` + `mistakeLevelOf`，纯函数无依赖 | 新增 `scripts/verify-stats.mjs`（15 条）：0/0 → 0 而非 NaN、NaN/负数兜底、floor 取整、85/84/70/69 分档边界 | **L-12 闭环**：空词表语义（0%）第一次有了可执行断言 |
+| K-2 | v10.2.1 全仓 prettier 含 tailwind class 重排，当时只用行为断言兜底 | 新增 `tests/e2e/visual.spec.ts`：错题本空态 + 设置面板两张基线截图（`maxDiffPixelRatio: 0.002`、禁用动画）；基线随仓库提交 | `npm run test:visual` 连跑 3 次 2/2 通过 | **L-11 残余风险闭环**：class 重排/样式漂移从此会被像素级对比抓到 |
+| K-3 | 练习页当时也想入视觉回归 | 实测遮住当前词与数字后仍有 1916 px（ratio 0.01）抖动 —— 随机词 + 每秒计时 | 结论写进 spec 注释：练习页不入视觉回归，正确性由 `test:typing` 覆盖 | 记录「为什么不做」，避免以后重复踩 |
+| K-4 | `local-fork/electron/enhance/enhance.js`（2660 行）从未审计 | 扫 `innerHTML` 插值、`JSON.parse`、`parseInt`、除法 `toFixed` | ① 唯一没套 `esc()` 的插值是键盘热区渲染，字符来自常量表而非用户数据；② 4 处 `JSON.parse` 全在 try/catch 内；③ `parseInt` 全部带 radix；④ `toFixed` 前都有 `n ?` / `st && st.ok ?` 守卫 | **未发现可改缺陷**，不改（不为改而改） |
+| K-5 | `src/utils/db/data-export.ts` 的导入路径（唯一会批量写用户库的地方） | 逐段读导入流程 | 已有：文件头校验（formatName/databaseName/表存在）、临时库 staging、逐表行数比对、主库单事务 clear+bulkPut、失败回滚标记、残留临时库清理 | **实现完备，未发现缺陷** |
+
 ---
 
 ## 六、遗留清单（未改或无法闭环，附具体差距）
@@ -148,10 +160,10 @@
 | L-6 | Electron CSP 解析失败时回退 `script-src 'self' 'unsafe-inline'`（AUDIT L2） | **接受风险** | 改 fail-closed 会在 `index.html` 结构变化时白屏；当前实测走 sha256 分支 |
 | L-7 | 发布脚本默认路径是作者本机布局（AUDIT M5） | **接受风险** | 全部支持 `QZ_*` 环境变量覆盖，`local-fork/README` 与 QUICKSTART 已说明；改默认值会破坏本机发布链 |
 | L-8 | 仓库是**浅克隆**（AUDIT S4） | **已闭环**（v10.3.0） | 已执行 `git fetch --unshallow`（补全上游历史，未合并任何上游代码、未改工作树）。收益：用 git 历史复核了 5 本本地补回词库（上游 0 条提交）+ 确认其余 380 本与基线逐字节一致，见 `docs/THIRD-PARTY.md` §3 |
-| L-9 | 309 条核心回归脚本不在仓库 | **已闭环** | 已迁入 `scripts/core-regression`（路径仓库相对、产物 gitignore、`npm run test:core`），发布脚本默认改指仓库内。**新差距**：它是 stub 化的纯算法仿真，不等于真实浏览器/Electron 环境 |
+| L-9 | 309 条核心回归脚本不在仓库 | **已闭环** | 已迁入 `scripts/core-regression`（路径仓库相对、产物 gitignore、`npm run test:core`），发布脚本默认改指仓库内。局限（非差距）：它是 stub 化的纯算法仿真，不等于真实浏览器/Electron 环境；界面/交互由冒烟、`test:pages`、`test:typing`、`test:visual` 覆盖 |
 | L-10 | 提交推送 | **已闭环** | 分支与标签均已推到 `menlieyijin/qwerty-learner`，远端与本地 HEAD 一致。推送路径有两种（都记录了）：① v10.2.1 之前：临时 unset 全局 `url.*.insteadOf` + 清空 `*_PROXY` 后 `git push` 直连；② v10.3.0：github.com:443 已完全不可达（6 次重试均 TCP 超时，直连与本地代理都不通），改用 GitHub **Git Data API**（`gh api` 建 blob → tree → commit → 更新 ref）复刻同一个提交，因元数据逐字一致，远端 commit SHA 与本地**完全相同**（`7352e3d`）。均未走 ghfast 传凭据 |
-| L-11 | 全仓 prettier 未统一 | **已闭环**（v10.2.1） | 按仓库配置全量格式化 18 个文件（含 `prettier-plugin-tailwindcss` 的 class 排序）。验证：tsc + eslint + build + 冒烟 11/11 + 四脚本 21/17/16/14 + 核心回归 309/309 全过。**残余风险**：class 重排的视觉差异没有像素级回归手段 |
-| L-12 | 结果页空词表的正确率语义 | **待确认** | 现按 0%；若产品上希望「无词不算错」，应改成不展示该指标 |
+| L-11 | 全仓 prettier 未统一 | **已闭环**（v10.2.1 格式化 + v10.4.0 视觉回归） | 格式化 18 个文件；v10.4.0 补上视觉基线（`test:visual`，2 张截图，连跑 3 次稳定），原「无像素级手段」的残余风险已消除。局限：基线是本机 Chromium 产物，换机器需 `--update-snapshots` 重建 |
+| L-12 | 结果页空词表的正确率语义 | **已闭环**（v10.4.0） | 抽成 `computeCorrectRate` 纯函数，约定 0% 并写进注释/发布说明；`scripts/verify-stats.mjs` 用 15 条断言把这个边界固定下来 |
 
 ---
 

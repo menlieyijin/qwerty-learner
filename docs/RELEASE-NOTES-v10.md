@@ -1,6 +1,6 @@
 # v10.0.0 / v10.1.0 发布说明（dsh）
 
-> 版本字符串：`1.0.0-enhanced-v10.3.0`（唯一来源：`local-fork/package.json`；v10.0.0 / v10.1.0 / v10.2.x 为同一基线的早期版本）
+> 版本字符串：`1.0.0-enhanced-v10.4.0`（唯一来源：`local-fork/package.json`；v10.0.0 / v10.1.0 / v10.2.x / v10.3.0 为同一基线的早期版本）
 > 基线：v9.15.1（`ce7eb79`）→ 本次重构 6 个提交 → v10.0.0
 > 逐条问题记录（根因 / 修复 / 验证 / 风险）见 [`REFACTOR-LOG.md`](./REFACTOR-LOG.md)
 
@@ -309,3 +309,58 @@ npm run test:core   # build-core → srs-sim → sim-autolevel → determinism �
 ## 遗留（本版关闭 3 条：L-1 / L-3 / L-8）
 
 剩余：L-12 空词表正确率语义（已按 0% 实现，若产品口径不同需改）、以及「class 重排无像素级视觉回归」这一残余风险。
+
+
+---
+
+# v10.4.0 追加（最后两条遗留清零）
+
+## 1. 空词表正确率：从「代码级约定」变成「可执行断言」
+
+`correctRate` / `mistakeLevel` 从 `ResultScreen` 的 `useMemo` 里抽成纯函数（`ResultScreen/correctRate.ts`），
+由此可以脱离浏览器直接断言：
+
+```bash
+npm run test:stats    # 15 条
+```
+
+覆盖：`0/0 → 0`（不是 NaN）、`NaN`/负数入参兜底、`floor` 取整（错 1/3 = 66）、85/84/70/69 分档边界、
+空词表分级落在红色档。
+
+## 2. 视觉回归：给 prettier 的 class 重排补上像素级把关
+
+v10.2.1 那次全仓格式化含 `prettier-plugin-tailwindcss` 的 class 排序，当时只有行为断言兜底。
+本版新增 `tests/e2e/visual.spec.ts`：
+
+```bash
+npm run test:visual        # 与基线比对（2 张：错题本空态、设置面板）
+npx playwright test tests/e2e/visual.spec.ts --project=chromium --update-snapshots   # 重建基线
+```
+
+- `maxDiffPixelRatio: 0.002`、`animations: 'disabled'`；基线 PNG 随仓库提交，改样式能在 review 里看见。
+- **练习页刻意不入基线**：实测遮住随机词与计时后仍有 1% 像素抖动（1916 px），会持续误报；
+  练习页的正确性由 `test:typing` 的 18 条行为断言覆盖。原因写在 spec 注释里。
+
+## 3. 两个「从未审计过」的文件审完了
+
+| 文件 | 规模 | 审计点 | 结论 |
+| --- | --- | --- | --- |
+| `local-fork/electron/enhance/enhance.js` | 2660 行 | `innerHTML` 插值是否转义、`JSON.parse` 是否在 try 内、`parseInt` radix、除法 `toFixed` 的 NaN | 未发现可改缺陷：唯一未套 `esc()` 的是键盘热区（字符来自常量表）；4 处 `JSON.parse` 全有 try；`parseInt` 全带 radix；`toFixed` 前均有守卫 |
+| `src/utils/db/data-export.ts` | 266 行 | 导入流程的校验与失败恢复 | 实现完备：文件头校验 → 临时库 staging → 逐表行数比对 → 主库单事务 clear+bulkPut → 失败回滚 → 残留临时库清理 |
+
+## 本版验证
+
+| 检查 | 结果 |
+| --- | --- |
+| tsc + eslint | 通过 |
+| `test:core` | 309/309 + determinism |
+| `test:stats` | **15/15**（新增） |
+| `test:visual` | **2/2**（新增，连跑 3 次稳定） |
+| `test:start-level` / `test:pages` / `test:typing` / `test:csv` | 21 / 17 / **18** / 14 |
+| 隔离冒烟 | 11/11 |
+| 双目录安装 | 两目录 asar SHA256 一致 |
+
+## 遗留
+
+原 12 条遗留已全部关闭。仅剩的不是「待办」而是**能力边界**：视觉基线是本机 Chromium 产物（换机器需重建）；
+核心回归是 stub 化仿真（不等于真实浏览器）。两者都已写进 README「已知限制」。

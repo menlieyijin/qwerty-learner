@@ -317,7 +317,13 @@ async function main() {
   // （暂停只应停表，不应丢进度；探针显示暂停时的 wordState.correctCount 与 DOM 不一致，故直接验 DOM）
   await ev(`(() => { const b = document.querySelector('button[aria-label="开始"]'); if (b) b.click(); return true })()`)
   await until(async () => (await ev(`!!document.querySelector('button[aria-label="暂停"]')`)) === true, 8000, '恢复输入态-2')
-  const sLetter = await readWordState()
+  // 词长必须 ≥2：否则「敲对一个字母」等于完成整词，页面会立刻切词，断言不成立（实测偶发失败）
+  let sLetter = await readWordState()
+  for (let i = 0; i < 6 && sLetter.word.length < 2; i += 1) {
+    if (sLetter.word) await press(sLetter.word[0].toLowerCase())
+    await wait(700)
+    sLetter = await readWordState()
+  }
   const nextChar = sLetter.word[sLetter.correct]
   if (nextChar) await press(nextChar.toLowerCase())
   await wait(600)

@@ -84,6 +84,8 @@ scripts/                 release / rollback / quality gate / CDP smoke / level-p
 | `npm run test:typing` | 18-check typing pipeline (input state, wrong letter marked, word advance, persistence, per-letter mistake log, pause writes session incl. second-pause upsert, progress kept across pause/resume, sound switches/sliders, dictation) |
 | `npm run test:csv` | 14 assertions for CSV-export formula-injection hardening |
 | `npm run test:core` | **309 core-algorithm assertions** (120 SRS + 189 auto-advance) + determinism gate, simulated from real source |
+| `npm run test:stats` | 15 assertions for the result-screen accuracy/mistake-level (empty-chapter 0/0 boundary, NaN guards, level thresholds) |
+| `npm run test:visual` | Visual regression: error-book empty state + settings panel screenshots (`--update-snapshots` to rebuild) |
 | `npm run quality` | PowerShell quality gate (tsc + eslint + core regression) |
 | `scripts/dsh-release.ps1` | Pack asar / test install / isolated smoke / dual-directory install |
 | `scripts/dsh-rollback.ps1` | Roll back to the previous build (saves a redo point first) |
