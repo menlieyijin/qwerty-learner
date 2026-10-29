@@ -13,15 +13,15 @@ import type { TypingSettleFn } from './store'
 import Header from '@/components/Header'
 import Tooltip from '@/components/Tooltip'
 import { DUE_REVIEW_WORDS_STORAGE_KEY } from '@/constants'
+import { useSaveChapterRecord } from '@/pages/Typing/hooks/useSaveRecord'
 import { idDictionaryMap } from '@/resources/dictionary'
 import { currentChapterAtom, currentDictIdAtom, isReviewModeAtom, reviewModeInfoAtom } from '@/store'
 import type { Word } from '@/typings'
 import { IsDesktop, isLegal } from '@/utils'
 import { recordSkip } from '@/utils/autoLevel'
-import { removeFromRequeue } from '@/utils/sessionRequeue'
 import { deferMemoryDue } from '@/utils/db'
-import { useSaveChapterRecord } from '@/pages/Typing/hooks/useSaveRecord'
 import { useMixPanelChapterLogUploader } from '@/utils/mixpanel'
+import { removeFromRequeue } from '@/utils/sessionRequeue'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import type React from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -104,11 +104,23 @@ const App: React.FC = () => {
       const word = state.chapterData.words[state.chapterData.index]
       if (word) {
         const dict = word.dict || currentDictId
-        try { recordSkip(dict, word.name) } catch { /* ignore */ }
+        try {
+          recordSkip(dict, word.name)
+        } catch {
+          /* ignore */
+        }
         // v9.4（SRS-001）：跳过的词不要再从「错词当场重现」队列里回来（否则 Skip 后立刻又看到它）
-        try { removeFromRequeue(dict, word.name) } catch { /* ignore */ }
+        try {
+          removeFromRequeue(dict, word.name)
+        } catch {
+          /* ignore */
+        }
         // v9.4（SRS-001）：非复习模式同样要顺延 due，否则「跳过的到期词」下一轮立刻又被抽中（连出 3 次）
-        try { await deferMemoryDue(dict, word.name, 1) } catch { /* ignore */ }
+        try {
+          await deferMemoryDue(dict, word.name, 1)
+        } catch {
+          /* ignore */
+        }
       }
       // v8.9：动态出词时 Skip 要实时取下一个词；不把被跳过的词计入 recent（避免它更难再出现）
       if (!isReviewMode && nextWord) {
