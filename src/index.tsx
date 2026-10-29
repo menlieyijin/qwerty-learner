@@ -1,5 +1,6 @@
 import Loading from './components/Loading'
 import ErrorBoundary from '@/components/ErrorBoundary'
+import { FirstRunLevelPicker } from '@/components/FirstRunLevelPicker'
 import './index.css'
 import { LEGACY_FONT_SIZE_LIMIT, LEGACY_FONT_SIZE_REPAIR } from '@/constants'
 import { ErrorBook } from './pages/ErrorBook'
@@ -45,6 +46,8 @@ function Root() {
               <Route path="/*" element={<Navigate to="/" />} />
             </Routes>
           </Suspense>
+          {/* v9.16（dsh）：首次打开的词汇起点选择。放在路由外——启动即判定，与当前页面无关 */}
+          <FirstRunLevelPicker />
         </ErrorBoundary>
       </HashRouter>
     </React.StrictMode>

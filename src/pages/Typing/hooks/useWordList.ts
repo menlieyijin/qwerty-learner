@@ -1,6 +1,7 @@
-import { autoLevelInfoAtom, currentDictInfoAtom, customDictInfoAtom, learningModeAtom, reviewModeInfoAtom } from '@/store'
-import type { Word, WordWithIndex } from '@/typings/index'
 import { REVALUATE_LEVEL_STORAGE_KEY } from '@/constants'
+import { autoLevelInfoAtom, currentDictInfoAtom, customDictInfoAtom, learningModeAtom, reviewModeInfoAtom } from '@/store'
+import { learningStartAtom } from '@/store/learningStart'
+import type { Word, WordWithIndex } from '@/typings/index'
 import { MIX_WINDOW_CAP, MIX_WINDOW_SIZE, reevaluateLevel, resolveCurrentLevel } from '@/utils/autoLevel'
 import { ensureMemoryMigrated, getMemoryRecords, normalizeWordName, pickDynamicWord } from '@/utils/memory'
 import { clearSessionRequeue } from '@/utils/sessionRequeue'
@@ -50,6 +51,8 @@ export function useWordList(): UseWordListResult {
   const learningMode = useAtomValue(learningModeAtom)
   const customDict = useAtomValue(customDictInfoAtom)
   const { isReviewMode, reviewRecord } = useAtomValue(reviewModeInfoAtom)
+  // v9.16（dsh）：起点选择变化后要立刻按新级别出词；它同时充当「重载触发器」（见下方依赖数组）
+  const learningStart = useAtomValue(learningStartAtom)
   const setLevelInfo = useSetAtom(autoLevelInfoAtom)
   const [words, setWords] = useState<WordWithIndex[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -108,7 +111,11 @@ export function useWordList(): UseWordListResult {
         const records = await getMemoryRecords()
         // v9.3：自动模式下先解析当前级别（会写 cached，供顶栏/数据页/到期配比使用；完成则升级）
         if (learningMode === 'auto') {
-          try { await resolveCurrentLevel(records) } catch { /* ignore */ }
+          try {
+            await resolveCurrentLevel(records)
+          } catch {
+            /* ignore */
+          }
         }
         // v9.3：数据页「重新评估级别」通过 localStorage 标记触发（唯一允许回退的入口）
         try {
@@ -116,7 +123,9 @@ export function useWordList(): UseWordListResult {
             localStorage.removeItem(REVALUATE_LEVEL_STORAGE_KEY)
             await reevaluateLevel(records, { migrate: false })
           }
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
         const pick = await pickDynamicWord({
           records,
           recent: [],
@@ -146,7 +155,7 @@ export function useWordList(): UseWordListResult {
       cancelled = true
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isReviewMode, reviewWords, learningMode, currentDictInfo.id, customDictKey])
+  }, [isReviewMode, reviewWords, learningMode, currentDictInfo.id, customDictKey, learningStart])
 
   // v9.4（SRS-004）：取词串行化——并发调用排队执行，避免两次取词拿到同一个词（后者会入列却从未展示）
   const nextInFlightRef = useRef<Promise<unknown>>(Promise.resolve())
@@ -168,7 +177,9 @@ export function useWordList(): UseWordListResult {
             try {
               manualWords = (await loadManualWords()) || []
               manualWordsRef.current = manualWords
-            } catch { /* ignore */ }
+            } catch {
+              /* ignore */
+            }
           }
           const pick = await pickDynamicWord({
             records,

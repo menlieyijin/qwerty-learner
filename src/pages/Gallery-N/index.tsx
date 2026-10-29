@@ -6,13 +6,18 @@ import type { GalleryState } from './context'
 import { useLearnedCounts } from './useLearnedCounts'
 import CloseButton from '@/components/CloseButton'
 import Layout from '@/components/Layout'
+import { LearningStartDialog } from '@/components/LearningStartDialog'
 import { dictionaries } from '@/resources/dictionary'
 import { currentDictInfoAtom, learningModeAtom } from '@/store'
+import { learningStartAtom, setLearningStartAtom } from '@/store/learningStart'
 import type { Dictionary } from '@/typings'
+import { getLevelName, getPersistedLevelId } from '@/utils/autoLevel'
 import groupBy, { groupByDictTags } from '@/utils/groupBy'
+import type { LearningStartId } from '@/utils/learningStart'
+import { nameOfChoice } from '@/utils/learningStart'
 import * as ScrollArea from '@radix-ui/react-scroll-area'
 import { useAtomValue, useSetAtom } from 'jotai'
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useHotkeys } from 'react-hotkeys-hook'
 import { useNavigate } from 'react-router-dom'
 import { useImmer } from 'use-immer'
@@ -49,6 +54,19 @@ export default function GalleryPage() {
     navigate('/')
   }, [navigate, setLearningMode])
 
+  // v9.16（dsh）：学习起点（修改入口不放在主界面，放在词库页）
+  const start = useAtomValue(learningStartAtom)
+  const applyStartChoice = useSetAtom(setLearningStartAtom)
+  const [startPickerOpen, setStartPickerOpen] = useState(false)
+  const startLevelLabel = nameOfChoice(start?.choiceId) || getLevelName(getPersistedLevelId()) || '未设置'
+  const onPickStart = useCallback(
+    (choiceId: LearningStartId) => {
+      applyStartChoice(choiceId)
+      setStartPickerOpen(false)
+    },
+    [applyStartChoice],
+  )
+
   useHotkeys('enter,esc', onBack, { preventDefault: true })
 
   useEffect(() => {
@@ -64,12 +82,21 @@ export default function GalleryPage() {
       <GalleryContext.Provider value={{ state: galleryState, setState: setGalleryState }}>
         <div className="relative mb-auto mt-auto flex w-full flex-1 flex-col overflow-y-auto pl-20">
           <CloseButton className="absolute right-20 top-10 mr-2 h-7 w-7" onClose={onBack} />
-          <button
-            className="absolute left-20 top-10 rounded-full border border-indigo-300 bg-white px-4 py-1.5 text-sm text-indigo-600 shadow-sm hover:bg-indigo-50 dark:border-indigo-500 dark:bg-gray-800 dark:text-indigo-300"
-            onClick={goAuto}
-          >
-            ← 自动进阶（按词汇水平）
-          </button>
+          <div className="absolute left-20 top-10 flex items-center gap-3">
+            <button
+              className="rounded-full border border-indigo-300 bg-white px-4 py-1.5 text-sm text-indigo-600 shadow-sm hover:bg-indigo-50 dark:border-indigo-500 dark:bg-gray-800 dark:text-indigo-300"
+              onClick={goAuto}
+            >
+              ← 自动进阶（按词汇水平）
+            </button>
+            {/* v9.16（dsh）：起点选择的修改入口放在这里（不在主界面），避免练习页被打扰 */}
+            <button
+              className="rounded-full border border-indigo-300 bg-white px-4 py-1.5 text-sm text-indigo-600 shadow-sm hover:bg-indigo-50 dark:border-indigo-500 dark:bg-gray-800 dark:text-indigo-300"
+              onClick={() => setStartPickerOpen(true)}
+            >
+              学习起点：{startLevelLabel}
+            </button>
+          </div>
           <div className="mt-20 flex w-full flex-1 flex-col items-center justify-center overflow-y-auto">
             <div className="flex h-full flex-col overflow-y-auto">
               <div className="flex h-20 w-full items-center justify-between pb-6 pr-20">
@@ -102,6 +129,12 @@ export default function GalleryPage() {
             </div>
           </div>
         </div>
+        <LearningStartDialog
+          open={startPickerOpen}
+          currentChoiceId={start?.choiceId ?? null}
+          onPick={onPickStart}
+          onClose={() => setStartPickerOpen(false)}
+        />
       </GalleryContext.Provider>
     </Layout>
   )
