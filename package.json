@@ -132,5 +132,10 @@
     "typescript-plugin-css-modules": "^5.0.1",
     "unplugin-icons": "^0.16.1",
     "vite": "^4.1.1"
-  }
+  },
+  "engines": {
+    "node": ">=18 <23",
+    "npm": ">=9"
+  },
+  "packageManager": "npm@10.9.7"
 }

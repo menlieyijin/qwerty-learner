@@ -10,8 +10,18 @@ import type { PluginOption } from 'vite'
 
 // https://vitejs.dev/config/
 export default defineConfig(async ({ mode }) => {
+  // v9.16（dsh，M4-003）：非 git 环境下（Docker 构建、下载的源码包）getLastCommit 会回调 err。
+  // 原实现写成 `err ? 'unknown' : resolve(...)`，err 分支只是「取值为 'unknown'」，Promise 永不 resolve，
+  // 于是 defineConfig 永远不返回 —— vite build 静默退出（退出码 0、无任何输出、不产出 build/），
+  // Dockerfile 里的 `COPY --from=build /app/build` 随之失败。这里两个分支都显式 resolve。
   const latestCommitHash = await new Promise<string>((resolve) => {
-    return getLastCommit((err, commit) => (err ? 'unknown' : resolve(commit.shortHash)))
+    getLastCommit((err, commit) => {
+      if (err || !commit) {
+        resolve('unknown')
+        return
+      }
+      resolve(commit.shortHash)
+    })
   })
   return {
     plugins: [

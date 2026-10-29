@@ -13,7 +13,12 @@ fi
 
 cd ..
 echo "开始安装依赖..."
-yarn install --registry=https://registry.npmmirror.com
+# 有 package-lock.json 时用 npm ci（严格按锁安装，可复现）；锁文件缺失时退回 npm install
+if [ -f package-lock.json ]; then
+	npm ci --registry=https://registry.npmmirror.com || npm install --registry=https://registry.npmmirror.com
+else
+	npm install --registry=https://registry.npmmirror.com
+fi
 echo "依赖安装完成，启动程序..."
 
 # 在浏览器中打开

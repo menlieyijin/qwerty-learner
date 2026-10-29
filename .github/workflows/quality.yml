@@ -2,14 +2,15 @@
 #
 # 设计取向（便于单独提上游 PR）：
 #   1. 不引入任何新依赖，全部用仓库已有的 tsc / eslint / vite；
-#   2. 只用上游通用命令（yarn install --frozen-lockfile / tsc / eslint / build），
+#   2. 只用通用命令（npm ci / tsc / eslint / build），
 #      不引用 fork 专属脚本（quality-gate.ps1 / dsh-smoke.mjs）；
-#   3. 与 deploy-pages.yml 一样用 yarn + yarn.lock（仓库里没有 package-lock.json）。
+#   3. v9.16（dsh，M4-002）：与 deploy-pages.yml 一样统一到 npm + package-lock.json
+#      （仓库此前只有 yarn.lock，两个 lock 并存必然漂移，现以 package-lock.json 为唯一来源）。
 #
 # 本地等价命令（Windows）：
 #   powershell -NoProfile -ExecutionPolicy Bypass -File scripts/quality-gate.ps1
 # 本地等价命令（pwsh 7 / Linux / macOS）：
-#   npx tsc --noEmit -p tsconfig.json && npx eslint src --ext .ts,.tsx --max-warnings 0 && yarn build
+#   npx tsc --noEmit -p tsconfig.json && npx eslint src --ext .ts,.tsx --max-warnings 0 && npm run build
 name: Quality Gate
 on:
   push:
@@ -30,11 +31,11 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 18
-          cache: yarn
+          node-version: 20
+          cache: npm
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: npm ci
 
       - name: Typecheck (tsc --noEmit)
         run: npx tsc --noEmit -p tsconfig.json
@@ -43,4 +44,4 @@ jobs:
         run: npx eslint src --ext .ts,.tsx --max-warnings 0
 
       - name: Build (vite)
-        run: yarn build
+        run: npm run build

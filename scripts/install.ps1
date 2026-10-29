@@ -26,7 +26,19 @@ if (!(Test-CommandInstalled node)) {
     Write-Host "已安装nodejs!"
     Set-Location ..
     Write-Host "开始安装依赖..."
-    yarn install --registry=https://registry.npmmirror.com
+    # 有 package-lock.json 时用 npm ci（严格按锁安装，可复现）；锁文件缺失时退回 npm install
+    if (Test-Path "package-lock.json") {
+        npm ci --registry=https://registry.npmmirror.com
+        if ($LASTEXITCODE -ne 0) { npm install --registry=https://registry.npmmirror.com }
+    }
+    else {
+        npm install --registry=https://registry.npmmirror.com
+    }
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "依赖安装失败，请检查 Node 版本是否满足 engines（node >=18 <23）与网络"
+        Set-Location $location
+        exit 1
+    }
     Write-Host "依赖安装完成，启动程序..."
     
     Start-Job -ScriptBlock {
