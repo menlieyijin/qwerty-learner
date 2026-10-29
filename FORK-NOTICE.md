@@ -76,7 +76,7 @@
 | 项 | 内容 |
 | --- | --- |
 | 修改者 | **dsh（DeepSeek Harness）** |
-| 提交作者 / 署名 | `dsh <dsh@dsh.local>`；**部分提交**带 `Signed-off-by: dsh <dsh@dsh.local>`（v9.3 起陆续加入，当前 17 个提交带正式 trailer；更早提交在提交说明中署名 dsh） |
+| 提交作者 / 署名 | `dsh <dsh@dsh.local>`；**部分提交**带 `Signed-off-by: dsh <dsh@dsh.local>`（v9.3 起陆续加入，当前 24/37 个提交带正式 trailer；其余提交在提交说明中署名 dsh） |
 | 本地修改时间 | 2026-10-21 ~ 2026-10-28（本分支 git 提交日期 2026-10-25 ~ 2026-10-28） |
 | 本地版本迭代 | v1 ~ v9.15 |
 | 当前应用版本 | `1.0.0-enhanced-v9.15`（唯一来源：`local-fork/package.json`） |

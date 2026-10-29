@@ -111,6 +111,12 @@ scripts/                 release / rollback / quality gate / CDP smoke / level-p
 | [FORK-NOTICE.md](./FORK-NOTICE.md) | Fork statement, GPL obligations, privacy/network disclosure, known limits |
 | [docs/DSH-FORK_EN.md](./docs/DSH-FORK_EN.md) | Technical details (auto-advance, SRS, desktop shell, security baseline) |
 | [docs/AUDIT-CLOSE.md](./docs/AUDIT-CLOSE.md) | Pre-release audit closure (fixed / accepted risk / not actionable) |
+| [docs/REFACTOR-LOG.md](./docs/REFACTOR-LOG.md) | v10 refactor log: issue / root cause / fix / verification / risk + backlog |
+| [docs/RELEASE-NOTES-v10.md](./docs/RELEASE-NOTES-v10.md) | v10.0.0 release notes |
+| [docs/UPSTREAM-PR-DRAFT.md](./docs/UPSTREAM-PR-DRAFT.md) | Ready-to-submit upstream issue / PR drafts (signed dsh) |
+| [docs/REFACTOR-LOG.md](./docs/REFACTOR-LOG.md) | v10 refactor log: issue / root cause / fix / verification / risk + backlog |
+| [docs/RELEASE-NOTES-v10.md](./docs/RELEASE-NOTES-v10.md) | v10.0.0 release notes |
+| [docs/UPSTREAM-PR-DRAFT.md](./docs/UPSTREAM-PR-DRAFT.md) | Ready-to-submit upstream issue / PR drafts (signed dsh) |
 | [docs/THIRD-PARTY.md](./docs/THIRD-PARTY.md) | Third-party dictionaries and icons: sources and licences |
 | [docs/Electron-EOL.md](./docs/Electron-EOL.md) | Electron runtime version and EOL record |
 | [docs/Backup-Restore.md](./docs/Backup-Restore.md) | Backup and restore |
