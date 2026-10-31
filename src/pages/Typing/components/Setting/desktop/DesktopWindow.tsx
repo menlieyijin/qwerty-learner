@@ -1,10 +1,13 @@
 import { Range, Row, Section, Toggle } from '../controls'
 import { useDesktopSettings } from '../useDesktopSettings'
+import { desktop } from '@/utils/desktop'
 
 // 桌面壳窗口行为。写入即生效（主进程 IPC），不需要「保存」按钮。
 export default function DesktopWindow() {
   const { settings, patch, preview } = useDesktopSettings()
   if (!settings) return null
+  const platform = desktop()?.platform
+  const autoStartSupported = platform !== 'linux'
 
   return (
     <Section label="窗口与系统" description="仅桌面版生效">
@@ -17,8 +20,13 @@ export default function DesktopWindow() {
       <Row label="关闭时最小化到托盘" hint="托盘图标单击恢复窗口">
         <Toggle label="关闭时最小化到托盘" checked={settings.closeToTray} onChange={(v) => void patch({ closeToTray: v })} />
       </Row>
-      <Row label="开机自动启动">
-        <Toggle label="开机自动启动" checked={settings.autoStart} onChange={(v) => void patch({ autoStart: v })} />
+      <Row label="开机自动启动" hint={autoStartSupported ? undefined : '当前平台不支持（仅 Windows / macOS）'}>
+        <Toggle
+          label="开机自动启动"
+          checked={settings.autoStart}
+          onChange={(v) => void patch({ autoStart: v })}
+          disabled={!autoStartSupported}
+        />
       </Row>
       <Row label="窗口不透明度" stacked>
         <Range

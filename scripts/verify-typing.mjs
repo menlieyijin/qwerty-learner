@@ -11,7 +11,7 @@
 //
 // 用法：node scripts/verify-typing.mjs [--exe <path>] [--port 9477]
 // 退出码：0 全过；1 有失败；2 环境问题。会强制结束正在运行的 Qwerty Learner。
-
+import { resolveDesktopExe } from './lib/desktop-app.mjs'
 import { execFileSync, spawn } from 'node:child_process'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -23,7 +23,13 @@ const argOf = (name, fallback) => {
   return i >= 0 && args[i + 1] ? args[i + 1] : fallback
 }
 
-const EXE = argOf('exe', process.env.QZ_VERIFY_EXE || 'D:\\整理\\qtest9\\app\\Qwerty Learner.exe')
+let EXE
+try {
+  EXE = resolveDesktopExe(argOf('exe', ''))
+} catch (e) {
+  console.error(`VERIFY_ERROR: ${e.message}`)
+  process.exit(2)
+}
 const PORT = Number(argOf('port', process.env.QZ_VERIFY_PORT || 9477))
 const GLOBAL_TIMEOUT = Number(process.env.QZ_VERIFY_TIMEOUT || 180000)
 
@@ -220,16 +226,22 @@ async function main() {
   await send('Runtime.enable')
 
   // 1) 首屏有词
-  const first = await until(async () => {
-    const s = await readWordState()
-    return s.word.length >= 2 && s.spans >= 2 ? s : null
-  }, 30000, '首屏出词')
+  const first = await until(
+    async () => {
+      const s = await readWordState()
+      return s.word.length >= 2 && s.spans >= 2 ? s : null
+    },
+    30000,
+    '首屏出词',
+  )
   check('1 首屏出现当前词', first.word.length >= 2, { word: first.word, letters: first.spans })
 
   // 关闭「首次起点弹窗」干扰：如果存在就选“以后再说”，避免遮挡
   const picker = await ev(`!!document.querySelector('[data-testid="start-level-cet6"]')`)
   if (picker) {
-    await ev(`(() => { const b = [...document.querySelectorAll('button')].find((x) => (x.textContent || '').includes('以后再说')); if (b) b.click(); return true })()`)
+    await ev(
+      `(() => { const b = [...document.querySelectorAll('button')].find((x) => (x.textContent || '').includes('以后再说')); if (b) b.click(); return true })()`,
+    )
     await wait(600)
   }
 
@@ -309,7 +321,11 @@ async function main() {
   const chapAfter = chapAfterRows[0]
   check(
     '5c 同词继续练后暂停：会话行被更新且未新增行（F5-003）',
-    chapAfterRows.length === 1 && !!chapBefore && !!chapAfter && chapAfter.wordCount === chapBefore.wordCount && chapAfter.time > chapBefore.time,
+    chapAfterRows.length === 1 &&
+      !!chapBefore &&
+      !!chapAfter &&
+      chapAfter.wordCount === chapBefore.wordCount &&
+      chapAfter.time > chapBefore.time,
     { rows: chapAfterRows.length, before: chapBefore, after: chapAfter },
   )
 
@@ -333,11 +349,12 @@ async function main() {
   await ev(`(() => { const b = document.querySelector('button[aria-label="开始"]'); if (b) b.click(); return true })()`)
   await wait(800)
   const resumed = await readWordState()
-  check(
-    '5d 敲对一个字母后暂停再恢复：该字母仍为已答对',
-    typed.correct === 1 && resumed.correct === 1,
-    { char: nextChar, typedCorrect: typed.correct, resumedCorrect: resumed.correct, word: resumed.word },
-  )
+  check('5d 敲对一个字母后暂停再恢复：该字母仍为已答对', typed.correct === 1 && resumed.correct === 1, {
+    char: nextChar,
+    typedCorrect: typed.correct,
+    resumedCorrect: resumed.correct,
+    word: resumed.word,
+  })
   // 收尾：再暂停，避免影响后面的设置面板断言
   await ev(`(() => { const b = document.querySelector('button[aria-label="暂停"]'); if (b) b.click(); return true })()`)
   await wait(400)
@@ -354,7 +371,8 @@ async function main() {
 
   // 新 profile 里 pronunciationConfig 尚未落盘（atomForConfig 只在需要合并/写回时才写），
   // 所以用 Radix Switch 的 data-state 作为 UI 真相，再确认 localStorage 已随之写入。
-  const switchState = () => ev(`(() => {
+  const switchState = () =>
+    ev(`(() => {
     const s = document.querySelector('[aria-label="单词发音开关"]')
     if (!s) return null
     let stored = null
@@ -373,11 +391,17 @@ async function main() {
   await ev(`(() => { const s = document.querySelector('[aria-label="单词发音开关"]'); if (s) s.click(); return true })()`)
   await wait(500)
   const sRestored = await switchState()
-  check('6c 再切回后 UI 与配置恢复', !!sRestored && sRestored.ui === sBefore.ui && sRestored.storedOpen === (sAfter.storedOpen === true ? false : true), sRestored)
+  check(
+    '6c 再切回后 UI 与配置恢复',
+    !!sRestored && sRestored.ui === sBefore.ui && sRestored.storedOpen === (sAfter.storedOpen === true ? false : true),
+    sRestored,
+  )
 
   // 6d 滑块接线：键盘右移一格，配置里的 volume 应从 1 涨不动、从 1 开始测「左移」
   //（默认 volume=1 已在上限，按左移才看得出变化；Radix Slider 的键盘交互绑在 Thumb 上）
-  const volBefore = await ev(`(() => { const c = JSON.parse(localStorage.getItem('pronunciation') || 'null'); return c ? c.volume : null })()`)
+  const volBefore = await ev(
+    `(() => { const c = JSON.parse(localStorage.getItem('pronunciation') || 'null'); return c ? c.volume : null })()`,
+  )
   await ev(`(() => {
     const t = document.querySelector('[aria-label="单词发音音量"]')
     if (!t) return false
@@ -386,7 +410,9 @@ async function main() {
     return true
   })()`)
   await wait(600)
-  const volAfter = await ev(`(() => { const c = JSON.parse(localStorage.getItem('pronunciation') || 'null'); return c ? c.volume : null })()`)
+  const volAfter = await ev(
+    `(() => { const c = JSON.parse(localStorage.getItem('pronunciation') || 'null'); return c ? c.volume : null })()`,
+  )
   check('6d 音量滑块键盘左移后配置随之下降', typeof volBefore === 'number' && typeof volAfter === 'number' && volAfter < volBefore, {
     before: volBefore,
     after: volAfter,
@@ -406,7 +432,9 @@ async function main() {
   await ev(`location.reload(); true`).catch(() => undefined)
   await wait(1500)
   await until(async () => (await ev(`!!document.querySelector('[data-testid="current-word"]')`)) === true, 25000, 'reload-2')
-  const shown = await ev(`(() => { const el = document.querySelector('[data-testid="current-word"]'); return el ? (el.textContent || '') : '' })()`)
+  const shown = await ev(
+    `(() => { const el = document.querySelector('[data-testid="current-word"]'); return el ? (el.textContent || '') : '' })()`,
+  )
   check('8b 关闭默写后当前词恢复可见', shown.length > 0 && !/_/.test(shown), shown)
 
   const noisy = results.consoleErrors.filter((e) => !/favicon|Autofill|React DevTools/i.test(e))

@@ -100,4 +100,6 @@
 - 不允许在组件里直接写 `window.qwertyEnhance` / `window.qzRuntime`（`grep` 应为 0，本文件除外）；
 - 桌面专属页签在 `SETTING_TABS` 上标 `desktopOnly: true`，网页版自动过滤；
 - 滑块类设置：`onChange` 只做预览（`preview`），`onValueCommit` 才落盘（`patch`），避免拖动时高频写设置文件；
-- 桌面运行时可能晚于页面就绪（注入顺序），调用点必须容忍返回 `null`，不要假设一定存在。
+- 桌面运行时可能晚于页面就绪（注入顺序），调用点必须容忍返回 `null`，不要假设一定存在；
+- 设置页签不要给 `Tab.Panel` 加 `unmount`：Headless UI 会注销 Panel 并重算选中索引，切换时可能落到相邻页；
+  需要延迟挂载用 `LazyPanel`（首次激活后保持挂载）。

@@ -8,6 +8,7 @@
 //
 // 用法：node scripts/verify-pages.mjs [--exe <path>] [--port 9476]
 // 退出码：0 全过；1 有失败；2 环境问题。注意会强制结束正在运行的 Qwerty Learner。
+import { resolveDesktopExe } from './lib/desktop-app.mjs'
 import { execFileSync, spawn } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { mkdtempSync, rmSync } from 'node:fs'
@@ -20,7 +21,13 @@ const argOf = (name, fallback) => {
   return i >= 0 && args[i + 1] ? args[i + 1] : fallback
 }
 
-const EXE = argOf('exe', process.env.QZ_VERIFY_EXE || 'D:\\整理\\qtest9\\app\\Qwerty Learner.exe')
+let EXE
+try {
+  EXE = resolveDesktopExe(argOf('exe', ''))
+} catch (e) {
+  console.error(`VERIFY_ERROR: ${e.message}`)
+  process.exit(2)
+}
 const PORT = Number(argOf('port', process.env.QZ_VERIFY_PORT || 9476))
 const GLOBAL_TIMEOUT = Number(process.env.QZ_VERIFY_TIMEOUT || 120000)
 

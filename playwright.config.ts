@@ -9,6 +9,11 @@ import { defineConfig, devices } from '@playwright/test'
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
+// 只有当 baseURL 指向本机时，才自动拉起 dev server（线上巡检/自定义地址不启动多余进程）
+const localBaseUrl = /^http:/ /////(127//.0//.0//.1|localhost)(://d+)?/.test(process.env.QZ_E2E_BASE_URL || '')
+  ? process.env.QZ_E2E_BASE_URL
+  : null
+
 export default defineConfig({
   testDir: './tests/e2e',
   /* Run tests in files in parallel */
@@ -79,10 +84,13 @@ export default defineConfig({
     // },
   ],
 
-  /* Run your local dev server before starting the tests */
-  // webServer: {
-  //   command: 'npm run start',
-  //   url: 'http://127.0.0.1:3000',
-  //   reuseExistingServer: !process.env.CI,
-  // },
+  /* 本地跑视觉/端到端：自动起 dev server，无需手工开终端 */
+  webServer: localBaseUrl
+    ? {
+        command: 'npm run dev -- --port 5173 --strictPort --host 127.0.0.1',
+        url: 'http://127.0.0.1:5173',
+        reuseExistingServer: !process.env.CI,
+        timeout: 120_000,
+      }
+    : undefined,
 })

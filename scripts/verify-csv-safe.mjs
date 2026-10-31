@@ -4,7 +4,6 @@
 // 不引入新的测试框架，也不把测试代码塞进 src。
 //
 // 用法：node scripts/verify-csv-safe.mjs   退出码 0=全过，1=有失败，2=环境问题（esbuild 不可用）
-
 import { build } from 'esbuild'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'

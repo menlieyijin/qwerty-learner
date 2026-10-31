@@ -72,21 +72,37 @@ scripts/                 发布 / 回滚 / 质量门禁 / CDP 冒烟 / 起点选
 
 ## 开发与验证
 
+> 标「桌面」的脚本会启动真实 Electron 程序，需要先指定程序路径：
+> `QZ_TEST_APP_DIR=<目录>` 或 `node scripts/verify-xxx.mjs --exe "<可执行文件>"`。
+> Windows 是 `Qwerty Learner.exe`，macOS 是 `Qwerty Learner.app/Contents/MacOS/Qwerty Learner`，Linux 是发布目录里的同名可执行文件。
+
 | 命令 | 作用 |
 | --- | --- |
 | `npm run test:quality` | `tsc --noEmit` + `eslint src --max-warnings 0`（CI 同款） |
-| `npm run test:local` | CDP 冒烟 11 项（需先启动带 `--remote-debugging-port=9472` 的实例） |
+| `npm run test:local` | CDP 冒烟 13 项（设置 7 页签 / qzRuntime / collectStats 结构 / 练习 / 备份 / 分析 / 错题本；需先启动带 `--remote-debugging-port=9472` 的实例） |
 | `npm run test:start-level` | 起点选择行为验证 21 项（首启弹窗 → 选档 → 出对应词 → 重启保持 → 词库页修改 → 老用户不打扰） |
 | `npm run test:pages` | 页面级回归 20 项（错题本排序/详情/Esc/删除取消、设置 7 页签与桌面统计、脏 payload 不白屏） |
 | `npm run test:typing` | 打字主链路 18 项（进入输入态/错字标红/切词/落库/**逐字母错因**/暂停写会话与二次暂停 upsert/**暂停恢复不丢进度**/音效开关与滑块/默写） |
 | `npm run test:csv` | 错题本 CSV 导出公式注入防护 14 项断言 |
 | `npm run test:core` | **核心算法回归 309 条**（SRS 120 + 自动进阶 189）+ 确定性门禁，真实源码打包仿真 |
-| `npm run test:all` | **一键跑完**：tsc/eslint + 正确率单测 + 核心回归 309 + 四个 CDP 行为脚本（不含 `test:visual`，它需要先起 dev server） |
+| `npm run test:all` | **一键跑完**：tsc/eslint + 正确率单测 + 核心回归 309 + 四个 CDP 行为脚本（不含 `test:visual` / `test:desktop-visual`，它们分别需要浏览器与桌面程序） |
 | `npm run test:stats` | 结果页正确率/错误分级的 15 条断言（含空词表 0/0 边界、NaN 兜底、分档边界） |
-| `npm run test:visual` | 视觉回归：错题本空态 + 设置面板两张基线截图。**需先** `npm run dev -- --port 5173 --host 127.0.0.1`；重建基线加 `--update-snapshots` |
+| `npm run test:visual` | 网页视觉回归：错题本空态 + 设置面板两张基线截图（自动拉起 dev server）；重建基线加 `--update-snapshots` |
+| `npm run test:desktop-visual` | **桌面**视觉回归：显示/数据/词库/工具四个设置页，固定 1280×800 视口逐页对比；重建基线用 `test:desktop-visual:update` |
 | `npm run quality` | PowerShell 质量门禁（tsc + eslint + 核心回归） |
 | `scripts/dsh-release.ps1` | 打包 asar / 测试安装 / 隔离冒烟 / 双目录安装 |
 | `scripts/dsh-rollback.ps1` | 回滚到上一个版本（回滚前自动存 redo 点） |
+
+## 兼容性
+
+| 场景 | 支持 |
+| --- | --- |
+| 网页版（`npm run build`） | Windows / macOS / Linux 均可构建；Chrome / Edge / Firefox / Safari 近两年版本 |
+| 桌面壳 | Electron 33，Windows 10+ / macOS 12+ / Linux（X11；Wayland 视发行版） |
+| 桌面壳的平台差异 | 开机自启仅 Windows / macOS（Linux 上开关置灰）；窗口透明度依赖系统合成器；托盘在部分 Linux 桌面需要 libappindicator |
+| 设置对话框 | 宽度 `min(800px, 100vw-32px)`、高度 `min(480px, 100vh-144px)`，1366×768 即可完整使用 |
+| Node | `>=18 <23`（CI 用 20）；构建脚本为 Node ESM，无 shell 依赖 |
+| 桌面验证脚本 | 通过 `QZ_TEST_APP_DIR` / `--exe` 定位程序，Windows / macOS / Linux 路径均已适配 |
 
 ## 数据、隐私与联网
 

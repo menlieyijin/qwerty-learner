@@ -31,6 +31,7 @@ v10 已修的 6 个缺陷（CSV 公式注入、脏 payload 白屏、非 git 构�
 | P1-2 | 同上 `collectStats` + `collectInsights` | 打开一次数据页把 `wordRecords` 全表读两遍 | 两个采集函数各自 `idbAll` | `readRecordInsights` 加 3s TTL；React 侧改为顺序调用，第二次命中缓存 |
 | P1-3 | `Setting/ToolsSetting.tsx` 番茄钟 | 原实现在 `setRemain` 的 updater 里调用 `setMode/setCount/notify`，StrictMode 下会重复执行；窗口节流后计时变慢 | 用「每秒自减」建模 | 改为「结束时间戳 + 500ms 轮询」，副作用移出 updater |
 | P1-4 | `Setting/desktop/DesktopSound.tsx` | 键音音量拖动时每个像素写一次 `enhanced-settings.json` | 滑块只有 `onChange` | `onChange` 只预览，`onValueCommit` 才落盘 |
+| P1-5 | `Setting/index.tsx` | 点「数据设置」偶发落到「高级设置」 | `Tab.Panel unmount` 触发 Panel 注销 + Headless UI 重算选中索引，与点击竞争 | 改 `LazyPanel`：首次激活后保持挂载；桌面视觉连跑 3 次稳定 |
 
 ## P2
 
@@ -49,6 +50,13 @@ v10 已修的 6 个缺陷（CSV 公式注入、脏 payload 白屏、非 git 构�
   直接写 `currentDict/learningMode/currentChapter` 后重载；缺 `id` 的词库给出明确提示。
 - 面板删除后清理死代码：`fmtNum`、`sleep`、`panelAppearance`、`#btn-*` 绑定、74 条面板 CSS 规则。
 - `docs/` 中「顶栏工具 / 设置 → 关于 → 打开增强工具」的旧描述全部改为「设置 → 词库管理 / 桌面工具」。
+
+## 兼容性（v11.1）
+
+- 桌面验证脚本改为跨平台解析程序路径（Windows / macOS / Linux），不再依赖作者机器目录；
+- 设置对话框宽度/高度自适应视口，1366×768 可完整使用；
+- Linux 不支持的能力（开机自启）在界面置灰，不假装可用；
+- 词库计数优先读元数据，首开不再解析 385 个 JSON。
 
 ## 仍未闭环（明确边界，不是待办）
 

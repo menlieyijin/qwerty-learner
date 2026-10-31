@@ -13,7 +13,7 @@
 // 退出码：0 全部通过；1 有断言失败；2 环境问题（连不上 / 启动失败 / 超时）。
 //
 // 注意：会强制结束正在运行的 Qwerty Learner（单实例锁会让新进程直接退出）。请先保存正在练的内容。
-
+import { resolveDesktopExe } from './lib/desktop-app.mjs'
 import { spawn } from 'node:child_process'
 import { execFileSync } from 'node:child_process'
 import { mkdtempSync, rmSync } from 'node:fs'
@@ -26,7 +26,13 @@ const argOf = (name, fallback) => {
   return i >= 0 && args[i + 1] ? args[i + 1] : fallback
 }
 
-const EXE = argOf('exe', process.env.QZ_VERIFY_EXE || 'D:\\整理\\qtest9\\app\\Qwerty Learner.exe')
+let EXE
+try {
+  EXE = resolveDesktopExe(argOf('exe', ''))
+} catch (e) {
+  console.error(`VERIFY_ERROR: ${e.message}`)
+  process.exit(2)
+}
 const PORT = Number(argOf('port', process.env.QZ_VERIFY_PORT || 9474))
 const GLOBAL_TIMEOUT = Number(process.env.QZ_VERIFY_TIMEOUT || 120000)
 const SEND_TIMEOUT = 15000
@@ -37,7 +43,9 @@ let failures = 0
 const check = (name, ok, detail) => {
   results.checks.push({ name, ok, detail })
   if (!ok) failures += 1
-  console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail === undefined ? '' : ` — ${typeof detail === 'string' ? detail : JSON.stringify(detail)}`}`)
+  console.log(
+    `${ok ? 'PASS' : 'FAIL'}  ${name}${detail === undefined ? '' : ` — ${typeof detail === 'string' ? detail : JSON.stringify(detail)}`}`,
+  )
   return ok
 }
 
@@ -211,10 +219,14 @@ async function main() {
   await until(async () => (await ev(`document.readyState === 'complete' && !!document.getElementById('root')`)) === true, 25000, '首屏')
 
   // 1) 首次打开弹起点选择
-  const boot = await until(async () => {
-    const s = await readState()
-    return s.hasPicker ? s : null
-  }, 15000, '首次打开弹窗')
+  const boot = await until(
+    async () => {
+      const s = await readState()
+      return s.hasPicker ? s : null
+    },
+    15000,
+    '首次打开弹窗',
+  )
   check('1 首次打开弹出起点选择', !!boot?.hasPicker)
   check('1b 首次打开尚未写入起点记录', boot.start === null, boot.start)
 
@@ -223,10 +235,14 @@ async function main() {
   const clicked = await clickSel('[data-testid="start-level-cet6"]')
   check('2 点击「大学六级」卡片', clicked === true)
 
-  const cet6 = await until(async () => {
-    const s = await readState()
-    return s.start?.choiceId === 'cet6' && s.level === 'cet6' ? s : null
-  }, 15000, '应用 cet6')
+  const cet6 = await until(
+    async () => {
+      const s = await readState()
+      return s.start?.choiceId === 'cet6' && s.level === 'cet6' ? s : null
+    },
+    15000,
+    '应用 cet6',
+  )
   check('2b 起点记录写入 qzLearningStart', cet6.start?.choiceId === 'cet6', cet6.start)
   check('2c 自动进阶级别切到 cet6', cet6.level === 'cet6', cet6.level)
 
@@ -241,10 +257,14 @@ async function main() {
   check('2d 选完立刻从 CET6 词表取词', dictsAfterCet6.includes('CET6_T.json'), dictsAfterCet6)
   check('2e 弹层已关闭', (await readState()).hasPicker === false)
 
-  const labelCet6 = await until(async () => {
-    const s = await readState()
-    return s.bodyText.includes('大学六级') ? s.bodyText : null
-  }, 10000, '顶栏显示大学六级')
+  const labelCet6 = await until(
+    async () => {
+      const s = await readState()
+      return s.bodyText.includes('大学六级') ? s.bodyText : null
+    },
+    10000,
+    '顶栏显示大学六级',
+  )
   check('2f 顶栏级别显示「大学六级」', !!labelCet6)
 
   // 3) 重启（同 profile）→ 不再弹窗，级别保持
@@ -257,7 +277,14 @@ async function main() {
   // 4) 词库页修改起点 → 初中，立刻生效（不重启）
   const markJunior = markRequests()
   await ev(`location.hash = '#/gallery'; true`)
-  await until(async () => (await ev(`!!document.querySelector('[data-testid="start-level-cet6"]') || [...document.querySelectorAll('button')].some((b) => (b.textContent || '').includes('学习起点'))`)) === true, 15000, '词库页入口')
+  await until(
+    async () =>
+      (await ev(
+        `!!document.querySelector('[data-testid="start-level-cet6"]') || [...document.querySelectorAll('button')].some((b) => (b.textContent || '').includes('学习起点'))`,
+      )) === true,
+    15000,
+    '词库页入口',
+  )
   const openEntry = await clickByText('学习起点')
   check('4 词库页存在「学习起点」修改入口（不在主界面）', openEntry === true)
   await until(async () => (await ev(`!!document.querySelector('[data-testid="start-level-junior"]')`)) === true, 10000, '修改弹层')
@@ -265,10 +292,14 @@ async function main() {
   const juniorClicked = await clickSel('[data-testid="start-level-junior"]')
   check('4b 在修改弹层选「初中水平」', juniorClicked === true)
 
-  const junior = await until(async () => {
-    const s = await readState()
-    return s.start?.choiceId === 'junior' && s.level === 'junior-1' ? s : null
-  }, 15000, '应用 junior-1')
+  const junior = await until(
+    async () => {
+      const s = await readState()
+      return s.start?.choiceId === 'junior' && s.level === 'junior-1' ? s : null
+    },
+    15000,
+    '应用 junior-1',
+  )
   check('4c 起点记录更新为 junior', junior.start?.choiceId === 'junior', junior.start)
   check('4d 级别切到 junior-1', junior.level === 'junior-1', junior.level)
 
@@ -282,11 +313,19 @@ async function main() {
     25000,
     '取初中词表',
   )
-  check('4e 改完回练习页即从初中词表取词（无需重启）', dictsAfterJunior.some((n) => n.startsWith('PEPChuZhong7_')), dictsAfterJunior)
-  const labelJunior = await until(async () => {
-    const s = await readState()
-    return s.bodyText.includes('初中一年级') ? s.bodyText : null
-  }, 15000, '顶栏显示初中一年级')
+  check(
+    '4e 改完回练习页即从初中词表取词（无需重启）',
+    dictsAfterJunior.some((n) => n.startsWith('PEPChuZhong7_')),
+    dictsAfterJunior,
+  )
+  const labelJunior = await until(
+    async () => {
+      const s = await readState()
+      return s.bodyText.includes('初中一年级') ? s.bodyText : null
+    },
+    15000,
+    '顶栏显示初中一年级',
+  )
   check('4f 顶栏级别显示「初中一年级」', !!labelJunior)
 
   // 5) 老用户兼容：有进阶状态、没有起点记录 → 不弹窗

@@ -4,7 +4,6 @@
 // 在正常使用中几乎走不到，无法用 CDP 构造，只能靠抽出来的纯函数做断言。
 //
 // 用法：node scripts/verify-stats.mjs
-
 import { build } from 'esbuild'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'

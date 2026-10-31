@@ -1,0 +1,44 @@
+# 本分支（menlieyijin/qwerty-learner）的质量门禁。
+# 上游 quality.yml 只在 master/dev 触发；这里覆盖所有分支，且只跑「不需要图形界面」的检查，
+# 保证任何人在 Linux/macOS/Windows 上 clone 后都能复现同样的结果。
+name: Fork Quality
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: fork-quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  node-checks:
+    # 只在本 fork 跑，避免给上游仓库添负担
+    if: github.repository == 'menlieyijin/qwerty-learner'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint:strict
+
+      - name: Build (vite)
+        run: npm run build
+
+      - name: Correct-rate unit tests
+        run: npm run test:stats
+
+      - name: Core algorithm regression (309 assertions)
+        run: npm run test:core

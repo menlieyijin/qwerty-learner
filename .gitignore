@@ -42,3 +42,6 @@ playwright-report
 # 核心回归产物（由 npm run test:core 生成）
 /scripts/core-regression/core.mjs
 /scripts/core-regression/report-*.json
+
+# 桌面视觉回归：只忽略差异产物，基线 PNG 需要提交
+/tests/desktop-visual/*.diff.png

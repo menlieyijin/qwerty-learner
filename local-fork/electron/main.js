@@ -760,16 +760,18 @@ function dictEntryFor(file) {
   const meta = getDictMeta()[file] || null;
   let count = 0;
   let size = 0;
+  const metaLen = meta ? Number(meta.length) || 0 : 0;
   try {
     const p = path.join(__dirname, '../build/dicts', file);
     size = fs.statSync(p).size;
     if (dictCountCache.has(file)) count = dictCountCache.get(file);
+    else if (metaLen > 0) count = metaLen; // 元数据里有词数：不再为 385 个文件各解析一次 JSON
     else {
       const arr = JSON.parse(fs.readFileSync(p, 'utf-8'));
       count = Array.isArray(arr) ? arr.length : 0;
       dictCountCache.set(file, count);
     }
-  } catch { count = meta ? Number(meta.length) || 0 : 0; size = 0; }
+  } catch { count = metaLen; size = 0; }
   const name = meta && meta.name ? meta.name : file.replace(/\.json$/i, '');
   return {
     file,
@@ -1771,6 +1773,8 @@ function registerShortcuts() {
 }
 
 function setAutoStart(on) {
+  // app.setLoginItemSettings 仅在 macOS / Windows 可用；Linux 上直接拒绝，避免「开关打开但无效」
+  if (process.platform === 'linux') return { ok: false, error: '当前平台不支持开机自启' };
   try {
     app.setLoginItemSettings({
       openAtLogin: !!on,
@@ -1815,6 +1819,7 @@ function registerIpc() {
           logError('settings-invalid', `${k}: ${patch[k] === null ? 'null' : typeof patch[k]}`);
           continue;
         }
+        if (k === 'autoStart' && process.platform === 'linux') continue;
         const range = SETTING_NUM_CLAMP[k];
         settings[k] = range ? Math.min(range[1], Math.max(range[0], patch[k])) : patch[k];
       }

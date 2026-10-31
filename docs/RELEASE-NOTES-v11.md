@@ -73,3 +73,23 @@
 验证：tsc + eslint 通过；`test:all` 88 条 + `test:core` 309/309；`test:pages` 20/20；
 `test:visual` 2/2；隔离冒烟 13/13；双目录安装哈希一致。桌面四页（显示/数据/词库/工具）用 CDP 截图逐页复核，
 无「读取失败 / 未就绪」。
+
+
+---
+
+# v11.1.0（兼容性与可移植性）
+
+| 项 | 之前 | 现在 |
+| --- | --- | --- |
+| 桌面验证脚本定位程序 | 三个脚本各写死 `D://整理//qtest9//app//Qwerty Learner.exe` | `scripts/lib/desktop-app.mjs` 统一解析：`--exe` → `QZ_VERIFY_EXE` → `QZ_TEST_APP_DIR` → `release/app`；按平台拼 `.exe` / `.app/Contents/MacOS/...` / 无后缀 |
+| `test:visual` | 必须手工起 dev server | Playwright 检测到本地 baseURL 时自动拉起，`reuseExistingServer` 复用已在跑的服务 |
+| 设置对话框 | 固定 800×480，小屏溢出 | `min(800px, 100vw-32px)` × `min(480px, 100vh-144px)`；侧栏 176px，≥640px 时 208px |
+| Linux 开机自启 | 开关可点但无效 | 主进程拒绝写入并在界面置灰，注明仅 Windows / macOS |
+| 词库列表首开 | 为 385 个词库各读一次 JSON 计数 | 优先用 `dict-meta.json` 的 `length`，缺失时才读文件 |
+| **切页错位（新发现）** | `Tab.Panel unmount` 会导致 Headless UI 重算索引，实测点「数据设置」偶发落到「高级设置」 | 改为 `LazyPanel`：首次激活后保持挂载，既不重复采集也不触发 Panel 注销 |
+| 桌面 UI 回归 | 只有临时截图脚本 | `npm run test:desktop-visual`：4 页固定 1280×800、像素对比、基线入库 |
+| CI | 只有上游 master/dev 触发 | `.github/workflows/quality-fork.yml`：所有分支跑 typecheck + lint + build + stats + core |
+
+验证：tsc + eslint 通过；`test:all` 88 条；`test:core` 309/309；`test:pages` 20/20；
+`test:visual` 2/2（自动起服务）；`test:desktop-visual` 4/4（连跑 3 次 0.000%）；
+隔离冒烟 13/13；双目录安装 asar `ADC627A8…` 一致。版本号 → `1.0.0-enhanced-v11.1.0`。

@@ -11,7 +11,7 @@ import { desktop, isDesktop } from '@/utils/desktop'
 import { Dialog, Tab, Transition } from '@headlessui/react'
 import classNames from 'classnames'
 import type { ComponentType } from 'react'
-import { Fragment, useCallback, useContext, useEffect, useState } from 'react'
+import { Fragment, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import IconAdjustmentsHorizontal from '~icons/tabler/adjustments-horizontal'
 import IconBook from '~icons/tabler/book'
 import IconDatabaseCog from '~icons/tabler/database-cog'
@@ -39,6 +39,14 @@ const SETTING_TABS: SettingTabDef[] = [
   { id: 'advanced', label: '高级设置', Icon: IconAdjustmentsHorizontal, Panel: AdvancedSetting },
   { id: 'about', label: '关于', Icon: IconInfoCircle, Panel: AboutSetting },
 ]
+
+// 只挂载「访问过的」页签：避免设置一打开就把所有桌面面板的采集（统计/洞察/词库）都跑一遍；
+// 同时保证后续切换不再触发 Panel 注册/注销（Headless UI 在 unmount 时会重算选中索引）。
+function LazyPanel({ active, children }: { active: boolean; children: React.ReactNode }) {
+  const seen = useRef(false)
+  if (active) seen.current = true
+  return seen.current ? <>{children}</> : null
+}
 
 export default function Setting() {
   const [isOpen, setIsOpen] = useState(false)
@@ -101,7 +109,7 @@ export default function Setting() {
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Dialog.Panel className="flex w-200 flex-col overflow-hidden rounded-2xl bg-white p-0 shadow-xl dark:bg-gray-800">
+                <Dialog.Panel className="flex w-[min(50rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl bg-white p-0 shadow-xl dark:bg-gray-800">
                   <div className="relative flex h-22 items-end justify-between rounded-t-lg border-b border-neutral-100 bg-stone-50 px-6 py-3 dark:border-neutral-700 dark:bg-gray-900">
                     <span className="text-3xl font-bold text-gray-600">设置</span>
                     <button type="button" onClick={() => setIsOpen(false)} title="关闭对话框">
@@ -110,8 +118,8 @@ export default function Setting() {
                   </div>
 
                   <Tab.Group vertical>
-                    <div className="flex h-120 w-full ">
-                      <Tab.List className="flex h-full w-52 flex-col items-start space-y-2 border-r border-neutral-100 bg-stone-50 px-6 py-3 dark:border-transparent dark:bg-gray-900">
+                    <div className="flex h-[min(30rem,calc(100vh-9rem))] w-full">
+                      <Tab.List className="flex h-full w-44 shrink-0 flex-col items-start space-y-2 border-r border-neutral-100 bg-stone-50 px-6 py-3 dark:border-transparent dark:bg-gray-900 sm:w-52">
                         {tabs.map(({ id, label, Icon }) => (
                           <Tab
                             key={id}
@@ -130,10 +138,14 @@ export default function Setting() {
 
                       <Tab.Panels className="h-full w-full flex-1">
                         {tabs.map(({ id, label, Panel }) => (
-                          <Tab.Panel key={id} unmount className="flex h-full w-full focus:outline-none">
-                            <SettingBoundary name={label}>
-                              <Panel />
-                            </SettingBoundary>
+                          <Tab.Panel key={id} className="flex h-full w-full focus:outline-none">
+                            {({ selected }) => (
+                              <LazyPanel active={selected}>
+                                <SettingBoundary name={label}>
+                                  <Panel />
+                                </SettingBoundary>
+                              </LazyPanel>
+                            )}
                           </Tab.Panel>
                         ))}
                       </Tab.Panels>
