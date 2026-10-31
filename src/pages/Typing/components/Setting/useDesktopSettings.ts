@@ -1,5 +1,5 @@
 import type { DesktopSettings } from '@/utils/desktop'
-import { desktop } from '@/utils/desktop'
+import { desktop, runtime } from '@/utils/desktop'
 import { useCallback, useEffect, useState } from 'react'
 
 // 桌面端设置只有一份（主进程 enhanced-settings.json）。
@@ -74,9 +74,16 @@ export function useDesktopSettings() {
   const patch = useCallback(async (p: Partial<DesktopSettings>) => {
     const b = desktop()
     if (!b) return
-    const next = await b.updateSettings(p)
-    if (next) broadcast({ ...(cache || ({} as DesktopSettings)), ...next, ...p })
-    else if (cache) broadcast({ ...cache, ...p })
+    try {
+      const next = await b.updateSettings(p)
+      if (next) broadcast({ ...(cache || ({} as DesktopSettings)), ...next, ...p })
+      else if (cache) broadcast({ ...cache, ...p })
+    } catch (e) {
+      // 主进程拒绝/通道断开时不让 UI 卡在旧状态，也不产生未捕获的 rejection
+      const msg = String((e as Error)?.message || e)
+      setError(msg)
+      runtime()?.toast(`设置保存失败：${msg}`)
+    }
   }, [])
 
   return { settings, patch, preview, error }

@@ -144,8 +144,12 @@ function Lookup() {
       <Row label="释义缓存" hint={cache ? `${cache.count} 条 · ${Math.round(cache.bytes / 1024)} KB` : '读取中…'}>
         <Btn
           onClick={async () => {
-            await desktop()?.freeClear()
-            await load()
+            try {
+              await desktop()?.freeClear()
+              await load()
+            } catch {
+              setCache(null)
+            }
           }}
         >
           清空
@@ -204,19 +208,47 @@ function Precache() {
           variant="primary"
           disabled={!current}
           onClick={async () => {
-            const r = (await desktop()?.precacheStart({
-              dictFile: current?.file,
-              type,
-              limit: Number(limit) || 0,
-            })) as { ok?: boolean; error?: string } | undefined
-            setMsg(r?.ok === false ? String(r.error || '启动失败') : '')
+            try {
+              const r = (await desktop()?.precacheStart({
+                dictFile: current?.file,
+                type,
+                limit: Number(limit) || 0,
+              })) as { ok?: boolean; error?: string } | undefined
+              setMsg(r?.ok === false ? String(r.error || '启动失败') : '')
+            } catch (e) {
+              setMsg(`启动失败：${String((e as Error)?.message || e)}`)
+            }
           }}
         >
           开始
         </Btn>
-        <Btn onClick={() => void desktop()?.precachePause()}>暂停</Btn>
-        <Btn onClick={() => void desktop()?.precacheResume()}>继续</Btn>
-        <Btn onClick={() => void desktop()?.precacheCancel()}>取消</Btn>
+        <Btn
+          onClick={() =>
+            void desktop()
+              ?.precachePause()
+              .catch(() => setMsg('暂停失败'))
+          }
+        >
+          暂停
+        </Btn>
+        <Btn
+          onClick={() =>
+            void desktop()
+              ?.precacheResume()
+              .catch(() => setMsg('继续失败'))
+          }
+        >
+          继续
+        </Btn>
+        <Btn
+          onClick={() =>
+            void desktop()
+              ?.precacheCancel()
+              .catch(() => setMsg('取消失败'))
+          }
+        >
+          取消
+        </Btn>
       </div>
       <Bar
         ratio={ratio}

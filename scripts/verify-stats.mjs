@@ -47,6 +47,8 @@ check('错 1/3 = 66（floor）', computeCorrectRate(3, 1) === 66, computeCorrect
 const emptyRate = computeCorrectRate(0, 0)
 check('空词表 = 0 而不是 NaN', emptyRate === 0 && Number.isFinite(emptyRate), { value: String(emptyRate) })
 check('空词表分级为 2（红色）', mistakeLevelOf(emptyRate) === 2, mistakeLevelOf(emptyRate))
+check('错词数大于词数时夹到 0（不产生负数）', computeCorrectRate(5, 9) === 0, computeCorrectRate(5, 9))
+check('错词数为负时夹到 100', computeCorrectRate(5, -2) === 100, computeCorrectRate(5, -2))
 
 // —— 非法输入兜底 ——
 check('chapterLength 为 NaN → 0', computeCorrectRate(Number.NaN, 0) === 0)

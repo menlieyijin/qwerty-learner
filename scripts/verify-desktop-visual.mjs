@@ -30,11 +30,13 @@ const PLATFORM = process.platform
 
 const VIEWPORT = { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false }
 const PAGES = [
-  ['显示设置', 'view', 900],
-  ['数据设置', 'data', 2200],
-  ['词库管理', 'dict', 1800],
-  ['桌面工具', 'tools', 900],
+  ['显示设置', 'view', 900, `document.body.innerText.includes('窗口与系统')`],
+  ['数据设置', 'data', 2200, `document.body.innerText.includes('学习概览') && !document.body.innerText.includes('读取中')`],
+  ['词库管理', 'dict', 1800, `document.body.innerText.includes('内置词库') && !document.body.innerText.includes('加载中')`],
+  ['桌面工具', 'tools', 900, `document.body.innerText.includes('番茄钟')`],
 ]
+// 强调色是 CSS 变量驱动的：额外截一张换色后的数据页，锁住「带透明度/渐变也跟随」这件事
+const ACCENT = 'qz-accent-rose'
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms))
 
@@ -45,8 +47,8 @@ let seq = 0
 const pending = new Map()
 
 function fail(msg) {
-  console.error(`VERIFY_ERROR: ${msg}`)
-  process.exit(2)
+  // 抛错而不是 process.exit：process.exit 会跳过 finally，留下未退出的 Electron 与临时 profile
+  throw new Error(msg)
 }
 
 async function waitForPage(deadlineMs = 45000) {
@@ -96,6 +98,16 @@ function send(method, params = {}, ms = 20000) {
 async function ev(expression) {
   const r = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true })
   return r.result && r.result.value
+}
+
+// 固定 sleep 会在慢机器/冷缓存时截到「加载中」；改为等页面自己进入就绪态
+async function waitUntil(expression, timeoutMs = 15000) {
+  const deadline = Date.now() + timeoutMs
+  while (Date.now() < deadline) {
+    if (await ev(expression)) return true
+    await wait(200)
+  }
+  return false
 }
 
 function compare(name, actualBuf) {
@@ -156,15 +168,38 @@ async function main() {
   await wait(900)
 
   let ok = true
-  for (const [tab, name, ms] of PAGES) {
+  for (const [tab, name, ms, ready] of PAGES) {
     const clicked = await ev(
       `(function(){var t=[...document.querySelectorAll('[role="tab"]')].find(function(x){return (x.textContent||'').trim()==='${tab}'});if(t){t.click();return true}return false})()`,
     )
     if (!clicked) fail(`找不到页签：${tab}`)
-    await wait(ms)
+    await wait(Math.min(ms, 800))
+    if (!(await waitUntil(ready))) fail(`页签 ${tab} 在 15s 内未就绪`)
+    await wait(300)
     const shot = await send('Page.captureScreenshot', { format: 'png', fromSurface: true })
     ok = compare(name, Buffer.from(shot.data, 'base64')) && ok
   }
+
+  // —— 强调色：先取一个 bg-indigo-400/70 的柱子颜色，换色后必须变化，再截图 ——
+  await ev(
+    `(function(){var t=[...document.querySelectorAll('[role="tab"]')].find(function(x){return (x.textContent||'').trim()==='数据设置'});if(t)t.click();return true})()`,
+  )
+  await wait(1800)
+  const colorOf = (expr) => ev(`(function(){var el=${expr};return el?getComputedStyle(el).backgroundColor:''})()`)
+  const before = await colorOf(`document.querySelector('[class~="bg-indigo-400/70"]')`)
+  await ev(`document.documentElement.classList.add('${ACCENT}'); true`)
+  await wait(400)
+  const after = await colorOf(`document.querySelector('[class~="bg-indigo-400/70"]')`)
+  const accentOk = !!before && !!after && before !== after
+  if (!accentOk) console.log(`FAIL  强调色未生效（before=${before}, after=${after}）`)
+  // 把带透明度的柱子滚到视口内，让基线覆盖「/70 也跟随主题」这件事
+  await ev(
+    `(function(){var el=document.querySelector('[class~="bg-indigo-400/70"]');if(el)el.scrollIntoView({block:'center'});return true})()`,
+  )
+  await wait(500)
+  const accentShot = await send('Page.captureScreenshot', { format: 'png', fromSurface: true })
+  ok = compare('accent', Buffer.from(accentShot.data, 'base64')) && ok && accentOk
+  await ev(`document.documentElement.classList.remove('${ACCENT}'); true`)
 
   const errText = await ev(`/读取失败|加载失败|未就绪/.test(document.body.innerText)`)
   if (errText) {

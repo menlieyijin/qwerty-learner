@@ -41,6 +41,13 @@
 - 不写 `!important`；确需覆盖时用更具体的选择器并注释原因。
 - 删除类名前先确认没有引用：`styles.x` / `style.x` 两种写法都要查（`React.memo` 的组件常用 `style`）。
 
+## 3.1 颜色与主题
+
+- 强调色只允许用 Tailwind 的 `indigo-*` 工具类（已映射到 `--qz-indigo-*` 变量）；不要写死 `#6366f1`、`rgb(99 102 241)`；
+- 带透明度（`bg-indigo-400/70`）、渐变（`from-indigo-500`）、`ring/shadow-indigo-*` 都可以直接用，换主题会自动跟随；
+- 新增主题只需在 `local-fork/electron/enhance/enhance.css` 里加一组 `html.qz-accent-xxx { --qz-indigo-*: ... }`，
+  不需要再写选择器覆盖；改颜色后跑 `test:visual` + `test:desktop-visual`。
+
 ## 4. 工具函数
 
 - 按领域放在 `src/utils/<domain>.ts`：`keyboard` / `platform` / `time` / `number` / `chapter` / `audio` / `trans` / `csvSafe` …

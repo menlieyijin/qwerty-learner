@@ -93,3 +93,45 @@
 验证：tsc + eslint 通过；`test:all` 88 条；`test:core` 309/309；`test:pages` 20/20；
 `test:visual` 2/2（自动起服务）；`test:desktop-visual` 4/4（连跑 3 次 0.000%）；
 隔离冒烟 13/13；双目录安装 asar `ADC627A8…` 一致。版本号 → `1.0.0-enhanced-v11.1.0`。
+
+
+---
+
+# v11.2.0（收尾：主题完整化、错误处理、属性测试、断点续传）
+
+## 主题
+
+- `indigo` 调色板改为 CSS 变量（`--qz-indigo-50..950`，默认值 = Tailwind indigo），桌面壳的
+  `html.qz-accent-*` 只覆盖变量；带透明度的 `bg-indigo-400/70`、渐变、`ring/shadow-indigo-*` 一起跟随。
+  删掉了原先 14 条「只覆盖 text/bg/border-indigo-500/400/600」的选择器补丁。
+- `test:desktop-visual` 增加「玫瑰红强调色」页，并断言 `bg-indigo-400/70` 的计算色在换色后发生变化。
+
+## 边界与错误处理
+
+| 位置 | 问题 | 修复 |
+| --- | --- | --- |
+| `computeCorrectRate` | 脏数据（错词数 > 词数 / 负数）会得到负值或 >100 | 夹取到 0~100；`test:stats` 17 条 + 属性测试覆盖 |
+| `useDesktopSettings.patch` | IPC 失败产生未捕获 rejection，界面停在旧状态 | catch + toast |
+| 词库页 | 收藏/切换/检查更新/下载/导入/删除都可能把异常抛到控制台 | 全部 catch 并显示原因；删除自定义词库加确认框 |
+| 工具页 | 预缓存开始/暂停/继续/取消、通知、清缓存失败时无反馈 | catch + 行内提示 |
+| 数据页 | 备份失败只在返回值里，通道异常无人处理 | catch + 行内提示 |
+| 当前词库 | 历史版本可能把 `currentDict` 存成裸字符串，`JSON.parse` 会抛错 | 解析失败按原值处理 |
+
+## 词库下载断点续传
+
+- 先写 `<file>.part`；失败保留，下次带 `Range: bytes=<已下载>-`；
+- 服务端返回 206 追加、200 从头覆盖；416 重置；
+- 落盘前校验体积与 JSON 结构，失败清 `.part`，避免半截文件被反复续传；
+- 返回 `resumed`，界面提示「断点续传」。
+
+## 新增验证
+
+- `npm run test:fuzz`：csvSafeCell / normalizeTrans / computeCorrectRate 各 800 组固定种子随机输入，
+  不变量失败即报错；已接入 CI 与 `test:all`。
+- `test:all` 现为 **95 条**（stats 17 + fuzz 5 + start-level 21 + pages 20 + typing 18 + csv 14）+ core 309。
+- `test:desktop-visual` 5 页（显示/数据/词库/工具/强调色），连跑 2 次 0.000%。
+
+## 本版验证
+
+tsc + eslint 通过；`test:all` 95 条；`test:core` 309/309；`test:visual` 2/2；
+`test:desktop-visual` 5/5；冒烟 13/13；双目录安装 asar `F418D1EB…` 一致。

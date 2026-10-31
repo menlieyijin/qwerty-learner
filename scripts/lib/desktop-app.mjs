@@ -8,6 +8,8 @@ const APP_NAME = 'Qwerty Learner'
 
 function variants(dir) {
   if (process.platform === 'darwin') {
+    // 允许直接传 .app 包路径
+    if (dir.endsWith('.app')) return [path.join(dir, 'Contents', 'MacOS', APP_NAME)]
     return [path.join(dir, `${APP_NAME}.app`, 'Contents', 'MacOS', APP_NAME), path.join(dir, APP_NAME)]
   }
   if (process.platform === 'win32') {

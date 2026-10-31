@@ -8,8 +8,8 @@
 | 级别 | 新发现 | 已修 | 接受风险 | 未修 |
 | --- | --- | --- | --- | --- |
 | P0 | 0 | 0 | 1（运行时暴露面） | 0 |
-| P1 | 4 | 4 | 0 | 0 |
-| P2 | 5 | 5 | 1（主题覆盖不完整） | 0 |
+| P1 | 6 | 6 | 0 | 0 |
+| P2 | 7 | 7 | 0 | 0 |
 
 v10 已修的 6 个缺陷（CSV 公式注入、脏 payload 白屏、非 git 构建静默失败、二次暂停丢更新、空词表 NaN、日志 BOM）见
 `REFACTOR-LOG.md` 批次 E/I，本轮未回归。
@@ -42,7 +42,9 @@ v10 已修的 6 个缺陷（CSV 公式注入、脏 payload 白屏、非 git 构�
 | P2-3 | 全局 `window.qwertyEnhance` | 组件直接摸全局对象，网页版无类型 | 无桥接层 | 新增 `src/utils/desktop.ts`：唯一访问点 + 完整类型 + `isDesktop()`；网页返回 `null`，不渲染假按钮 |
 | P2-4 | `utils/desktop.ts` + `main.js` | `panelAppearance` 只写不读（面板删除后成死配置） | 面板专属设置未清理 | 两处默认值删除 |
 | P2-5 | `Setting/DictSetting.tsx` | 自定义词库导入无体积上限 | 直接 `file.text()` | 32MB 上限 + 明确提示 |
-| P2-6 | `enhance/enhance.css` | 强调色只重映射 `text/bg/border-indigo-*` 等工具类，`bg-indigo-400/70` 一类带透明度的不会变 | 用 CSS 覆盖 Tailwind 类，天然不完整 | **接受**：属视觉细节，不影响功能；彻底修需把颜色提成 CSS 变量（会动全站样式） |
+| P2-6 | `enhance/enhance.css` | 强调色只重映射 `text/bg/border-indigo-*`，带透明度/渐变/ring 不跟随 | 用 CSS 覆盖 Tailwind 类，天然不完整 | **已修 v11.2**：indigo 调色板改为 CSS 变量，主题只改变量；桌面视觉新增强调色基线 |
+| P1-6 | `ResultScreen/correctRate.ts` | 脏数据（错词数 > 词数 / 负数）会得到负值或 >100 | 只处理了空词表，未夹取 | 结果夹取 0~100，`test:stats` + `test:fuzz` 覆盖 |
+| P2-7 | 桌面面板（词库/工具/数据） | IPC 失败产生未捕获 rejection，界面无反馈 | 只写成功分支 | 全部 catch + 行内提示；设置保存失败 toast；删除自定义词库加确认 |
 
 ## 结构与一致性（本轮同时收敛）
 
@@ -62,10 +64,10 @@ v10 已修的 6 个缺陷（CSV 公式注入、脏 payload 白屏、非 git 构�
 
 | 项 | 说明 |
 | --- | --- |
-| 视觉覆盖 | 桌面面板（词库/工具）依赖 Electron 桥，Playwright 只覆盖网页版设置页；桌面侧靠冒烟 + `test:pages` 的 DOM 断言 |
-| 词库在线更新 | 只做「检查 + 单个下载」，无断点续传/全量镜像；失败靠重试按钮 |
-| 无 fuzz / 渗透 | 输入面（导入 JSON/CSV、脏 payload）有定向用例，但没有自动化模糊测试 |
-| `enhance.css` 主题 | 见 P2-6 |
+| 桌面视觉基线 | 已有 5 页（含强调色），但基线按平台/字体渲染，换机器或系统版本需 `test:desktop-visual:update` 重建；Linux/macOS 尚未在真实机器上生成基线 |
+| 词库在线更新 | 有 `.part` + Range 续传，但没有网络故障注入用例；多镜像源之间可能复用同一个 `.part`，靠 JSON 校验兜底 |
+| 模糊测试深度 | `test:fuzz` 是固定种子的属性测试（3 个纯函数 × 800 组），不是覆盖全部输入面的 fuzz/渗透测试 |
+| 强调色 | 已变量化（P2-6 关闭）；新增主题仍需补一组变量并跑两套视觉基线 |
 
 ## 仓库正规化建议（按收益排序）
 

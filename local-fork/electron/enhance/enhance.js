@@ -1114,13 +1114,18 @@
     }
   }
   async function toggleDictFavorite(file) {
-    const arr = Array.isArray(settings.dictFavorites) ? settings.dictFavorites.slice() : []
-    const i = arr.indexOf(file)
-    if (i >= 0) arr.splice(i, 1)
-    else arr.push(file)
-    settings = await api.updateSettings({ dictFavorites: arr })
-    toast(i >= 0 ? '已取消收藏' : '已收藏')
-    return arr
+    try {
+      const arr = Array.isArray(settings.dictFavorites) ? settings.dictFavorites.slice() : []
+      const i = arr.indexOf(file)
+      if (i >= 0) arr.splice(i, 1)
+      else arr.push(file)
+      settings = await api.updateSettings({ dictFavorites: arr })
+      toast(i >= 0 ? '已取消收藏' : '已收藏')
+      return arr
+    } catch (e) {
+      toast('收藏失败：' + (e.message || e))
+      return undefined
+    }
   }
   async function setCurrentDict(entry) {
     if (!entry) return false

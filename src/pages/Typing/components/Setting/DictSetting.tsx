@@ -49,13 +49,18 @@ export default function DictSetting() {
 
   // 当前词库：应用自身把它存在 localStorage.currentDict（JSON 字符串）
   const current = useMemo(() => {
+    const raw = localStorage.getItem('currentDict')
+    if (!raw) return null
+    let id = raw
     try {
-      const raw = localStorage.getItem('currentDict')
-      const id = raw ? String(JSON.parse(raw)) : ''
-      return dicts.find((d) => d.id === id) ?? null
+      const parsed = JSON.parse(raw)
+      if (typeof parsed === 'string') id = parsed
+      else if (parsed && typeof parsed === 'object') id = String(parsed.id || parsed.dict || parsed.value || '')
     } catch {
-      return null
+      // 历史版本可能直接存裸字符串（不是 JSON），按原值处理
+      id = raw
     }
+    return dicts.find((d) => d.id === id) ?? null
   }, [dicts])
 
   useEffect(() => {
@@ -143,8 +148,12 @@ export default function DictSetting() {
                       type="button"
                       aria-label={isFav ? `取消收藏${d.name}` : `收藏${d.name}`}
                       onClick={async () => {
-                        const next = await runtime()?.toggleDictFavorite(d.file)
-                        if (next) setFavs(next)
+                        try {
+                          const next = await runtime()?.toggleDictFavorite(d.file)
+                          if (next) setFavs(next)
+                        } catch (e) {
+                          setMsg(`收藏失败：${String((e as Error)?.message || e)}`)
+                        }
                       }}
                       className={classNames('text-base leading-none', isFav ? 'text-amber-500' : 'text-gray-300 hover:text-amber-400')}
                     >
@@ -162,8 +171,13 @@ export default function DictSetting() {
                     <Btn
                       disabled={isCur}
                       onClick={async () => {
-                        const e = dicts.find((x) => x.file === d.file)
-                        if (e) await runtime()?.setCurrentDict(e)
+                        const entry = dicts.find((x) => x.file === d.file)
+                        if (!entry) return
+                        try {
+                          await runtime()?.setCurrentDict(entry)
+                        } catch (e) {
+                          setMsg(`切换失败：${String((e as Error)?.message || e)}`)
+                        }
                       }}
                     >
                       设为当前
@@ -193,6 +207,8 @@ export default function DictSetting() {
                     const list = (r?.changes as typeof changes) || []
                     setChanges(list)
                     setMsg(r?.ok ? `检查完成：${list.length} 个可更新` : String(r?.error || '检查失败'))
+                  } catch (e) {
+                    setMsg(`检查失败：${String((e as Error)?.message || e)}`)
                   } finally {
                     setChecking(false)
                   }
@@ -212,8 +228,14 @@ export default function DictSetting() {
                   <span className="text-gray-400">{Math.round(c.remoteSize / 1024)}KB</span>
                   <Btn
                     onClick={async () => {
-                      const r = await desktop()?.dictDownloadUpdate(c.name, c.downloadUrl)
-                      setMsg(r?.ok ? `已下载 ${c.name}，重启后生效` : `下载失败：${r?.error || ''}`)
+                      try {
+                        const r = await desktop()?.dictDownloadUpdate(c.name, c.downloadUrl)
+                        setMsg(
+                          r?.ok ? `已下载 ${c.name}${r.resumed ? '（断点续传）' : ''}，重启后生效` : `下载失败：${r?.error || '未知错误'}`,
+                        )
+                      } catch (e) {
+                        setMsg(`下载失败：${String((e as Error)?.message || e)}`)
+                      }
                     }}
                   >
                     下载
@@ -240,13 +262,17 @@ export default function DictSetting() {
                       return
                     }
                     const ext = (f.name.split('.').pop() || '').toLowerCase()
-                    const text = await f.text()
-                    const name = customName.trim() || f.name.replace(/\.[^.]+$/, '')
-                    const r = await runtime()?.importCustomDict(text, ext, name)
-                    setMsg(r ? `已导入「${r.name}」：${r.count} 词` : '导入失败')
-                    setCustomName('')
-                    e.target.value = ''
-                    await loadCustom()
+                    try {
+                      const text = await f.text()
+                      const name = customName.trim() || f.name.replace(/\.[^.]+$/, '')
+                      const r = await runtime()?.importCustomDict(text, ext, name)
+                      setMsg(r ? `已导入「${r.name}」：${r.count} 词` : '导入失败')
+                      setCustomName('')
+                      e.target.value = ''
+                      await loadCustom()
+                    } catch (err) {
+                      setMsg(`导入失败：${String((err as Error)?.message || err)}`)
+                    }
                   }}
                   className="text-xs text-gray-500 file:mr-2 file:rounded-lg file:border-0 file:bg-indigo-400 file:px-3 file:py-1 file:text-white"
                 />
@@ -269,7 +295,11 @@ export default function DictSetting() {
                   <span className="text-[11px] text-gray-400">{c.count} 词</span>
                   <Btn
                     onClick={async () => {
-                      await runtime()?.startCustomMemory(c.name)
+                      try {
+                        await runtime()?.startCustomMemory(c.name)
+                      } catch (e) {
+                        setMsg(`切换失败：${String((e as Error)?.message || e)}`)
+                      }
                     }}
                   >
                     记忆曲线
@@ -277,8 +307,13 @@ export default function DictSetting() {
                   <Btn
                     variant="danger"
                     onClick={async () => {
-                      await runtime()?.removeCustomDict(c.name)
-                      await loadCustom()
+                      if (!window.confirm(`删除自定义词库「${c.name}」？此操作不可撤销。`)) return
+                      try {
+                        await runtime()?.removeCustomDict(c.name)
+                        await loadCustom()
+                      } catch (e) {
+                        setMsg(`删除失败：${String((e as Error)?.message || e)}`)
+                      }
                     }}
                   >
                     删除

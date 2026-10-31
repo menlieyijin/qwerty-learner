@@ -17,50 +17,73 @@ body.qz-mini ::-webkit-scrollbar {
   display: none;
 }
 
-/* —— B9 主题：强调色覆盖（Tailwind indigo 系列工具类）—— */
-html.qz-accent-indigo {
-  --qz-accent: #818cf8;
-}
+/* —— B9 主题：强调色 ——
+   页面里的 indigo 工具类已改为引用 --qz-indigo-*（见 tailwind.config.js / src/index.css），
+   这里只需按主题覆盖变量；带透明度的写法（bg-indigo-400/70）、渐变、ring 会自动跟随。 */
 html.qz-accent-emerald {
-  --qz-accent: #34d399;
+  --qz-indigo-50: 236 253 245;
+  --qz-indigo-100: 209 250 229;
+  --qz-indigo-200: 167 243 208;
+  --qz-indigo-300: 110 231 183;
+  --qz-indigo-400: 52 211 153;
+  --qz-indigo-500: 16 185 129;
+  --qz-indigo-600: 5 150 105;
+  --qz-indigo-700: 4 120 87;
+  --qz-indigo-800: 6 95 70;
+  --qz-indigo-900: 6 78 59;
+  --qz-indigo-950: 2 44 34;
 }
 html.qz-accent-rose {
-  --qz-accent: #fb7185;
+  --qz-indigo-50: 255 241 242;
+  --qz-indigo-100: 255 228 230;
+  --qz-indigo-200: 254 205 211;
+  --qz-indigo-300: 253 164 175;
+  --qz-indigo-400: 251 113 133;
+  --qz-indigo-500: 244 63 94;
+  --qz-indigo-600: 225 29 72;
+  --qz-indigo-700: 190 18 60;
+  --qz-indigo-800: 159 18 57;
+  --qz-indigo-900: 136 19 55;
+  --qz-indigo-950: 76 5 25;
 }
 html.qz-accent-amber {
-  --qz-accent: #fbbf24;
+  --qz-indigo-50: 255 251 235;
+  --qz-indigo-100: 254 243 199;
+  --qz-indigo-200: 253 230 138;
+  --qz-indigo-300: 252 211 77;
+  --qz-indigo-400: 251 191 36;
+  --qz-indigo-500: 245 158 11;
+  --qz-indigo-600: 217 119 6;
+  --qz-indigo-700: 180 83 9;
+  --qz-indigo-800: 146 64 14;
+  --qz-indigo-900: 120 53 15;
+  --qz-indigo-950: 69 26 3;
 }
 html.qz-accent-sky {
-  --qz-accent: #38bdf8;
+  --qz-indigo-50: 240 249 255;
+  --qz-indigo-100: 224 242 254;
+  --qz-indigo-200: 186 230 253;
+  --qz-indigo-300: 125 211 252;
+  --qz-indigo-400: 56 189 248;
+  --qz-indigo-500: 14 165 233;
+  --qz-indigo-600: 2 132 199;
+  --qz-indigo-700: 3 105 161;
+  --qz-indigo-800: 7 89 133;
+  --qz-indigo-900: 12 74 110;
+  --qz-indigo-950: 8 47 73;
 }
 html.qz-accent-violet {
-  --qz-accent: #a78bfa;
-}
-html[class*='qz-accent-']:not(.qz-accent-indigo) .text-indigo-500,
-html[class*='qz-accent-']:not(.qz-accent-indigo) .text-indigo-600,
-html[class*='qz-accent-']:not(.qz-accent-indigo) .text-indigo-400 {
-  color: var(--qz-accent) !important;
-}
-html[class*='qz-accent-']:not(.qz-accent-indigo) .bg-indigo-500,
-html[class*='qz-accent-']:not(.qz-accent-indigo) .bg-indigo-600,
-html[class*='qz-accent-']:not(.qz-accent-indigo) .bg-indigo-400 {
-  background-color: var(--qz-accent) !important;
-}
-html[class*='qz-accent-']:not(.qz-accent-indigo) .border-indigo-500,
-html[class*='qz-accent-']:not(.qz-accent-indigo) .border-indigo-400,
-html[class*='qz-accent-']:not(.qz-accent-indigo) .border-indigo-600 {
-  border-color: var(--qz-accent) !important;
-}
-html[class*='qz-accent-']:not(.qz-accent-indigo) .shadow-indigo-300,
-html[class*='qz-accent-']:not(.qz-accent-indigo) .shadow-indigo-400 {
-  --tw-shadow-color: var(--qz-accent) !important;
-}
-html[class*='qz-accent-']:not(.qz-accent-indigo) .ring-indigo-500 {
-  --tw-ring-color: var(--qz-accent) !important;
-}
-html[class*='qz-accent-']:not(.qz-accent-indigo) .from-indigo-500,
-html[class*='qz-accent-']:not(.qz-accent-indigo) .from-indigo-400 {
-  --tw-gradient-from: var(--qz-accent) !important;
+  --qz-indigo-50: 245 243 255;
+  --qz-indigo-100: 237 233 254;
+  --qz-indigo-200: 221 214 254;
+  --qz-indigo-300: 196 181 253;
+  --qz-indigo-400: 167 139 250;
+  --qz-indigo-500: 139 92 246;
+  --qz-indigo-600: 124 58 237;
+  --qz-indigo-700: 109 40 217;
+  --qz-indigo-800: 91 33 182;
+  --qz-indigo-900: 76 29 149;
+  --qz-indigo-950: 46 16 101;
 }
 
 /* —— B9 字体：只作用于练习区的单词/翻译文本 —— */

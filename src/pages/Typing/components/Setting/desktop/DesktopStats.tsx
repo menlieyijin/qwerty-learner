@@ -177,8 +177,12 @@ export default function DesktopStats() {
           <Btn
             variant="primary"
             onClick={async () => {
-              const r = await desktop()?.backupNow()
-              say(r?.ok ? `备份完成：${r.path || ''}` : `备份失败：${r?.error || '未知错误'}`)
+              try {
+                const r = await desktop()?.backupNow()
+                say(r?.ok ? `备份完成：${r.path || ''}` : `备份失败：${r?.error || '未知错误'}`)
+              } catch (e) {
+                say(`备份失败：${String((e as Error)?.message || e)}`)
+              }
             }}
           >
             立即备份

@@ -1,3 +1,8 @@
+// 强调色主题：indigo 调色板改为 CSS 变量（默认值 = Tailwind indigo），
+// 桌面壳的 html.qz-accent-* 只需覆盖变量即可让所有 indigo 工具类（含 /70 透明度写法、渐变、ring）一起跟随。
+const THEME_SHADES = ['50', '100', '200', '300', '400', '500', '600', '700', '800', '900', '950']
+const indigoPalette = Object.fromEntries(THEME_SHADES.map((k) => [k, `rgb(var(--qz-indigo-${k}) / <alpha-value>)`]))
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: ['class'],
@@ -6,6 +11,7 @@ module.exports = {
     extend: {
       colors: {
         primary: '#6366f1',
+        indigo: indigoPalette,
       },
       keyframes: {
         'accordion-down': {

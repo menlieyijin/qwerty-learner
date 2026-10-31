@@ -899,21 +899,65 @@ async function checkDictUpdates() {
     return { ok: false, error: '检查失败：' + String(e.message || e), changes: [] };
   }
 }
-async function fetchDictFile(url, timeout = 25000) {
-  // v9.4（SHELL-003）：下载前校验来源（https + 受信 host + .json）
+// 下载词库到 UPDATE_DIR，支持断点续传：
+// - 先写 <file>.part，失败后保留；下次请求带 Range: bytes=<已下载字节>-
+// - 服务端返回 206 时追加，返回 200（忽略 Range）时从头覆盖
+// - 落盘前校验 JSON 结构与体积上限；校验失败清掉 .part，避免半截文件被反复续传
+async function fetchDictToFile(url, target, timeout = 60000) {
   if (!dictUrlAllowed(url)) throw new Error('下载源不在白名单内');
-  const res = await fetch(url, { headers: { 'user-agent': FREE_UA }, signal: AbortSignal.timeout(timeout) });
-  if (!res.ok) throw new Error('HTTP ' + res.status);
-  // 重定向后再校验最终地址，防止受信域名 302 到内网/非受信域
+  const part = target + '.part';
+  let start = 0;
+  try {
+    const st = fs.statSync(part);
+    if (st.isFile() && st.size > 0 && st.size <= DICT_MAX_BYTES) start = st.size;
+  } catch {
+    /* 无残留 */
+  }
+
+  const headers = { 'user-agent': FREE_UA };
+  if (start > 0) headers.Range = `bytes=${start}-`;
+  const res = await fetch(url, { headers, signal: AbortSignal.timeout(timeout) });
+  if (res.status === 416 && start > 0) {
+    try {
+      fs.rmSync(part, { force: true });
+    } catch {
+      /* ignore */
+    }
+    throw new Error('续传范围无效，已重置');
+  }
+  if (!res.ok && res.status !== 206) throw new Error('HTTP ' + res.status);
   if (!dictUrlAllowed(res.url)) throw new Error('下载地址重定向到非受信源');
+
+  const append = res.status === 206 && start > 0;
   const declared = Number(res.headers.get('content-length') || 0);
-  if (declared > DICT_MAX_BYTES) throw new Error('词库文件过大');
+  if (declared && (append ? start : 0) + declared > DICT_MAX_BYTES) throw new Error('词库文件过大');
   const buf = Buffer.from(await res.arrayBuffer());
   if (!buf.length) throw new Error('空文件');
-  if (buf.length > DICT_MAX_BYTES) throw new Error('词库文件过大');
-  const json = JSON.parse(buf.toString('utf-8'));
-  if (!validateDictPayload(json)) throw new Error('JSON 不是有效词库数组');
-  return buf;
+  const total = (append ? start : 0) + buf.length;
+  if (total > DICT_MAX_BYTES) throw new Error('词库文件过大');
+  fs.writeFileSync(part, buf, { flag: append ? 'a' : 'w' });
+
+  let json = null;
+  try {
+    json = JSON.parse(fs.readFileSync(part, 'utf-8'));
+  } catch {
+    try {
+      fs.rmSync(part, { force: true });
+    } catch {
+      /* ignore */
+    }
+    throw new Error('下载内容不是完整 JSON');
+  }
+  if (!validateDictPayload(json)) {
+    try {
+      fs.rmSync(part, { force: true });
+    } catch {
+      /* ignore */
+    }
+    throw new Error('JSON 不是有效词库数组');
+  }
+  fs.renameSync(part, target);
+  return { size: total, resumed: append };
 }
 async function downloadDictUpdate(name, downloadUrl) {
   try {
@@ -930,13 +974,12 @@ async function downloadDictUpdate(name, downloadUrl) {
     let lastErr = null;
     for (const url of urls) {
       try {
-        const buf = await fetchDictFile(url);
         const target = path.join(UPDATE_DIR, file);
-        fs.writeFileSync(target, buf);
+        const got = await fetchDictToFile(url, target);
         // v9.15（dsh，M5-006）：新文件已落盘 → 失效内存缓存，使「记忆曲线 / 更新检查」立即按新词库工作
         invalidateDictCaches();
-        logRenderer('dict-download', `${file} <- ${String(url).replace(/^https:\/\/([^/]+).*$/, '$1')} (${buf.length} B)`);
-        return { ok: true, file, path: target, size: buf.length, url };
+        logRenderer('dict-download', `${file} <- ${String(url).replace(/^https:\/\/([^/]+).*$/, '$1')} (${got.size} B${got.resumed ? ', resumed' : ''})`);
+        return { ok: true, file, path: target, size: got.size, resumed: got.resumed, url };
       } catch (e) { lastErr = e; }
     }
     return { ok: false, error: String((lastErr && lastErr.message) || lastErr || '下载失败') };

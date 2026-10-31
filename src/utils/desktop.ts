@@ -119,7 +119,7 @@ export type DesktopBridge = {
     updatedCount?: number
     error?: string
   }>
-  dictDownloadUpdate(name: string, url: string): Promise<{ ok: boolean; error?: string }>
+  dictDownloadUpdate(name: string, url: string): Promise<{ ok: boolean; size?: number; resumed?: boolean; error?: string }>
   dictUpdateInfo(): Promise<Record<string, unknown>>
   dictOpenUpdateDir(): Promise<unknown>
   dictClearUpdates(): Promise<unknown>

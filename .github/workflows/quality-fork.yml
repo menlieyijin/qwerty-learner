@@ -40,5 +40,8 @@ jobs:
       - name: Correct-rate unit tests
         run: npm run test:stats
 
+      - name: Property tests (seeded fuzz)
+        run: npm run test:fuzz
+
       - name: Core algorithm regression (309 assertions)
         run: npm run test:core

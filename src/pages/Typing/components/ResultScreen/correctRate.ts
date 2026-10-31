@@ -13,7 +13,9 @@ export function computeCorrectRate(chapterLength: number, wrongWordCount: number
   if (!Number.isFinite(chapterLength) || chapterLength <= 0) return 0
   const wrong = Number.isFinite(wrongWordCount) ? wrongWordCount : 0
   const correctCount = chapterLength - wrong
-  return Math.floor((correctCount / chapterLength) * 100)
+  // 脏数据（wrong 大于词数 / 负数）不应产生负数或 >100 的百分比：结果页只认 0~100
+  const rate = Math.floor((correctCount / chapterLength) * 100)
+  return Math.min(100, Math.max(0, rate))
 }
 
 /** 结果页的「错误分级」：>=85 绿、>=70 黄、其余红（与原实现的分档逐字一致） */

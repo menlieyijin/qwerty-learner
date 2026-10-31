@@ -13,6 +13,7 @@ function fmtBytes(n: number) {
 export default function DesktopSound() {
   const { settings, patch, preview } = useDesktopSettings()
   const [pron, setPron] = useState<{ count: number; bytes: number } | null>(null)
+  const [err, setErr] = useState('')
 
   const loadPron = useCallback(async () => {
     const b = desktop()
@@ -55,11 +56,16 @@ export default function DesktopSound() {
         <Row label="启用缓存">
           <Toggle label="发音缓存" checked={settings.pronCache} onChange={(v) => void patch({ pronCache: v })} />
         </Row>
-        <Row label="缓存统计" hint={pron ? `${pron.count} 个文件 · ${fmtBytes(pron.bytes)}` : '读取中…'}>
+        <Row label="缓存统计" hint={err || (pron ? `${pron.count} 个文件 · ${fmtBytes(pron.bytes)}` : '读取中…')}>
           <Btn
             onClick={async () => {
-              await desktop()?.clearPronCache()
-              await loadPron()
+              try {
+                await desktop()?.clearPronCache()
+                await loadPron()
+                setErr('')
+              } catch (e) {
+                setErr(`清空失败：${String((e as Error)?.message || e)}`)
+              }
             }}
           >
             清空
