@@ -27,7 +27,7 @@ v10 已修的 6 个缺陷（CSV 公式注入、脏 payload 白屏、非 git 构�
 
 | # | 位置 | 问题 | 根因 | 处理 |
 | --- | --- | --- | --- | --- |
-| P1-1 | `enhance/enhance.js`（2605 行） | 增强工具是独立 Shadow DOM 面板：自带一套 CSS/状态/页签，与设置面板两套 UI；「在关于页加入口」只是跳板 | 历史上面板先于设置页存在，功能与视图写在一起（`renderXxx` 直接改 DOM），无法被 React 复用 | 删除整页 UI（-1362 行），逻辑改为无头运行时 `window.qzRuntime`；功能在设置内用 React 重建（见 P2-1） |
+| P1-1 | `enhance/enhance.js`（2605 行） | 增强工具是独立 Shadow DOM 面板：自带一套 CSS/状态/页签，与设置面板两套 UI；「在关于页加入口」只是跳板 | 历史上面板先于设置页存在，功能与视图写在一起（`renderXxx` 直接改 DOM），无法被 React 复用 | 删除整页 UI（净减 937 行），逻辑改为无头运行时 `window.qzRuntime`；功能在设置内用 React 重建（见 P2-1） |
 | P1-2 | 同上 `collectStats` + `collectInsights` | 打开一次数据页把 `wordRecords` 全表读两遍 | 两个采集函数各自 `idbAll` | `readRecordInsights` 加 3s TTL；React 侧改为顺序调用，第二次命中缓存 |
 | P1-3 | `Setting/ToolsSetting.tsx` 番茄钟 | 原实现在 `setRemain` 的 updater 里调用 `setMode/setCount/notify`，StrictMode 下会重复执行；窗口节流后计时变慢 | 用「每秒自减」建模 | 改为「结束时间戳 + 500ms 轮询」，副作用移出 updater |
 | P1-4 | `Setting/desktop/DesktopSound.tsx` | 键音音量拖动时每个像素写一次 `enhanced-settings.json` | 滑块只有 `onChange` | `onChange` 只预览，`onValueCommit` 才落盘 |

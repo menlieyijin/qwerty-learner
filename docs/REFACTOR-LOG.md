@@ -186,7 +186,7 @@
 
 | # | 问题 | 根因 | 修复 | 验证 |
 | --- | --- | --- | --- | --- |
-| P-1 | 增强工具是独立 Shadow DOM 面板（2605 行，自带 CSS/页签/状态），与设置面板两套 UI；v10.7 只在关于页加入口，是跳板不是合并 | 面板先于设置页存在，逻辑与视图写在一起（`renderXxx` 直接改 DOM），React 无法复用 | 删除整页 UI（-1362 行）；保留无头 `window.qzRuntime`（统计/洞察/查词/到期复习/导入导出/词库切换/自定义词库）；React 重建 5 个区块 | 冒烟 13/13（7 页签 + runtime + collectStats 结构）；`test:pages` 20 项 |
+| P-1 | 增强工具是独立 Shadow DOM 面板（2605 行，自带 CSS/页签/状态），与设置面板两套 UI；v10.7 只在关于页加入口，是跳板不是合并 | 面板先于设置页存在，逻辑与视图写在一起（`renderXxx` 直接改 DOM），React 无法复用 | 删除整页 UI（净减 937 行：删 2227 / 增 1290）；保留无头 `window.qzRuntime`（统计/洞察/查词/到期复习/导入导出/词库切换/自定义词库）；React 重建 5 个区块 | 冒烟 13/13（7 页签 + runtime + collectStats 结构）；`test:pages` 20 项 |
 | P-2 | 设置无桌面能力，组件直接摸全局对象 | 没有桥接层 | `src/utils/desktop.ts`：唯一访问点 + 类型 + `isDesktop()`；网页返回 null，页签按 `desktopOnly` 过滤 | tsc 通过；网页版视觉基线仍 5 页签 |
 | P-3 | 单面板抛错会让整个设置白屏 | 无错误边界 | `SettingBoundary` 按页签隔离，可重试 | 代码级；`test:pages` 打开各页无异常 |
 | P-4 | 数据页一次打开把 `wordRecords` 读两遍 | 两个采集函数各自 `idbAll` | 3s TTL + 顺序调用 | 冒烟 `statsRuntime` 校验返回结构 |

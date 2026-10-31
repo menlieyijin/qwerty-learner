@@ -25,7 +25,7 @@
 
 | 文件 | 变化 |
 | --- | --- |
-| `local-fork/electron/enhance/enhance.js` | 2605 → 1235 行；删除面板 DOM/CSS/页签与 74 条面板规则；保留词卡、悬停提示、toast、键音、主题、统计与备份；新增无头 `window.qzRuntime`（13 个方法） |
+| `local-fork/electron/enhance/enhance.js` | 2605 → 1668 行（净减 937：删 2227 / 增 1290，含 prettier 展开）；删除面板 DOM/CSS/页签与 74 条面板规则；保留词卡、悬停提示、toast、键音、主题、统计与备份；新增无头 `window.qzRuntime`（13 个方法） |
 | `src/utils/desktop.ts` | 新增：`window.qwertyEnhance` / `window.qzRuntime` 的唯一定义与访问点，网页返回 `null` |
 | `src/pages/Typing/components/Setting/` | 新增 `controls.tsx`（Section/Row/Toggle/Range/Select/Btn/Stats/Bar）、`SettingBoundary.tsx`、`DictSetting.tsx`、`ToolsSetting.tsx`、`desktop/*`（窗口/外观/音效/数据）；`index.tsx` 页签表加 `desktopOnly` |
 | `main.js` | 托盘入口改 `openSettings`；移除 `panelAppearance` 默认值 |
