@@ -8,8 +8,8 @@
 //
 // 用法：node scripts/verify-pages.mjs [--exe <path>] [--port 9476]
 // 退出码：0 全过；1 有失败；2 环境问题。注意会强制结束正在运行的 Qwerty Learner。
-
 import { execFileSync, spawn } from 'node:child_process'
+import { readFileSync } from 'node:fs'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -181,17 +181,30 @@ async function main() {
   await until(async () => (await ev(`document.readyState === 'complete' && !!document.getElementById('root')`)) === true, 25000, '首屏')
 
   // 等应用自己把 RecordDB 建好，再注入
-  await until(async () => (await ev(`(async () => { const dbs = await indexedDB.databases(); return dbs.some((d) => d.name === 'RecordDB') })()`)) === true, 20000, 'RecordDB 就绪')
+  await until(
+    async () =>
+      (await ev(`(async () => { const dbs = await indexedDB.databases(); return dbs.some((d) => d.name === 'RecordDB') })()`)) === true,
+    20000,
+    'RecordDB 就绪',
+  )
   const seeded = await seedWrongRecords()
   check('0 注入 3 条错题记录', seeded === 3, seeded)
 
   // 1) 列表
   await ev(`location.hash = '#/error-book'; true`)
-  const words = await until(async () => {
-    const list = await rowWords()
-    return list.length >= 3 ? list : null
-  }, 20000, '错题列表渲染')
-  check('1 三条错题全部渲染', ['apple', 'banana', 'cherry'].every((w) => words.includes(w)), words)
+  const words = await until(
+    async () => {
+      const list = await rowWords()
+      return list.length >= 3 ? list : null
+    },
+    20000,
+    '错题列表渲染',
+  )
+  check(
+    '1 三条错题全部渲染',
+    ['apple', 'banana', 'cherry'].every((w) => words.includes(w)),
+    words,
+  )
 
   const counts = await ev(`[...document.querySelectorAll('li[role="button"][aria-label^="查看"]')].map((li) => {
     const hit = [...li.querySelectorAll('span')].map((s) => (s.textContent || '').trim()).find((t) => /^\\d+$/.test(t))
@@ -206,13 +219,17 @@ async function main() {
     th.click()
     return true
   })()`)
-  const sortedDesc = await until(async () => {
-    const c = await ev(`[...document.querySelectorAll('li[role="button"][aria-label^="查看"]')].map((li) => {
+  const sortedDesc = await until(
+    async () => {
+      const c = await ev(`[...document.querySelectorAll('li[role="button"][aria-label^="查看"]')].map((li) => {
       const hit = [...li.querySelectorAll('span')].map((s) => (s.textContent || '').trim()).find((t) => /^\\d+$/.test(t))
       return hit === undefined ? -1 : Number(hit)
     })`)
-    return JSON.stringify(c) === JSON.stringify([3, 2, 1]) ? c : null
-  }, 8000, '降序排序')
+      return JSON.stringify(c) === JSON.stringify([3, 2, 1]) ? c : null
+    },
+    8000,
+    '降序排序',
+  )
   check('3 点「错误次数」切降序（3 → 2 → 1）', !!sortedDesc, sortedDesc)
 
   // 3) 详情 + Esc
@@ -251,12 +268,35 @@ async function main() {
     return true
   })()`)
   check('7 设置入口存在且可点击', opened === true)
-  const settingsText = await until(async () => {
-    const t = await ev(`document.body.innerText`)
-    return t.includes('音效设置') ? t : null
-  }, 8000, '设置面板')
+  const settingsText = await until(
+    async () => {
+      const t = await ev(`document.body.innerText`)
+      return t.includes('音效设置') ? t : null
+    },
+    8000,
+    '设置面板',
+  )
   check('7b 设置面板可打开（音效设置页签存在）', !!settingsText)
-  check('7c 设置面板含三个页签', ['音效设置', '高级设置', '数据设置'].every((t) => settingsText.includes(t)))
+  check(
+    '7c 设置面板含五个页签',
+    ['音效设置', '高级设置', '显示设置', '数据设置', '关于'].every((t) => settingsText.includes(t)),
+    ['音效设置', '高级设置', '显示设置', '数据设置', '关于'].filter((t) => !settingsText.includes(t)),
+  )
+
+  // 7d「关于」页：版本号必须与 local-fork/package.json 一致（构建期注入 APP_VERSION）
+  await ev(`(() => {
+    const tab = [...document.querySelectorAll('[role="tab"], button')].find((b) => (b.textContent || '').trim() === '关于')
+    if (tab) tab.click()
+    return true
+  })()`)
+  await wait(600)
+  const expectedVersion = JSON.parse(readFileSync('local-fork/package.json', 'utf8')).version
+  const aboutText = await ev(`document.body.innerText`)
+  check('7d 关于页显示当前版本号', aboutText.includes(expectedVersion), { expected: expectedVersion })
+
+  // 7e 顶栏不再有重复的「工具」入口（已合并到 设置 → 关于）
+  const toolButtons = await ev(`([...document.querySelectorAll('button')].filter((b) => (b.textContent || '').trim() === '工具')).length`)
+  check('7e 顶栏无独立「工具」按钮（入口已合并）', toolButtons === 0, { count: toolButtons })
 
   // 6) 到期复习通道的脏 payload（F5-002）：不可信输入不应白屏，也不应误进复习模式
   await ev(`localStorage.setItem('qzDueReviewWords', JSON.stringify([{ bad: 1 }, null, 'x', 42])); true`)
@@ -281,10 +321,14 @@ async function main() {
   await ev(`location.reload(); true`).catch(() => undefined)
   await wait(1500)
   await until(async () => (await ev(`document.readyState === 'complete' && !!document.getElementById('root')`)) === true, 20000, 'reload2')
-  const reviewMode = await until(async () => {
-    const nav = await ev(`[...document.querySelectorAll('a')].map((a) => (a.textContent || '').trim())`)
-    return nav.includes('到期复习') ? nav : null
-  }, 15000, '合法 payload 进入复习')
+  const reviewMode = await until(
+    async () => {
+      const nav = await ev(`[...document.querySelectorAll('a')].map((a) => (a.textContent || '').trim())`)
+      return nav.includes('到期复习') ? nav : null
+    },
+    15000,
+    '合法 payload 进入复习',
+  )
   check('10 合法 payload 仍能进入到期复习（正控）', !!reviewMode)
 
   const noisy = results.consoleErrors.filter((e) => !/favicon|Autofill|React DevTools/i.test(e))

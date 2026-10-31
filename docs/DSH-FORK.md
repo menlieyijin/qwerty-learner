@@ -77,7 +77,7 @@
 │  页面：练习 Typing / 词库画廊 / 分析 / 错题本                  │
 │  算法：memory.ts（出词/SRS）→ autoLevel.ts（级别）            │
 │  数据：Dexie `RecordDB`（IndexedDB）                          │
-│  注入：enhance.js「工具」面板（Shadow DOM，不改 build 产物）  │
+│  注入：enhance.js 增强面板（入口：设置 → 关于；Shadow DOM）  │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -361,7 +361,7 @@ required < 20 或 = 0       → 0
 导出/备份/恢复的完整说明见 [`Backup-Restore.md`](Backup-Restore.md)。要点：
 
 - **跨设备恢复优先**用"工具 → 数据 → 导出全量数据 JSON / 导入全量数据"；它覆盖 RecordDB、`QwertyPlusDB.dicts`、localStorage 与外壳设置。
-- 上游"设置 → 数据 → 导出/导入数据库"只导 Dexie（`RecordDB`），不含 localStorage 与外壳设置；本分支未改上游页面，只在工具页提示。
+- 上游"设置 → 数据 → 导出/导入数据库"只导 Dexie（`RecordDB`），不含 localStorage 与外壳设置；本分支未改上游页面，只在「设置 → 关于 → 打开增强工具」里提示。
 - 自动备份每天一次（面板/托盘可手动触发），保留最近 7 份；目录副本 + `data.json` 逻辑快照（单份上限 64 MB，8 秒超时；超时不影响目录副本）。
 - 全量 JSON 导出文件名自 v9.13 起为 `Qwerty-Learner-User-Data-YYYYMMDD-HHmmss.gz`（原来只有日期，同日多次导出会重名覆盖）。字段与结构未变，导入方仍按内容解析。
 

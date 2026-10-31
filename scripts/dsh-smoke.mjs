@@ -65,8 +65,14 @@ const send = (m, p = {}, ms = SEND_TIMEOUT) =>
       rej(new Error(`CDP_TIMEOUT ${m}（${ms}ms 无回包）`))
     }, ms)
     pending.set(id, {
-      res: (v) => { clearTimeout(timer); res(v) },
-      rej: (e) => { clearTimeout(timer); rej(e) },
+      res: (v) => {
+        clearTimeout(timer)
+        res(v)
+      },
+      rej: (e) => {
+        clearTimeout(timer)
+        rej(e)
+      },
     })
     try {
       ws.send(JSON.stringify({ id, method: m, params: p }))
@@ -105,7 +111,11 @@ ws.addEventListener('message', (ev) => {
 // v9.15（dsh，M5-001）：通道关闭时拒绝所有未决调用，避免 send() 的 promise 永不 settle
 ws.addEventListener('close', () => {
   for (const [, p] of pending) {
-    try { p.rej(new Error('CDP 通道已关闭')) } catch { /* ignore */ }
+    try {
+      p.rej(new Error('CDP 通道已关闭'))
+    } catch {
+      /* ignore */
+    }
   }
   pending.clear()
 })
@@ -155,7 +165,9 @@ async function poll(fn, timeout = 12000, interval = 150) {
   return null
 }
 const currentWord = () =>
-  ev(`(function(){var els=[...document.querySelectorAll('span.font-mono')];if(!els.length){els=[...document.querySelectorAll('[class*="font-mono"] span')]}return els.map(function(s){return s.textContent}).join('')})()`)
+  ev(
+    `(function(){var els=[...document.querySelectorAll('span.font-mono')];if(!els.length){els=[...document.querySelectorAll('[class*="font-mono"] span')]}return els.map(function(s){return s.textContent}).join('')})()`,
+  )
 
 // 1) 版本 / 页面加载
 // v9.15（dsh，M5-002）：原来是「固定等 1.5s + 一次性快照」，而 waitForPage() 只要 CDP 出现任意 page 就返回
@@ -223,8 +235,7 @@ await ev(`location.hash='#/analysis'; 1`)
 await wait(2600)
 results.checks.analysisCanvas = await ev(`document.querySelectorAll('canvas').length`)
 results.checks.analysisText = (await ev(`(document.body.innerText||'').slice(0,400)`)) || ''
-results.checks.analysisWorks =
-  (results.checks.analysisCanvas || 0) >= 1 && results.exceptions.length === errBeforeAnalysis
+results.checks.analysisWorks = (results.checks.analysisCanvas || 0) >= 1 && results.exceptions.length === errBeforeAnalysis
 
 // 6) 错题本：空状态/列表/加载失败三态之一，且不崩溃
 const errBeforeErrorBook = results.exceptions.length
@@ -246,7 +257,8 @@ results.summary = {
   versionOk: typeof results.checks.version === 'string' && results.checks.version.startsWith('1.0.0-enhanced-'),
   pageLoaded: results.checks.hasApp === true,
   started: results.checks.started === true,
-  panelTabs: Array.isArray(results.checks.tabs) && results.checks.tabs.length >= 5,
+  // v10.7：增强面板的「关于」页已并入 设置 → 关于，面板只剩 4 个页签（常规/数据/词库/工具）
+  panelTabs: Array.isArray(results.checks.tabs) && ['常规', '数据', '词库', '工具'].every((t) => results.checks.tabs.includes(t)),
   dataSections: results.checks.dataDueSection === true,
   practiceWorks: results.checks.practiceWorks === true,
   backupWorks: results.checks.backup === true,

@@ -2,11 +2,15 @@ import react from '@vitejs/plugin-react'
 import { getLastCommit } from 'git-last-commit'
 import jotaiDebugLabel from 'jotai/babel/plugin-debug-label'
 import jotaiReactRefresh from 'jotai/babel/plugin-react-refresh'
+import fs from 'node:fs'
 import path from 'node:path'
 import { visualizer } from 'rollup-plugin-visualizer'
 import Icons from 'unplugin-icons/vite'
 import { defineConfig } from 'vite'
 import type { PluginOption } from 'vite'
+
+// 版本号唯一来源：local-fork/package.json（构建期注入，前端「关于」直接读，避免文档/界面各写一份）
+const forkPkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'local-fork/package.json'), 'utf8')) as { version: string }
 
 // https://vitejs.dev/config/
 export default defineConfig(async ({ mode }) => {
@@ -74,6 +78,7 @@ export default defineConfig(async ({ mode }) => {
     define: {
       REACT_APP_DEPLOY_ENV: JSON.stringify(process.env.REACT_APP_DEPLOY_ENV),
       LATEST_COMMIT_HASH: JSON.stringify(latestCommitHash + (process.env.NODE_ENV === 'production' ? '' : ' (dev)')),
+      APP_VERSION: JSON.stringify(forkPkg.version),
     },
     resolve: {
       alias: {

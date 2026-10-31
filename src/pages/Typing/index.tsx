@@ -1,6 +1,5 @@
 import Layout from '../../components/Layout'
 import { DictButton } from './components/DictButton'
-import { EnhanceButton } from './components/EnhanceButton'
 import PronunciationSwitcher from './components/PronunciationSwitcher'
 import ResultScreen from './components/ResultScreen'
 import StartButton from './components/StartButton'
@@ -258,7 +257,6 @@ function App() {
           <DictButton />
           <PronunciationSwitcher />
           <Switcher />
-          <EnhanceButton />
           <StartButton isLoading={isLoading} />
           <Tooltip content="跳过该词">
             <button

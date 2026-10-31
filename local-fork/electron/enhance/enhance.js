@@ -756,7 +756,6 @@
         <button data-tab="data">数据</button>
         <button data-tab="dict">词库</button>
         <button data-tab="tools">工具</button>
-        <button data-tab="about">关于</button>
       </div>
       <div class="body">
         <!-- 常规 -->
@@ -874,7 +873,7 @@
               <button class="btn ghost" id="btn-auto-reeval">重新评估级别</button>
               <button class="btn ghost" id="btn-auto-resume">恢复全部待攻克</button>
             </div>
-            <div class="muted" style="margin-top:8px">升级条件：本级已见 100%（待攻克除外）+ 掌握 ≥85%（v9.11 由 90% 下调）；掌握达 70% 后会按 10%→30% 的比例掺入下一级新词（只提前尝鲜，不影响本级毕业）。Skip ≥3 次的词进入「待攻克」，不阻塞升级。重新评估是唯一允许级别回退的入口。</div>
+            <div class="muted" style="margin-top:8px">升级：已见 100% + 掌握 ≥85%；掌握 70% 起掺入下级新词；Skip ≥3 进「待攻克」。</div>
           </div>
           <div class="sec">
             <h4>到期复习（v9.0）</h4>
@@ -893,7 +892,7 @@
               <button class="btn" id="btn-export-all">导出全量数据 JSON</button>
               <button class="btn" id="btn-import-all">导入全量数据…</button>
             </div>
-            <div class="muted" style="margin-top:8px">JSON 含：设置 + 记忆曲线/练习记录/章节记录 + 自定义词库（QwertyPlusDB.dicts）+ localStorage（含「当前自定义词库」qzCustomDict、自动进阶状态等）。导入会先自动备份当前数据，再覆盖学习数据并重载。<br><b>跨设备恢复请用本页导出/导入</b>：官方「设置 → 数据 → 导出/导入数据库」只含 IndexedDB，不含 qzCustomDict 与外壳设置。</div>
+            <div class="muted" style="margin-top:8px">含设置、记忆曲线与记录、自定义词库、外壳配置；导入前自动备份。<b>跨设备恢复用这里</b>（官方导出不含自定义词库）。</div>
           </div>
           <div class="sec">
             <h4>导出 CSV（快速保存，无需手选路径）</h4>
@@ -938,7 +937,7 @@
               <button class="btn primary" id="btn-backup">立即备份</button>
               <button class="btn ghost" id="btn-open-backup">打开备份目录</button>
             </div>
-            <div class="muted" style="margin-top:8px">自动备份每天一次（IndexedDB + Local Storage + Preferences），保留最近 7 份，位置：%APPDATA%\\qwerty-learner-plus\\backups。<br>自定义词库已包含（Local Storage 的 qzCustomDict + IndexedDB 的 QwertyPlusDB.dicts）；同机恢复用整目录副本，<b>跨设备恢复请用下面「导入全量数据」导入 data.json</b>。</div>
+            <div class="muted" style="margin-top:8px">每日自动备份，保留 7 份（「打开备份目录」查看）。同机整目录恢复；跨设备用「导入全量数据」。</div>
           </div>
         </div>
 
@@ -1060,60 +1059,6 @@
           </div>
         </div>
 
-        <!-- 关于 -->
-        <div class="tabpane" id="tab-about">
-          <div class="sec">
-            <h4>Qwerty Learner Plus</h4>
-            <div class="muted">
-              版本：<b>${APP_VERSION}（随机出词 + 艾宾浩斯记忆曲线 + 错词当场重现 + 数据收口 + 错误分类提示 + 逻辑备份快照 + 到期复习中心 + 全量导入导出；无章节、无每日上限）</b><br>
-              基于官方 Qwerty Learner 源码（commit 1182426）自行构建：练习页不再有章节选择，直接按记忆曲线随机出词；官方打字/默写/音标/音效/错题本/数据统计/词库画廊/设置等功能全部保留；v1~v6 中仍适用的增强功能收纳到顶栏「工具」全屏页。本地魔改由 dsh 完成，不跟随官方更新。
-            </div>
-          </div>
-          <div class="sec">
-            <h4>功能清单</h4>
-            <div class="muted">
-              A 层：置顶 · 全局快捷键 · 迷你模式 · 托盘 · 开机自启 · 透明度/缩放 · 每日备份 · 错误日志 · 托盘进度<br>
-              B 层：每日目标/打卡 · CSV 快速导出 · 统计热力图 · 自定义词库 · 番茄钟 · 主题/字体/键音 · 免费释义/整句翻译 · 剪贴板查词 · 发音缓存<br>
-              数据页：错词 Top 10 · 键位热力图 · 慢词榜 · 错误键榜（只读 RecordDB）<br>
-              v7 记忆曲线：当前词库整本作为词池、无章节；到期复习词与未学词随机混排；艾宾浩斯间隔阶梯（10 分钟 → 1 天 → 4 天 → 15 天 …）；答错回到 10 分钟档；一批练完自动续批、无需重新按键；没有每日新词上限，随时背随时退；旧版学习记录自动导入<br>
-              v8 复习增强：答错的词在本次练习内隔 3 个词强制再练一次（同一词最多 2 次），答对只刷新记忆、不延长间隔；随机回顾词会标注「随机回顾」，错词重练会标注「再练一次」<br>
-              v8.1 数据收口：数据页的错词/键位/慢词/时长统一读官方 RecordDB；新增学习报告（掌握度分布 + 未来 7 天到期）<br>
-              v8.2 错误提示：打错时按「漏字 / 重复 / 大小写 / 错字」在单词下方提示正确字母约 1.8 秒<br>
-              v8.3 影子调度：按正确率 / ease / 慢词比例并行计算自适应间隔并记录到 memoryRecords（暂不启用，数据页可看对比）<br>
-              v8.4 自定义词库进主流程：「工具 → 词库 → 我的自定义词库 → 记忆曲线」即可按记忆曲线练习自己的词表（记录命名空间 custom:名称；官方错题本对自定义词只显示单词与错误次数）<br>
-              v8.7 视觉：开始页概览改为 14px、数字加粗、到期数高亮；错误提示 15px；「再练一次 / 随机回顾」改为徽标<br>
-              v8.8 清理：移除旧 v6 记忆曲线/插件练习/键位统计死代码（约 860 行）；面板只保留 常规 / 数据 / 词库 / 工具 / 关于<br>
-              v8.9 壳加固：IPC 来源白名单 · 导航/外链守卫 · 权限默认拒绝（仅放行剪贴板写）· 崩溃 reload 限流 · 日志按日轮转保留 14 天 · 备份新增 data.json 逻辑快照（RecordDB/自定义词库/localStorage/设置）· 统计上报去重 · 剪贴板轮询按需启动<br>
-              v9.0 学习闭环：到期复习中心（未来 7 天柱状图 + 到期词列表 + 一键复习，按原词库写回）· 开始页「到期复习」可点直达 · 今日练习/新学口径统一 · 自定义词库在官方错题本回退记忆曲线释义 · 全量数据导出/导入 JSON（导入前自动备份）· 暂停时补写 chapterRecord<br>
-              v5 词库层：内置 385 词库搜索/收藏/最近/分类 + 设为当前 · GitHub 官方词库在线更新（逐个下载、SHA 比对、可回滚）· 当前词库发音预缓存（美/英音、续传、暂停/继续/取消、失败重试）
-            </div>
-          </div>
-          <div class="sec">
-            <h4>已知限制</h4>
-            <div class="muted">
-              · 统计/导出依赖应用自身 IndexedDB（RecordDB），字段随官方版本变化可能缺失；<br>
-              · 免费释义/整句翻译依赖有道 suggest、dictionaryapi.dev、MyMemory 等公共接口，需联网；接口限流或断网时自动降级为本地词库 + 缓存，并标注“离线”；<br>
-              · 逐词悬停释义优先用缓存，其次在线查短释义，长句/生僻词可能暂无结果；<br>
-              · ECDICT 离线词典为预留功能，当前版本未提供下载；<br>
-              · 发音缓存为实验功能，个别网络环境下可能影响发音，可在"常规"页关闭；<br>
-              · 迷你模式依靠 CSS 隐藏页面头部，官方页面结构若大改可能失效；<br>
-              · 自定义词库：「记忆曲线」按钮进入主练习流程（记录命名空间 custom:名称）；v9.0 起官方错题本会回退显示记忆曲线里的释义（若练习/导入时已存 trans）。<br>
-              · v8 数据收口：错词/键位/慢词/时长均只读官方 RecordDB（wordRecords/memoryRecords），旧插件练习数据不再写入也不迁移显示；<br>
-              · WPM 与练习时长按按键间隔估算（不含读题停顿），仅供参考；键位延迟为相邻按键的近似间隔。<br>
-              · 词库「设为当前」v9.1 起直接写官方 localStorage（currentDict/learningMode）并重载；仅少数缺少 id 的异常词库仍回退官方画廊自动化。<br>
-              · 在线更新只下载你点击的单个词库文件；更新文件通过请求层覆盖生效，重启应用/切换词库后最可靠；删除 dicts-update 目录即回滚。<br>
-              · 发音预缓存会按词库词数下载音频（单条约 14KB），大词库（上万词）请使用「本次上限」或分次进行；仅写入本机缓存，不修改词库/应用数据。
-            </div>
-          </div>
-          <div class="sec">
-            <h4>快捷键</h4>
-            <div class="muted">
-              <span class="kbd">Ctrl+Alt+Q</span> 显示/隐藏窗口<br>
-              <span class="kbd">Ctrl+Alt+M</span> 迷你模式开关<br>
-              面板内：Esc 关闭面板，Ctrl+Enter 开始/暂停番茄钟
-            </div>
-          </div>
-        </div>
       </div>
     </div>
     <div id="qz-wordcard-root"></div>
