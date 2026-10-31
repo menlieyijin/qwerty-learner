@@ -7,9 +7,9 @@ import * as ScrollArea from '@radix-ui/react-scroll-area'
 import classNames from 'classnames'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
-const CATEGORIES = ['全部', 'CET', '考研', '雅思', '托福', 'GRE', '编程', '其他']
+const CATEGORIES = ['全部分类', 'CET', '考研', '雅思', '托福', 'GRE', '编程', '其他']
 const MODES = [
-  { value: 'all', label: '全部' },
+  { value: 'all', label: '全部词库' },
   { value: 'fav', label: '收藏' },
   { value: 'recent', label: '最近' },
 ] as const
@@ -21,7 +21,7 @@ export default function DictSetting() {
   const [dicts, setDicts] = useState<DictEntry[]>([])
   const [query, setQuery] = useState('')
   const [mode, setMode] = useState<Mode>('all')
-  const [category, setCategory] = useState('全部')
+  const [category, setCategory] = useState('全部分类')
   const [visible, setVisible] = useState(40)
   const [favs, setFavs] = useState<string[]>([])
   const [msg, setMsg] = useState('')
@@ -72,7 +72,7 @@ export default function DictSetting() {
         [d.name, d.description, d.file, d.id, d.category, (d.tags || []).join(' ')].join(' ').toLowerCase().includes(q),
       )
     }
-    if (category !== '全部') list = list.filter((d) => d.category === category)
+    if (category !== '全部分类') list = list.filter((d) => d.category === category)
     if (mode === 'fav') list = list.filter((d) => favSet.has(d.file))
     if (mode === 'recent') list = list.filter((d) => recent[d.file]).sort((a, b) => (recent[b.file] || 0) - (recent[a.file] || 0))
     else {
@@ -108,7 +108,7 @@ export default function DictSetting() {
                 aria-label="词库筛选"
                 value={mode}
                 onChange={(e) => setMode(e.target.value as Mode)}
-                className="h-8 rounded-lg border border-neutral-200 bg-white px-2 text-sm dark:border-neutral-600 dark:bg-gray-700 dark:text-gray-200"
+                className="h-8 w-24 rounded-lg border border-neutral-200 bg-white px-2 text-sm dark:border-neutral-600 dark:bg-gray-700 dark:text-gray-200"
               >
                 {MODES.map((m) => (
                   <option key={m.value} value={m.value}>
@@ -120,7 +120,7 @@ export default function DictSetting() {
                 aria-label="词库分类"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="h-8 rounded-lg border border-neutral-200 bg-white px-2 text-sm dark:border-neutral-600 dark:bg-gray-700 dark:text-gray-200"
+                className="h-8 w-24 rounded-lg border border-neutral-200 bg-white px-2 text-sm dark:border-neutral-600 dark:bg-gray-700 dark:text-gray-200"
               >
                 {CATEGORIES.map((c) => (
                   <option key={c} value={c}>

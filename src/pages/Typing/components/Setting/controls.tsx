@@ -8,7 +8,8 @@ import type { ReactNode } from 'react'
 
 export function Section({ label, description, children }: { label: string; description?: string; children: ReactNode }) {
   return (
-    <div className={styles.section}>
+    // 设置对话框外层是 text-center，桌面面板必须显式 text-left，否则标签/列表会居中
+    <div className={classNames(styles.section, 'text-left')}>
       <span className={styles.sectionLabel}>{label}</span>
       {description ? <span className={styles.sectionDescription}>{description}</span> : null}
       {children}
