@@ -277,10 +277,12 @@ async function main() {
     '设置面板',
   )
   check('7b 设置面板可打开（音效设置页签存在）', !!settingsText)
+  // 桌面版比网页版多「词库管理 / 桌面工具」两页（增强面板已并入设置）
+  const EXPECTED_TABS = ['音效设置', '显示设置', '数据设置', '词库管理', '桌面工具', '高级设置', '关于']
   check(
-    '7c 设置面板含五个页签',
-    ['音效设置', '高级设置', '显示设置', '数据设置', '关于'].every((t) => settingsText.includes(t)),
-    ['音效设置', '高级设置', '显示设置', '数据设置', '关于'].filter((t) => !settingsText.includes(t)),
+    '7c 设置面板含全部页签（桌面 7 个）',
+    EXPECTED_TABS.every((t) => settingsText.includes(t)),
+    EXPECTED_TABS.filter((t) => !settingsText.includes(t)),
   )
 
   // 7d「关于」页：版本号必须与 local-fork/package.json 一致（构建期注入 APP_VERSION）
@@ -294,9 +296,22 @@ async function main() {
   const aboutText = await ev(`document.body.innerText`)
   check('7d 关于页显示当前版本号', aboutText.includes(expectedVersion), { expected: expectedVersion })
 
-  // 7e 顶栏不再有重复的「工具」入口（已合并到 设置 → 关于）
+  // 7f 数据页：桌面统计区块由 qzRuntime 提供，不能停在「读取失败」
+  await ev(`(() => {
+    const tab = [...document.querySelectorAll('[role="tab"], button')].find((b) => (b.textContent || '').trim() === '数据设置')
+    if (tab) tab.click()
+    return true
+  })()`)
+  await wait(2200)
+  const dataText = await ev(`document.body.innerText`)
+  check(
+    '7f 数据页渲染桌面统计（学习概览 / 每日目标，无读取失败）',
+    dataText.includes('学习概览') && dataText.includes('每日目标') && !dataText.includes('读取失败'),
+  )
+
+  // 7e 顶栏没有独立「工具」入口（面板已整体并入设置）
   const toolButtons = await ev(`([...document.querySelectorAll('button')].filter((b) => (b.textContent || '').trim() === '工具')).length`)
-  check('7e 顶栏无独立「工具」按钮（入口已合并）', toolButtons === 0, { count: toolButtons })
+  check('7e 顶栏无独立「工具」按钮', toolButtons === 0, { count: toolButtons })
 
   // 6) 到期复习通道的脏 payload（F5-002）：不可信输入不应白屏，也不应误进复习模式
   await ev(`localStorage.setItem('qzDueReviewWords', JSON.stringify([{ bad: 1 }, null, 'x', 42])); true`)

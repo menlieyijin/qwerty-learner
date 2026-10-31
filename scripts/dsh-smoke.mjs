@@ -189,18 +189,30 @@ results.checks.started = !!(await poll(
 ))
 results.checks.startText = (await ev(`(document.body.innerText||'').replace(/\\s+/g,' ')`)) || ''
 
-// 2) 增强面板可打开、tabs 存在
-await ev(`window.dispatchEvent(new CustomEvent('qz-open-enhance')); 1`)
-await wait(800)
-results.checks.tabs = await ev(
-  `(function(){var h=document.getElementById('qz-enhance-host');var sr=h&&h.shadowRoot;return sr?[...sr.querySelectorAll('.tabs button')].map(function(b){return b.textContent.trim()}):null})()`,
+// 2) 设置对话框：桌面页签 + 数据页 + 运行时（v11：增强面板已并入设置）
+const settingsOpened = await ev(
+  `(function(){var b=[...document.querySelectorAll('button')].find(function(x){return x.getAttribute('title')==='打开设置对话框'});if(b){b.click();return true}return false})()`,
 )
-results.checks.dataDueSection = await ev(
-  `(function(){var h=document.getElementById('qz-enhance-host');var sr=h&&h.shadowRoot;return !!(sr&&sr.querySelector('#btn-due-start')&&sr.querySelector('#trend-box'))})()`,
+results.checks.settingsOpened = settingsOpened
+await wait(700)
+results.checks.tabs = await ev(`[...document.querySelectorAll('[role="tab"]')].map(function(b){return (b.textContent||'').trim()})`)
+results.checks.runtimeReady = await ev(
+  `!!(window.qzRuntime && typeof window.qzRuntime.collectStats === 'function' && typeof window.qzRuntime.startDueReview === 'function')`,
 )
-// 关闭面板，避免遮挡练习按钮
+results.checks.statsRuntime = await ev(
+  `window.qzRuntime.collectStats().then(function(s){return !!(s && typeof s.totalWords === 'number' && Array.isArray(s.heatDays) && Array.isArray(s.wrongWords))}).catch(function(){return false})`,
+  true,
+)
 await ev(
-  `window.dispatchEvent(new CustomEvent('qz-close-enhance')); (function(){var h=document.getElementById('qz-enhance-host');if(h&&h.shadowRoot){var b=[...h.shadowRoot.querySelectorAll('button')].find(function(x){return /关闭|Close|×/.test(x.textContent)});if(b)b.click()}})(); 1`,
+  `(function(){var t=[...document.querySelectorAll('[role="tab"]')].find(function(x){return (x.textContent||'').trim()==='数据设置'});if(t)t.click();return true})()`,
+)
+await wait(2200)
+results.checks.dataDueSection = await ev(
+  `(function(){var t=(document.body.innerText||'');return t.indexOf('学习概览')>=0 && t.indexOf('每日目标')>=0})()`,
+)
+// 关闭设置，避免遮挡练习按钮
+await ev(
+  `(function(){var b=[...document.querySelectorAll('button')].find(function(x){return x.getAttribute('title')==='关闭对话框'});if(b)b.click();return true})()`,
 )
 await wait(300)
 
@@ -257,8 +269,12 @@ results.summary = {
   versionOk: typeof results.checks.version === 'string' && results.checks.version.startsWith('1.0.0-enhanced-'),
   pageLoaded: results.checks.hasApp === true,
   started: results.checks.started === true,
-  // v10.7：增强面板的「关于」页已并入 设置 → 关于，面板只剩 4 个页签（常规/数据/词库/工具）
-  panelTabs: Array.isArray(results.checks.tabs) && ['常规', '数据', '词库', '工具'].every((t) => results.checks.tabs.includes(t)),
+  // v11：设置对话框（桌面版 7 个页签）取代原增强面板
+  settingsTabs:
+    Array.isArray(results.checks.tabs) &&
+    ['音效设置', '显示设置', '数据设置', '词库管理', '桌面工具', '高级设置', '关于'].every((t) => results.checks.tabs.includes(t)),
+  runtimeReady: results.checks.runtimeReady === true,
+  statsRuntime: results.checks.statsRuntime === true,
   dataSections: results.checks.dataDueSection === true,
   practiceWorks: results.checks.practiceWorks === true,
   backupWorks: results.checks.backup === true,

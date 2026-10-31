@@ -77,13 +77,14 @@
 │  页面：练习 Typing / 词库画廊 / 分析 / 错题本                  │
 │  算法：memory.ts（出词/SRS）→ autoLevel.ts（级别）            │
 │  数据：Dexie `RecordDB`（IndexedDB）                          │
-│  注入：enhance.js 增强面板（入口：设置 → 关于；Shadow DOM）  │
+│  外壳能力：qzRuntime（无头）+ 设置内的 词库管理 / 桌面工具     │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 - 学习数据（IndexedDB `RecordDB`）由渲染进程持有；外壳私有数据（设置、日志、备份、缓存）写入 `%APPDATA%\qwerty-learner-plus`，不写入应用学习记录目录。
 - 外壳通过 `contextBridge` 暴露少量白名单 IPC；渲染页面不接触 Node。
-- 增强面板是**注入式**的（`main.js` 在页面加载后注入 `enhance.js`），不修改 `build/` 里的网页产物，因此网页构建与外壳升级相互独立。
+- 桌面能力分两层：`preload.js` 的 `window.qwertyEnhance`（IPC 白名单）+ `enhance.js` 注入的 `window.qzRuntime`（统计、查词、导入导出、词库切换等纯逻辑）。
+  **没有独立的增强面板**：所有设置与工具都在应用的「设置」对话框里，React 通过 `src/utils/desktop.ts` 访问这两个对象；网页版该文件返回 `null`，相关页签自动隐藏。
 
 ### 3.2 目录
 
@@ -361,7 +362,7 @@ required < 20 或 = 0       → 0
 导出/备份/恢复的完整说明见 [`Backup-Restore.md`](Backup-Restore.md)。要点：
 
 - **跨设备恢复优先**用"工具 → 数据 → 导出全量数据 JSON / 导入全量数据"；它覆盖 RecordDB、`QwertyPlusDB.dicts`、localStorage 与外壳设置。
-- 上游"设置 → 数据 → 导出/导入数据库"只导 Dexie（`RecordDB`），不含 localStorage 与外壳设置；本分支未改上游页面，只在「设置 → 关于 → 打开增强工具」里提示。
+- 上游"设置 → 数据 → 导出/导入数据库"只导 Dexie（`RecordDB`），不含 localStorage 与外壳设置；桌面版另在「设置 → 数据设置 → 备份与迁移」提供全量 JSON。
 - 自动备份每天一次（面板/托盘可手动触发），保留最近 7 份；目录副本 + `data.json` 逻辑快照（单份上限 64 MB，8 秒超时；超时不影响目录副本）。
 - 全量 JSON 导出文件名自 v9.13 起为 `Qwerty-Learner-User-Data-YYYYMMDD-HHmmss.gz`（原来只有日期，同日多次导出会重名覆盖）。字段与结构未变，导入方仍按内容解析。
 
@@ -395,7 +396,7 @@ npm run test:e2e:local   # Playwright（需先启动本地 dev server 并安装 
 npm run test:local       # CDP 冒烟（需应用带 --remote-debugging-port 启动）
 ```
 
-> `yarn start` / `yarn build` 只涉及网页部分。增强面板、托盘、备份、剪贴板查词等**只存在于 Electron 外壳**中，网页模式不可见（这是预期行为）。
+> `yarn start` / `yarn build` 只涉及网页部分。词库管理、桌面工具、托盘、备份、剪贴板查词等**只存在于 Electron 外壳**中，网页模式不可见（这是预期行为）。
 
 ### 6.3 质量门禁
 

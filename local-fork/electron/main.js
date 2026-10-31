@@ -105,7 +105,6 @@ const DEFAULT_SETTINGS = {
   csvAutoSave: true,     // CSV 快速导出（自动保存到 文档\QwertyLearnerPlus\exports）
   pronCache: false,
   theme: 'indigo',
-  panelAppearance: 'auto', // v4：面板外观 auto（跟随应用浅/深色，默认浅色视觉）/ light / dark
   dictFavorites: [],      // v5：收藏的词库文件列表
   dictRecent: {},         // v5：最近使用词库 { file: timestamp }
   fontFamily: 'default',
@@ -526,7 +525,7 @@ function updateTrayMenu() {
     { type: 'separator' },
     { label: '立即备份用户数据', click: () => runBackup('manual-tray') },
     { label: '打开备份目录', click: () => shell.openPath(BACKUP_DIR) },
-    { label: '打开设置面板', click: () => { showMainWindow(); sendEvent('open-panel', true); } },
+    { label: '打开设置', click: () => { showMainWindow(); sendEvent('openSettings', true); } },
     { type: 'separator' },
     { label: '退出', click: () => { isQuitting = true; app.quit(); } },
   ]);

@@ -10,10 +10,12 @@ try {
   if (v) APP_VERSION = String(v);
 } catch { /* 保持 unknown */ }
 
+// v11：返回取消订阅函数。React 面板会随页签 unmount，监听器不能只加不减。
 function onEvent(cb) {
-  if (typeof cb !== 'function') return;
+  if (typeof cb !== 'function') return () => {};
   const handler = (_e, payload) => { try { cb(payload); } catch { /* ignore */ } };
   ipcRenderer.on('enhance:event', handler);
+  return () => { try { ipcRenderer.removeListener('enhance:event', handler); } catch { /* ignore */ } };
 }
 function onClipboardWord(cb) {
   if (typeof cb !== 'function') return;
@@ -81,8 +83,10 @@ contextBridge.exposeInMainWorld('qwertyEnhance', {
   precacheCancel: () => ipcRenderer.invoke('pron:precacheCancel'),
   precacheStatus: () => ipcRenderer.invoke('pron:precacheStatus'),
   onPrecacheProgress: (cb) => {
-    if (typeof cb !== 'function') return;
-    ipcRenderer.on('pron:precache-progress', (_e, payload) => { try { cb(payload); } catch { /* ignore */ } });
+    if (typeof cb !== 'function') return () => {};
+    const handler = (_e, payload) => { try { cb(payload); } catch { /* ignore */ } };
+    ipcRenderer.on('pron:precache-progress', handler);
+    return () => { try { ipcRenderer.removeListener('pron:precache-progress', handler); } catch { /* ignore */ } };
   },
   // —— 剪贴板 / 发音缓存 ——
   // v9.15（dsh，M5-011）：删除 getClipboard / closeClipboard —— 主窗口业务从不使用（全仓库无调用），

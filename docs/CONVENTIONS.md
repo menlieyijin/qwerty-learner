@@ -88,5 +88,16 @@
 ## 8. Electron 侧（`local-fork/electron/`）
 
 - `main.js` / `preload.js` 保持最小：只做窗口、协议、IPC 白名单；
-- 注入面板（`enhance/enhance.js`）里所有拼进 `innerHTML` 的用户数据必须过 `esc()`；
+- `enhance/enhance.js` 只允许保留**页面内浮层**（词卡 / 悬停提示 / toast）与无头逻辑；不要再加整页 UI，
+  设置与工具一律做成 `Setting/` 下的 React 面板；
+- 拼进 `innerHTML` 的用户数据必须过 `esc()`；
 - 新增 IPC 通道要同时改 preload 白名单与主进程 handler，不允许 `ipcRenderer` 直通渲染进程任意模块。
+
+## 9. 桌面能力的用法
+
+- React 侧**只能**通过 `src/utils/desktop.ts` 访问桌面能力：
+  `desktop()` 拿 IPC（`window.qwertyEnhance`），`runtime()` 拿无头逻辑（`window.qzRuntime`），`isDesktop()` 决定是否渲染；
+- 不允许在组件里直接写 `window.qwertyEnhance` / `window.qzRuntime`（`grep` 应为 0，本文件除外）；
+- 桌面专属页签在 `SETTING_TABS` 上标 `desktopOnly: true`，网页版自动过滤；
+- 滑块类设置：`onChange` 只做预览（`preview`），`onValueCommit` 才落盘（`patch`），避免拖动时高频写设置文件；
+- 桌面运行时可能晚于页面就绪（注入顺序），调用点必须容忍返回 `null`，不要假设一定存在。

@@ -77,7 +77,7 @@ scripts/                 发布 / 回滚 / 质量门禁 / CDP 冒烟 / 起点选
 | `npm run test:quality` | `tsc --noEmit` + `eslint src --max-warnings 0`（CI 同款） |
 | `npm run test:local` | CDP 冒烟 11 项（需先启动带 `--remote-debugging-port=9472` 的实例） |
 | `npm run test:start-level` | 起点选择行为验证 21 项（首启弹窗 → 选档 → 出对应词 → 重启保持 → 词库页修改 → 老用户不打扰） |
-| `npm run test:pages` | 页面级回归 17 项（错题本排序/详情/Esc/删除取消、设置面板、脏 payload 不白屏） |
+| `npm run test:pages` | 页面级回归 20 项（错题本排序/详情/Esc/删除取消、设置 7 页签与桌面统计、脏 payload 不白屏） |
 | `npm run test:typing` | 打字主链路 18 项（进入输入态/错字标红/切词/落库/**逐字母错因**/暂停写会话与二次暂停 upsert/**暂停恢复不丢进度**/音效开关与滑块/默写） |
 | `npm run test:csv` | 错题本 CSV 导出公式注入防护 14 项断言 |
 | `npm run test:core` | **核心算法回归 309 条**（SRS 120 + 自动进阶 189）+ 确定性门禁，真实源码打包仿真 |
@@ -113,10 +113,9 @@ scripts/                 发布 / 回滚 / 质量门禁 / CDP 冒烟 / 起点选
 | [docs/CODE-REVIEW.md](./docs/CODE-REVIEW.md) | 代码审查报告（按 P0/P1/P2 分组：位置 / 影响 / 状态）+ 仓库正规化建议 |
 | [docs/CONVENTIONS.md](./docs/CONVENTIONS.md) | 代码约定：目录分层、组件写法、样式、工具函数、命名、验证要求 |
 | [docs/REFACTOR-LOG.md](./docs/REFACTOR-LOG.md) | v10 重构逐条记录：问题 / 根因 / 修复 / 验证 / 风险 + 遗留清单 |
-| [docs/RELEASE-NOTES-v10.md](./docs/RELEASE-NOTES-v10.md) | v10.0.0 发布说明 |
-| [docs/UPSTREAM-PR-DRAFT.md](./docs/UPSTREAM-PR-DRAFT.md) | 可直接提交上游的 issue / PR 文稿（署名 dsh） |
-| [docs/REFACTOR-LOG.md](./docs/REFACTOR-LOG.md) | v10 重构逐条记录：问题 / 根因 / 修复 / 验证 / 风险 + 遗留清单 |
-| [docs/RELEASE-NOTES-v10.md](./docs/RELEASE-NOTES-v10.md) | v10.0.0 发布说明 |
+| [docs/AUDIT-V11.md](./docs/AUDIT-V11.md) | v11 全栈审查（根因版）：P0/P1/P2 分组 + 正规化建议 |
+| [docs/RELEASE-NOTES-v11.md](./docs/RELEASE-NOTES-v11.md) | v11.0.0 发布说明（增强面板并入设置） |
+| [docs/RELEASE-NOTES-v10.md](./docs/RELEASE-NOTES-v10.md) | v10 发布说明（历史） |
 | [docs/UPSTREAM-PR-DRAFT.md](./docs/UPSTREAM-PR-DRAFT.md) | 可直接提交上游的 issue / PR 文稿（署名 dsh） |
 | [docs/THIRD-PARTY.md](./docs/THIRD-PARTY.md) | 第三方词库与图标来源、许可 |
 | [docs/Electron-EOL.md](./docs/Electron-EOL.md) | Electron 运行时版本与 EOL 记录 |

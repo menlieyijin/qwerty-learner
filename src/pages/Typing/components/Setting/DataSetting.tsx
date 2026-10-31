@@ -1,6 +1,8 @@
+import DesktopStats from './desktop/DesktopStats'
 import styles from './index.module.css'
 import type { ExportProgress, ImportProgress } from '@/utils/db/data-export'
 import { exportDatabase, importDatabase } from '@/utils/db/data-export'
+import { isDesktop } from '@/utils/desktop'
 import * as Progress from '@radix-ui/react-progress'
 import * as ScrollArea from '@radix-ui/react-scroll-area'
 import { useCallback, useState } from 'react'
@@ -61,12 +63,8 @@ export default function DataSetting() {
       <ScrollArea.Viewport className="h-full w-full px-3">
         <div className={styles.tabContent}>
           <div className={styles.section}>
-            <span className={styles.sectionLabel}>数据导出</span>
-            <span className={styles.sectionDescription}>
-              目前，用户的练习数据<strong>仅保存在本地</strong>。如果您需要在不同的设备、浏览器或者其他非官方部署上使用 Qwerty Learner，
-              您需要手动进行数据同步和保存。为了保留您的练习进度，以及使用近期即将上线的数据分析和智能训练功能，
-              我们建议您及时备份您的数据。
-            </span>
+            <span className={styles.sectionLabel}>数据导出（官方格式）</span>
+            <span className={styles.sectionDescription}>练习记录只存本地。导出后可在其他设备或浏览器部署中导入恢复。</span>
             <span className="pl-4 text-left text-sm font-bold leading-tight text-red-500">
               为了您的数据安全，请不要修改导出的数据文件。
             </span>
@@ -122,6 +120,7 @@ export default function DataSetting() {
               导入数据
             </button>
           </div>
+          {isDesktop() ? <DesktopStats /> : null}
         </div>
       </ScrollArea.Viewport>
       <ScrollArea.Scrollbar className="flex touch-none select-none bg-transparent " orientation="vertical"></ScrollArea.Scrollbar>

@@ -1,9 +1,11 @@
+import DesktopSound from './desktop/DesktopSound'
 import styles from './index.module.css'
 import { SoundSwitchRow } from './sound/SoundSwitchRow'
 import { SoundVolumeRow } from './sound/SoundVolumeRow'
 import { keySoundResources } from '@/resources/soundResource'
 import { hintSoundsConfigAtom, keySoundsConfigAtom, pronunciationConfigAtom } from '@/store'
 import type { SoundResource } from '@/typings'
+import { isDesktop } from '@/utils/desktop'
 import { playKeySoundResource } from '@/utils/sounds/keySounds'
 import { Listbox, Transition } from '@headlessui/react'
 import * as ScrollArea from '@radix-ui/react-scroll-area'
@@ -195,6 +197,7 @@ export default function SoundSetting() {
               disabled={!hintSoundsConfig.isOpen}
             />
           </div>
+          {isDesktop() ? <DesktopSound /> : null}
         </div>
       </ScrollArea.Viewport>
       <ScrollArea.Scrollbar className="flex touch-none select-none bg-transparent " orientation="vertical"></ScrollArea.Scrollbar>

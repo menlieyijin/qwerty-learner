@@ -80,7 +80,7 @@ scripts/                 release / rollback / quality gate / CDP smoke / level-p
 | `npm run test:quality` | `tsc --noEmit` + `eslint src --max-warnings 0` (same as CI) |
 | `npm run test:local` | 11-check CDP smoke (needs an instance started with `--remote-debugging-port=9472`) |
 | `npm run test:start-level` | 21-check behavioural test for the level picker (first-run dialog → pick → correct dictionary → persists across restart → edit from dictionary page → existing users are not interrupted) |
-| `npm run test:pages` | 17-check page regression (error book sort/detail/Esc/delete-cancel, settings panel, malformed payload does not white-screen) |
+| `npm run test:pages` | 20-check page regression (error book sort/detail/Esc/delete-cancel, 7 settings tabs incl. desktop stats, malformed payload does not white-screen) |
 | `npm run test:typing` | 18-check typing pipeline (input state, wrong letter marked, word advance, persistence, per-letter mistake log, pause writes session incl. second-pause upsert, progress kept across pause/resume, sound switches/sliders, dictation) |
 | `npm run test:csv` | 14 assertions for CSV-export formula-injection hardening |
 | `npm run test:core` | **309 core-algorithm assertions** (120 SRS + 189 auto-advance) + determinism gate, simulated from real source |
@@ -119,10 +119,9 @@ scripts/                 release / rollback / quality gate / CDP smoke / level-p
 | [docs/CODE-REVIEW.md](./docs/CODE-REVIEW.md) | Code review report (P0/P1/P2: location / impact / status) + repo hardening suggestions |
 | [docs/CONVENTIONS.md](./docs/CONVENTIONS.md) | Conventions: layering, component authoring, styles, utils, naming, verification |
 | [docs/REFACTOR-LOG.md](./docs/REFACTOR-LOG.md) | v10 refactor log: issue / root cause / fix / verification / risk + backlog |
-| [docs/RELEASE-NOTES-v10.md](./docs/RELEASE-NOTES-v10.md) | v10.0.0 release notes |
-| [docs/UPSTREAM-PR-DRAFT.md](./docs/UPSTREAM-PR-DRAFT.md) | Ready-to-submit upstream issue / PR drafts (signed dsh) |
-| [docs/REFACTOR-LOG.md](./docs/REFACTOR-LOG.md) | v10 refactor log: issue / root cause / fix / verification / risk + backlog |
-| [docs/RELEASE-NOTES-v10.md](./docs/RELEASE-NOTES-v10.md) | v10.0.0 release notes |
+| [docs/AUDIT-V11.md](./docs/AUDIT-V11.md) | v11 full-stack audit (root-cause): P0/P1/P2 + repo hardening |
+| [docs/RELEASE-NOTES-v11.md](./docs/RELEASE-NOTES-v11.md) | v11.0.0 release notes (enhancement panel merged into settings) |
+| [docs/RELEASE-NOTES-v10.md](./docs/RELEASE-NOTES-v10.md) | v10 release notes (historical) |
 | [docs/UPSTREAM-PR-DRAFT.md](./docs/UPSTREAM-PR-DRAFT.md) | Ready-to-submit upstream issue / PR drafts (signed dsh) |
 | [docs/THIRD-PARTY.md](./docs/THIRD-PARTY.md) | Third-party dictionaries and icons: sources and licences |
 | [docs/Electron-EOL.md](./docs/Electron-EOL.md) | Electron runtime version and EOL record |

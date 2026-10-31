@@ -1,6 +1,9 @@
+import DesktopAppearance from './desktop/DesktopAppearance'
+import DesktopWindow from './desktop/DesktopWindow'
 import styles from './index.module.css'
 import { defaultFontSizeConfig } from '@/constants'
 import { fontSizeConfigAtom } from '@/store'
+import { isDesktop } from '@/utils/desktop'
 import * as ScrollArea from '@radix-ui/react-scroll-area'
 import * as Slider from '@radix-ui/react-slider'
 import { useAtom } from 'jotai'
@@ -82,6 +85,12 @@ export default function ViewSetting() {
           <button className="my-btn-primary ml-4 disabled:bg-gray-300" type="button" onClick={onResetFontSize} title="重置字体设置">
             重置字体设置
           </button>
+          {isDesktop() ? (
+            <>
+              <DesktopWindow />
+              <DesktopAppearance />
+            </>
+          ) : null}
         </div>
       </ScrollArea.Viewport>
       <ScrollArea.Scrollbar className="flex touch-none select-none bg-transparent " orientation="vertical"></ScrollArea.Scrollbar>
