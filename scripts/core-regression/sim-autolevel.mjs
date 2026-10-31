@@ -2,9 +2,9 @@
  * sim-autolevel.mjs — Qwerty Learner Plus v9.3 自动进阶回归仿真（--strict 门禁）
  *
  * 运行：node "scripts/core-regression\sim-autolevel.mjs" [--strict]
- * 产物：scripts/core-regression\v93-autolevel-report.json
+ * 产物：scripts/core-regression\report-autolevel.json
  *
- * 断言对象：`_v93-core.mjs` —— esbuild 从**真实源码**打包：
+ * 断言对象：`core.mjs` —— esbuild 从**真实源码**打包：
  *   src/utils/autoLevel.ts（状态持久化 / recordSkip / suspend / suspend 过滤 / computeLevelProgress /
  *                            resolveCurrentLevel / advanceIfComplete / reevaluateLevel / getNewRatio /
  *                            getRefreshChance / cached）
@@ -35,10 +35,10 @@ import {
   resetStorage,
   seedRandom,
   setNow,
-} from './_v93-harness.mjs'
+} from './harness.mjs'
 import path from 'node:path'
 
-const REPORT = path.join(AUDIT_DIR, 'v93-autolevel-report.json')
+const REPORT = path.join(AUDIT_DIR, 'report-autolevel.json')
 const strict = hasStrict()
 const SEED = 20261026
 const T0 = BASE_TS // 本地 2026-01-01 08:00
@@ -48,7 +48,7 @@ const suite = createSuite('sim-autolevel v9.3 (real-source bundle)', {
   designDoc: 'docs/DSH-FORK.md',
   assertionPlan: 'scripts/core-regression/README.md',
   sourceVersion: 'v9.3 (src/utils/autoLevel.ts + memory.ts + db/index.ts)',
-  coreBundle: '_v93-core.mjs',
+  coreBundle: 'core.mjs',
   coreKind: 'esbuild(real src)',
   seed: SEED,
   tzOffsetMin: TZ_OFFSET_MIN,

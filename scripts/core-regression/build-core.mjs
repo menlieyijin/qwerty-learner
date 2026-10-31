@@ -1,16 +1,16 @@
 #!/usr/bin/env node
 /**
  * v9.3 仿真核心构建：把 **真实源码** src/utils/{srsRules,autoLevel,memory,db/index,learningPath,
- * memoryLadder,memoryKey,memoryCache,sessionRequeue}.ts 用 esbuild 打包成 _v93-core.mjs。
+ * memoryLadder,memoryKey,memoryCache,sessionRequeue}.ts 用 esbuild 打包成 core.mjs。
  *
  * 只替换浏览器专属依赖（不改变算法判定）：
- *   - dexie   → _v93-stub-dexie.mjs（内存表）
+ *   - dexie   → stub-dexie.mjs（内存表）
  *   - react / jotai / @/store / @/pages/Typing/store → hook stub（仿真不调用 UI hook）
- *   - @/utils/db/record   → _v93-stub-record.mjs（真实 record.ts 依赖 navigator/mixpanel）
+ *   - @/utils/db/record   → stub-record.mjs（真实 record.ts 依赖 navigator/mixpanel）
  *   - @/resources/dictionary → dictionary-stub.mjs（真实模块含 Vite import.meta.glob）
  *   - learningPath 保持真实实现，仿真通过注入 globalThis.fetch 供词库数据（含加载失败场景）
  *
- * 不修改 src/ 下任何文件。运行：node "scripts/core-regression\_v93-build-core.mjs"
+ * 不修改 src/ 下任何文件。运行：node "scripts/core-regression\build-core.mjs"
  */
 import fs from 'node:fs'
 import path from 'node:path'
@@ -19,11 +19,11 @@ import { createRequire } from 'node:module'
 const SRC_ROOT = path.resolve(import.meta.dirname, '../..')
 const SRC = path.join(SRC_ROOT, 'src')
 const AUDIT = import.meta.dirname
-const ENTRY = path.join(AUDIT, '_v93-entry.ts')
-const OUT = process.env.CORE_OUT ? path.resolve(process.env.CORE_OUT) : path.join(AUDIT, '_v93-core.mjs')
+const ENTRY = path.join(AUDIT, 'entry.ts')
+const OUT = process.env.CORE_OUT ? path.resolve(process.env.CORE_OUT) : path.join(AUDIT, 'core.mjs')
 /**
  * v9.11 量化仿真需要「同一份源码、两个毕业线」：
- *   CORE_MASTERY_RATIO=0.9 node _v93-build-core.mjs  →  变体 bundle（只在内存里改常量，不动 src）
+ *   CORE_MASTERY_RATIO=0.9 node build-core.mjs  →  变体 bundle（只在内存里改常量，不动 src）
  * 缺省（不设该环境变量）= 完全按源码原样打包，门禁行为不变。
  */
 const MASTERY_OVERRIDE = process.env.CORE_MASTERY_RATIO ? Number(process.env.CORE_MASTERY_RATIO) : null
@@ -34,12 +34,12 @@ const WINDOW_CAP_OVERRIDE = process.env.CORE_MIX_WINDOW_CAP ? Number(process.env
 
 const STUBS = {
   dictionary: path.join(AUDIT, 'dictionary-stub.mjs'),
-  dexie: path.join(AUDIT, '_v93-stub-dexie.mjs'),
-  react: path.join(AUDIT, '_v93-stub-react.mjs'),
-  jotai: path.join(AUDIT, '_v93-stub-jotai.mjs'),
-  store: path.join(AUDIT, '_v93-stub-store.mjs'),
-  typingStore: path.join(AUDIT, '_v93-stub-typing-store.mjs'),
-  record: path.join(AUDIT, '_v93-stub-record.mjs'),
+  dexie: path.join(AUDIT, 'stub-dexie.mjs'),
+  react: path.join(AUDIT, 'stub-react.mjs'),
+  jotai: path.join(AUDIT, 'stub-jotai.mjs'),
+  store: path.join(AUDIT, 'stub-store.mjs'),
+  typingStore: path.join(AUDIT, 'stub-typing-store.mjs'),
+  record: path.join(AUDIT, 'stub-record.mjs'),
 }
 
 const require = createRequire(path.join(SRC_ROOT, 'package.json'))

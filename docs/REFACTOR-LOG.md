@@ -146,6 +146,16 @@
 | K-4 | `local-fork/electron/enhance/enhance.js`（2660 行）从未审计 | 扫 `innerHTML` 插值、`JSON.parse`、`parseInt`、除法 `toFixed` | ① 唯一没套 `esc()` 的插值是键盘热区渲染，字符来自常量表而非用户数据；② 4 处 `JSON.parse` 全在 try/catch 内；③ `parseInt` 全部带 radix；④ `toFixed` 前都有 `n ?` / `st && st.ok ?` 守卫 | **未发现可改缺陷**，不改（不为改而改） |
 | K-5 | `src/utils/db/data-export.ts` 的导入路径（唯一会批量写用户库的地方） | 逐段读导入流程 | 已有：文件头校验（formatName/databaseName/表存在）、临时库 staging、逐表行数比对、主库单事务 clear+bulkPut、失败回滚标记、残留临时库清理 | **实现完备，未发现缺陷** |
 
+| L | v10.5.0 | 仓库一致性收尾：核心回归脚本去掉 `_v93` 历史前缀；文档里的「当前版本/提交数」改为指向唯一来源、不再硬编码；新增 `npm run test:all` | `test:core` 309/309（改名后）；`test:all` 一键通过；`test:visual` 2/2 |
+
+### 批次 L 逐条
+
+| # | 问题 | 做法 | 验证 |
+| --- | --- | --- | --- |
+| L-1 | `scripts/core-regression/` 里 11 个文件仍带 `_v93-` 前缀（历史遗留），与 `verify-*.mjs`、`dsh-*.ps1` 的命名风格不一致 | 去掉前缀：`build-core.mjs` / `harness.mjs` / `entry.ts` / `aggregate.mjs` / `determinism-check.mjs` / `stub-*.mjs`；生成的 `core.mjs` 与报告改名 `report-*.json`；同步 `run.mjs`、`README.md`、`dsh-release.ps1`、`quality-gate.ps1`、`.gitignore` 与 `src/utils/memoryLadder.ts` 的注释 | `npm run test:core` → 309/309 + determinism；`grep _v93` 全仓 0 命中 |
+| L-2 | 文档里硬编码「当前应用版本」「fork 提交数」，每次发布都会过期（`DSH-FORK.md` 写 v9.15、`THIRD-PARTY.md` 写 v9.9、`DSH-FORK_EN.md` 写 29 提交/17 签名） | 改为指向唯一来源：版本 → `local-fork/package.json`；提交数 → 给出 `git rev-list --count` 命令；仅 `FORK-NOTICE.md` 保留一个带时点的统计（35/48，注明截至 v10.4.0） | 复查 `grep enhanced-v9.` 只剩**历史发布说明**（v9.11/v9.15 记录，属事实存档，不改） |
+| L-3 | 验证入口分散在 8 个命令里，发布前容易漏跑 | 新增 `npm run test:all`：quality → stats → core → start-level → pages → typing → csv；`test:visual` 因需 dev server 单独说明 | 直接跑 `test:all`，7 段全绿 |
+
 ---
 
 ## 六、遗留清单（未改或无法闭环，附具体差距）

@@ -1,6 +1,6 @@
 # DSH Fork 技术文档（Qwerty Learner Plus）
 
-> 本文档描述 Qwerty Learner 的 **dsh 非官方分支**（分支 `dsh-local-v8`，应用版本 `1.0.0-enhanced-v9.15`）。
+> 本文档描述 Qwerty Learner 的 **dsh 非官方分支**（分支 `dsh-local-v8`；应用版本以 `local-fork/package.json` 的 `version` 为唯一来源，本文不写死）。
 > 上游项目：[RealKai42/qwerty-learner](https://github.com/RealKai42/qwerty-learner)，基线 commit `1182426`，GPL-3.0。
 > 分支声明、GPL 合规与已知限制的**权威版本**见仓库根目录 [`FORK-NOTICE.md`](../FORK-NOTICE.md)；本文档补充实现细节。
 
@@ -491,7 +491,7 @@ pwsh -File scripts/dsh-release.ps1
 
 | 位置 | 含义 | 当前值 |
 | --- | --- | --- |
-| `local-fork/package.json` `version` | **应用版本唯一来源** | `1.0.0-enhanced-v9.15` |
+| `local-fork/package.json` `version` | **应用版本唯一来源** | 以该文件为准（发布时更新） |
 | `main.js` / preload / 注入面板 | 运行时读取上面的版本（`app:version-sync`、`window.__QZ_VERSION__`） | 自动 |
 | 根 `package.json` `version` | 上游网页工程版本，**不用于桌面版本** | `0.1.0`（保持上游，不改） |
 | Git tag | 里程碑标记 | `vX.Y-dsh-local` |

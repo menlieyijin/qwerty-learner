@@ -1,6 +1,6 @@
 # Third-Party Components & Data（第三方组件与数据）
 
-> 适用范围：本仓库是 [Qwerty Learner](https://github.com/RealKai42/qwerty-learner) 的非官方分支（分支 `dsh-local-v8`，应用版本 `1.0.0-enhanced-v9.9`），整体按 **GNU GPL v3.0** 分发（见根目录 `LICENSE` 与 [`FORK-NOTICE.md`](../FORK-NOTICE.md)）。本文件逐项说明仓库内**第三方代码/数据/资产**的来源与许可，用于公开发布前的合规披露。
+> 适用范围：本仓库是 [Qwerty Learner](https://github.com/RealKai42/qwerty-learner) 的非官方分支（分支 `dsh-local-v8`；应用版本以 `local-fork/package.json` 为准），整体按 **GNU GPL v3.0** 分发（见根目录 `LICENSE` 与 [`FORK-NOTICE.md`](../FORK-NOTICE.md)）。本文件逐项说明仓库内**第三方代码/数据/资产**的来源与许可，用于公开发布前的合规披露。
 >
 > **边界声明**：本文件只做来源与许可的**如实披露**，不代表我们已就全部第三方数据取得额外授权，也不声称这些数据属于公有领域；GPL-3.0 覆盖本仓库有权许可的代码，不当然覆盖第三方词表数据。若权利人认为随附方式不妥，请在本 fork 仓库开 issue，我们会移除对应数据文件或改为运行时按需获取。
 

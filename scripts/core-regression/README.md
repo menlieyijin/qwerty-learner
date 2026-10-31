@@ -7,11 +7,11 @@
 
 | 步骤 | 脚本 | 内容 | 断言数 |
 | --- | --- | --- | --- |
-| 1 | `_v93-build-core.mjs` | 用 esbuild 把**真实源码**（`src/utils/{srsRules,autoLevel,memory,memoryLadder,memoryKey,memoryCache,sessionRequeue,learningPath,db/index}.ts`）打包成 `_v93-core.mjs`；只把浏览器专属依赖换成本目录下的 stub | — |
+| 1 | `build-core.mjs` | 用 esbuild 把**真实源码**（`src/utils/{srsRules,autoLevel,memory,memoryLadder,memoryKey,memoryCache,sessionRequeue,learningPath,db/index}.ts`）打包成 `core.mjs`；只把浏览器专属依赖换成本目录下的 stub | — |
 | 2 | `srs-sim.mjs --strict` | 到期计算、错答降档、快答升档、时钟回拨纠正、mature 降档、refresh 调度、封顶与不变式 | 120 |
 | 3 | `sim-autolevel.mjs --strict` | 级别推进（掌握度 85% 毕业）、掺入上一级词、skip/挂起、due 键、加载失败不推进 | 189 |
-| 4 | `_v93-determinism-check.mjs` | 同输入跑两遍，结果必须逐字节一致（防随机/时间泄漏） | — |
-| 5 | `_v93-aggregate.mjs` | 汇总 309 条 + 确定性结果，任一项失败即非 0 退出 | — |
+| 4 | `determinism-check.mjs` | 同输入跑两遍，结果必须逐字节一致（防随机/时间泄漏） | — |
+| 5 | `aggregate.mjs` | 汇总 309 条 + 确定性结果，任一项失败即非 0 退出 | — |
 
 ## 怎么跑
 
@@ -19,12 +19,12 @@
 npm run test:core
 ```
 
-产物（都已 gitignore）：`_v93-core.mjs`、`v93-srs-report.json`、`v93-autolevel-report.json`、
-`v93-determinism.json`、`v93-regression-result.json`。
+产物（都已 gitignore）：`core.mjs`、`report-srs.json`、`report-autolevel.json`、
+`report-determinism.json`、`report-all.json`。
 
 ## 关键约束：**不改 src**
 
-`_v93-build-core.mjs` 只在内存里对常量做替换（`CORE_MASTERY_RATIO` / `CORE_MIX_MAX` /
+`build-core.mjs` 只在内存里对常量做替换（`CORE_MASTERY_RATIO` / `CORE_MIX_MAX` /
 `CORE_MIX_WINDOW_CAP` 三个环境变量，用于对比实验），**不会写 `src/`**。仿真注入时间、随机种子与
 localStorage/fetch，因此结果可复现。
 

@@ -2,7 +2,7 @@
  * v9.3 仿真公共 harness：固定时区 / 固定时钟 / 可复现随机 / localStorage & fetch 注入 / 断言与报告。
  *
  * 设计要点：
- * - 仿真对象是 `_v93-core.mjs`（由 _v93-build-core.mjs 从 **真实 src** esbuild 打包，见该脚本注释），
+ * - 仿真对象是 `core.mjs`（由 build-core.mjs 从 **真实 src** esbuild 打包，见该脚本注释），
  *   本文件只负责提供浏览器环境替身，不复制/改写任何算法。
  * - 每个场景通过 `freshCore()` 动态 import 带 cache-busting 查询串的 bundle 副本，
  *   等价于「新进程/应用重启」：Dexie 内存表、词表缓存、requeue 队列、迁移标记 promise 全部重置。
@@ -14,7 +14,7 @@ import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 
 export const AUDIT_DIR = import.meta.dirname
-export const CORE_PATH = path.join(AUDIT_DIR, '_v93-core.mjs')
+export const CORE_PATH = path.join(AUDIT_DIR, 'core.mjs')
 
 export const MINUTE = 60_000
 export const HOUR = 60 * MINUTE

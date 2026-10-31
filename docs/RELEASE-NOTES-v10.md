@@ -1,6 +1,6 @@
 # v10.0.0 / v10.1.0 发布说明（dsh）
 
-> 版本字符串：`1.0.0-enhanced-v10.4.0`（唯一来源：`local-fork/package.json`；v10.0.0 / v10.1.0 / v10.2.x / v10.3.0 为同一基线的早期版本）
+> 版本字符串：`1.0.0-enhanced-v10.5.0`（唯一来源：`local-fork/package.json`；v10.0.0–v10.4.0 为同一基线的早期版本）
 > 基线：v9.15.1（`ce7eb79`）→ 本次重构 6 个提交 → v10.0.0
 > 逐条问题记录（根因 / 修复 / 验证 / 风险）见 [`REFACTOR-LOG.md`](./REFACTOR-LOG.md)
 
@@ -364,3 +364,41 @@ npx playwright test tests/e2e/visual.spec.ts --project=chromium --update-snapsho
 
 原 12 条遗留已全部关闭。仅剩的不是「待办」而是**能力边界**：视觉基线是本机 Chromium 产物（换机器需重建）；
 核心回归是 stub 化仿真（不等于真实浏览器）。两者都已写进 README「已知限制」。
+
+
+---
+
+# v10.5.0 追加（仓库一致性收尾，无功能变化）
+
+## 1. 命名统一：核心回归脚本去掉 `_v93` 前缀
+
+11 个文件从 `_v93-build-core.mjs` / `_v93-harness.mjs` / `_v93-stub-*.mjs` … 改为
+`build-core.mjs` / `harness.mjs` / `stub-*.mjs` …；生成物统一为 `core.mjs` + `report-*.json`。
+同步了 `run.mjs`、`scripts/core-regression/README.md`、`scripts/dsh-release.ps1`、`scripts/quality-gate.ps1`、
+`.gitignore` 和 `src/utils/memoryLadder.ts` 的注释。**验证**：`npm run test:core` 仍 309/309 + determinism。
+
+## 2. 文档不再硬编码「当前版本/提交数」
+
+- `docs/DSH-FORK.md` / `docs/DSH-FORK_EN.md`：版本改为「以 `local-fork/package.json` 为准」，
+  提交数改为给出统计命令；
+- `docs/THIRD-PARTY.md`：顶部版本同样改为指向唯一来源；
+- `FORK-NOTICE.md`：签名统计更新为「截至 v10.4.0，35/48」并注明时点。
+- 历史发布说明（`RELEASE-NOTES-v9.11.md` / `v9.15.md` 等）里的旧版本号**保留不删**——那是发布事实存档。
+
+## 3. 一键验证
+
+```bash
+npm run test:all      # quality → stats → core → start-level → pages → typing → csv
+npm run test:visual   # 视觉回归（需先起 dev server）
+```
+
+## 本版验证
+
+| 检查 | 结果 |
+| --- | --- |
+| `npm run test:all` | 7 段全绿（含 309 核心回归、15 正确率断言、四脚本 21/17/18/14） |
+| `npm run test:visual` | 2/2 |
+| 隔离冒烟 | 11/11 |
+| 双目录安装 | 两目录 asar SHA256 一致 |
+
+功能行为零变化：本版只改命名、文档表述与验证入口。

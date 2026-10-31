@@ -151,20 +151,20 @@ if (-not $SkipCheck) {
 # 3. 质量门禁：SRS / 自动进阶回归（真实源码 bundle + strict）
 # ---------------------------------------------------------------------------
 if (-not $SkipAudit) {
-  $buildCore = Join-Path $AuditRoot '_v93-build-core.mjs'
+  $buildCore = Join-Path $AuditRoot 'build-core.mjs'
   $srsSim = Join-Path $AuditRoot 'srs-sim.mjs'
   $autoSim = Join-Path $AuditRoot 'sim-autolevel.mjs'
   if ((Test-Path $buildCore) -and (Test-Path $srsSim) -and (Test-Path $autoSim)) {
     Write-Step '核心回归门禁（重建 bundle + srs-sim / sim-autolevel --strict）...'
     Push-Location $AuditRoot
     try {
-      & cmd.exe /c "node .\_v93-build-core.mjs > `"$logDir\audit-build-core-$stamp.txt`" 2>&1"
+      & cmd.exe /c "node .\build-core.mjs > `"$logDir\audit-build-core-$stamp.txt`" 2>&1"
       if ($LASTEXITCODE -ne 0) { throw "audit 核心 bundle 重建失败（exit $LASTEXITCODE）" }
       & cmd.exe /c "node .\srs-sim.mjs --strict > `"$logDir\audit-srs-$stamp.txt`" 2>&1"
       if ($LASTEXITCODE -ne 0) { throw "SRS 回归失败（exit $LASTEXITCODE），详见 $logDir\audit-srs-$stamp.txt" }
       & cmd.exe /c "node .\sim-autolevel.mjs --strict > `"$logDir\audit-autolevel-$stamp.txt`" 2>&1"
       if ($LASTEXITCODE -ne 0) { throw "自动进阶回归失败（exit $LASTEXITCODE），详见 $logDir\audit-autolevel-$stamp.txt" }
-      & cmd.exe /c "node .\_v93-aggregate.mjs > `"$logDir\audit-aggregate-$stamp.txt`" 2>&1"
+      & cmd.exe /c "node .\aggregate.mjs > `"$logDir\audit-aggregate-$stamp.txt`" 2>&1"
       if ($LASTEXITCODE -ne 0) { throw "回归汇总失败（exit $LASTEXITCODE）" }
     } finally { Pop-Location }
     Write-Ok '核心回归门禁通过'

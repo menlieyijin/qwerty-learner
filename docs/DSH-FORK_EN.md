@@ -9,10 +9,10 @@ An **unofficial fork** of [Qwerty Learner](https://github.com/RealKai42/qwerty-l
 | Item | Value |
 | --- | --- |
 | Upstream baseline | `1182426f2bd0a28c95302c33f9e19136b1262a70` (upstream `master`) |
-| Fork commits | 29 (`git rev-list --count 1182426..dsh-local-v8`) |
+| Fork commits | `git rev-list --count 1182426..dsh-local-v8` (changes every release; do not hardcode) |
 | License | GNU GPL v3.0 (same as upstream; `LICENSE` kept intact) |
-| App version | `1.0.0-enhanced-v9.15` (single source: `local-fork/package.json`) |
-| Author of fork changes | `dsh <dsh@dsh.local>`; 17 commits carry a `Signed-off-by` trailer (added from v9.3 onwards); earlier commits credit dsh in the commit message |
+| App version | single source: `local-fork/package.json` → `version` |
+| Author of fork changes | `dsh <dsh@dsh.local>`; commits from v9.3 onwards carry a `Signed-off-by` trailer (count via `git rev-list --count --grep=Signed-off-by`); earlier commits credit dsh in the message |
 | Desktop runtime | Electron 43.8.3 / Chromium 150.0.7871.250 (Windows) |
 
 It is a desktop-first study app: the upstream typing / pronunciation / dictation / error-book / statistics / dictionary-gallery features are kept, while the vocabulary workflow is replaced by an Ebbinghaus-style SRS scheduler, dynamic word picking and automatic level progression. An Electron shell is added on top of the web app.
@@ -186,7 +186,7 @@ pwsh -File scripts/dsh-rollback.ps1
 
 ## 7. Versioning
 
-- App version single source: `local-fork/package.json` → `1.0.0-enhanced-v9.15` (read by main process, preload via `app:version-sync`, injected panel via `window.__QZ_VERSION__`).
+- App version single source: `local-fork/package.json` → `version` (read by main process, preload via `app:version-sync`, injected panel via `window.__QZ_VERSION__`).
 - Root `package.json` stays at upstream `0.1.0` and is not the desktop version.
 - Milestone tags: `vX.Y-dsh-local` (v7.1, v8.9, v9.0, v9.2, v9.3, v9.5, v9.6, v9.7, v9.8, v9.9; v9.10–v9.15 are not tagged yet). v9.1/v9.2 and v9.4/v9.5 were released in shared commits, so no separate tags.
 - Installer exe metadata is written by rcedit only during runtime upgrades and may lag the app version (currently FileVersion 9.8.0.0 while the app is v9.15).

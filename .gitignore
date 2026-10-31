@@ -40,5 +40,5 @@ playwright-report
 /build-error.log
 
 # 核心回归产物（由 npm run test:core 生成）
-/scripts/core-regression/_v93-core.mjs
-/scripts/core-regression/v93-*.json
+/scripts/core-regression/core.mjs
+/scripts/core-regression/report-*.json

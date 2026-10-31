@@ -3,8 +3,8 @@
  * 可复现性检查（R-SIM-04）：同一 Node 下把两个 --strict 门禁各跑两遍，
  * 比较报告 JSON（忽略 generatedAt），并校验退出码均为 0。
  *
- * 运行：node "scripts/core-regression\_v93-determinism-check.mjs"
- * 产物：scripts/core-regression\v93-determinism.json
+ * 运行：node "scripts/core-regression\determinism-check.mjs"
+ * 产物：scripts/core-regression\report-determinism.json
  */
 import fs from 'node:fs'
 import path from 'node:path'
@@ -13,8 +13,8 @@ import { spawnSync } from 'node:child_process'
 const AUDIT = import.meta.dirname
 const node = process.execPath
 const sims = [
-  { name: 'srs', script: path.join(AUDIT, 'srs-sim.mjs'), report: path.join(AUDIT, 'v93-srs-report.json') },
-  { name: 'autoLevel', script: path.join(AUDIT, 'sim-autolevel.mjs'), report: path.join(AUDIT, 'v93-autolevel-report.json') },
+  { name: 'srs', script: path.join(AUDIT, 'srs-sim.mjs'), report: path.join(AUDIT, 'report-srs.json') },
+  { name: 'autoLevel', script: path.join(AUDIT, 'sim-autolevel.mjs'), report: path.join(AUDIT, 'report-autolevel.json') },
 ]
 
 const strip = (obj) => {
@@ -44,6 +44,6 @@ for (const sim of sims) {
 }
 
 const out = { generatedAt: new Date().toISOString(), pass: ok, results }
-fs.writeFileSync(path.join(AUDIT, 'v93-determinism.json'), JSON.stringify(out, null, 2), 'utf8')
+fs.writeFileSync(path.join(AUDIT, 'report-determinism.json'), JSON.stringify(out, null, 2), 'utf8')
 console.log(JSON.stringify(out, null, 2))
 process.exit(ok ? 0 : 1)

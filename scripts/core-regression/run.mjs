@@ -3,14 +3,14 @@
 //
 // 依次执行：
 //   1. 用 esbuild 把**真实源码** src/utils/{srsRules,autoLevel,memory,memoryLadder,memoryKey,
-//      memoryCache,sessionRequeue,learningPath,db/index}.ts 打包成 _v93-core.mjs（只把浏览器依赖换成 stub）；
+//      memoryCache,sessionRequeue,learningPath,db/index}.ts 打包成 core.mjs（只把浏览器依赖换成 stub）；
 //   2. srs-sim.mjs --strict（SRS / 记忆曲线，120 条断言）；
 //   3. sim-autolevel.mjs --strict（自动进阶 / 出词，189 条断言）；
-//   4. _v93-determinism-check.mjs（同输入跑两遍必须完全一致）；
-//   5. _v93-aggregate.mjs（汇总 309 条 + 确定性门禁，任一项失败即非 0 退出）。
+//   4. determinism-check.mjs（同输入跑两遍必须完全一致）；
+//   5. aggregate.mjs（汇总 309 条 + 确定性门禁，任一项失败即非 0 退出）。
 //
 // 用法：npm run test:core
-// 产物：同目录下 _v93-core.mjs、v93-*-report.json、v93-regression-result.json（均已在 .gitignore 中）
+// 产物：同目录下 core.mjs、v93-*-report.json、report-all.json（均已在 .gitignore 中）
 
 import { spawnSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
@@ -18,11 +18,11 @@ import { join } from 'node:path'
 
 const here = import.meta.dirname
 const steps = [
-  { name: 'build-core（打包真实源码）', file: '_v93-build-core.mjs', args: [] },
+  { name: 'build-core（打包真实源码）', file: 'build-core.mjs', args: [] },
   { name: 'srs-sim --strict', file: 'srs-sim.mjs', args: ['--strict'] },
   { name: 'sim-autolevel --strict', file: 'sim-autolevel.mjs', args: ['--strict'] },
-  { name: 'determinism-check', file: '_v93-determinism-check.mjs', args: [] },
-  { name: 'aggregate（汇总门禁）', file: '_v93-aggregate.mjs', args: [] },
+  { name: 'determinism-check', file: 'determinism-check.mjs', args: [] },
+  { name: 'aggregate（汇总门禁）', file: 'aggregate.mjs', args: [] },
 ]
 
 for (const step of steps) {
@@ -39,4 +39,4 @@ for (const step of steps) {
   }
 }
 
-console.log('\n核心回归全部通过（309 条断言 + 确定性门禁），明细见 v93-regression-result.json')
+console.log('\n核心回归全部通过（309 条断言 + 确定性门禁），明细见 report-all.json')

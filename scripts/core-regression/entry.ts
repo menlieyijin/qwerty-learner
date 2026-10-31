@@ -1,6 +1,6 @@
 /**
  * v9.3 仿真入口：只做 re-export，不改任何 src 实现。
- * 由 _v93-build-core.mjs 用 esbuild 打包成 _v93-core.mjs（ESM，供 Node 直接 import）。
+ * 由 build-core.mjs 用 esbuild 打包成 core.mjs（ESM，供 Node 直接 import）。
  */
 export {
   MEMORY_MATURE_STAGE,

@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
  * v9.3 回归门禁结果聚合：读取 srs-sim.mjs / sim-autolevel.mjs 的 --strict 报告，
- * 写 scripts/core-regression\v93-regression-result.json（断言总数/通过/失败/关键数字/口径差异）。
+ * 写 scripts/core-regression\report-all.json（断言总数/通过/失败/关键数字/口径差异）。
  *
- * 运行：node "scripts/core-regression\_v93-aggregate.mjs"
+ * 运行：node "scripts/core-regression\aggregate.mjs"
  * 前置：node srs-sim.mjs --strict && node sim-autolevel.mjs --strict
  */
 import fs from 'node:fs'
@@ -12,14 +12,14 @@ import crypto from 'node:crypto'
 
 const AUDIT = import.meta.dirname
 const SRC = path.resolve(import.meta.dirname, '../..')
-const OUT = path.join(AUDIT, 'v93-regression-result.json')
+const OUT = path.join(AUDIT, 'report-all.json')
 
 const readJson = (p) => JSON.parse(fs.readFileSync(p, 'utf8'))
 const sha256 = (p) => (fs.existsSync(p) ? crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex').slice(0, 16) : null)
 
-const srs = readJson(path.join(AUDIT, 'v93-srs-report.json'))
-const auto = readJson(path.join(AUDIT, 'v93-autolevel-report.json'))
-const detPath = path.join(AUDIT, 'v93-determinism.json')
+const srs = readJson(path.join(AUDIT, 'report-srs.json'))
+const auto = readJson(path.join(AUDIT, 'report-autolevel.json'))
+const detPath = path.join(AUDIT, 'report-determinism.json')
 const det = fs.existsSync(detPath) ? readJson(detPath) : null
 
 const totals = {
@@ -85,9 +85,9 @@ const report = {
     tzVerified: srs.meta.tzVerified,
     baseTs: srs.meta.baseTs,
     coreKind: 'esbuild 打包真实 src（非手写复刻）',
-    coreBundle: '_v93-core.mjs',
-    buildScript: 'scripts/core-regression\\_v93-build-core.mjs',
-    harness: 'scripts/core-regression\\_v93-harness.mjs',
+    coreBundle: 'core.mjs',
+    buildScript: 'scripts/core-regression\\build-core.mjs',
+    harness: 'scripts/core-regression\\harness.mjs',
     sourceFiles,
     gateCommands: ['node "scripts/core-regression\\srs-sim.mjs" --strict', 'node "scripts/core-regression\\sim-autolevel.mjs" --strict'],
     note: '仿真核心由 esbuild 从真实源码打包（dexie/react/jotai/store/record 用 Node stub 替代，learningPath 真实但 fetch 注入词库），固定 seed=20261026、注入时钟、固定 +08:00；不 import TS、不改 src。',
@@ -99,7 +99,7 @@ const report = {
     failed: srs.failed,
     byGroup: srs.byGroup,
     failures: srs.failures,
-    report: 'scripts/core-regression\\v93-srs-report.json',
+    report: 'scripts/core-regression\\report-srs.json',
   },
   autoLevel: {
     exitCode: auto.failed === 0 ? 0 : 1,
@@ -108,7 +108,7 @@ const report = {
     failed: auto.failed,
     byGroup: auto.byGroup,
     failures: auto.failures,
-    report: 'scripts/core-regression\\v93-autolevel-report.json',
+    report: 'scripts/core-regression\\report-autolevel.json',
   },
   totals,
   keyNumbers: {
@@ -136,8 +136,8 @@ const report = {
   },
   findings,
   determinism: det
-    ? { pass: det.pass, results: det.results, report: 'v93-determinism.json', command: 'node "scripts/core-regression\\_v93-determinism-check.mjs"' }
-    : { pass: null, note: '未运行 _v93-determinism-check.mjs' },
+    ? { pass: det.pass, results: det.results, report: 'report-determinism.json', command: 'node "scripts/core-regression\\determinism-check.mjs"' }
+    : { pass: null, note: '未运行 determinism-check.mjs' },
   gate: {
     pass: totals.failed === 0 && srs.failed === 0 && auto.failed === 0 && (!det || det.pass === true),
     strictExitCodes: { srs: srs.failed === 0 ? 0 : 1, autoLevel: auto.failed === 0 ? 0 : 1 },

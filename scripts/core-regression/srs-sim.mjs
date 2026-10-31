@@ -2,9 +2,9 @@
  * srs-sim.mjs — Qwerty Learner Plus v9.3 SRS / 记忆曲线回归仿真（--strict 门禁）
  *
  * 运行：node "scripts/core-regression\srs-sim.mjs" [--strict]
- * 产物：scripts/core-regression\v93-srs-report.json
+ * 产物：scripts/core-regression\report-srs.json
  *
- * 特点：断言对象是 `_v93-core.mjs` —— 由 _v93-build-core.mjs 用 esbuild 从**真实源码**打包
+ * 特点：断言对象是 `core.mjs` —— 由 build-core.mjs 用 esbuild 从**真实源码**打包
  *   src/utils/srsRules.ts / db/index.ts(updateMemoryProgress,deferMemoryDue) / memory.ts(迁移,pickDynamicWord)
  *   / autoLevel.ts(recordSkip,suspendWord,clearSkip,defer...) 而来，不含任何手写复刻，避免"复刻漂移"。
  *
@@ -33,11 +33,11 @@ import {
   seedRandom,
   setNow,
   storage,
-} from './_v93-harness.mjs'
+} from './harness.mjs'
 
 const SRC = path.resolve(import.meta.dirname, '../..')
 const SRC_UTILS = path.join(SRC, 'src', 'utils')
-const REPORT = path.join(AUDIT_DIR, 'v93-srs-report.json')
+const REPORT = path.join(AUDIT_DIR, 'report-srs.json')
 const strict = hasStrict()
 
 const D = 'simDict'
@@ -46,7 +46,7 @@ const suite = createSuite('srs-sim v9.3 (real-source bundle)', {
   designDoc: 'docs/DSH-FORK.md',
   assertionPlan: 'scripts/core-regression/README.md',
   sourceVersion: 'v9.3 (src/utils/srsRules.ts + db/index.ts + memory.ts)',
-  coreBundle: '_v93-core.mjs',
+  coreBundle: 'core.mjs',
   coreKind: 'esbuild(real src)',
   seed: 20261026,
   tzOffsetMin: TZ_OFFSET_MIN,
