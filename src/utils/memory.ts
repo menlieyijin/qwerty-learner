@@ -13,7 +13,6 @@ import {
   resolveCurrentLevel,
 } from './autoLevel'
 import type { LevelProgress } from './autoLevel'
-import { normalizeTrans } from '@/utils/trans'
 import { db } from './db'
 import type { IMemoryRecord } from './db/record'
 import { LEARNING_PATH, loadDictWords, loadLevelWords } from './learningPath'
@@ -24,6 +23,7 @@ import { takeRequeueWord } from './sessionRequeue'
 import { computeDue, correctClockRollback, effectiveDueOf, migrateStage, shouldCountSlow } from './srsRules'
 import { idDictionaryMap } from '@/resources/dictionary'
 import type { Word } from '@/typings'
+import { normalizeTrans } from '@/utils/trans'
 
 /**
  * v9.13（M1-017）：删掉历史兼容的 `memoryKey` 再导出（grep 反证：src 内无任何 `from '@/utils/memory'`

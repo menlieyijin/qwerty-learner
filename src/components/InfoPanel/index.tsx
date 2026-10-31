@@ -14,7 +14,7 @@ type InfoPanelProps = {
   children: React.ReactNode
 }
 
-const InfoPanel: React.FC<InfoPanelProps> = ({ openState, title, onClose, icon: Icon, iconClassName, buttonClassName, children }) => {
+function InfoPanel({ openState, title, onClose, icon: Icon, iconClassName, buttonClassName, children }: InfoPanelProps) {
   return (
     <Transition.Root show={openState} as={Fragment}>
       <Dialog as="div" className="relative z-50" onClose={() => onClose()}>

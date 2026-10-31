@@ -1,8 +1,8 @@
 import type { Dictionary, Word } from '@/typings'
 import { db } from '@/utils/db'
 import { memoryKey } from '@/utils/memoryKey'
-import { wordListFetcher } from '@/utils/wordListFetcher'
 import { normalizeTrans } from '@/utils/trans'
+import { wordListFetcher } from '@/utils/wordListFetcher'
 import { useEffect, useMemo, useState } from 'react'
 import useSWR from 'swr'
 

@@ -72,7 +72,7 @@ export function computeRowDetailStats(records: readonly RowDetailRecordLike[]): 
   return { hasRecords: true, averageSeconds, exerciseCount, correctCount, wrongKeyCount }
 }
 
-const RowDetail: React.FC<RowDetailProps> = ({ currentRowDetail, allRecords }) => {
+function RowDetail({ currentRowDetail, allRecords }: RowDetailProps) {
   const setCurrentRowDetail = useSetAtom(currentRowDetailAtom)
 
   const dictInfo = idDictionaryMap[currentRowDetail.dict]

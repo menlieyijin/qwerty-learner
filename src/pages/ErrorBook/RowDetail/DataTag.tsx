@@ -6,7 +6,7 @@ interface DataTagProps {
   data: number | string
 }
 
-const DataTag: React.FC<DataTagProps> = ({ icon, name, data }) => {
+function DataTag({ icon, name, data }: DataTagProps) {
   const IconComponent = icon
 
   return (

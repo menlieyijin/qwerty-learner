@@ -1,10 +1,10 @@
-import { computeCorrectRate, mistakeLevelOf } from './correctRate'
 import { TypingContext, TypingStateActionType } from '../../store'
 import ShareButton from '../ShareButton'
 import { getMistakeChar, normalizeDisplayWord } from '../WordPanel/components/Word/displayWord'
 import ConclusionBar from './ConclusionBar'
 import RemarkRing from './RemarkRing'
 import WordChip from './WordChip'
+import { computeCorrectRate, mistakeLevelOf } from './correctRate'
 import Tooltip from '@/components/Tooltip'
 import {
   currentChapterAtom,

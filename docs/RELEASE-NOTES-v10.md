@@ -1,6 +1,6 @@
 # v10.0.0 / v10.1.0 发布说明（dsh）
 
-> 版本字符串：`1.0.0-enhanced-v10.5.0`（唯一来源：`local-fork/package.json`；v10.0.0–v10.4.0 为同一基线的早期版本）
+> 版本字符串：`1.0.0-enhanced-v10.6.0`（唯一来源：`local-fork/package.json`；v10.0.0–v10.5.0 为同一基线的早期版本）
 > 基线：v9.15.1（`ce7eb79`）→ 本次重构 6 个提交 → v10.0.0
 > 逐条问题记录（根因 / 修复 / 验证 / 风险）见 [`REFACTOR-LOG.md`](./REFACTOR-LOG.md)
 
@@ -402,3 +402,59 @@ npm run test:visual   # 视觉回归（需先起 dev server）
 | 双目录安装 | 两目录 asar SHA256 一致 |
 
 功能行为零变化：本版只改命名、文档表述与验证入口。
+
+
+---
+
+# v10.6.0 追加（前端整洁度专项，页面行为不变）
+
+## 1. `utils/index.ts`：168 行杂物桶 → 14 行纯 barrel
+
+拆成 6 个领域文件，`@/utils` 的导出名与所有调用点一字未改：
+
+| 新文件 | 内容 |
+| --- | --- |
+| `utils/keyboard.ts` | `isLegal` / `isChineseSymbol`（含 50+ 键名的 bannedKeys） |
+| `utils/platform.ts` | `IS_MAC_OS` / `CTRL` / `IsDesktop` |
+| `utils/time.ts` | `getCurrentDate` / `getUTCUnixTimestamp` / `timeStamp2String` / `formatDate` |
+| `utils/number.ts` | `toFixedNumber` / `findCommonValues` |
+| `utils/chapter.ts` | `calcChapterCount`（唯一入口，依赖 `CHAPTER_LENGTH`） |
+| `utils/audio.ts` | `addHowlListener` |
+
+## 2. 删除死样式（有截图证明"没影响页面"）
+
+`src/index.css` 里 3 个类 + 5 段 keyframes 全仓无人引用，已删除（168 → 143 行）：
+`.gradient-text`、`.text-shadow`、`.typewriter`、`@keyframes gradient-text-hue / typing / blink-caret / hideCaret / gradientBG`。
+删除后 `npm run test:visual` 仍 2/2 —— 基线截图逐像素一致，说明删的确实是死代码。
+
+## 3. 移除 13 个未引用依赖
+
+`@radix-ui/react-{avatar,dialog,slot,tabs,toggle,toggle-group}`、`@tanstack/react-table`、
+`dexie-react-hooks`、`embla-carousel-react`、`lucide-react`、`react-timer-hook`、
+`source-map-explorer`、`@tailwindcss/postcss7-compat`。
+**保留**：`immer`（`use-immer` 的 peer）、`@iconify/json` 与 `@svgr/*`（`unplugin-icons` 构建期解析图标集合）、
+`cross-env`（npm scripts 使用）。
+
+## 4. 组件写法统一
+
+7 处 `React.FC` 收敛为函数声明（`memo` 的两处改为「先声明再 `memo(X)`」），并清掉随之失效的
+`import type React`。`grep -r "React.FC" src` 命中 0。
+
+## 5. 新增 `docs/CONVENTIONS.md`
+
+把"大家默认这么做"写成文档：目录分层、组件写法（函数声明 + `XxxProps` + 导出规则）、
+样式规则（Tailwind 优先、CSS Module kebab-case 与 `camelCaseOnly` 映射）、utils 放置、
+命名表、验证矩阵（改什么跑什么）、提交与发布、Electron 侧约束。README 中英与 CONTRIBUTING 已链接。
+
+## 本版验证
+
+| 检查 | 结果 |
+| --- | --- |
+| tsc + eslint（零告警） | 通过 |
+| `test:all` | 全绿（85 条行为断言 + 核心 309/309 + determinism） |
+| `test:visual` | 2/2（删样式后截图未变） |
+| 隔离冒烟 | 11/11 |
+| 双目录安装 | 两目录 asar SHA256 一致 |
+
+**页面行为不变**：本版没有改任何组件逻辑、样式生效值或文案；删除的样式与依赖均经引用扫描确认无人使用，
+并由视觉基线与行为脚本复核。

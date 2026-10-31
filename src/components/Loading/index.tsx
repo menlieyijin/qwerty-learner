@@ -1,6 +1,6 @@
 import React from 'react'
 
-export const LoadingUI: React.FC<{ className?: string }> = ({ className }) => {
+export function LoadingUI({ className }: { className?: string }) {
   return (
     <div
       className={`inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid  border-indigo-400 border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite] ${className}`}
@@ -12,7 +12,7 @@ export const LoadingUI: React.FC<{ className?: string }> = ({ className }) => {
   )
 }
 
-const Loading: React.FC = () => {
+function Loading() {
   return (
     // v9.14（dsh，M4-016）：原 `bg-[#faf9ff;]` 多了一个分号，Tailwind 不生成该类，
     // 首屏遮罩背景实际是透明的（与 ErrorBoundary 里的正确写法不一致）

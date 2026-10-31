@@ -110,6 +110,7 @@ scripts/                 发布 / 回滚 / 质量门禁 / CDP 冒烟 / 起点选
 | [FORK-NOTICE.md](./FORK-NOTICE.md) | 分支声明、GPL 义务、隐私与联网披露、已知限制 |
 | [docs/DSH-FORK.md](./docs/DSH-FORK.md) | 技术实现（自动进阶、SRS、桌面端增强、安全基线） |
 | [docs/AUDIT-CLOSE.md](./docs/AUDIT-CLOSE.md) | 发布前审计的逐条闭环记录（修复 / 接受风险 / 无法处理） |
+| [docs/CONVENTIONS.md](./docs/CONVENTIONS.md) | 代码约定：目录分层、组件写法、样式、工具函数、命名、验证要求 |
 | [docs/REFACTOR-LOG.md](./docs/REFACTOR-LOG.md) | v10 重构逐条记录：问题 / 根因 / 修复 / 验证 / 风险 + 遗留清单 |
 | [docs/RELEASE-NOTES-v10.md](./docs/RELEASE-NOTES-v10.md) | v10.0.0 发布说明 |
 | [docs/UPSTREAM-PR-DRAFT.md](./docs/UPSTREAM-PR-DRAFT.md) | 可直接提交上游的 issue / PR 文稿（署名 dsh） |

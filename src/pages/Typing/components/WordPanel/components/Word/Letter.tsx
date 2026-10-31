@@ -25,7 +25,7 @@ export type LetterProps = {
   visible?: boolean
 }
 
-const Letter: React.FC<LetterProps> = ({ letter, state = 'normal', visible = true }) => {
+function Letter({ letter, state = 'normal', visible = true }: LetterProps) {
   const fontSizeConfig = useAtomValue(fontSizeConfigAtom)
   return (
     <span

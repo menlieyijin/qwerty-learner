@@ -156,6 +156,18 @@
 | L-2 | 文档里硬编码「当前应用版本」「fork 提交数」，每次发布都会过期（`DSH-FORK.md` 写 v9.15、`THIRD-PARTY.md` 写 v9.9、`DSH-FORK_EN.md` 写 29 提交/17 签名） | 改为指向唯一来源：版本 → `local-fork/package.json`；提交数 → 给出 `git rev-list --count` 命令；仅 `FORK-NOTICE.md` 保留一个带时点的统计（35/48，注明截至 v10.4.0） | 复查 `grep enhanced-v9.` 只剩**历史发布说明**（v9.11/v9.15 记录，属事实存档，不改） |
 | L-3 | 验证入口分散在 8 个命令里，发布前容易漏跑 | 新增 `npm run test:all`：quality → stats → core → start-level → pages → typing → csv；`test:visual` 因需 dev server 单独说明 | 直接跑 `test:all`，7 段全绿 |
 
+| M | v10.6.0 | 前端整洁度专项：`utils/index.ts`（168 行杂物桶）按领域拆成 6 个文件、只剩 14 行 re-export；删除 3 条无人引用的全局样式与 5 段无人引用的 keyframes；移除 13 个未被引用的依赖；7 处 `React.FC` 收敛为函数组件；新增 `docs/CONVENTIONS.md` | `test:all` 全绿；`test:visual` 2/2（删除样式后截图未变）；构建产物 index chunk 468.16 kB |
+
+### 批次 M 逐条
+
+| # | 问题 | 做法 | 验证 |
+| --- | --- | --- | --- |
+| M-1 | `src/utils/index.ts` 168 行同时放键盘判定、平台判定、Howl 监听、日期格式化、数值取整、数组交集、章节计算 | 拆为 `keyboard.ts` / `platform.ts` / `time.ts` / `number.ts` / `chapter.ts` / `audio.ts`；`index.ts` 退化为 14 行纯 re-export，**对外 API 与全部调用点不变** | tsc + eslint 通过；`test:all` 全绿 |
+| M-2 | `src/index.css` 里有 3 条类与 5 段 keyframes 无人引用（`gradient-text` / `text-shadow` / `typewriter` + `gradient-text-hue` / `typing` / `blink-caret` / `hideCaret` / `gradientBG`） | 逐块删除（花括号配对校验），文件 168 → 143 行 | `test:visual` 2/2 —— 截图基线未变，证明删除的确实是死样式；构建通过 |
+| M-3 | `package.json` 里 13 个包没有任何 import（6 个 radix、react-table、dexie-react-hooks、embla-carousel、lucide-react、react-timer-hook、source-map-explorer、@tailwindcss/postcss7-compat） | `npm uninstall` 并更新锁文件；保留 `immer`（use-immer 的 peer）、`@iconify/json` 与 `@svgr/*`（unplugin-icons 构建期需要） | `npm run build` 通过；`test:all` 全绿 |
+| M-4 | 组件声明风格两套：30 处 `export default function` vs 7 处 `React.FC` | 7 处改为函数声明（含 `memo` 的两处先声明再 `memo(X)`），清理因此失效的 `import type React` | tsc + eslint 零告警；`grep React.FC` 命中 0 |
+| M-5 | 没有成文的代码约定，风格靠口口相传 | 新增 `docs/CONVENTIONS.md`：分层、组件写法、样式、utils 放置、命名、验证矩阵、提交与发布、Electron 侧约束；README 中英与 CONTRIBUTING 均已链接 | 文档链接检查 0 断链 |
+
 ---
 
 ## 六、遗留清单（未改或无法闭环，附具体差距）

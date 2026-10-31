@@ -1,6 +1,6 @@
 import { memoryKey } from './memoryKey'
-import { normalizeTrans } from '@/utils/trans'
 import type { Word } from '@/typings'
+import { normalizeTrans } from '@/utils/trans'
 
 /**
  * 会话内错词重现队列（v8）：

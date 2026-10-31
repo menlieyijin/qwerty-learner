@@ -17,10 +17,10 @@ import { effectiveDueOf, isDue, isMastered } from './srsRules'
 import type { Word } from '@/typings'
 import type { IMemoryRecord } from '@/utils/db/record'
 import { LEARNING_PATH, loadLevelWords } from '@/utils/learningPath'
-import { normalizeTrans } from '@/utils/trans'
 import type { LearningLevel } from '@/utils/learningPath'
 import { clearMemoryCache } from '@/utils/memoryCache'
 import { memoryKey, normalizeWordName } from '@/utils/memoryKey'
+import { normalizeTrans } from '@/utils/trans'
 
 /** localStorage 键（随备份/导入迁移，见 enhance.js collectBackupSnapshot 的 localStorage 全量快照） */
 export const AUTO_LEVEL_STORAGE_KEY = 'qzAutoLevelState'
