@@ -287,3 +287,15 @@ node scripts/shell.mjs --asar <app.asar>         # 指定包
 | 冒烟（`npm run shell` 自建外壳） | 13/13 |
 | 安装体检 | 3/3 |
 | 双目录安装 | asar `C895DFA5…` 一致 |
+
+---
+
+# v11.5.1（补丁）
+
+- `FORK-NOTICE.md`：提交数改为「命令 + 时点快照」，不再写死（写死的数字每次提交就过期）；
+  同时修正 4.5 节「注入式增强面板」的过期描述；
+- 因为 `FORK-NOTICE.md` 会打进 `app.asar` 并复制到安装目录，本版重新构建并重装，保证
+  「仓库文档 / asar / 安装目录」三处一致。
+
+验证：`test:all` 149 条、`test:core` 309/309、`test:visual` 2/2、`test:desktop-visual` 5/5、
+隔离冒烟 13/13、安装体检 3/3；asar `01FEA493…`，双目录一致。
