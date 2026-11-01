@@ -91,7 +91,8 @@ scripts/                 发布 / 回滚 / 质量门禁 / CDP 冒烟 / 起点选
 | `npm run test:dict` | 词库下载 30 项：白名单 / 断流续传（真实 Range）/ 脏 JSON / 超限 / 416 / 重定向 / 结构校验 |
 | `npm run test:visual` | 网页视觉回归：错题本空态 + 设置面板两张基线截图（自动拉起 dev server）；重建基线加 `--update-snapshots` |
 | `npm run test:desktop-visual` | **桌面**视觉回归：显示/数据/词库/工具四个设置页 + 玫瑰红强调色页，固定 1280×800 逐页对比；重建基线用 `test:desktop-visual:update` |
-| `npm run quality` | 质量门禁（tsc + eslint + 正确率 + 属性测试 + 词库下载 + 核心回归），跨平台 |
+| `npm run test:format` | prettier 全仓格式检查（`*.md`、生成物与安全窗口 HTML 已在 `.prettierignore` 说明） |
+| `npm run quality` | 质量门禁（格式 + tsc + eslint + 正确率 + 属性测试 + 词库下载 + 核心回归），跨平台 |
 | `npm run release` | 打包 asar：门禁 → build → asar → SHA256 → `release-info.json` |
 | `npm run release:test` | 装到测试目录（`QZ_TEST_APP_DIR`）；加 `--smoke` 跑隔离冒烟 |
 | `npm run rollback` / `rollback:list` | 回滚到上一版本 / 列出可用备份 |

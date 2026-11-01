@@ -51,6 +51,7 @@
     "build": "cross-env CI=false vite build --base=./",
     "test": "npm run typecheck && npm run lint:strict",
     "test:quality": "tsc --noEmit -p tsconfig.json && eslint src --ext .ts,.tsx --max-warnings 0",
+    "test:format": "prettier --check .",
     "test:e2e": "playwright test",
     "test:e2e:local": "cross-env QZ_E2E_BASE_URL=http://127.0.0.1:5173 playwright test --project=chromium",
     "test:local": "node scripts/dsh-smoke.mjs",
@@ -73,7 +74,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint .",
     "lint:strict": "eslint src --ext .ts,.tsx --max-warnings 0",
-    "quality": "npm run test:quality && npm run test:stats && npm run test:fuzz && npm run test:dict && npm run test:core",
+    "quality": "npm run test:format && npm run test:quality && npm run test:stats && npm run test:fuzz && npm run test:dict && npm run test:core",
     "prettier": "prettier --write .",
     "prepare": "husky install"
   },

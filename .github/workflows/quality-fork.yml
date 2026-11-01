@@ -34,6 +34,9 @@ jobs:
       - name: Lint
         run: npm run lint:strict
 
+      - name: Format check (prettier)
+        run: npm run test:format
+
       - name: Build (vite)
         run: npm run build
 
@@ -42,6 +45,9 @@ jobs:
 
       - name: Property tests (seeded fuzz)
         run: npm run test:fuzz
+
+      - name: Dictionary download tests (resume / limits / allow-list)
+        run: npm run test:dict
 
       - name: Core algorithm regression (309 assertions)
         run: npm run test:core

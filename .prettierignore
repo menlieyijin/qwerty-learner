@@ -2,3 +2,23 @@ build
 node_modules
 public/dicts
 stats.html
+
+# 文档不纳入自动格式化：Prettier 会重排表格与换行，产生大量纯排版 diff，
+# 而这些表格是手工对齐的中文说明，重排后反而更难读。
+# 需要格式化时显式执行：npx prettier --write docs/<file>.md
+*.md
+docs/
+
+# 生成物与二进制资产
+logs/
+release/
+backup/
+scripts/core-regression/core.mjs
+scripts/core-regression/report-*.json
+tests/desktop-visual/
+package-lock.json
+playwright-report/
+test-results/
+local-fork/electron/enhance/dict-map.json
+local-fork/electron/enhance/dict-meta.json
+local-fork/electron/enhance/clipboard.html

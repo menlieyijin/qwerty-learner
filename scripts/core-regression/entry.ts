@@ -39,13 +39,7 @@ export {
   getLearningSummary,
 } from '@/utils/memory'
 
-export {
-  clearMemoryCache,
-  getMemoryCache,
-  setMemoryCache,
-  upsertMemoryCache,
-  removeMemoryCache,
-} from '@/utils/memoryCache'
+export { clearMemoryCache, getMemoryCache, setMemoryCache, upsertMemoryCache, removeMemoryCache } from '@/utils/memoryCache'
 
 export {
   pushWrongWordRequeue,
@@ -94,11 +88,6 @@ export {
 
 export { db, updateMemoryProgress, deferMemoryDue } from '@/utils/db'
 
-export {
-  MEMORY_MIGRATED_KEY,
-  ensureMemoryMigrated,
-  getMemoryRecords,
-  pickDynamicWord,
-} from '@/utils/memory'
+export { MEMORY_MIGRATED_KEY, ensureMemoryMigrated, getMemoryRecords, pickDynamicWord } from '@/utils/memory'
 
 export { LEARNING_PATH, loadLevelWords, loadDictWords } from '@/utils/learningPath'

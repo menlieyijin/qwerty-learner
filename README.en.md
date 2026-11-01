@@ -90,7 +90,8 @@ scripts/                 release / rollback / quality gate / CDP smoke / level-p
 | `npm run test:dict` | 30 checks for dictionary download: allow-list / resume after drop (real Range) / bad JSON / oversize / 416 / redirect / payload shape |
 | `npm run test:visual` | Web visual regression: error-book empty state + settings panel (auto-starts the dev server); add `--update-snapshots` to rebuild |
 | `npm run test:desktop-visual` | **Desktop** visual regression: display/data/dict/tools + rose-accent page at a fixed 1280×800 viewport; rebuild with `test:desktop-visual:update` |
-| `npm run quality` | Quality gate (tsc + eslint + stats + property tests + dict download + core regression), cross-platform |
+| `npm run test:format` | Repo-wide prettier check (`*.md`, generated files and the CSP-critical window HTML are listed in `.prettierignore`) |
+| `npm run quality` | Quality gate (format + tsc + eslint + stats + property tests + dict download + core regression), cross-platform |
 | `scripts/dsh-release.ps1` | Pack asar / test install / isolated smoke / dual-directory install |
 | `scripts/dsh-rollback.ps1` | Roll back to the previous build (saves a redo point first) |
 
