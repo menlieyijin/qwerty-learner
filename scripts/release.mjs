@@ -13,6 +13,7 @@
 // 回滚：node scripts/rollback.mjs
 import { cleanEnv, copyFileAtomic, copyTree, resourcesDirFor, sha256, sizeOf, stampNow, stopApp } from './lib/app-files.mjs'
 import { resolveDesktopExe } from './lib/desktop-app.mjs'
+import { checkInstallDir } from './lib/install-check.mjs'
 import { spawn, spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -126,6 +127,14 @@ async function runSmoke(exe, userDir, plusDir, port, logDir, stamp) {
       /* ignore */
     }
     stopApp(exe)
+  }
+}
+
+// 安装目录根部的 GPL 材料：LICENSE 与 fork 声明必须随包分发
+function copyLegalFiles(dir) {
+  for (const f of ['LICENSE', 'FORK-NOTICE.md']) {
+    const src = path.join(REPO, f)
+    if (fs.existsSync(src)) fs.copyFileSync(src, path.join(dir, f))
   }
 }
 
@@ -286,6 +295,11 @@ if (testInstall) {
   const got = sha256(testTarget)
   if (got !== hash) die(`测试安装后哈希不一致：${got}`)
   ok(`测试安装完成（sha256=${got}）`)
+  copyLegalFiles(testAppDir)
+
+  const testCheck = checkInstallDir(testAppDir, { expectedHash: hash })
+  if (!testCheck.ok) die(`测试安装体检失败：\n  - ${testCheck.issues.join('\n  - ')}`)
+  ok(`测试安装体检通过（asar ${testCheck.info.entries} 个条目，GPL 材料齐全）`)
 
   if (smoke) {
     step('隔离 profile 冒烟（每次全新 profile，避免状态残留）')
@@ -326,10 +340,7 @@ if (install) {
       copyFileAtomic(asarOut, target)
       const got = sha256(target)
       if (got !== hash) die(`安装后哈希不一致：${target} -> ${got}`)
-      for (const f of ['LICENSE', 'FORK-NOTICE.md']) {
-        const src = path.join(REPO, f)
-        if (fs.existsSync(src)) fs.copyFileSync(src, path.join(dir, f))
-      }
+      copyLegalFiles(dir)
       installed.push({ dir, target, sha256: got, size: sizeOf(target) })
       ok(`${target} -> ${got}`)
       newHashes.push(got)
@@ -372,6 +383,13 @@ if (install) {
     dirs: installed,
     smoke,
   }
+  // 落盘后体检：asar 完整性 / 关键文件 / .tmp 残留 / GPL 材料（只看结构，不启动应用）
+  for (const item of installed) {
+    const c = checkInstallDir(item.dir, { expectedHash: hash })
+    if (!c.ok) die(`安装体检失败（${item.dir}）：\n  - ${c.issues.join('\n  - ')}`)
+  }
+  ok('各安装目录体检通过（asar 结构 / GPL 材料 / 无临时残留）')
+
   const installLogPath = path.join(logDir, `qwerty-${ver}-installed-${stamp}.json`)
   fs.writeFileSync(installLogPath, JSON.stringify(installLog, null, 2))
   ok(`安装日志：${installLogPath}`)

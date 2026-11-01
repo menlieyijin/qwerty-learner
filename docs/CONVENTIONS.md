@@ -56,6 +56,12 @@
 | `taskkill /IM "Qwerty Learner.exe"` | 会杀掉用户正在使用的应用 | `ensurePortFree(port)`：只清理占用本脚本端口的进程 |
 | 固定 `sleep` 等进程退出/页面就绪 | 机器慢时偶发失败，且报错无法定位 | 轮询条件（`waitPortFree` / `until(...)`），超时信息带上最后状态 |
 
+## 3.3 发布与安装
+
+- 发布只走 `node scripts/release.mjs`（`npm run release` / `release:test`）；不要往 `.ps1` 里加逻辑，它只是包装；
+- 安装后必须能过 `npm run check:install -- --dir "<目录>"`：asar 结构、哈希、`.tmp-*` 残留、GPL 材料；
+- 视觉基线按平台命名，缺基线就是失败；新平台用 `test:desktop-visual:update` 生成并提交 PNG。
+
 ## 4. 工具函数
 
 - 按领域放在 `src/utils/<domain>.ts`：`keyboard` / `platform` / `time` / `number` / `chapter` / `audio` / `trans` / `csvSafe` …

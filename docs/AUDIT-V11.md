@@ -59,6 +59,8 @@ v10 已修的 6 个缺陷（CSV 公式注入、脏 payload 白屏、非 git 构�
 | P2-10 | 发布脚本 | 打包依赖 `npx --yes @electron/asar@4.3.1` 现拉，离线/私有源会失败 | 未固定到 devDependencies | 装为 devDependency，发布时直接跑 `node_modules/@electron/asar/bin/asar.mjs`（与旧链产物逐字节一致） |
 | P2-11 | `scripts/dsh-release.ps1` / `dsh-rollback.ps1` | 发布与回滚只能在 Windows 跑，默认路径是作者本机布局 | 实现是 PowerShell 脚本 | 重写为 `scripts/release.mjs` / `rollback.mjs`（纯 Node），默认 `release/`+`backup/`；`.ps1` 降级为薄包装 |
 
+| P2-12 | `scripts/release.mjs` `--test-install` | 测试安装目录没有 `LICENSE` / `FORK-NOTICE.md`，与正式目录结构不一致，GPL 材料缺失也不会被发现 | 只有正式安装那段拷了合规文件，且安装后只比哈希 | 抽 `copyLegalFiles` 两处共用；新增安装体检（`check-install.mjs`），发布脚本在测试/正式安装后都跑 |
+
 ## 结构与一致性（本轮同时收敛）
 
 - 词库页的「设为当前」不再走官方画廊 DOM 自动化（原 160 行 `trySwitchViaOfficialUI/findAppTrigger/isUnsafeSwitch`），

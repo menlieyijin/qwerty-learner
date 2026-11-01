@@ -183,9 +183,14 @@ npm run rollback
 ```
 
 - All of the above are plain Node scripts and behave the same on Windows / macOS / Linux.
+- Each install is **health-checked** (`scripts/check-install.mjs`): executable present, `app.asar` readable with the
+  required entries, hash matches, no `.tmp-*` leftovers, and `LICENSE` / `FORK-NOTICE.md` alongside the app (GPL).
 - Staging defaults to `release/`, backups to `backup/` (both git-ignored). Arguments override env vars (`QZ_STAGE_ROOT`, `QZ_BACKUP_DIR`, `QZ_AUDIT_DIR`, `QZ_TEST_APP_DIR`, `QZ_INSTALL_DIRS`), which override defaults.
 - Packaging uses the **local** `@electron/asar` devDependency (no network, version pinned). The legacy `scripts/dsh-release.ps1` / `dsh-rollback.ps1` remain as thin wrappers that forward to the Node scripts.
 - `yarn start` serves the web app only; tray/backup/dictionary management require the Electron shell.
+- Desktop visual baselines are **per platform** (`tests/desktop-visual/<page>-<platform>.png`). Only Windows ships today;
+  on another platform run `QZ_TEST_APP_DIR=<dir> npm run test:desktop-visual:update` and commit the PNGs.
+  A missing baseline fails the check instead of silently writing one.
 - Electron runtime upgrades are separate, manual steps (official zip + rcedit branding + verified replacement); see [`Electron-EOL.md`](Electron-EOL.md). Electron 43.x EOL: 2027-01-05.
 
 ## 7. Versioning

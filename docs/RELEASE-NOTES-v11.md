@@ -190,3 +190,56 @@ tsc + eslint 通过；`test:all` 95 条；`test:core` 309/309；`test:visual` 2/
 | `test:desktop-visual` | 5/5（view/data/dict/tools 0.000%，accent 0.004%） |
 | 隔离冒烟 | 13/13（含 `backupWorks`：走新的 `copyTreeSync`） |
 | 双目录安装 | asar `1D5502ED…` 两目录一致 |
+
+---
+
+# v11.4.0（把「剩余风险」变成可跑的检查）
+
+本轮不加功能，只把上一版列出的风险逐条变成能跑的东西。
+
+## 1. 下载链路：从 30 项到 45 项
+
+| 新增场景 | 断言 |
+| --- | --- |
+| 分块慢速（10 块 × 120ms） | 完整落盘、`resumed=false` |
+| 下载中途超时 | 报错且 `.part` 保留已收字节；之后能续传到完整文件 |
+| 连续三次中断（服务端支持 Range 但只给一半） | `.part` **每次都在前进**，不是原地重下；最后能续传完成 |
+| 206 只给一半就结束 | 判定为脏 JSON，清 `.part`，不生成目标文件 |
+| 0 字节响应 / `body=null` | 报「空文件」而不是崩溃 |
+| 残留 `.part` 超过体积上限 | 丢弃并整包重下，不会被当成续传起点 |
+
+## 2. 安装目录体检
+
+新增 `scripts/check-install.mjs`（`npm run check:install`），发布脚本在**测试安装**与**正式安装**后各跑一次：
+
+- 可执行文件存在；
+- `app.asar` 能被 asar 读出目录（截断的包在这一步就会失败）；
+- 必需条目齐全：`package.json` / `electron/main.js` / `build/index.html`；
+- 哈希与本次产物一致；
+- `resources` 下没有上次失败留下的 `.tmp-*`；
+- 安装目录根部有 `LICENSE` 与 `FORK-NOTICE.md`（GPL）。
+
+顺带修掉：`--test-install` 以前不复制这两个合规文件，测试目录与正式目录结构不一致——体检第一次跑就抓出来了。
+
+## 3. 桌面视觉基线可指定平台
+
+新增 `--platform` / `QZ_DESKTOP_VISUAL_PLATFORM`，给其它平台（或 CI 容器）生成独立基线用；
+`docs/DSH-FORK.md` §6.6 写了具体步骤。缺基线仍然是**失败**，不会静默写一份然后判过。
+
+## 4. 门禁只剩一处实现
+
+`scripts/quality-gate.ps1` 降级为薄包装，把 `-SkipTypes` / `-SkipLint` / `-WithSim` / `-WithSmoke` 映射到
+`npm run quality` / `npm run test:quality` / `node scripts/core-regression/run.mjs` / `node scripts/dsh-smoke.mjs`。
+
+## 本版验证
+
+| 检查 | 结果 |
+| --- | --- |
+| tsc + eslint + `prettier --check .` | 通过 |
+| `test:all` | **140 条**（stats 17 / fuzz 5 / dict **45** / start-level 21 / pages 20 / typing 18 / csv 14） |
+| `test:core` | 309/309 + determinism |
+| `test:visual` | 2/2 |
+| `test:desktop-visual` | 5/5（view/data/dict/tools 0.000%，accent 0.004%） |
+| 隔离冒烟 | 13/13 |
+| 安装体检 | 3/3（测试目录 + 两个正式目录） |
+| 双目录安装 | asar `738E9E81…` 两目录一致 |

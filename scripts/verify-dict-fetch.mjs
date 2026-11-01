@@ -51,6 +51,56 @@ const server = createServer((req, res) => {
     setTimeout(() => res.destroy(), 30)
     return
   }
+  if (mode === 'halfRange') {
+    // 支持 Range，但只给剩余部分的一半就断链：用于验证多轮中断时 .part 持续前进
+    const m = lastRange.match(/bytes=(\d+)-/)
+    const start = m ? Number(m[1]) : 0
+    const rest = BODY.length - start
+    const give = Math.max(1, Math.floor(rest / 2))
+    if (start >= BODY.length) {
+      res.writeHead(416, { 'content-range': `bytes */${BODY.length}` })
+      res.end()
+      return
+    }
+    res.writeHead(206, {
+      'content-type': 'application/json',
+      'content-range': `bytes ${start}-${BODY.length - 1}/${BODY.length}`,
+    })
+    res.write(BODY.subarray(start, start + give))
+    setTimeout(() => res.destroy(), 30)
+    return
+  }
+  if (mode === 'slow') {
+    // 分块慢速：10 块 × 每块 120ms，用来覆盖「下载进行中」的超时与中断
+    res.writeHead(200, { 'content-type': 'application/json', 'content-length': String(BODY.length) })
+    const step = Math.ceil(BODY.length / 10)
+    let i = 0
+    const tick = () => {
+      if (res.destroyed) return
+      if (i >= 10) {
+        res.end()
+        return
+      }
+      res.write(BODY.subarray(i * step, Math.min((i + 1) * step, BODY.length)))
+      i += 1
+      setTimeout(tick, 120)
+    }
+    tick()
+    return
+  }
+  if (mode === 'short206') {
+    // 声称按 Range 续传，但只给一半就结束：客户端应判定 JSON 不完整并清理 .part
+    const m = lastRange.match(/bytes=(\d+)-/)
+    const start = m ? Number(m[1]) : 0
+    res.writeHead(206, { 'content-type': 'application/json', 'content-range': `bytes ${start}-${BODY.length - 1}/${BODY.length}` })
+    res.end(BODY.subarray(start, start + Math.floor((BODY.length - start) / 2)))
+    return
+  }
+  if (mode === 'empty') {
+    res.writeHead(200, { 'content-type': 'application/json', 'content-length': '0' })
+    res.end()
+    return
+  }
   if (mode === 'range' && lastRange) {
     const m = lastRange.match(/bytes=(\d+)-/)
     const start = m ? Number(m[1]) : 0
@@ -79,8 +129,19 @@ const realFetch = globalThis.fetch
 
 // 把白名单 URL 的请求转到本地服务；reportedUrl 用于模拟「重定向到非受信源」
 const makeFetch =
-  (reportedUrl = ALLOWED) =>
+  (reportedUrl = ALLOWED, { nullBody = false } = {}) =>
   async (_url, init) => {
+    if (nullBody) {
+      // 有的实现对 204/HEAD 给 null body：这里模拟该分支
+      return {
+        ok: true,
+        status: 200,
+        url: reportedUrl,
+        headers: new Headers({ 'content-length': '0' }),
+        body: null,
+        arrayBuffer: async () => new ArrayBuffer(0),
+      }
+    }
     const r = await realFetch(localUrl, init)
     // 与真实 Response 对齐：body 可流式读，也支持 arrayBuffer（后者用于反证旧实现）
     const body = r.body
@@ -205,6 +266,99 @@ check('9d 非数组拒绝', validateDictPayload({ a: 1 }) === false)
 check('9e 79% 合法被拒', validateDictPayload([...Array(21).fill({ name: 'ok' }), ...Array.from({ length: 79 }, () => ({}))]) === false)
 check('9f 81% 合法通过', validateDictPayload([...Array(81).fill({ name: 'ok' }), ...Array.from({ length: 19 }, () => ({}))]) === true)
 check('9g name 为空字符串不计入', validateDictPayload([{ name: '  ' }]) === false)
+
+// ---------------------------------------------------------------- 10. 慢速分块
+fresh()
+mode = 'slow'
+r = await fetchDictToFile(ALLOWED, target, { fetch: makeFetch() })
+check('10a 分块慢速下载能完整落盘', r.size === BODY.length && readFileSync(target).equals(BODY), r)
+check('10b 慢速下载不标记为续传', r.resumed === false, r)
+
+// 10c 慢速下载中途超时：已收字节留在 .part，之后能续上
+fresh()
+mode = 'slow'
+threw = false
+try {
+  await fetchDictToFile(ALLOWED, target, { fetch: makeFetch(), timeout: 350 })
+} catch (e) {
+  threw = /abort|timeout/i.test(`${e.name || ''} ${e.message || ''}`)
+}
+const slowPartial = existsSync(partFile) ? statSync(partFile).size : 0
+check('10c 下载超时会报错（不静默成功）', threw === true)
+check('10d 超时后 .part 保留已收字节', slowPartial > 0 && slowPartial < BODY.length, { slowPartial })
+mode = 'range'
+lastRange = ''
+r = await fetchDictToFile(ALLOWED, target, { fetch: makeFetch() })
+check('10e 超时后能续传到完整文件', r.resumed === true && readFileSync(target).equals(BODY), r)
+
+// ---------------------------------------------------------------- 11. 多轮中断累计前进
+fresh()
+mode = 'halfRange'
+const progresses = []
+for (let i = 0; i < 3; i += 1) {
+  const before = existsSync(partFile) ? statSync(partFile).size : 0
+  try {
+    await fetchDictToFile(ALLOWED, target, { fetch: makeFetch() })
+  } catch {
+    /* 预期中断 */
+  }
+  const after = existsSync(partFile) ? statSync(partFile).size : 0
+  progresses.push({ before, after })
+}
+check(
+  '11a 连续三次中断，.part 每次都有进展（不是原地重下）',
+  progresses.every((p, i) => p.after > p.before && (i === 0 || p.before > 0)),
+  progresses,
+)
+mode = 'range'
+r = await fetchDictToFile(ALLOWED, target, { fetch: makeFetch() })
+check('11b 多轮中断后仍能续传完成', r.resumed === true && readFileSync(target).equals(BODY), r)
+
+// ---------------------------------------------------------------- 12. 206 只给一半
+fresh()
+writeFileSync(partFile, BODY.subarray(0, 100))
+mode = 'short206'
+threw = false
+try {
+  await fetchDictToFile(ALLOWED, target, { fetch: makeFetch() })
+} catch (e) {
+  threw = /完整 JSON|有效词库/.test(e.message)
+}
+check('12a 206 内容不完整时判定为脏 JSON', threw === true)
+check('12b 不完整内容不留下 .part', !existsSync(partFile))
+check('12c 不完整内容不生成目标文件', !existsSync(target))
+
+// ---------------------------------------------------------------- 13. 空响应
+fresh()
+mode = 'empty'
+threw = false
+try {
+  await fetchDictToFile(ALLOWED, target, { fetch: makeFetch() })
+} catch (e) {
+  threw = /空文件/.test(e.message)
+}
+check('13a 0 字节响应报「空文件」', threw === true)
+check('13b 空响应不生成目标文件', !existsSync(target))
+
+// 13c body 为 null（部分实现对 204/HEAD 如此）
+fresh()
+mode = 'ok'
+threw = false
+try {
+  await fetchDictToFile(ALLOWED, target, { fetch: makeFetch(ALLOWED, { nullBody: true }) })
+} catch (e) {
+  threw = /空文件/.test(e.message)
+}
+check('13c body 为 null 时报「空文件」而不是崩溃', threw === true)
+
+// ---------------------------------------------------------------- 14. 残留 .part 超限
+fresh()
+writeFileSync(partFile, Buffer.alloc(BODY.length + 100, 0x20))
+mode = 'ok'
+lastRange = ''
+r = await fetchDictToFile(ALLOWED, target, { fetch: makeFetch(), maxBytes: BODY.length + 10 })
+check('14a 残留 .part 超过上限时丢弃并整包重下', r.resumed === false && readFileSync(target).equals(BODY), r)
+check('14b 超限残留不会被当作续传起点', lastRange === '', { lastRange })
 
 server.close()
 rmSync(dir, { recursive: true, force: true })

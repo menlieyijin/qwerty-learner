@@ -70,6 +70,7 @@
     "release:test": "node scripts/release.mjs --test-install",
     "rollback": "node scripts/rollback.mjs",
     "rollback:list": "node scripts/rollback.mjs --list",
+    "check:install": "node scripts/check-install.mjs",
     "test:all": "npm run test:quality && npm run test:stats && npm run test:fuzz && npm run test:dict && npm run test:core && npm run test:start-level && npm run test:pages && npm run test:typing && npm run test:csv",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint .",

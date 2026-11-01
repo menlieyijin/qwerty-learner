@@ -26,7 +26,9 @@ const PORT = Number(argOf('port', process.env.QZ_DESKTOP_VISUAL_PORT || 9477))
 const UPDATE = args.includes('--update')
 const THRESHOLD = Number(process.env.QZ_DESKTOP_VISUAL_THRESHOLD || 0.003)
 const BASELINE_DIR = resolve('tests/desktop-visual')
-const PLATFORM = process.platform
+// 基线按平台命名（字体/渲染不同，跨平台无法逐像素比对）。
+// --platform 可覆盖：在 CI 里用 xvfb 跑 Linux 基线、或想为另一台机器单独生成一套时用。
+const PLATFORM = argOf('platform', process.env.QZ_DESKTOP_VISUAL_PLATFORM || process.platform)
 
 const VIEWPORT = { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false }
 const PAGES = [

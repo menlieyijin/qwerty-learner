@@ -427,9 +427,17 @@ node scripts/release.mjs --skip-build --install               # 复用现有 bui
 4. `vite build --base=./`（`--skip-build` 可跳）；
 5. 组装 staging：`local-fork/package.json` + `electron/` + `build/` + `LICENSE` + `FORK-NOTICE.md`；
 6. 用**本地** `@electron/asar` 打包（不联网、版本固定在 devDependencies），写 `SHA256SUMS` 与 `release-info.json`；
-7. 可选测试安装（原子替换 + 哈希校验 + 隔离 profile 冒烟）；
-8. 可选正式安装：预检各安装目录当前 asar 哈希一致 → 备份 → 原子替换 → 校验 → 写安装日志；任一步失败自动回滚；
+7. 可选测试安装（原子替换 + 哈希校验 + **目录体检** + 隔离 profile 冒烟）；
+8. 可选正式安装：预检各安装目录当前 asar 哈希一致 → 备份 → 原子替换 → 校验 → **目录体检** → 写安装日志；任一步失败自动回滚；
 9. 清理旧 staging（保留最近 5 份）。
+
+**目录体检**（`scripts/check-install.mjs`，可单独跑）：可执行文件存在、`app.asar` 能被 asar 读出目录、
+`package.json` / `electron/main.js` / `build/index.html` 齐全、哈希与预期一致、`resources` 下没有上次失败留下的
+`.tmp-*`、安装目录根部有 `LICENSE` 与 `FORK-NOTICE.md`（GPL 合规）。
+
+```bash
+npm run check:install -- --dir "<安装目录>" [--dir "..."] [--expect <sha256>]
+```
 
 **路径**：默认 `release/`（暂存）与 `backup/`（备份），均在仓库内且被 `.gitignore` 忽略；
 命令行参数 > 环境变量（`QZ_STAGE_ROOT` / `QZ_BACKUP_DIR` / `QZ_AUDIT_DIR` / `QZ_TEST_APP_DIR` / `QZ_INSTALL_DIRS`） > 默认值。
@@ -446,6 +454,23 @@ node scripts/rollback.mjs --asar <xxx.asar>   # 指定文件
 - 回滚前把当前版本另存为 redo 点，回滚后可再切回；替换失败自动恢复。
 - 若选中备份与当前 `app.asar` 内容相同，脚本**默认中止**（提示加 `--force`），避免「无操作回滚」白占备份空间、污染清单。
 - 备份是文件级 `app.asar`；安装/回滚日志在 `logs/` 下记录版本、SHA256、目录。
+
+### 6.6 桌面视觉基线（跨平台）
+
+`npm run test:desktop-visual` 按**平台**命名基线（`tests/desktop-visual/<页面>-<平台>.png`），
+因为字体与渲染不同，跨平台无法逐像素比对。当前仓库只有 Windows 基线。
+
+在别的平台首次生成：
+
+```bash
+# 需要该平台已安装好的外壳目录（QZ_TEST_APP_DIR 或 --exe 指向可执行文件）
+QZ_TEST_APP_DIR="<目录>" npm run test:desktop-visual:update
+# 想给另一台机器单独命名（例如 CI 的容器镜像）：
+node scripts/verify-desktop-visual.mjs --update --platform linux-ci
+```
+
+生成后连同 `tests/desktop-visual/` 一起提交；缺基线时脚本会**失败**并列出缺失文件，
+不会静默写一份然后判过。
 
 ## 7. Electron 外壳构建与安装
 
