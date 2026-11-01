@@ -16,8 +16,10 @@ import { resolveDesktopExe } from './lib/desktop-app.mjs'
 import { spawn, spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const REPO = path.resolve(import.meta.dirname, '..')
+// 用 fileURLToPath 而不是 import.meta.dirname：后者要 Node 20.11+，而 engines 允许 18
+const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const isWin = process.platform === 'win32'
 const APP_NAME = 'Qwerty Learner'
 

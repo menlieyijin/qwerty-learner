@@ -64,10 +64,10 @@ npm run test:local       # CDP 冒烟（需先按第 5 节启动带调试端口�
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\dsh-release.ps1
 
 # 构建 + 安装到测试目录 + 隔离 profile 冒烟
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\dsh-release.ps1 -TestInstall -Smoke
+node scripts/release.mjs --test-install --smoke
 
 # 构建 + 安装到两个正式目录（先备份、原子替换、失败回滚、写安装日志）
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\dsh-release.ps1 -Install
+node scripts/release.mjs --install --install-dirs "<目录1>;<目录2>"
 
 # 回滚到上一个版本（回滚前会先存一个 redo 点）
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\dsh-rollback.ps1 -List

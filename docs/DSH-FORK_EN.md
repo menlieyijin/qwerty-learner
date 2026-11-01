@@ -43,7 +43,8 @@ It is **not** an official repository, not endorsed by upstream, and not tracking
 - **Electron main process** (`local-fork/electron/main.js`): windows, tray, global shortcuts, mini mode, backup, log rotation, dictionary updates, pronunciation cache, IPC whitelist, navigation guards, CSP, permission denial.
 - **Preload** (`preload.js`, `preload-clipboard.js`): `contextBridge` whitelist only; sets `window.__QZ_ELECTRON__`; clipboard window gets a minimal 3-method preload.
 - **Renderer** (Vite/React in `build/`): typing / gallery / analysis / error book; `memory.ts` (word picking + SRS write) → `autoLevel.ts` (level state) → Dexie `RecordDB`.
-- **Injected enhancement UI** (`enhance.js`, Shadow DOM): does not modify `build/` output.
+- **Injected in-page overlays + headless runtime** (`enhance.js`: word card / hover hints / toast, and
+  `window.qzRuntime` for stats, lookup, import/export, dictionary switching): does not modify `build/` output.
 - Shell-private data (settings/logs/backups/caches) lives in `%APPDATA%\qwerty-learner-plus`; study records stay in the app's IndexedDB.
 
 ### 3.1 Dependency layering and cycle gate (v9.12+)

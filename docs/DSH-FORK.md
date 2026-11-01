@@ -457,19 +457,19 @@ node scripts/rollback.mjs --asar <xxx.asar>   # 指定文件
 | `local-fork/electron/main.js` | 主进程：窗口/托盘/全局快捷键/迷你模式/置顶/透明度/缩放/自启/关闭到托盘/单实例/每日备份/日志轮转与脱敏/词库管理/发音缓存/免 Key 释义/安全守卫/IPC |
 | `local-fork/electron/preload.js` | 主窗口 `contextBridge` 白名单 API；设置 `window.__QZ_ELECTRON__`；词库在线更新 fetch 包装 |
 | `local-fork/electron/preload-clipboard.js` | 剪贴板小窗专用最小 preload（查词/收词/关闭 3 个能力） |
-| `local-fork/electron/enhance/` | 注入式增强 UI（`enhance.js` / `enhance.css` / `clipboard.html` / 词库映射表），渲染在 Shadow DOM 中 |
+| `local-fork/electron/enhance/` | 页面内浮层（词卡 / 悬停提示 / toast）+ 无头运行时 `window.qzRuntime`（`enhance.js`）、主题变量（`enhance.css`）、剪贴板小窗（`clipboard.html`）、词库映射表 |
 
 ### 7.2 构建
 
-```powershell
-pwsh -File scripts/dsh-release.ps1
+```bash
+npm run release        # = node scripts/release.mjs
 ```
 
-产出：`staging-<version>-<stamp>/app.asar`、`SHA256SUMS`、`release-info.json`。
+产出：`staging-<version>-<stamp>/app.asar`、`SHA256SUMS`、`release-info.json`（默认在 `release/`，已 gitignore）。
 
 - 外壳**不需要** `electron` npm 依赖：项目只产出 `app.asar`，运行时使用安装目录里已有的 Electron 二进制。
-- 构建机需要 `npx @electron/asar`（脚本用 `npx --yes @electron/asar pack`，首次会临时下载）。
-- 脚本文件按 UTF-8 BOM 保存以兼容 Windows PowerShell 5.1；PowerShell 7 用 `pwsh -File` 等价。
+- 打包用 **devDependencies 里的 `@electron/asar`**（离线可用，版本固定）。
+- 旧的两个 `.ps1` 仍在，但只是**薄包装**（参数转发给 Node 脚本），不再承载逻辑。
 
 ### 7.3 安装
 
@@ -500,7 +500,7 @@ pwsh -File scripts/dsh-release.ps1
 
 1. 只改 `local-fork/package.json` 的 `version`（例如 `1.0.0-enhanced-v10.0`）；
 2. 打 tag `v10.0-dsh-local`；
-3. 跑 `dsh-release.ps1 -TestInstall -Smoke` 与正式安装；
+3. 跑 `npm run release`（含门禁）/ `node scripts/release.mjs --test-install --smoke` / `--install`；
 4. 更新 `docs/RELEASE-NOTES-*.md` 与 `FORK-NOTICE.md` 的版本说明（如有必要）。
 
 注意：
@@ -580,7 +580,7 @@ pwsh -File scripts/dsh-release.ps1
 - 覆盖方向：新词/到期/循环回顾、refresh、封顶、成熟词降档、时钟回拨、日粒度、迁移、Skip、leech、删除清理、影子调度；自动进阶的掌握度、全错、Skip、跨级、同名、配比、清债、持久化、阈值、加载失败、due key、**70% 掺入曲线与窗口封顶**等。
 - 确定性：同 seed 重复运行结果一致（v9.11 起两个 sim 各跑两遍逐字节比对；v9.12–v9.15 沿用同一门禁）。
 - 打字判定另有两组用例（不在 309 内）：`wordmatch-src.mjs` **29/29**（esbuild 打包真实 `src`）、`word-judgment-sim.mjs` **42/42**（等价状态机，v9.10 前为 32）。
-- **重要**：仿真脚本、断言计划与报告位于作者本机独立审计目录，**不在本仓库内**。干净 clone 上 `quality-gate.ps1 -WithSim` 会因脚本缺失而 SKIP；309/309 是作者本机验收记录，不是公开 CI 结果。
+- **可复跑**：仿真脚本已随仓库发布（`scripts/core-regression/`），`npm run test:core` 一条命令跑完 309 条 + 确定性门禁；它是把浏览器依赖 stub 掉的**算法层仿真**，不等于真实浏览器/Electron 环境。
 
 ### 10.3 E2E 与冒烟
 
@@ -649,12 +649,13 @@ pwsh -File scripts/dsh-release.ps1
 | 安装依赖 | `yarn install` |
 | 开发服务器 | `yarn start` |
 | 生产构建 | `yarn build` |
-| 类型 + lint | `npm test` 或 `pwsh -File scripts/quality-gate.ps1` |
-| 核心回归（需审计脚本） | `pwsh -File scripts/quality-gate.ps1 -WithSim` |
-| 发布构建 | `pwsh -File scripts/dsh-release.ps1` |
-| 测试安装 + 冒烟 | `pwsh -File scripts/dsh-release.ps1 -TestInstall -Smoke` |
-| 正式安装 | `pwsh -File scripts/dsh-release.ps1 -Install` |
-| 回滚 | `pwsh -File scripts/dsh-rollback.ps1` |
+| 类型 + lint | `npm run test:quality` |
+| 全量门禁 | `npm run quality`（tsc + eslint + 单测 + 属性测试 + 下载测试 + 核心回归） |
+| 核心回归 | `npm run test:core` |
+| 发布构建 | `npm run release` |
+| 测试安装 + 冒烟 | `node scripts/release.mjs --test-install --smoke` |
+| 正式安装 | `node scripts/release.mjs --install --install-dirs "<目录1>;<目录2>"` |
+| 回滚 | `npm run rollback` / `npm run rollback:list` |
 | CDP 冒烟 | `node scripts/dsh-smoke.mjs`（应用需带调试端口） |
 | E2E（本地） | `npm run test:e2e:local`（需先 `npm run dev -- --port 5173 --host 127.0.0.1`） |
 
