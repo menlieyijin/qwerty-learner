@@ -101,6 +101,14 @@ export function stopApp(prefix = '') {
   spawnSync('pkill', ['-x', APP_NAME], { stdio: 'ignore' })
 }
 
+/** 安装/外壳目录根部的 GPL 材料：LICENSE 与 fork 声明必须随包分发 */
+export function copyLegalFiles(dir, repoRoot) {
+  for (const f of ['LICENSE', 'FORK-NOTICE.md']) {
+    const src = path.join(repoRoot, f)
+    if (fs.existsSync(src)) fs.copyFileSync(src, path.join(dir, f))
+  }
+}
+
 /** 从备份文件名里解析版本号（兼容历史命名） */
 export function versionFromName(name) {
   const patterns = [/before-(.+?)-\d{8}-\d{6}/, /staging-before-(.+?)_\d{8}/, /enhanced-(.+?)_\d{8}/]

@@ -191,6 +191,10 @@ npm run rollback
 - Desktop visual baselines are **per platform** (`tests/desktop-visual/<page>-<platform>.png`). Only Windows ships today;
   on another platform run `QZ_TEST_APP_DIR=<dir> npm run test:desktop-visual:update` and commit the PNGs.
   A missing baseline fails the check instead of silently writing one.
+- **Build a runnable shell from scratch**: `npm run shell` downloads the official Electron distribution
+  (npmmirror by default, `--mirror` overrides), extracts it (system `tar.exe` on Windows, `unzip` elsewhere),
+  drops in `resources/app.asar`, renames the binary per platform, copies the GPL files, writes `shell-info.json`
+  and runs the install health check. It does **not** produce installers or custom icons (that needs rcedit / .icns / NSIS).
 - Electron runtime upgrades are separate, manual steps (official zip + rcedit branding + verified replacement); see [`Electron-EOL.md`](Electron-EOL.md). Electron 43.x EOL: 2027-01-05.
 
 ## 7. Versioning

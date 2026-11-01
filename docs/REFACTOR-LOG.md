@@ -263,6 +263,24 @@ S-4 也不是加长 sleep，而是把「杀谁」和「等到什么状态」这�
 
 ---
 
+## 五之八、v11.5.0（批次 U）：外壳能自己造了 + 浮层有了用例
+
+| # | 遗留 | 处理 | 验证 |
+| --- | --- | --- | --- |
+| U-1 | 装外壳要「先有一个装好的 Electron 目录」，别人 clone 下来跑不起来 | 新增 `scripts/shell.mjs`（`npm run shell`）：下载官方发行包（默认 npmmirror）→ 解压（Windows 用系统 `tar.exe`，其余 `unzip`/`bsdtar`）→ 放 `app.asar`、删 `default_app.asar` → 按平台重命名（win `Qwerty Learner.exe` / linux `qwerty-learner` / macOS `.app` + `plutil` 改 Info.plist）→ 复制 GPL 材料 → 写 `shell-info.json` → 体检 | 用 Electron **43.8.3** 官方包实跑：产出目录体检通过（477 条目、GPL 齐全），启动后冒烟 **13/13**（含 `backupWorks`、`runtimeReady`） |
+| U-2 | 词卡/浮层没有任何自动化（上一版明确列为遗留） | 新增 `scripts/verify-enhance.mjs`（`npm run test:enhance`）：词卡打开、空词不打开、Esc、点遮罩、点 ✕、关闭后无残影、无异常/控制台错误 | 9/9，连跑 3 次稳定；在**自建外壳**和**正式安装目录**上都通过 |
+| U-3 | README 写「Electron 33」「注入式增强 UI」，与 v11 现实不符 | 改为 Electron 43.8.3、「页面内浮层 + 无头运行时」；DSH-FORK §7.3 重写为「从零组装外壳」，新增 §7.3.1 安装 | 文档链接检查 0 失效 |
+| U-4 | GPL 材料复制逻辑在 release 内联、shell 需要再用一份 | 提到 `scripts/lib/app-files.mjs` 的 `copyLegalFiles(dir, repoRoot)`，release 与 shell 共用 | 三目录体检 + 两次外壳组装均显示 GPL 材料齐全 |
+
+**过程中修掉的两个自身缺陷**：
+
+- `shell.mjs` 最初把 `path.resolve(asarOverride || latest || '')` 当 asar 路径 —— 找不到时会解析成**当前目录**，
+  于是去复制整个仓库并抛 EPERM。改为「找不到就报错并给出三种解决办法」，同时支持 `QZ_STAGE_ROOT` 下的 staging。
+- `verify-enhance` 第一版在 `Runtime.enable` 之后立刻断言 `window.qzRuntime`，而 `enhance.js` 是页面加载后注入的，
+  偶发 `ok:false`（后续用例却通过）。改为先 `until(qzRuntime 就绪)` 再断言。
+
+---
+
 ## 六、遗留清单（未改或无法闭环，附具体差距）
 
 | # | 项 | 状态 | 差距 / 原因 |
@@ -310,6 +328,7 @@ S-4 也不是加长 sleep，而是把「杀谁」和「等到什么状态」这�
 | `v11.2.0` | `1f45a9b` | 主题变量化 / 错误处理 / 属性测试 / 词库续传 | **13/13** + 桌面视觉 5/5 | `F418D1EB…` |
 | `v11.3.0` | `d184934`（+`824c0b2` 文档与 Node 18 兼容） | 发布链跨平台 / `fs.cpSync` 崩溃 / 断点续传真续传 / 验证脚本不再误杀 | **13/13** + 桌面视觉 5/5 + 下载 30/30 | `1D5502ED…` |
 | `v11.4.0` | `4fff23d` | 弱网/多轮中断用例 / 安装目录体检 / 基线平台覆盖 / 门禁去重 | **13/13** + 桌面视觉 5/5 + 下载 45/45 + 体检 3/3 | `738E9E81…` |
+| `v11.5.0` | 本次提交 | 外壳自建（shell.mjs）/ 词卡浮层用例 / README 版本纠正 | **13/13** + 浮层 9/9 + 桌面视觉 5/5 + 下载 45/45 | `C895DFA5…` |
 
 > 回滚点同时保存在 tag（`v9.16-batchA` … `v10.0.0`）与分支历史里；回退前的 HEAD 另存为
 > `archive/v10-baseline-20261029` / `backup/v10-baseline`（均为 `b97eb62`，即本次「回退到 v9.15 重做」之前的树），

@@ -82,6 +82,7 @@ scripts/                 release / rollback / quality gate / CDP smoke / level-p
 | `npm run test:start-level` | 21-check behavioural test for the level picker (first-run dialog → pick → correct dictionary → persists across restart → edit from dictionary page → existing users are not interrupted) |
 | `npm run test:pages` | 20-check page regression (error book sort/detail/Esc/delete-cancel, 7 settings tabs incl. desktop stats, malformed payload does not white-screen) |
 | `npm run test:typing` | 18-check typing pipeline (input state, wrong letter marked, word advance, persistence, per-letter mistake log, pause writes session incl. second-pause upsert, progress kept across pause/resume, sound switches/sliders, dictation) |
+| `npm run test:enhance` | 9 checks for in-page overlays: word card open/empty word, Esc, mask, close button, no residue, no errors (queried through the shadow root) |
 | `npm run test:csv` | 14 assertions for CSV-export formula-injection hardening |
 | `npm run test:core` | **309 core-algorithm assertions** (120 SRS + 189 auto-advance) + determinism gate, simulated from real source |
 | `npm run test:all` | **Everything in one shot**: tsc/eslint + stats unit tests + property tests + 309 core assertions + the four CDP behaviour scripts (excludes `test:visual` / `test:desktop-visual`, which need a browser / desktop build) |
@@ -100,7 +101,7 @@ scripts/                 release / rollback / quality gate / CDP smoke / level-p
 | Scenario | Support |
 | --- | --- |
 | Web build (`npm run build`) | Builds on Windows / macOS / Linux; Chrome / Edge / Firefox / Safari (last two years) |
-| Desktop shell | Electron 33; Windows 10+ / macOS 12+ / Linux (X11; Wayland depends on distro) |
+| Desktop shell | Electron 43.8.3; Windows 10+ / macOS 12+ / Linux (X11; Wayland depends on distro) |
 | Desktop platform gaps | Auto-start is Windows/macOS only (toggle disabled on Linux); window opacity depends on the compositor; tray needs libappindicator on some Linux desktops |
 | Settings dialog | `min(800px, 100vw-32px)` wide, `min(480px, 100vh-144px)` tall — usable on 1366×768 |
 | Node | `>=18 <23` (CI uses 20); scripts are Node ESM with no shell dependency |

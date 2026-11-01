@@ -1,15 +1,15 @@
 # 本地增强外壳（Electron，dsh）
 
-Qwerty Learner 本地魔改版的 Electron 外壳源码：主进程（托盘/快捷键/备份/免费释义/发音缓存等）、preload 白名单、注入式增强 UI（入口：设置 → 关于 → 打开增强工具）。
+Qwerty Learner 本地魔改版的 Electron 外壳源码：主进程（托盘/快捷键/备份/免费释义/发音缓存等）、preload 白名单、页面内浮层与无头运行时（`enhance/`，词卡 / 悬停提示 / toast + `window.qzRuntime`）。设置与工具都在应用的「设置」对话框里，没有独立面板。
 
 本目录与仓库根目录的网页源码（Vite 工程）一起构成完整程序。**上游版本冻结，不跟随官方更新。**
 
 ## 目录
 
-- `package.json` — asar 根 package.json（`main: electron/main.js`，**版本号唯一来源**：`1.0.0-enhanced-v9.9`）
+- `package.json` — asar 根 package.json（`main: electron/main.js`）；**版本号唯一来源**，当前值见文件里的 `version`
 - `electron/main.js` — 主进程（窗口/托盘/快捷键/单实例/备份/词库/发音缓存/免费接口/安全守卫等 IPC）
 - `electron/preload.js` — contextBridge 白名单 API（版本号通过 `app:version-sync` 同步 IPC 获取）
-- `electron/enhance/` — 注入的增强 UI（enhance.js/css、剪贴板查词窗、词库映射表）
+- `electron/enhance/` — 页面内浮层与无头运行时（enhance.js / enhance.css）、剪贴板查词窗（clipboard.html）、词库映射表
 
 ## 构建与安装（v9.4 起脚本强化）
 
@@ -33,7 +33,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\dsh-rollback.ps1
 
 > 脚本兼容 Windows PowerShell 5.1 与 PowerShell 7（保存为 UTF-8 BOM 以兼容 PS5；`powershell -File` 与 `pwsh -File` 等价）。
 > `-SkipCheck` 跳过 tsc、`-SkipAudit` 跳过 309 条核心回归（旧口径 248/253）、`-SkipBuild` 复用现有 `build/`。
-> 发版只需改本目录 `package.json` 的 `version`：主进程读取 package.json；preload 通过 `app:version-sync` 获取；注入的增强面板用主进程传入的 `window.__QZ_VERSION__`。
+> 发版只需改本目录 `package.json` 的 `version`：主进程读取 package.json；preload 通过 `app:version-sync` 获取；前端「关于」页读构建期注入的 `APP_VERSION`（来源同一文件）。
 > 旧的打包工作区已废弃，不再手工同步（脚本直接从本目录组装）。
 > 发布/安装/备份/回归目录的内置默认值见 `scripts\dsh-release.ps1` 与 `scripts\dsh-rollback.ps1` 的参数；
 > 需要改到别处时用显式参数或环境变量覆盖（`QZ_STAGE_ROOT` / `QZ_BACKUP_DIR` / `QZ_AUDIT_DIR` / `QZ_TEST_APP_DIR` / `QZ_INSTALL_DIRS`），无需改脚本。

@@ -496,12 +496,41 @@ npm run release        # = node scripts/release.mjs
 - 打包用 **devDependencies 里的 `@electron/asar`**（离线可用，版本固定）。
 - 旧的两个 `.ps1` 仍在，但只是**薄包装**（参数转发给 Node 脚本），不再承载逻辑。
 
-### 7.3 安装
+### 7.3 组装外壳（从零得到一个能启动的目录）
 
-1. 准备一个已安装好的 Electron 运行时目录（含 `Qwerty Learner.exe` 与 `resources/`）；
-2. 使用 `-TestInstall` 装到测试目录，跑 `-Smoke` 冒烟；
-3. 使用 `-Install` 装到正式目录（脚本会预检多个目录当前 asar 哈希一致，避免混合版本）；
-4. 安装会把 `LICENSE` 与 `FORK-NOTICE.md` 复制到安装目录。
+以前这一步要手工准备「已装好的 Electron 目录」，别人 clone 下来跑不起来。现在一条命令：
+
+```bash
+npm run shell                          # 默认 Electron 43.8.3，产出 release/shell-<platform>-<arch>
+node scripts/shell.mjs --electron-version 43.8.3 --out /tmp/qz-shell
+node scripts/shell.mjs --zip ~/Downloads/electron-v43.8.3-win32-x64.zip   # 离线：用本地包
+node scripts/shell.mjs --asar <app.asar>                                   # 指定 asar（默认取最新 staging）
+```
+
+流程：下载官方发行包（默认 `npmmirror` 镜像，可用 `--mirror` 换）→ 解压（Windows 用系统 `tar.exe`，
+macOS/Linux 用 `unzip`）→ 放入 `resources/app.asar` 并删掉 `default_app.asar` →
+按平台重命名可执行文件（win `electron.exe` → `Qwerty Learner.exe`；linux `electron` → `qwerty-learner`；
+macOS `Electron.app` → `Qwerty Learner.app` 并 `plutil` 改正 Info.plist）→ 复制 `LICENSE` / `FORK-NOTICE.md`
+→ 写 `shell-info.json` → 跑一次目录体检。
+
+- **不生成安装器与图标**：那需要 `rcedit` / `.icns` / NSIS 等平台工具链，见 §7.4 与 `Electron-EOL.md`；
+  本脚本产出的是「绿色目录」，可直接启动、可用于冒烟与视觉回归。
+- macOS 的 Info.plist 只能用 `plutil` 改，所以在非 macOS 上交叉产出 `.app` 会警告，需要在 macOS 上再跑一次。
+- 组装后可直接验证：
+
+```bash
+QZ_TEST_APP_DIR=release/shell-win32-x64 npm run test:local   # 冒烟（需先起带 CDP 的实例，见脚本头）
+QZ_TEST_APP_DIR=release/shell-win32-x64 npm run test:desktop-visual
+```
+
+### 7.3.1 安装
+
+1. 用 §7.3 组装外壳，或准备一个已安装好的 Electron 目录（含 `Qwerty Learner.exe` 与 `resources/`）；
+2. `node scripts/release.mjs --test-install --smoke` 装到测试目录并冒烟；
+3. `node scripts/release.mjs --install --install-dirs "<目录1>;<目录2>"` 装到正式目录
+   （脚本会预检多个目录当前 asar 哈希一致，避免混合版本）；
+4. 安装会把 `LICENSE` 与 `FORK-NOTICE.md` 复制到安装目录，并在装完后跑一次体检
+   （`npm run check:install -- --dir "<目录>"` 可单独执行）。
 
 安装目录、备份目录均通过参数指定；脚本不会自动发现安装目录。
 

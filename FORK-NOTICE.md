@@ -36,8 +36,8 @@
 | 上游在线站点 | <https://qwerty.kaiyi.cool/>（本分支不部署、不运营该站点） |
 | 本分支仓库 | <https://github.com/menlieyijin/qwerty-learner>（GitHub fork） |
 | 本分支名称 | `dsh-local-v8` |
-| 相对上游的提交 | 29 个（`git rev-list --count 1182426..dsh-local-v8` 可复核；v9.9 文档记为 21 个，实际当时为 22 个） |
-| 里程碑 tag | `v7.1-dsh-local`、`v8.9-dsh-local`、`v9.0-dsh-local`、`v9.2-dsh-local`、`v9.3-dsh-local`、`v9.5-dsh-local`、`v9.6-dsh-local`、`v9.7-dsh-local`、`v9.8-dsh-local`、`v9.9-dsh-local`（v9.10 – v9.15 尚未打 tag；v9.12–v9.15 各批开工前有 `v9.1x-pre-batchX` 打点，仅用于批次回看） |
+| 相对上游的提交 | 67 个（`git rev-list --count 1182426..dsh-local-v8` 可复核；其中 54 个带 `Signed-off-by`） |
+| 里程碑 tag | `v7.1-dsh-local` … `v9.9-dsh-local`（早期）、`v9.16-batchA` … `v10.7.0`（v10 重构逐批）、`v11.0.0` … `v11.5.0`（v11 结构收尾）；共 48 个，`git tag` 可列全 |
 
 说明：
 
@@ -76,7 +76,7 @@
 | 项 | 内容 |
 | --- | --- |
 | 修改者 | **dsh（DeepSeek Harness）** |
-| 提交作者 / 署名 | `dsh <dsh@dsh.local>`；**部分提交**带 `Signed-off-by: dsh <dsh@dsh.local>`（v9.3 起陆续加入；截至 v10.4.0 为 35/48 个提交带正式 trailer，其余提交在提交说明中署名 dsh） |
+| 提交作者 / 署名 | `dsh <dsh@dsh.local>`；**部分提交**带 `Signed-off-by: dsh <dsh@dsh.local>`（v9.3 起陆续加入；截至 v11.5.0 为 54/67 个提交带正式 trailer，其余提交在提交说明中署名 dsh） |
 | 本地修改时间 | 2026-10-21 ~ 2026-10-28（本分支 git 提交日期 2026-10-25 ~ 2026-10-28） |
 | 本地版本迭代 | v1 ~ v9.15 |
 | 当前应用版本 | `1.0.0-enhanced-v9.15`（唯一来源：`local-fork/package.json`） |
@@ -124,9 +124,10 @@
 
 ### 4.5 Electron 增强外壳
 
-- 代码：`local-fork/electron/`（`main.js` / `preload.js` / 注入式增强 UI / 剪贴板小窗）。
+- 代码：`local-fork/electron/`（`main.js` / `preload.js` / 页面内浮层与无头运行时 `enhance/` / 剪贴板小窗）。
 - 托盘、全局快捷键、迷你模式、窗口置顶、透明度/缩放、开机自启、关闭到托盘、每日自动备份、日志轮转与脱敏。
-- 剪贴板查词小窗、免 Key 释义/翻译（本地词库优先，在线接口可关）、发音缓存（`qzcache` 协议，仅放行有道 `dictvoice` 音频）、词库在线更新、注入式"工具"面板。
+- 剪贴板查词小窗、免 Key 释义/翻译（本地词库优先，在线接口可关）、发音缓存（`qzcache` 协议，仅放行有道 `dictvoice` 音频）、词库在线更新（支持断点续传）。
+- v11 起**没有独立的增强面板**：统计、洞察、查词、导入导出、词库切换由页面内的无头运行时 `window.qzRuntime` 提供，界面统一在应用的「设置」对话框（音效 / 显示 / 数据 / 词库管理 / 桌面工具 / 高级 / 关于）。
 - 主进程/预加载与网页源码一起打包为 `app.asar`；不修改 `build/` 产物本身。
 - 外壳设置写入（`app:updateSettings`）自 v9.15 起按默认值的声明类型逐键校验：类型不符的值被忽略并记日志，`opacity` / `zoom` 收敛到界面允许范围（导入全量 JSON 时脏值不再持久化）。
 
@@ -145,7 +146,7 @@
 ### 4.8 测试与验收记录
 
 - 静态门禁：`tsc --noEmit` 0 error、`eslint src --max-warnings 0` 0 error / 0 warning。
-- 核心算法回归：作者本机 v9.11 交付记录为 **309/309**（120 条 SRS + 189 条自动进阶），v9.12–v9.15 四批在同一口径下重跑仍为 **309/309**（断言集未改）；历史口径为 v9.3 ~ v9.6 **248** 条、v9.7 ~ v9.9 **253** 条（120 + 133）。v9.10 另有两组判定用例：`wordmatch-src` 29/29（直接打包真实源码）、`word-judgment-sim` 42/42。
+- 核心算法回归：**309 条**（120 条 SRS + 189 条自动进阶）+ 确定性门禁，`npm run test:core` 一条命令可复跑（脚本随仓库发布，把浏览器依赖 stub 掉后打包真实 `src/utils/*`）；历史口径为 v9.3 ~ v9.6 **248** 条、v9.7 ~ v9.9 **253** 条。行为层另有 `test:start-level` / `test:pages` / `test:typing` / `test:enhance` / `test:csv` / `test:stats` / `test:dict` / `test:fuzz`。
 - Playwright 本地模式：12 passed / 5 skipped（跳过项为已下线的旧流程）。
 - CDP 冒烟 11/11；外壳安全探针 19/19（v9.9 本机验收记录）。
 - **v9.10 / v9.11 的 CDP 冒烟为手工执行**：脚本内 `-Smoke` 在构建会话里被 GPU 崩溃拦住（`NO_PAGE`），改用 `--disable-gpu --no-sandbox` + 隔离 profile 手工跑同一 `scripts/dsh-smoke.mjs`，v9.10/v9.11 测试安装与 v9.11 已安装版均 **11/11**（`logs\smoke-1.0.0-enhanced-v9.11-installed.txt`）；安装日志里的 `smoke=false` 表示安装步骤本身未带 `-Smoke`。

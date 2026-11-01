@@ -11,7 +11,7 @@
 //
 // 路径优先级：命令行参数 > 环境变量 > 仓库内默认值（release/ 与 backup/）。
 // 回滚：node scripts/rollback.mjs
-import { cleanEnv, copyFileAtomic, copyTree, resourcesDirFor, sha256, sizeOf, stampNow, stopApp } from './lib/app-files.mjs'
+import { cleanEnv, copyFileAtomic, copyLegalFiles, copyTree, resourcesDirFor, sha256, sizeOf, stampNow, stopApp } from './lib/app-files.mjs'
 import { resolveDesktopExe } from './lib/desktop-app.mjs'
 import { checkInstallDir } from './lib/install-check.mjs'
 import { spawn, spawnSync } from 'node:child_process'
@@ -127,14 +127,6 @@ async function runSmoke(exe, userDir, plusDir, port, logDir, stamp) {
       /* ignore */
     }
     stopApp(exe)
-  }
-}
-
-// 安装目录根部的 GPL 材料：LICENSE 与 fork 声明必须随包分发
-function copyLegalFiles(dir) {
-  for (const f of ['LICENSE', 'FORK-NOTICE.md']) {
-    const src = path.join(REPO, f)
-    if (fs.existsSync(src)) fs.copyFileSync(src, path.join(dir, f))
   }
 }
 
@@ -295,7 +287,7 @@ if (testInstall) {
   const got = sha256(testTarget)
   if (got !== hash) die(`测试安装后哈希不一致：${got}`)
   ok(`测试安装完成（sha256=${got}）`)
-  copyLegalFiles(testAppDir)
+  copyLegalFiles(testAppDir, REPO)
 
   const testCheck = checkInstallDir(testAppDir, { expectedHash: hash })
   if (!testCheck.ok) die(`测试安装体检失败：\n  - ${testCheck.issues.join('\n  - ')}`)
@@ -340,7 +332,7 @@ if (install) {
       copyFileAtomic(asarOut, target)
       const got = sha256(target)
       if (got !== hash) die(`安装后哈希不一致：${target} -> ${got}`)
-      copyLegalFiles(dir)
+      copyLegalFiles(dir, REPO)
       installed.push({ dir, target, sha256: got, size: sizeOf(target) })
       ok(`${target} -> ${got}`)
       newHashes.push(got)

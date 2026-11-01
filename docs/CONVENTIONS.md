@@ -62,6 +62,13 @@
 - 安装后必须能过 `npm run check:install -- --dir "<目录>"`：asar 结构、哈希、`.tmp-*` 残留、GPL 材料；
 - 视觉基线按平台命名，缺基线就是失败；新平台用 `test:desktop-visual:update` 生成并提交 PNG。
 
+## 3.4 页面内浮层（`enhance.js`）
+
+- 词卡 / 悬停提示 / toast 全部挂在 `#qz-enhance-host` 的 **open shadow root** 里；
+  自动化必须从 `document.querySelector('#qz-enhance-host').shadowRoot` 里查，`document.querySelector` 看不到；
+- 关闭路径有三条，都要保留：`Esc`（document 捕获阶段）、点遮罩本体（`e.target.id === 'wc-mask'`）、点 `#wc-close`；
+- 用例见 `scripts/verify-enhance.mjs`（`npm run test:enhance`）。
+
 ## 4. 工具函数
 
 - 按领域放在 `src/utils/<domain>.ts`：`keyboard` / `platform` / `time` / `number` / `chapter` / `audio` / `trans` / `csvSafe` …

@@ -64,7 +64,7 @@ src/                     网页端（React 18 + TS + Vite 4）
   pages/Analysis/        数据统计（热力图、正确率、WPM）
   pages/ErrorBook/       错题本（分组、分页、详情、导出）
   pages/Gallery-N/       词库与学习起点入口
-local-fork/              桌面端外壳源码（Electron 主进程 / preload / 注入式增强 UI）
+local-fork/              桌面端外壳源码（Electron 主进程 / preload / 页面内浮层与无头运行时）
 public/dicts/            385 本词库（体积主要来源，约 79 MB）
 docs/                    分支声明、技术文档、快速开始、第三方许可、审计闭环
 scripts/                 发布 / 回滚 / 质量门禁 / CDP 冒烟 / 起点选择行为验证
@@ -83,6 +83,7 @@ scripts/                 发布 / 回滚 / 质量门禁 / CDP 冒烟 / 起点选
 | `npm run test:start-level` | 起点选择行为验证 21 项（首启弹窗 → 选档 → 出对应词 → 重启保持 → 词库页修改 → 老用户不打扰） |
 | `npm run test:pages` | 页面级回归 20 项（错题本排序/详情/Esc/删除取消、设置 7 页签与桌面统计、脏 payload 不白屏） |
 | `npm run test:typing` | 打字主链路 18 项（进入输入态/错字标红/切词/落库/**逐字母错因**/暂停写会话与二次暂停 upsert/**暂停恢复不丢进度**/音效开关与滑块/默写） |
+| `npm run test:enhance` | 页面内浮层 9 项：词卡打开/空词、Esc、遮罩、关闭按钮、无残影、无异常（shadow root 内查询） |
 | `npm run test:csv` | 错题本 CSV 导出公式注入防护 14 项断言 |
 | `npm run test:core` | **核心算法回归 309 条**（SRS 120 + 自动进阶 189）+ 确定性门禁，真实源码打包仿真 |
 | `npm run test:all` | **一键跑完**：tsc/eslint + 正确率单测 + 属性测试 + 词库下载测试 + 核心回归 309 + 四个 CDP 行为脚本（不含 `test:visual` / `test:desktop-visual`，它们分别需要浏览器与桌面程序） |
@@ -94,6 +95,7 @@ scripts/                 发布 / 回滚 / 质量门禁 / CDP 冒烟 / 起点选
 | `npm run test:format` | prettier 全仓格式检查（`*.md`、生成物与安全窗口 HTML 已在 `.prettierignore` 说明） |
 | `npm run quality` | 质量门禁（格式 + tsc + eslint + 正确率 + 属性测试 + 词库下载 + 核心回归），跨平台 |
 | `npm run release` | 打包 asar：门禁 → build → asar → SHA256 → `release-info.json` |
+| `npm run shell` | **从零组装可运行外壳**：下载 Electron 发行包 → 解压 → 放入 asar → 平台重命名 → 体检 |
 | `npm run release:test` | 装到测试目录（`QZ_TEST_APP_DIR`）；加 `--smoke` 跑隔离冒烟 |
 | `npm run rollback` / `rollback:list` | 回滚到上一版本 / 列出可用备份 |
 | `npm run check:install` | 安装目录体检：可执行文件 / asar 结构 / 哈希 / `.tmp` 残留 / GPL 材料 |
@@ -104,7 +106,7 @@ scripts/                 发布 / 回滚 / 质量门禁 / CDP 冒烟 / 起点选
 | 场景 | 支持 |
 | --- | --- |
 | 网页版（`npm run build`） | Windows / macOS / Linux 均可构建；Chrome / Edge / Firefox / Safari 近两年版本 |
-| 桌面壳 | Electron 33，Windows 10+ / macOS 12+ / Linux（X11；Wayland 视发行版） |
+| 桌面壳 | Electron 43.8.3，Windows 10+ / macOS 12+ / Linux（X11；Wayland 视发行版） |
 | 桌面壳的平台差异 | 开机自启仅 Windows / macOS（Linux 上开关置灰）；窗口透明度依赖系统合成器；托盘在部分 Linux 桌面需要 libappindicator |
 | 设置对话框 | 宽度 `min(800px, 100vw-32px)`、高度 `min(480px, 100vh-144px)`，1366×768 即可完整使用 |
 | Node | `>=18 <23`（CI 用 20）；构建脚本为 Node ESM，无 shell 依赖 |

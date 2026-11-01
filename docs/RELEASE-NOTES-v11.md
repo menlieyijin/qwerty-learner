@@ -243,3 +243,47 @@ tsc + eslint 通过；`test:all` 95 条；`test:core` 309/309；`test:visual` 2/
 | 隔离冒烟 | 13/13 |
 | 安装体检 | 3/3（测试目录 + 两个正式目录） |
 | 双目录安装 | asar `738E9E81…` 两目录一致 |
+
+---
+
+# v11.5.0（外壳可以自己造了 + 浮层有用例了）
+
+## 1. 从零组装桌面外壳
+
+以前要「先准备一个装好的 Electron 目录」，别人 clone 下来跑不起来。现在：
+
+```bash
+npm run shell                                   # Electron 43.8.3，产出 release/shell-<platform>-<arch>
+node scripts/shell.mjs --zip <本地 zip>          # 离线
+node scripts/shell.mjs --asar <app.asar>         # 指定包
+```
+
+下载 → 解压 → 放 `app.asar` → 删 `default_app.asar` → 平台重命名 → 复制 GPL 材料 → 写 `shell-info.json` → 体检。
+**实测**：用官方 Electron 43.8.3 包产出目录，体检 477 条目 / GPL 齐全，启动后冒烟 **13/13**。
+
+不生成安装器与图标（需要 rcedit / .icns / NSIS，见 DSH-FORK §7.4）。
+
+## 2. 词卡浮层回归（上一版的遗留）
+
+`npm run test:enhance`，9 项：`qzRuntime.lookupWord` 打开词卡、空词不打开、Esc 关闭、
+点遮罩关闭、点 ✕ 关闭、关闭后无残影、无未捕获异常、无控制台错误。
+浮层在 `#qz-enhance-host` 的 open shadow root 里，用例从 shadowRoot 查。
+
+## 3. 文档纠正
+
+- README 的「Electron 33」改为 **43.8.3**；「注入式增强 UI」改为「页面内浮层 + 无头运行时」；
+- DSH-FORK §7.3 重写为「从零组装外壳」，新增 §7.3.1 安装。
+
+## 本版验证
+
+| 检查 | 结果 |
+| --- | --- |
+| `npm run quality` | 通过（格式 + tsc + eslint + 17 + 5 + 45 + 309） |
+| `test:all` | **149 条**（stats 17 / fuzz 5 / dict 45 / start-level 21 / pages 20 / typing 18 / **enhance 9** / csv 14） |
+| `test:core` | 309/309 + determinism |
+| `test:visual` | 2/2 |
+| `test:desktop-visual` | 5/5 |
+| 隔离冒烟（安装目录） | 13/13 |
+| 冒烟（`npm run shell` 自建外壳） | 13/13 |
+| 安装体检 | 3/3 |
+| 双目录安装 | asar `C895DFA5…` 一致 |
