@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 /**
  * v9.3 回归门禁结果聚合：读取 srs-sim.mjs / sim-autolevel.mjs 的 --strict 报告，
  * 写 scripts/core-regression\report-all.json（断言总数/通过/失败/关键数字/口径差异）。
@@ -6,9 +7,9 @@
  * 运行：node "scripts/core-regression\aggregate.mjs"
  * 前置：node srs-sim.mjs --strict && node sim-autolevel.mjs --strict
  */
+import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
-import crypto from 'node:crypto'
 
 const AUDIT = import.meta.dirname
 const SRC = path.resolve(import.meta.dirname, '../..')
@@ -60,7 +61,8 @@ const findings = [
       '但每答对一个到期词 dueCount 就下降，跌破 300 后 newRatio 升到 0.1、跌破 100 后 0.2 且 refreshChance=0.03。' +
       '实测 due=300→0 清债共约 320 词次，新词约 5~6%、出现少量 review 取词，仍满足“≤360 词次清空”的硬门禁。',
     assertion: 'sim-autolevel B-09（cleared=300 / within≤360 / newRatio≤10% / refresh 仅在 due≤100 后出现）',
-    suggestion: 'v93-assertion-plan B-09 的“新词≤5%、refresh=0”建议改为“清债≤360 词次 + 高债务阶段配比”。源码动态配比符合设计第三章第 3 条，无需修改。',
+    suggestion:
+      'v93-assertion-plan B-09 的“新词≤5%、refresh=0”建议改为“清债≤360 词次 + 高债务阶段配比”。源码动态配比符合设计第三章第 3 条，无需修改。',
   },
   {
     id: 'B-18-cached-due',
@@ -136,7 +138,12 @@ const report = {
   },
   findings,
   determinism: det
-    ? { pass: det.pass, results: det.results, report: 'report-determinism.json', command: 'node "scripts/core-regression\\determinism-check.mjs"' }
+    ? {
+        pass: det.pass,
+        results: det.results,
+        report: 'report-determinism.json',
+        command: 'node "scripts/core-regression\\determinism-check.mjs"',
+      }
     : { pass: null, note: '未运行 determinism-check.mjs' },
   gate: {
     pass: totals.failed === 0 && srs.failed === 0 && auto.failed === 0 && (!det || det.pass === true),
@@ -146,11 +153,17 @@ const report = {
 }
 
 fs.writeFileSync(OUT, JSON.stringify(report, null, 2), 'utf8')
-console.log(JSON.stringify({
-  out: OUT,
-  totals: report.totals,
-  srsByGroup: report.srs.byGroup,
-  autoByGroup: report.autoLevel.byGroup,
-  gate: report.gate,
-}, null, 2))
+console.log(
+  JSON.stringify(
+    {
+      out: OUT,
+      totals: report.totals,
+      srsByGroup: report.srs.byGroup,
+      autoByGroup: report.autoLevel.byGroup,
+      gate: report.gate,
+    },
+    null,
+    2,
+  ),
+)
 process.exit(report.gate.pass ? 0 : 1)

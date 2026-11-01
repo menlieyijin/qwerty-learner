@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 /**
  * v9.3 仿真核心构建：把 **真实源码** src/utils/{srsRules,autoLevel,memory,db/index,learningPath,
  * memoryLadder,memoryKey,memoryCache,sessionRequeue}.ts 用 esbuild 打包成 core.mjs。
@@ -13,8 +14,8 @@
  * 不修改 src/ 下任何文件。运行：node "scripts/core-regression\build-core.mjs"
  */
 import fs from 'node:fs'
-import path from 'node:path'
 import { createRequire } from 'node:module'
+import path from 'node:path'
 
 const SRC_ROOT = path.resolve(import.meta.dirname, '../..')
 const SRC = path.join(SRC_ROOT, 'src')

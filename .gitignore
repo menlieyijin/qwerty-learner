@@ -45,3 +45,7 @@ playwright-report
 
 # 桌面视觉回归：只忽略差异产物，基线 PNG 需要提交
 /tests/desktop-visual/*.diff.png
+
+# 发布产物与备份（npm run release / rollback 的默认目录）
+/release/
+/backup/

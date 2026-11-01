@@ -15,7 +15,9 @@ class Table {
   }
 
   configure(def) {
-    const primary = String(def || '').split(',')[0].trim()
+    const primary = String(def || '')
+      .split(',')[0]
+      .trim()
     this.auto = primary.startsWith('++')
     this.keyField = this.auto ? null : primary
   }

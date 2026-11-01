@@ -11,8 +11,6 @@
  * 覆盖：A-01…A-14（v9.3 期望）+ S-01…S-11（设计文档第二章）。
  * 约束：只写 scripts/core-regression，不改 src/、不构建应用、不联网；时钟/+08:00 时区/随机 seed 全部注入。
  */
-import fs from 'node:fs'
-import path from 'node:path'
 import {
   AUDIT_DIR,
   BASE_TS,
@@ -34,6 +32,8 @@ import {
   setNow,
   storage,
 } from './harness.mjs'
+import fs from 'node:fs'
+import path from 'node:path'
 
 const SRC = path.resolve(import.meta.dirname, '../..')
 const SRC_UTILS = path.join(SRC, 'src', 'utils')
@@ -318,8 +318,20 @@ async function s05() {
   ]) {
     suite.check('S 日粒度', id, `${id} 保持精确毫秒`, delta, core.computeDue(T0, days) - T0)
   }
-  suite.check('S 日粒度', 'S-05.month', '1/31 23:30 + 1 天 → 2/1 00:00', localTs(2026, 2, 1, 0), core.computeDue(localTs(2026, 1, 31, 23, 30), 1))
-  suite.check('S 日粒度', 'S-05.year', '12/31 23:30 + 1 天 → 2027/1/1 00:00', localTs(2027, 1, 1, 0), core.computeDue(localTs(2026, 12, 31, 23, 30), 1))
+  suite.check(
+    'S 日粒度',
+    'S-05.month',
+    '1/31 23:30 + 1 天 → 2/1 00:00',
+    localTs(2026, 2, 1, 0),
+    core.computeDue(localTs(2026, 1, 31, 23, 30), 1),
+  )
+  suite.check(
+    'S 日粒度',
+    'S-05.year',
+    '12/31 23:30 + 1 天 → 2027/1/1 00:00',
+    localTs(2027, 1, 1, 0),
+    core.computeDue(localTs(2026, 12, 31, 23, 30), 1),
+  )
   suite.check('S 日粒度', 'S-05.zero', 'interval=0 → now', T0, core.computeDue(T0, 0))
   suite.check('S 日粒度', 'S-05.nan', 'interval=NaN → now', T0, core.computeDue(T0, NaN))
 }
@@ -329,7 +341,13 @@ async function s06() {
   const mkRows = () => {
     const rows = []
     for (let i = 0; i < 6; i++) {
-      rows.push({ word: `mig${i}`, dict: D, timeStamp: Math.floor((t - 20 * DAY - i * HOUR) / 1000), timing: i === 0 ? [7000] : [1000], wrongCount: 0 })
+      rows.push({
+        word: `mig${i}`,
+        dict: D,
+        timeStamp: Math.floor((t - 20 * DAY - i * HOUR) / 1000),
+        timing: i === 0 ? [7000] : [1000],
+        wrongCount: 0,
+      })
     }
     rows.push({ word: 'migWrong2', dict: D, timeStamp: Math.floor((t - 20 * DAY) / 1000), timing: [1000], wrongCount: 2 })
     rows.push({ word: 'migWrong3', dict: D, timeStamp: Math.floor((t - 20 * DAY) / 1000), timing: [1000], wrongCount: 3 })
@@ -347,7 +365,13 @@ async function s06() {
   const byWord = new Map(recs.map((r) => [r.word, r]))
   suite.check('S 迁移', 'S-06.count', '迁移记录数 = 去重词数', 9, recs.length)
   const expired = recs.filter((r) => r.word.startsWith('mig') && r.word !== 'migFresh')
-  suite.ok('S 迁移', 'S-06.window', '过期词 due 摊到 [now, now+14d)', expired.every((r) => r.due >= t && r.due < t + 14 * DAY), expired.map((r) => `${r.word}:${((r.due - t) / DAY).toFixed(2)}d`))
+  suite.ok(
+    'S 迁移',
+    'S-06.window',
+    '过期词 due 摊到 [now, now+14d)',
+    expired.every((r) => r.due >= t && r.due < t + 14 * DAY),
+    expired.map((r) => `${r.word}:${((r.due - t) / DAY).toFixed(2)}d`),
+  )
   const spread = new Set(expired.map((r) => Math.floor((r.due - t) / DAY)))
   suite.ok('S 迁移', 'S-06.spread', '摊平日期有分散（≥3 个不同天）', spread.size >= 3, spread.size)
   suite.check('S 迁移', 'S-06.freshDue', '未过期词 due = lastSeen + interval（不被摊平）', t - HOUR + DAY, byWord.get('migFresh').due)
@@ -412,7 +436,13 @@ async function s07() {
   core.recordSkip(D, 's07')
   const skip3 = core.recordSkip(D, 's07')
   suite.check('S 复习 Skip', 'S-07.suspend', 'Skip 3 次 → suspended=true', true, skip3.suspended)
-  suite.ok('S 复习 Skip', 'S-07.suspendList', 'suspended 列表包含该 key', core.getSuspendedKeys().includes(core.memoryKey(D, 's07')), core.getSuspendedKeys())
+  suite.ok(
+    'S 复习 Skip',
+    'S-07.suspendList',
+    'suspended 列表包含该 key',
+    core.getSuspendedKeys().includes(core.memoryKey(D, 's07')),
+    core.getSuspendedKeys(),
+  )
 
   // ---- S-07.b：23:50 边界 + 重复 Skip（旧实现 23:50 → 次日 00:00 只隔 10 分钟） ----
   {
@@ -512,19 +542,46 @@ async function s09() {
   const skip3 = core.recordSkip(D, 'gone')
   suite.check('S 删除清理', 'S-09.skip3', 'Skip 3 次后 suspended', true, skip3.suspended)
   core.clearSkip(D, 'gone')
-  suite.check('S 删除清理', 'S-09.cleared', '删除路径 clearSkip 后 skip/suspended 均清空', [undefined, false], [
-    core.loadAutoLevelState().skipped[core.memoryKey(D, 'gone')],
-    core.getSuspendedKeys().includes(core.memoryKey(D, 'gone')),
-  ])
+  suite.check(
+    'S 删除清理',
+    'S-09.cleared',
+    '删除路径 clearSkip 后 skip/suspended 均清空',
+    [undefined, false],
+    [core.loadAutoLevelState().skipped[core.memoryKey(D, 'gone')], core.getSuspendedKeys().includes(core.memoryKey(D, 'gone'))],
+  )
 }
 
 async function s10() {
-  suite.check('S refresh 显式', 'S-10.fileRemoved', 'src/utils/refreshMarker.ts 已删除', false, fs.existsSync(path.join(SRC_UTILS, 'refreshMarker.ts')))
+  suite.check(
+    'S refresh 显式',
+    'S-10.fileRemoved',
+    'src/utils/refreshMarker.ts 已删除',
+    false,
+    fs.existsSync(path.join(SRC_UTILS, 'refreshMarker.ts')),
+  )
   const dbSrc = fs.readFileSync(path.join(SRC_UTILS, 'db', 'index.ts'), 'utf8')
   const memorySrc = fs.readFileSync(path.join(SRC_UTILS, 'memory.ts'), 'utf8')
-  suite.check('S refresh 显式', 'S-10.noMarkerDb', 'db/index.ts 不引用 refreshMarker 全局标记', false, /refreshMarker|markRefresh/.test(dbSrc))
-  suite.check('S refresh 显式', 'S-10.noMarkerMemory', 'memory.ts 不引用 refreshMarker 全局标记', false, /refreshMarker|markRefresh/.test(memorySrc))
-  suite.check('S refresh 显式', 'S-10.explicitParam', 'updateMemoryProgress 有显式 isRefreshRequested 参数', true, /isRefreshRequested/.test(dbSrc))
+  suite.check(
+    'S refresh 显式',
+    'S-10.noMarkerDb',
+    'db/index.ts 不引用 refreshMarker 全局标记',
+    false,
+    /refreshMarker|markRefresh/.test(dbSrc),
+  )
+  suite.check(
+    'S refresh 显式',
+    'S-10.noMarkerMemory',
+    'memory.ts 不引用 refreshMarker 全局标记',
+    false,
+    /refreshMarker|markRefresh/.test(memorySrc),
+  )
+  suite.check(
+    'S refresh 显式',
+    'S-10.explicitParam',
+    'updateMemoryProgress 有显式 isRefreshRequested 参数',
+    true,
+    /isRefreshRequested/.test(dbSrc),
+  )
 
   const core = await newScenario()
   setNow(T0)
@@ -542,20 +599,54 @@ async function s11() {
   await core.updateMemoryProgress(D, 's11', 0, 4000)
   const rec = await get(core, D, 's11')
   suite.check('S 影子调度', 'S-11.ease', '答对 ease 2.5→2.6', 2.6, rec.ease)
-  suite.ok('S 影子调度', 'S-11.shadow', 'shadow 字段已写入（仅观测）', typeof rec.shadowInterval === 'number' && typeof rec.shadowDue === 'number', { shadowInterval: rec.shadowInterval, shadowDue: rec.shadowDue })
+  suite.ok(
+    'S 影子调度',
+    'S-11.shadow',
+    'shadow 字段已写入（仅观测）',
+    typeof rec.shadowInterval === 'number' && typeof rec.shadowDue === 'number',
+    { shadowInterval: rec.shadowInterval, shadowDue: rec.shadowDue },
+  )
   suite.check('S 影子调度', 'S-11.dueUnaffected', 'due 只由 stage 档位决定，不受 ease/shadow 影响', localTs(2026, 1, 3, 0), rec.due)
 }
 
 // ===========================================================================
 const scenarios = [
-  a01, a02, a03, a04, a05, a06, a07a08, a09, a10, a11, a12, a13, a14,
-  s01, s02, s03, s04, s05, s06, s07, s08, s09, s10, s11,
+  a01,
+  a02,
+  a03,
+  a04,
+  a05,
+  a06,
+  a07a08,
+  a09,
+  a10,
+  a11,
+  a12,
+  a13,
+  a14,
+  s01,
+  s02,
+  s03,
+  s04,
+  s05,
+  s06,
+  s07,
+  s08,
+  s09,
+  s10,
+  s11,
 ]
 for (const run of scenarios) {
   try {
     await run()
   } catch (e) {
-    suite.fail('SCENARIO', `${run.name}.exception`, `场景抛错：${e && e.message}`, 'no throw', String(e && e.stack ? e.stack.split('\n').slice(0, 4).join(' | ') : e))
+    suite.fail(
+      'SCENARIO',
+      `${run.name}.exception`,
+      `场景抛错：${e && e.message}`,
+      'no throw',
+      String(e && e.stack ? e.stack.split('\n').slice(0, 4).join(' | ') : e),
+    )
   }
 }
 

@@ -55,7 +55,7 @@
 | 桌面外壳 | 无（网页应用） | Electron：托盘/快捷键/迷你模式/置顶/透明度/自启/备份/日志/剪贴板查词/免 Key 释义/发音缓存/词库更新/注入面板 | `local-fork/electron/` |
 | 推广内容 | 捐赠、作者推荐、移动端落地页、站点统计与 SEO 外链等 | **移除与学习无关的营销 UI 与统计脚本**；保留分享成绩/导出/请求词库 | v9.8 提交 |
 | 遥测 | 网页端默认统计 | **桌面默认关闭**（需显式 opt-in）；网页构建仍沿用上游统计口径 | `src/utils/telemetry.ts` |
-| 构建/发布 | 上游 `yarn build` / 安装脚本 | `dsh-release.ps1`（门禁 → build → asar → 校验 → 安装/回滚）+ `quality-gate.ps1` | `scripts/` |
+| 构建/发布 | 上游 `yarn build` / 安装脚本 | `scripts/release.mjs`（门禁 → build → asar → 校验 → 安装）+ `scripts/rollback.mjs` | `scripts/` |
 | 测试 | Playwright e2e | 在上述基础上增加核心算法回归、CDP 冒烟、安全探针（部分脚本未随仓库发布） | 见第 10 节 |
 
 > 表格是方向性对比；具体数值、边界条件以第 4 节和第 5 节的源码规则为准。
@@ -400,54 +400,52 @@ npm run test:local       # CDP 冒烟（需应用带 --remote-debugging-port 启
 
 ### 6.3 质量门禁
 
-```powershell
-# 类型 + 严格 lint
-pwsh -File scripts/quality-gate.ps1
-
-# 追加核心算法回归（需要审计脚本目录）
-pwsh -File scripts/quality-gate.ps1 -WithSim
-
-# 全量（需先以隔离 profile 启动应用，暴露 CDP）
-pwsh -File scripts/quality-gate.ps1 -WithSim -WithSmoke -SmokePort 9472
+```bash
+npm run quality        # tsc + 严格 lint + 正确率单测 + 属性测试 + 词库下载测试 + 核心回归 309
+npm run test:quality   # 只跑 tsc + eslint --max-warnings 0
+npm run test:core      # 只跑核心算法回归（SRS + 自动进阶 + 确定性）
 ```
 
-- 门禁只负责检查，不 build / 不安装 / 不 commit。
-- `-WithSim` 默认读取作者本机审计目录（`-SimDir` 可覆盖）；脚本不存在时会标记为 SKIP，**不会**失败。
-- 退出码：0 = 全绿，1 = 有步骤失败。
+- 门禁只检查，不 build / 不安装 / 不 commit；退出码 0 = 全绿。
+- 全部是 Node 脚本，Windows / macOS / Linux 行为一致。
 
 ### 6.4 发布构建
 
-```powershell
-pwsh -File scripts/dsh-release.ps1                          # tsc + 核心回归 + Vite build + asar
-pwsh -File scripts/dsh-release.ps1 -TestInstall -Smoke      # 构建 + 测试安装 + 隔离 CDP 冒烟
-pwsh -File scripts/dsh-release.ps1 -Install                 # 构建 + 正式安装（备份/原子替换/校验/日志）
-pwsh -File scripts/dsh-release.ps1 -SkipBuild -Install      # 复用现有 build/
+```bash
+npm run release                                              # 门禁 + build + asar + SHA256
+npm run release:test                                         # 装到测试目录（QZ_TEST_APP_DIR）
+node scripts/release.mjs --test-install --smoke               # 测试安装 + 隔离 profile CDP 冒烟
+node scripts/release.mjs --install --install-dirs "<目录1>;<目录2>"  # 正式安装（备份/原子替换/校验/日志）
+node scripts/release.mjs --skip-build --install               # 复用现有 build/
 ```
 
-脚本流程（`scripts/dsh-release.ps1`）：
+流程（`scripts/release.mjs`）：
 
-1. 读取 `local-fork/package.json` 版本；创建 `staging-<version>-<stamp>`；
-2. `tsc --noEmit`（`-SkipCheck` 可跳）；
-3. 核心算法回归：重建源码 bundle → `srs-sim --strict` → `sim-autolevel --strict` → 汇总（`-SkipAudit` 可跳；审计脚本缺失时警告并跳过）；
-4. `npm run build`（`-SkipBuild` 可跳）；
-5. 组装 staging：`local-fork/package.json` + `electron/` + `build/` + `LICENSE` + `FORK-NOTICE.md`，用 `npx @electron/asar pack` 打包；
-6. 计算 SHA256、写 `SHA256SUMS` 与 `release-info.json`；
-7. 可选测试安装（原子替换 + 哈希校验 + 隔离 profile CDP 冒烟）；
-8. 可选正式安装：预检多个安装目录当前 `app.asar` 哈希一致 → 备份 → 原子替换 → 校验 → 写安装日志；任一步失败自动回滚；
+1. 读 `local-fork/package.json` 版本 → 建 `staging-<version>-<stamp>`；
+2. `tsc --noEmit`（`--skip-check` 可跳）；
+3. 核心算法回归：重建 bundle → `srs-sim --strict` → `sim-autolevel --strict` → 汇总（`--skip-audit` 可跳）；
+4. `vite build --base=./`（`--skip-build` 可跳）；
+5. 组装 staging：`local-fork/package.json` + `electron/` + `build/` + `LICENSE` + `FORK-NOTICE.md`；
+6. 用**本地** `@electron/asar` 打包（不联网、版本固定在 devDependencies），写 `SHA256SUMS` 与 `release-info.json`；
+7. 可选测试安装（原子替换 + 哈希校验 + 隔离 profile 冒烟）；
+8. 可选正式安装：预检各安装目录当前 asar 哈希一致 → 备份 → 原子替换 → 校验 → 写安装日志；任一步失败自动回滚；
 9. 清理旧 staging（保留最近 5 份）。
 
-**路径参数**：`-StageRoot`、`-BackupDir`、`-AuditRoot`、`-TestAppDir`、`-InstallDirs`。脚本内置默认值来自作者本机目录布局，在其他机器上必须覆盖；公开仓库不保证默认值可用。
+**路径**：默认 `release/`（暂存）与 `backup/`（备份），均在仓库内且被 `.gitignore` 忽略；
+命令行参数 > 环境变量（`QZ_STAGE_ROOT` / `QZ_BACKUP_DIR` / `QZ_AUDIT_DIR` / `QZ_TEST_APP_DIR` / `QZ_INSTALL_DIRS`） > 默认值。
+旧的 `scripts/dsh-release.ps1` 保留为**薄包装**（参数原样转发给 `release.mjs`），只为兼容既有命令行；跨平台请直接用 `node scripts/release.mjs`。
 
 ### 6.5 回滚
 
-```powershell
-pwsh -File scripts/dsh-rollback.ps1 -List   # 列出可用备份
-pwsh -File scripts/dsh-rollback.ps1         # 回滚到"与当前版本不同的最近备份"
+```bash
+npm run rollback:list   # 列出可用备份（版本 / 大小 / 哈希 / 是否当前）
+npm run rollback        # 回滚到「与当前版本不同」的最近备份
+node scripts/rollback.mjs --asar <xxx.asar>   # 指定文件
 ```
 
-- 回滚前会先把当前版本另存为 redo 点，回滚后可再切回。
-- v9.15 起：若选中备份与当前 `app.asar` 内容相同，脚本**默认中止**（提示加 `-Force`），避免"无操作回滚"白占备份空间、污染清单；确需重放时加 `-Force`。
-- 正式安装的备份是 `app.asar` 文件级备份；安装日志在 `logs/` 下记录版本、SHA256、安装目录。
+- 回滚前把当前版本另存为 redo 点，回滚后可再切回；替换失败自动恢复。
+- 若选中备份与当前 `app.asar` 内容相同，脚本**默认中止**（提示加 `--force`），避免「无操作回滚」白占备份空间、污染清单。
+- 备份是文件级 `app.asar`；安装/回滚日志在 `logs/` 下记录版本、SHA256、目录。
 
 ## 7. Electron 外壳构建与安装
 

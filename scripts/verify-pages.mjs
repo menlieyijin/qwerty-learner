@@ -8,6 +8,7 @@
 //
 // 用法：node scripts/verify-pages.mjs [--exe <path>] [--port 9476]
 // 退出码：0 全过；1 有失败；2 环境问题。注意会强制结束正在运行的 Qwerty Learner。
+import { ensurePortFree, killChild } from './lib/app-files.mjs'
 import { resolveDesktopExe } from './lib/desktop-app.mjs'
 import { execFileSync, spawn } from 'node:child_process'
 import { readFileSync } from 'node:fs'
@@ -59,7 +60,7 @@ function finish(code) {
     /* ignore */
   }
   try {
-    if (child) execFileSync('taskkill', ['/PID', String(child.pid), '/T', '/F'], { stdio: 'ignore' })
+    killChild(child)
   } catch {
     /* 已退出 */
   }
@@ -148,11 +149,11 @@ const rowWords = () =>
   })`)
 
 async function main() {
-  try {
-    execFileSync('taskkill', ['/IM', 'Qwerty Learner.exe', '/F'], { stdio: 'ignore' })
-    await wait(800)
-  } catch {
-    /* 没有在运行 */
+  // 只清理占用本脚本端口的旧实例（不再全量 taskkill，避免杀掉用户正在用的应用），
+  // 并等端口真正释放后再启动；固定 sleep 会在 Windows 上偶发连到正在退出的旧实例。
+  if (!(await ensurePortFree(PORT))) {
+    console.error(`VERIFY_ERROR: 端口 ${PORT} 仍被占用，无法开始`)
+    return finish(2)
   }
 
   profileDir = mkdtempSync(join(tmpdir(), 'qz-verify-pages-'))

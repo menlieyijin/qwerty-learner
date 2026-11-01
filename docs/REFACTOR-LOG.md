@@ -229,6 +229,26 @@
 
 ---
 
+## 五之六、v11.3.0（批次 S）：发布链跨平台 + 三处「看着有、其实没生效」
+
+| # | 问题 | 根因 | 修复 | 验证 |
+| --- | --- | --- | --- | --- |
+| S-1 | 发布/回滚只能在 Windows 上跑，且默认路径是作者本机布局 | 脚本用 PowerShell 写死 `D:\整理\...`；参数覆盖只解决路径，不解决平台 | 新增 `scripts/release.mjs` / `scripts/rollback.mjs` / `scripts/lib/app-files.mjs`：纯 Node，默认 `release/`、`backup/`（gitignore），参数 > 环境变量 > 默认值；两个 `.ps1` 保留为**薄包装**（原样转发参数） | 新脚本打包出的 asar `F418D1EB…` 与旧 PowerShell 链**逐字节一致**（同为 v11.2.0 构建）；随后 v11.3.0 全链 `release --test-install --smoke` + 双目录 `--install` 均通过 |
+| S-2 | `fs.cpSync` 在本机 Node 22.22.2 / Windows 上对**任意**目录都以 `0xC0000409` 硬崩（`src`、单包目录同样崩），`try/catch` 抓不到 | 不是业务代码问题，是运行时行为；但代码依赖了它 | ① 发布脚本改用自写 `copyTree`；② **主进程备份**（`runBackup` 复制 IndexedDB / Local Storage）同样换掉 —— 那里一旦崩就是备份失败 + 应用退出 | 反证：`node -e "fs.cpSync('src', ...)"` 退出码 3221226505；换成 `copyTree` 正常。发布链、`backupNow` 冒烟均通过 |
+| S-3 | 词库「断点续传」**根本不可能续传** | 原实现先把整个响应读进内存，再一次性写 `.part` —— 连接中断时什么都没落盘，下次只能从 0 开始；`.part`/`Range` 分支等于死代码 | 改成流式写 `.part`（边收边写），中断保留已收字节；下次带 `Range` 续传 | 新增 `scripts/verify-dict-fetch.mjs`（30 项，本地 HTTP 服务真发 Range）：断流后 `.part` 保留、续传请求头正确、文件完整。**反证**：把实现改回「整包再写」，3b/3d/3e 三条立刻失败（`partialSize: 0`、`lastRange: ""`） |
+| S-4 | 三个 CDP 验证脚本会 `taskkill /IM "Qwerty Learner.exe"`——杀掉用户正在用的应用；且用固定 `sleep 800ms` 等退出，偶发连到正在关闭的旧实例，`verify-typing` 报「等待超时（首屏出词）」 | 「先全杀再启动」的粗暴清理 | 改为**只清理占用本脚本端口的那个进程**，并轮询等端口真正释放（`ensurePortFree`）；子进程退出改跨平台 `killChild` | `verify-typing` 连跑 3 次 18/18 稳定（此前连跑两次必有一次卡住） |
+| S-5 | 桌面视觉回归「没有基线就直接判过」 | `compare()` 里 `UPDATE || !existsSync(file)` 把「缺基线」当成「写基线并成功」 | 缺基线 → 失败并提示 `test:desktop-visual:update`；只有显式 `--update` 才写。新平台首次运行必须显式生成 | 代码级；Windows 基线仍在，连跑通过 |
+| S-6 | `@electron/asar` 每次发布都用 `npx --yes @electron/asar@4.3.1` 联网拉取 | 未进 devDependencies | 装为 devDependency（4.3.1），发布时直接 `node node_modules/@electron/asar/bin/asar.mjs` | 打包成功且哈希与旧链一致（S-1） |
+| S-7 | `resolveDesktopExe(dir)` 把目录当可执行文件返回 → `spawn <dir>` ENOENT | 只判断 `existsSync`，没区分文件/目录 | 目录展开成平台路径（`.exe` / `.app/Contents/MacOS` / 无后缀）；`resourcesDirFor` 不再「找不到就回退到仓库产物」 | `release --test-install --smoke` 通过（此前直接 ENOENT 崩溃） |
+
+**为什么不是补丁**：S-1/S-2/S-3 都不是「改一行让它不报错」——
+发布链是**换实现**（PowerShell → Node，路径进 gitignore）、
+复制是用**自己控制的遍历**替换不可靠的运行时 API、
+续传是从「先攒后写」改成**流式落盘**（否则续传分支永远走不到）。
+S-4 也不是加长 sleep，而是把「杀谁」和「等到什么状态」这两件事说清楚。
+
+---
+
 ## 六、遗留清单（未改或无法闭环，附具体差距）
 
 | # | 项 | 状态 | 差距 / 原因 |
@@ -239,7 +259,7 @@
 | L-4 | 结果页空词表 `0/0 → NaN` | **已闭环（约定 0%）** | `chapterLength <= 0` 直接返回 0；约定「没有词就没有正确率可言，按 0% 处理」写在代码注释与发布说明里。仍无法构造复现路径，属代码级验证 |
 | L-5 | 暂停时若已完成词数未变，不重复 upsert | **已修 + 已反证** | 见 F5-003：改签名判重，`test:typing` 5c 覆盖，并将判重回退后确认用例会失败 |
 | L-6 | Electron CSP 解析失败时回退 `script-src 'self' 'unsafe-inline'`（AUDIT L2） | **接受风险** | 改 fail-closed 会在 `index.html` 结构变化时白屏；当前实测走 sha256 分支 |
-| L-7 | 发布脚本默认路径是作者本机布局（AUDIT M5） | **接受风险** | 全部支持 `QZ_*` 环境变量覆盖，`local-fork/README` 与 QUICKSTART 已说明；改默认值会破坏本机发布链 |
+| L-7 | 发布脚本默认路径是作者本机布局（AUDIT M5） | **已闭环**（v11.3.0） | 发布/回滚改为 `scripts/release.mjs` / `rollback.mjs`，跨平台、默认 `release/`+`backup/`（gitignore），参数与环境变量均可覆盖；`.ps1` 仅作薄包装 |
 | L-8 | 仓库是**浅克隆**（AUDIT S4） | **已闭环**（v10.3.0） | 已执行 `git fetch --unshallow`（补全上游历史，未合并任何上游代码、未改工作树）。收益：用 git 历史复核了 5 本本地补回词库（上游 0 条提交）+ 确认其余 380 本与基线逐字节一致，见 `docs/THIRD-PARTY.md` §3 |
 | L-9 | 309 条核心回归脚本不在仓库 | **已闭环** | 已迁入 `scripts/core-regression`（路径仓库相对、产物 gitignore、`npm run test:core`），发布脚本默认改指仓库内。局限（非差距）：它是 stub 化的纯算法仿真，不等于真实浏览器/Electron 环境；界面/交互由冒烟、`test:pages`、`test:typing`、`test:visual` 覆盖 |
 | L-10 | 提交推送 | **已闭环** | 分支与标签均已推到 `menlieyijin/qwerty-learner`，远端与本地 HEAD 一致。推送路径有两种（都记录了）：① v10.2.1 之前：临时 unset 全局 `url.*.insteadOf` + 清空 `*_PROXY` 后 `git push` 直连；② v10.3.0：github.com:443 已完全不可达（6 次重试均 TCP 超时，直连与本地代理都不通），改用 GitHub **Git Data API**（`gh api` 建 blob → tree → commit → 更新 ref）复刻同一个提交，因元数据逐字一致，远端 commit SHA 与本地**完全相同**（`7352e3d`）。均未走 ghfast 传凭据 |
@@ -274,6 +294,7 @@
 | `v11.0.1` | `e38f5bb` | 桌面面板文字对齐 + 词库筛选文案/宽度 | **13/13** | `A1F9A90A…` |
 | `v11.1.0` | `d967315` | 跨平台脚本路径 / 响应式设置 / 桌面视觉回归 / Linux 自启 / 切页错位 | **13/13** + 桌面视觉 4/4 | `ADC627A8…` |
 | `v11.2.0` | `1f45a9b` | 主题变量化 / 错误处理 / 属性测试 / 词库续传 | **13/13** + 桌面视觉 5/5 | `F418D1EB…` |
+| `v11.3.0` | 本次提交 | 发布链跨平台 / `fs.cpSync` 崩溃 / 断点续传真续传 / 验证脚本不再误杀 | **13/13** + 桌面视觉 5/5 + 下载 30/30 | `1D5502ED…` |
 
 > 回滚点同时保存在 tag（`v9.16-batchA` … `v10.0.0`）与分支历史里；回退前的 HEAD 另存为
 > `archive/v10-baseline-20261029` / `backup/v10-baseline`（均为 `b97eb62`，即本次「回退到 v9.15 重做」之前的树），

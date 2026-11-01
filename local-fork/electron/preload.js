@@ -1,26 +1,46 @@
 // Qwerty Learner Plus — 安全预加载脚本（contextIsolation: true）
 // 通过 contextBridge 只暴露白名单 API，渲染进程不接触 Node。
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer } = require('electron')
 
 // v9.2：版本号单一来源——同步向主进程要（沙箱化 preload 不能 require('path') 读 package.json）
 // v9.4（SHELL-010）：取不到时返回 unknown，不再保留硬编码版本兜底
-let APP_VERSION = 'unknown';
+let APP_VERSION = 'unknown'
 try {
-  const v = ipcRenderer.sendSync('app:version-sync');
-  if (v) APP_VERSION = String(v);
-} catch { /* 保持 unknown */ }
+  const v = ipcRenderer.sendSync('app:version-sync')
+  if (v) APP_VERSION = String(v)
+} catch {
+  /* 保持 unknown */
+}
 
 // v11：返回取消订阅函数。React 面板会随页签 unmount，监听器不能只加不减。
 function onEvent(cb) {
-  if (typeof cb !== 'function') return () => {};
-  const handler = (_e, payload) => { try { cb(payload); } catch { /* ignore */ } };
-  ipcRenderer.on('enhance:event', handler);
-  return () => { try { ipcRenderer.removeListener('enhance:event', handler); } catch { /* ignore */ } };
+  if (typeof cb !== 'function') return () => {}
+  const handler = (_e, payload) => {
+    try {
+      cb(payload)
+    } catch {
+      /* ignore */
+    }
+  }
+  ipcRenderer.on('enhance:event', handler)
+  return () => {
+    try {
+      ipcRenderer.removeListener('enhance:event', handler)
+    } catch {
+      /* ignore */
+    }
+  }
 }
 function onClipboardWord(cb) {
-  if (typeof cb !== 'function') return;
-  const handler = (_e, word) => { try { cb(word); } catch { /* ignore */ } };
-  ipcRenderer.on('clipboard:word', handler);
+  if (typeof cb !== 'function') return
+  const handler = (_e, word) => {
+    try {
+      cb(word)
+    } catch {
+      /* ignore */
+    }
+  }
+  ipcRenderer.on('clipboard:word', handler)
 }
 
 contextBridge.exposeInMainWorld('qwertyEnhance', {
@@ -43,8 +63,14 @@ contextBridge.exposeInMainWorld('qwertyEnhance', {
   backupNow: () => ipcRenderer.invoke('backup:now'),
   // —— v8.9：逻辑备份快照（主进程备份时请求，渲染端收集数据后回传）——
   onBackupRequest: (cb) => {
-    if (typeof cb !== 'function') return;
-    ipcRenderer.on('backup:request', () => { try { cb(); } catch { /* ignore */ } });
+    if (typeof cb !== 'function') return
+    ipcRenderer.on('backup:request', () => {
+      try {
+        cb()
+      } catch {
+        /* ignore */
+      }
+    })
   },
   writeBackupSnapshot: (json) => ipcRenderer.invoke('backup:writeSnapshot', json),
   openPath: (which) => ipcRenderer.invoke('app:openPath', which),
@@ -83,10 +109,22 @@ contextBridge.exposeInMainWorld('qwertyEnhance', {
   precacheCancel: () => ipcRenderer.invoke('pron:precacheCancel'),
   precacheStatus: () => ipcRenderer.invoke('pron:precacheStatus'),
   onPrecacheProgress: (cb) => {
-    if (typeof cb !== 'function') return () => {};
-    const handler = (_e, payload) => { try { cb(payload); } catch { /* ignore */ } };
-    ipcRenderer.on('pron:precache-progress', handler);
-    return () => { try { ipcRenderer.removeListener('pron:precache-progress', handler); } catch { /* ignore */ } };
+    if (typeof cb !== 'function') return () => {}
+    const handler = (_e, payload) => {
+      try {
+        cb(payload)
+      } catch {
+        /* ignore */
+      }
+    }
+    ipcRenderer.on('pron:precache-progress', handler)
+    return () => {
+      try {
+        ipcRenderer.removeListener('pron:precache-progress', handler)
+      } catch {
+        /* ignore */
+      }
+    }
   },
   // —— 剪贴板 / 发音缓存 ——
   // v9.15（dsh，M5-011）：删除 getClipboard / closeClipboard —— 主窗口业务从不使用（全仓库无调用），
@@ -95,7 +133,7 @@ contextBridge.exposeInMainWorld('qwertyEnhance', {
   pronStats: () => ipcRenderer.invoke('pron:stats'),
   clearPronCache: () => ipcRenderer.invoke('pron:clear'),
   setClipboardWatch: (v) => ipcRenderer.invoke('win:setClipboardWatch', v),
-});
+})
 
 // v5：在页面脚本执行前安装 fetch 包装，让「在线更新词库」下载的文件优先于 asar 内置文件。
 // 仅当主进程确认更新目录存在对应文件时才改写 URL（qzcache://dict/<file>），否则原样放行。
@@ -106,26 +144,36 @@ try {
         try {
           // v9.4（SHELL-001）：给 index.html 一个提前的「Electron 环境」标记，桌面端据此不加载 Google Analytics；
           // 网页版没有该标记，gtag 行为保持不变。必须在页面脚本执行前设置（此处就是 preload 阶段）。
-          window.__QZ_ELECTRON__ = true;
-          if (window.__QZ_DICT_PATCH__) return;
-          window.__QZ_DICT_PATCH__ = true;
-          const origFetch = window.fetch ? window.fetch.bind(window) : null;
-          if (!origFetch) return;
+          window.__QZ_ELECTRON__ = true
+          if (window.__QZ_DICT_PATCH__) return
+          window.__QZ_DICT_PATCH__ = true
+          const origFetch = window.fetch ? window.fetch.bind(window) : null
+          if (!origFetch) return
           window.fetch = function (input, init) {
             try {
-              const url = typeof input === 'string' ? input : (input && input.url) || '';
-              const m = /(?:^|\/)dicts\/([^/?#]+\.json)(?:[?#]|$)/.exec(url);
+              const url = typeof input === 'string' ? input : (input && input.url) || ''
+              const m = /(?:^|\/)dicts\/([^/?#]+\.json)(?:[?#]|$)/.exec(url)
               if (m && window.qwertyEnhance && window.qwertyEnhance.dictOverride) {
-                return window.qwertyEnhance.dictOverride(m[1]).then(function (has) {
-                  return has ? origFetch('qzcache://dict/' + encodeURIComponent(m[1]), init) : origFetch(input, init);
-                }).catch(function () { return origFetch(input, init); });
+                return window.qwertyEnhance
+                  .dictOverride(m[1])
+                  .then(function (has) {
+                    return has ? origFetch('qzcache://dict/' + encodeURIComponent(m[1]), init) : origFetch(input, init)
+                  })
+                  .catch(function () {
+                    return origFetch(input, init)
+                  })
               }
-            } catch (e) { /* ignore */ }
-            return origFetch(input, init);
-          };
-        } catch (e) { /* ignore */ }
+            } catch (e) {
+              /* ignore */
+            }
+            return origFetch(input, init)
+          }
+        } catch (e) {
+          /* ignore */
+        }
       },
-    });
+    })
   }
-} catch { /* 旧版 Electron 不支持 executeInMainWorld 时，由 enhance.js 注入后再安装一次 */ }
-
+} catch {
+  /* 旧版 Electron 不支持 executeInMainWorld 时，由 enhance.js 注入后再安装一次 */
+}

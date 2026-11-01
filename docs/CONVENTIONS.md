@@ -48,6 +48,14 @@
 - 新增主题只需在 `local-fork/electron/enhance/enhance.css` 里加一组 `html.qz-accent-xxx { --qz-indigo-*: ... }`，
   不需要再写选择器覆盖；改颜色后跑 `test:visual` + `test:desktop-visual`。
 
+## 3.2 禁止的 API
+
+| API | 原因 | 替代 |
+| --- | --- | --- |
+| `fs.cpSync` | Node 22.22.2 / Windows 上对任意目录都会以 `0xC0000409` 硬崩，`try/catch` 抓不到 | `scripts/lib/app-files.mjs` 的 `copyTree`；主进程内用 `copyTreeSync` |
+| `taskkill /IM "Qwerty Learner.exe"` | 会杀掉用户正在使用的应用 | `ensurePortFree(port)`：只清理占用本脚本端口的进程 |
+| 固定 `sleep` 等进程退出/页面就绪 | 机器慢时偶发失败，且报错无法定位 | 轮询条件（`waitPortFree` / `until(...)`），超时信息带上最后状态 |
+
 ## 4. 工具函数
 
 - 按领域放在 `src/utils/<domain>.ts`：`keyboard` / `platform` / `time` / `number` / `chapter` / `audio` / `trans` / `csvSafe` …
@@ -81,7 +89,7 @@
 
 - 改**算法**（`utils/srsRules|autoLevel|memory*`）→ 必须跑 `test:core`；
 - 改**页面/组件** → 至少 `test:pages` 或 `test:typing`，涉及样式再加 `test:visual`；
-- 改**构建/发布脚本** → 跑 `scripts\dsh-release.ps1 -TestInstall -Smoke`；
+- 改**构建/发布脚本** → 跑 `node scripts/release.mjs --test-install --smoke`（`.ps1` 只是薄包装）；
 - 不允许"只跑 build 就算验证"。
 
 ## 7. 提交与发布
@@ -108,5 +116,6 @@
 - 桌面专属页签在 `SETTING_TABS` 上标 `desktopOnly: true`，网页版自动过滤；
 - 滑块类设置：`onChange` 只做预览（`preview`），`onValueCommit` 才落盘（`patch`），避免拖动时高频写设置文件；
 - 桌面运行时可能晚于页面就绪（注入顺序），调用点必须容忍返回 `null`，不要假设一定存在；
+- 断言不要假设词库内容（词长、首词、某本词库是否存在）：用例要能自适应，否则换词库/换机器就偶发失败；
 - 设置页签不要给 `Tab.Panel` 加 `unmount`：Headless UI 会注销 Panel 并重算选中索引，切换时可能落到相邻页；
   需要延迟挂载用 `LazyPanel`（首次激活后保持挂载）。

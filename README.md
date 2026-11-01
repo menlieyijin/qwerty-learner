@@ -85,13 +85,16 @@ scripts/                 发布 / 回滚 / 质量门禁 / CDP 冒烟 / 起点选
 | `npm run test:typing` | 打字主链路 18 项（进入输入态/错字标红/切词/落库/**逐字母错因**/暂停写会话与二次暂停 upsert/**暂停恢复不丢进度**/音效开关与滑块/默写） |
 | `npm run test:csv` | 错题本 CSV 导出公式注入防护 14 项断言 |
 | `npm run test:core` | **核心算法回归 309 条**（SRS 120 + 自动进阶 189）+ 确定性门禁，真实源码打包仿真 |
-| `npm run test:all` | **一键跑完**：tsc/eslint + 正确率单测 + 属性测试 + 核心回归 309 + 四个 CDP 行为脚本（不含 `test:visual` / `test:desktop-visual`，它们分别需要浏览器与桌面程序） |
+| `npm run test:all` | **一键跑完**：tsc/eslint + 正确率单测 + 属性测试 + 词库下载测试 + 核心回归 309 + 四个 CDP 行为脚本（不含 `test:visual` / `test:desktop-visual`，它们分别需要浏览器与桌面程序） |
 | `npm run test:stats` | 结果页正确率/错误分级的 17 条断言（空词表 0/0、NaN 兜底、0~100 夹取、分档边界） |
 | `npm run test:fuzz` | 纯函数属性测试：csvSafeCell / normalizeTrans / computeCorrectRate 各 800 组固定种子随机输入 |
+| `npm run test:dict` | 词库下载 30 项：白名单 / 断流续传（真实 Range）/ 脏 JSON / 超限 / 416 / 重定向 / 结构校验 |
 | `npm run test:visual` | 网页视觉回归：错题本空态 + 设置面板两张基线截图（自动拉起 dev server）；重建基线加 `--update-snapshots` |
 | `npm run test:desktop-visual` | **桌面**视觉回归：显示/数据/词库/工具四个设置页 + 玫瑰红强调色页，固定 1280×800 逐页对比；重建基线用 `test:desktop-visual:update` |
-| `npm run quality` | PowerShell 质量门禁（tsc + eslint + 核心回归） |
-| `scripts/dsh-release.ps1` | 打包 asar / 测试安装 / 隔离冒烟 / 双目录安装 |
+| `npm run quality` | 质量门禁（tsc + eslint + 正确率 + 属性测试 + 词库下载 + 核心回归），跨平台 |
+| `npm run release` | 打包 asar：门禁 → build → asar → SHA256 → `release-info.json` |
+| `npm run release:test` | 装到测试目录（`QZ_TEST_APP_DIR`）；加 `--smoke` 跑隔离冒烟 |
+| `npm run rollback` / `rollback:list` | 回滚到上一版本 / 列出可用备份 |
 | `scripts/dsh-rollback.ps1` | 回滚到上一个版本（回滚前自动存 redo 点） |
 
 ## 兼容性

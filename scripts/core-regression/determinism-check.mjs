@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 /**
  * 可复现性检查（R-SIM-04）：同一 Node 下把两个 --strict 门禁各跑两遍，
  * 比较报告 JSON（忽略 generatedAt），并校验退出码均为 0。
@@ -6,9 +7,9 @@
  * 运行：node "scripts/core-regression\determinism-check.mjs"
  * 产物：scripts/core-regression\report-determinism.json
  */
+import { spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
-import { spawnSync } from 'node:child_process'
 
 const AUDIT = import.meta.dirname
 const node = process.execPath

@@ -35,7 +35,7 @@ It is **not** an official repository, not endorsed by upstream, and not tracking
 | Desktop shell | none | tray, shortcuts, mini mode, always-on-top, backup, logs, clipboard lookup, free dictionary lookup, pronunciation cache, dictionary updates, injected "tools" panel |
 | Marketing UI | donate/promo/mobile landing/analytics/SEO links | removed from v9.8; share/export/dictionary-request kept |
 | Telemetry | enabled on web | **desktop default off** (explicit opt-in); web build keeps upstream behavior |
-| Build/release | upstream scripts | `dsh-release.ps1` (gates → build → asar → verify → install/rollback) + `quality-gate.ps1` |
+| Build/release | upstream scripts | `scripts/release.mjs` (gates → build → asar → verify → install) + `scripts/rollback.mjs` |
 | Tests | Playwright e2e | plus core-algorithm regression, CDP smoke, security probes (some scripts are not in the repo) |
 
 ## 3. Architecture
@@ -170,18 +170,21 @@ yarn start          # Vite dev server, http://localhost:5173/
 yarn build          # production output in build/
 ```
 
-```powershell
-pwsh -File scripts/quality-gate.ps1                     # tsc + eslint --max-warnings 0
-pwsh -File scripts/dsh-release.ps1                      # gates + build + asar + SHA256
-pwsh -File scripts/dsh-release.ps1 -TestInstall -Smoke  # test install + isolated CDP smoke
-pwsh -File scripts/dsh-release.ps1 -Install             # backup + atomic replace + verify + log
-pwsh -File scripts/dsh-rollback.ps1 -List
-pwsh -File scripts/dsh-rollback.ps1
+```bash
+npm run quality        # tsc + strict lint + stats + property tests + dict-fetch tests + 309 core assertions
+npm run test:quality   # tsc + eslint --max-warnings 0 only
+npm run release        # gates + build + asar + SHA256
+npm run release:test   # install into the test dir (QZ_TEST_APP_DIR)
+node scripts/release.mjs --test-install --smoke                  # test install + isolated CDP smoke
+node scripts/release.mjs --install --install-dirs "<a>;<b>"      # backup + atomic replace + verify + log
+npm run rollback:list
+npm run rollback
 ```
 
-- Release script stages `local-fork/package.json` + `electron/` + `build/` + `LICENSE` + `FORK-NOTICE.md`, packs with `npx @electron/asar`, and verifies SHA256 before/after install. Since v9.15 the rollback script aborts by default when the selected backup is identical to the current `app.asar`; add `-Force` to replay it anyway.
-- Path parameters `-StageRoot`, `-BackupDir`, `-AuditRoot`, `-TestAppDir`, `-InstallDirs` **must be overridden** outside the author's machine; defaults reflect the author's local layout. The scripts are Windows-only.
-- `yarn start` serves the web app only; tray/backup/enhancement panel require the Electron shell.
+- All of the above are plain Node scripts and behave the same on Windows / macOS / Linux.
+- Staging defaults to `release/`, backups to `backup/` (both git-ignored). Arguments override env vars (`QZ_STAGE_ROOT`, `QZ_BACKUP_DIR`, `QZ_AUDIT_DIR`, `QZ_TEST_APP_DIR`, `QZ_INSTALL_DIRS`), which override defaults.
+- Packaging uses the **local** `@electron/asar` devDependency (no network, version pinned). The legacy `scripts/dsh-release.ps1` / `dsh-rollback.ps1` remain as thin wrappers that forward to the Node scripts.
+- `yarn start` serves the web app only; tray/backup/dictionary management require the Electron shell.
 - Electron runtime upgrades are separate, manual steps (official zip + rcedit branding + verified replacement); see [`Electron-EOL.md`](Electron-EOL.md). Electron 43.x EOL: 2027-01-05.
 
 ## 7. Versioning

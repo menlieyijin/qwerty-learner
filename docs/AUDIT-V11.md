@@ -7,9 +7,12 @@
 
 | 级别 | 新发现 | 已修 | 接受风险 | 未修 |
 | --- | --- | --- | --- | --- |
-| P0 | 0 | 0 | 1（运行时暴露面） | 0 |
-| P1 | 6 | 6 | 0 | 0 |
-| P2 | 7 | 7 | 0 | 0 |
+| P0 | 1 | 1 | 1（运行时暴露面） | 0 |
+| P1 | 8 | 8 | 0 | 0 |
+| P2 | 11 | 11 | 0 | 0 |
+
+> v11.3.0 追加 5 条（P0-2、P1-7/8、P2-8/9），都是「看着有、其实没生效」类：
+> `fs.cpSync` 硬崩、续传根本续不上、验证脚本误杀应用、缺基线判过、断言假设词库内容。
 
 v10 已修的 6 个缺陷（CSV 公式注入、脏 payload 白屏、非 git 构建静默失败、二次暂停丢更新、空词表 NaN、日志 BOM）见
 `REFACTOR-LOG.md` 批次 E/I，本轮未回归。
@@ -23,6 +26,8 @@ v10 已修的 6 个缺陷（CSV 公式注入、脏 payload 白屏、非 git 构�
 主进程复核（无新问题）：`handle()` 统一校验 sender；`dicts:read` 用 `basename + /^[A-Za-z0-9._-]+\.json$/`；
 `dicts:downloadUpdate` 走 host 白名单 + 重定向后复检；`updateSettings` 按默认值类型校验并 clamp 透明度/缩放。
 
+| P0-2 | `local-fork/electron/main.js` `runBackup` + `scripts/release.mjs` | 备份/发布在复制目录时可能让进程直接消失（0xC0000409），`try/catch` 抓不到 | 依赖 `fs.cpSync`；该 API 在 Node 22.22.2 / Windows 上对**任意**目录都会硬崩（实测 `src`、单包目录同样崩），属运行时行为，业务代码无法兜底 | 换自写 `copyTree` / `copyTreeSync`（遍历 + `copyFileSync`），失败抛普通异常，按原逻辑「该备份项跳过并记日志」；发布脚本同样替换 |
+
 ## P1
 
 | # | 位置 | 问题 | 根因 | 处理 |
@@ -32,6 +37,9 @@ v10 已修的 6 个缺陷（CSV 公式注入、脏 payload 白屏、非 git 构�
 | P1-3 | `Setting/ToolsSetting.tsx` 番茄钟 | 原实现在 `setRemain` 的 updater 里调用 `setMode/setCount/notify`，StrictMode 下会重复执行；窗口节流后计时变慢 | 用「每秒自减」建模 | 改为「结束时间戳 + 500ms 轮询」，副作用移出 updater |
 | P1-4 | `Setting/desktop/DesktopSound.tsx` | 键音音量拖动时每个像素写一次 `enhanced-settings.json` | 滑块只有 `onChange` | `onChange` 只预览，`onValueCommit` 才落盘 |
 | P1-5 | `Setting/index.tsx` | 点「数据设置」偶发落到「高级设置」 | `Tab.Panel unmount` 触发 Panel 注销 + Headless UI 重算选中索引，与点击竞争 | 改 `LazyPanel`：首次激活后保持挂载；桌面视觉连跑 3 次稳定 |
+
+| P1-7 | `local-fork/electron/lib/dict-fetch.js`（原 `main.js`） | 「断点续传」不可能生效：中断后 `.part` 永远是空的，下次只能从 0 开始 | 先把整个响应读进内存再一次性写盘，中断时没有任何字节落盘；`Range`/`.part` 分支因此是死代码 | 改成流式写 `.part`（边收边写），中断保留已收字节；`scripts/verify-dict-fetch.mjs` 30 项覆盖（含真实 `Range`）。反证：改回「整包再写」，3b/3d/3e 立即失败 |
+| P1-8 | `scripts/verify-pages.mjs` / `verify-typing.mjs` / `verify-start-level.mjs` | 验证脚本会 `taskkill /IM "Qwerty Learner.exe"`，把用户正在用的应用一起杀掉；且固定 `sleep 800ms` 等退出，偶发连到正在关闭的旧实例 → 「等待超时（首屏出词）」 | 「先全杀再启动」的粗暴清理 + 用时间猜状态 | 只清理占用本脚本端口的进程（`ensurePortFree`），并轮询等端口释放；子进程退出改跨平台 `killChild`。`verify-typing` 连跑 4 次 18/18 |
 
 ## P2
 
@@ -45,6 +53,11 @@ v10 已修的 6 个缺陷（CSV 公式注入、脏 payload 白屏、非 git 构�
 | P2-6 | `enhance/enhance.css` | 强调色只重映射 `text/bg/border-indigo-*`，带透明度/渐变/ring 不跟随 | 用 CSS 覆盖 Tailwind 类，天然不完整 | **已修 v11.2**：indigo 调色板改为 CSS 变量，主题只改变量；桌面视觉新增强调色基线 |
 | P1-6 | `ResultScreen/correctRate.ts` | 脏数据（错词数 > 词数 / 负数）会得到负值或 >100 | 只处理了空词表，未夹取 | 结果夹取 0~100，`test:stats` + `test:fuzz` 覆盖 |
 | P2-7 | 桌面面板（词库/工具/数据） | IPC 失败产生未捕获 rejection，界面无反馈 | 只写成功分支 | 全部 catch + 行内提示；设置保存失败 toast；删除自定义词库加确认 |
+
+| P2-8 | `scripts/verify-desktop-visual.mjs` | 桌面视觉「没有基线就直接判过」，等于新平台首次运行不设防 | `UPDATE || !existsSync(file)` 把「缺基线」和「写基线」混为一谈 | 缺基线 → 失败并提示 `test:desktop-visual:update`；只有 `--update` 才写 |
+| P2-9 | `scripts/verify-typing.mjs` 用例 1 | 首屏就绪条件要求词长 ≥2，遇到单字母词（`a` / `I`）会等满 30s 后超时，报错只有 `null` | 拿词库内容当就绪条件；词是随机的 | 条件改为「有词且字母已渲染」（≥1）；多字母需求由 5d 自己换词；超时信息带上最后读到的状态 |
+| P2-10 | 发布脚本 | 打包依赖 `npx --yes @electron/asar@4.3.1` 现拉，离线/私有源会失败 | 未固定到 devDependencies | 装为 devDependency，发布时直接跑 `node_modules/@electron/asar/bin/asar.mjs`（与旧链产物逐字节一致） |
+| P2-11 | `scripts/dsh-release.ps1` / `dsh-rollback.ps1` | 发布与回滚只能在 Windows 跑，默认路径是作者本机布局 | 实现是 PowerShell 脚本 | 重写为 `scripts/release.mjs` / `rollback.mjs`（纯 Node），默认 `release/`+`backup/`；`.ps1` 降级为薄包装 |
 
 ## 结构与一致性（本轮同时收敛）
 

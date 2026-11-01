@@ -87,9 +87,10 @@ scripts/                 release / rollback / quality gate / CDP smoke / level-p
 | `npm run test:all` | **Everything in one shot**: tsc/eslint + stats unit tests + property tests + 309 core assertions + the four CDP behaviour scripts (excludes `test:visual` / `test:desktop-visual`, which need a browser / desktop build) |
 | `npm run test:stats` | 17 assertions for the result-screen accuracy/mistake-level (0/0 boundary, NaN guards, 0–100 clamp, level thresholds) |
 | `npm run test:fuzz` | Property tests: csvSafeCell / normalizeTrans / computeCorrectRate, 800 seeded random inputs each |
+| `npm run test:dict` | 30 checks for dictionary download: allow-list / resume after drop (real Range) / bad JSON / oversize / 416 / redirect / payload shape |
 | `npm run test:visual` | Web visual regression: error-book empty state + settings panel (auto-starts the dev server); add `--update-snapshots` to rebuild |
 | `npm run test:desktop-visual` | **Desktop** visual regression: display/data/dict/tools + rose-accent page at a fixed 1280×800 viewport; rebuild with `test:desktop-visual:update` |
-| `npm run quality` | PowerShell quality gate (tsc + eslint + core regression) |
+| `npm run quality` | Quality gate (tsc + eslint + stats + property tests + dict download + core regression), cross-platform |
 | `scripts/dsh-release.ps1` | Pack asar / test install / isolated smoke / dual-directory install |
 | `scripts/dsh-rollback.ps1` | Roll back to the previous build (saves a redo point first) |
 

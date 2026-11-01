@@ -4,17 +4,25 @@
 //       展示远端词典数据的小窗口。该页已完成远端字段转义 + nonce CSP（v9.4），这里再做一层最小权限。
 // 页面自身需要的 navigator.clipboard.writeText 由主进程权限白名单（clipboard-sanitized-write）放行，不经过本文件。
 // 注意：新增/删除该页能力时必须同步本文件，避免 clipboard.html 调不到 API。
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer } = require('electron')
 
-let APP_VERSION = 'unknown';
+let APP_VERSION = 'unknown'
 try {
-  const v = ipcRenderer.sendSync('app:version-sync');
-  if (v) APP_VERSION = String(v);
-} catch { /* 保持 unknown */ }
+  const v = ipcRenderer.sendSync('app:version-sync')
+  if (v) APP_VERSION = String(v)
+} catch {
+  /* 保持 unknown */
+}
 
 function onClipboardWord(cb) {
-  if (typeof cb !== 'function') return;
-  ipcRenderer.on('clipboard:word', (_e, word) => { try { cb(word); } catch { /* ignore */ } });
+  if (typeof cb !== 'function') return
+  ipcRenderer.on('clipboard:word', (_e, word) => {
+    try {
+      cb(word)
+    } catch {
+      /* ignore */
+    }
+  })
 }
 
 contextBridge.exposeInMainWorld('qwertyEnhance', {
@@ -26,4 +34,4 @@ contextBridge.exposeInMainWorld('qwertyEnhance', {
   onClipboardWord,
   // 关闭小窗（主进程校验 sender 必须是 clipboardWin）
   closeClipboard: () => ipcRenderer.invoke('clipboard:close'),
-});
+})

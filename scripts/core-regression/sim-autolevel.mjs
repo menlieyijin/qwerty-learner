@@ -122,7 +122,10 @@ async function putMastered(core, words, over = {}) {
   for (const w of words) await core.db.memoryRecords.put(recordOf(core, w, D, over))
 }
 async function putSeenOnly(core, words) {
-  for (const w of words) await core.db.memoryRecords.put(recordOf(core, w, D, { stage: 0, interval: 0, correct: 0, wrong: 0, attempts: 0, lastResult: '', due: 0, lastSeen: 0 }))
+  for (const w of words)
+    await core.db.memoryRecords.put(
+      recordOf(core, w, D, { stage: 0, interval: 0, correct: 0, wrong: 0, attempts: 0, lastResult: '', due: 0, lastSeen: 0 }),
+    )
 }
 
 /** 取词采样：按名字前缀归类 new/due/review/retry/null */
@@ -152,10 +155,28 @@ async function samplePicks(core, n, seed, classify) {
 async function b00() {
   const core = await prep({})
   suite.check('B 掌握度', 'B-00.null', '无记录不算掌握', false, core.isMastered(null))
-  suite.check('B 掌握度', 'B-00.firstCorrect', 'correct=1 新词首对不算掌握', false, core.isMastered({ correct: 1, stage: 3, lastResult: 'ok' }))
+  suite.check(
+    'B 掌握度',
+    'B-00.firstCorrect',
+    'correct=1 新词首对不算掌握',
+    false,
+    core.isMastered({ correct: 1, stage: 3, lastResult: 'ok' }),
+  )
   suite.check('B 掌握度', 'B-00.lowStage', 'stage<2 不算掌握', false, core.isMastered({ correct: 2, stage: 1, lastResult: 'ok' }))
-  suite.check('B 掌握度', 'B-00.lastWrong', 'lastResult=wrong 不算掌握', false, core.isMastered({ correct: 3, stage: 3, lastResult: 'wrong' }))
-  suite.check('B 掌握度', 'B-00.pass', 'correct>=2 && stage>=2 && 非最近错 → 掌握', true, core.isMastered({ correct: 2, stage: 2, lastResult: 'ok' }))
+  suite.check(
+    'B 掌握度',
+    'B-00.lastWrong',
+    'lastResult=wrong 不算掌握',
+    false,
+    core.isMastered({ correct: 3, stage: 3, lastResult: 'wrong' }),
+  )
+  suite.check(
+    'B 掌握度',
+    'B-00.pass',
+    'correct>=2 && stage>=2 && 非最近错 → 掌握',
+    true,
+    core.isMastered({ correct: 2, stage: 2, lastResult: 'ok' }),
+  )
   suite.check('B 掌握度', 'B-00.legacy', '迁移旧记录（无 lastResult）按最近无错处理', true, core.isMastered({ correct: 2, stage: 3 }))
 }
 
@@ -304,9 +325,16 @@ async function b07a() {
   const core2 = await prep({ [L1]: words }) // 注意：prep 会 resetStorage，故重建 records
   await putSeenOnly(core2, words)
   await core2.resolveCurrentLevel(await recs(core2))
-  suite.check('B 同名', 'B-07a.migrateNote', '【口径差异备注】无状态迁移反推会把“全 seen 未掌握”级别跳过（旧逻辑）', L2, core2.getPersistedLevelId(), {
-    note: '设计 B-07a 要求不得整级跳过；源码 reevaluateLevel(migrate=true) 以 unseen>0 为停止条件，全 seen 会推进到下一级。已上报 Lead，未改源码。',
-  })
+  suite.check(
+    'B 同名',
+    'B-07a.migrateNote',
+    '【口径差异备注】无状态迁移反推会把“全 seen 未掌握”级别跳过（旧逻辑）',
+    L2,
+    core2.getPersistedLevelId(),
+    {
+      note: '设计 B-07a 要求不得整级跳过；源码 reevaluateLevel(migrate=true) 以 unseen>0 为停止条件，全 seen 会推进到下一级。已上报 Lead，未改源码。',
+    },
+  )
 }
 
 // ===========================================================================
@@ -330,7 +358,13 @@ async function b07b() {
     const pk = await core.pickDynamicWord({ records, recent: [], mode: 'auto' })
     if (pk && !pk.refresh) picked.push(pk.word.name)
   }
-  suite.ok('B 同名', 'B-07b.noDupNew', '新词只来自下一级，不重复出已掌握词', picked.length > 0 && picked.every((n) => !words.includes(n)), picked.slice(0, 10))
+  suite.ok(
+    'B 同名',
+    'B-07b.noDupNew',
+    '新词只来自下一级，不重复出已掌握词',
+    picked.length > 0 && picked.every((n) => !words.includes(n)),
+    picked.slice(0, 10),
+  )
 }
 
 // ===========================================================================
@@ -360,8 +394,20 @@ async function b08() {
       await core.db.memoryRecords.put(recordOf(core, `rf${i}`, 'simReview', { stage: 3, due: T0 + 5 * DAY }))
     }
     // 配置值断言
-    suite.check('B 配比', `B-08.cfg${dueCount}`, `getNewRatio(${dueCount})=${expect[dueCount].newRatio}`, expect[dueCount].newRatio, core.getNewRatio(dueCount))
-    suite.check('B 配比', `B-08.rfc${dueCount}`, `getRefreshChance(${dueCount})=${expect[dueCount].refresh}`, expect[dueCount].refresh, core.getRefreshChance(dueCount))
+    suite.check(
+      'B 配比',
+      `B-08.cfg${dueCount}`,
+      `getNewRatio(${dueCount})=${expect[dueCount].newRatio}`,
+      expect[dueCount].newRatio,
+      core.getNewRatio(dueCount),
+    )
+    suite.check(
+      'B 配比',
+      `B-08.rfc${dueCount}`,
+      `getRefreshChance(${dueCount})=${expect[dueCount].refresh}`,
+      expect[dueCount].refresh,
+      core.getRefreshChance(dueCount),
+    )
 
     const { counts } = await samplePicks(core, 10000, SEED + dueCount, (name) => {
       if (name.startsWith('nw')) return 'new'
@@ -386,7 +432,13 @@ async function b08() {
   suite.ok('B 配比', 'B-08.due300New', 'due=300 时新词占比 ≤5%（实测 ≈2%）', measured[300].newP <= 0.05, measured[300].newP)
   suite.ok('B 配比', 'B-08.due0New', 'due=0 时新词占比 ≥80%（实测 ≈88%）', measured[0].newP >= 0.8, measured[0].newP)
   const seq = tiers.map((t) => measured[t].newP)
-  suite.ok('B 配比', 'B-08.monotonic', '新词比例随积压单调不增', seq.every((v, i) => i === 0 || v <= seq[i - 1] + 0.01), seq.map((v) => +(v * 100).toFixed(1)))
+  suite.ok(
+    'B 配比',
+    'B-08.monotonic',
+    '新词比例随积压单调不增',
+    seq.every((v, i) => i === 0 || v <= seq[i - 1] + 0.01),
+    seq.map((v) => +(v * 100).toFixed(1)),
+  )
 }
 
 // ===========================================================================
@@ -538,7 +590,13 @@ async function b13() {
   suite.check('B leech', 'B-13.done', '19/19 mastered → done', true, p.done)
   await resolve(core)
   suite.check('B leech', 'B-13.levelUp', 'suspended 词不阻塞升级', L2, core.getPersistedLevelId())
-  suite.ok('B leech', 'B-13.suspendedKept', 'suspended 词仍在待攻克列表', core.getSuspendedKeys().includes(core.memoryKey(D, words[19])), core.getSuspendedKeys())
+  suite.ok(
+    'B leech',
+    'B-13.suspendedKept',
+    'suspended 词仍在待攻克列表',
+    core.getSuspendedKeys().includes(core.memoryKey(D, words[19])),
+    core.getSuspendedKeys(),
+  )
 }
 
 // ===========================================================================
@@ -559,13 +617,31 @@ async function b14() {
     const pk = await core.pickDynamicWord({ records, recent: [], mode: 'auto' })
     if (pk && !pk.refresh) picked.add(pk.word.name)
   }
-  suite.ok('B 新词顺序', 'B-14.first20Only', '新词只从文件顺序前 20 个中随机', picked.size > 0 && Array.from(picked).every((n) => first20.has(n)), Array.from(picked))
-  suite.ok('B 新词顺序', 'B-14.noBatchJump', '不会跳到第 21-50 个', !Array.from(picked).some((n) => words.slice(20).includes(n)), Array.from(picked).filter((n) => !first20.has(n)))
+  suite.ok(
+    'B 新词顺序',
+    'B-14.first20Only',
+    '新词只从文件顺序前 20 个中随机',
+    picked.size > 0 && Array.from(picked).every((n) => first20.has(n)),
+    Array.from(picked),
+  )
+  suite.ok(
+    'B 新词顺序',
+    'B-14.noBatchJump',
+    '不会跳到第 21-50 个',
+    !Array.from(picked).some((n) => words.slice(20).includes(n)),
+    Array.from(picked).filter((n) => !first20.has(n)),
+  )
   // 跨词库同词去重：ord0 已有其他词库记录 → 不再是新词
   await core.db.memoryRecords.put(recordOf(core, 'ord0', 'otherDict'))
   const p2 = await progress(core)
   suite.check('B 新词顺序', 'B-14.dedup', '跨词库同名词不再是新词', 49, p2.newWords.length)
-  suite.ok('B 新词顺序', 'B-14.dedupList', 'newWords 不含 ord0', !p2.newWords.some((w) => w.name === 'ord0'), p2.newWords.map((w) => w.name).slice(0, 5))
+  suite.ok(
+    'B 新词顺序',
+    'B-14.dedupList',
+    'newWords 不含 ord0',
+    !p2.newWords.some((w) => w.name === 'ord0'),
+    p2.newWords.map((w) => w.name).slice(0, 5),
+  )
 }
 
 // ===========================================================================
@@ -588,7 +664,13 @@ async function b15() {
   suite.check('B 加载失败', 'B-15.progressError', '直接计算失败级别也标 error', 'load-failed', pFail.error)
   // 取词不应崩溃：无新词可用时应返回 null 或回顾，而不是新词
   const pk = await pickOne(core)
-  suite.ok('B 加载失败', 'B-15.pickNoCrash', '加载失败时取词不崩溃且不出新词', pk === null || pk.refresh === true, pk && { name: pk.word.name, refresh: pk.refresh, hint: pk.hint })
+  suite.ok(
+    'B 加载失败',
+    'B-15.pickNoCrash',
+    '加载失败时取词不崩溃且不出新词',
+    pk === null || pk.refresh === true,
+    pk && { name: pk.word.name, refresh: pk.refresh, hint: pk.hint },
+  )
   console.error = origError
   // 去掉失败后（模拟下次重试成功）可正常推进
   const core2 = await prep({ [L1]: words })
@@ -615,7 +697,13 @@ async function b16() {
   core.clearSkip(D, 'p1w0')
   p = await progress(core)
   suite.check('B 删除', 'B-16.cleared', '删除后 suspended=0 / required=20', [0, 20], [p.suspended, p.required])
-  suite.check('B 删除', 'B-16.reappearsNew', '该词重新回到新词供给', true, p.newWords.some((w) => w.name === 'p1w0'))
+  suite.check(
+    'B 删除',
+    'B-16.reappearsNew',
+    '该词重新回到新词供给',
+    true,
+    p.newWords.some((w) => w.name === 'p1w0'),
+  )
   suite.check('B 删除', 'B-16.noSkipResidue', 'skip 计数无残留', undefined, core.loadAutoLevelState().skipped[core.memoryKey(D, 'p1w0')])
 }
 
@@ -634,7 +722,13 @@ async function b18() {
     await core.db.memoryRecords.put(recordOf(core, 'dup', dict, { stage: 3, due: T0 - MINUTE }))
   }
   const p = await progress(core)
-  suite.check('B due key', 'B-18.knownByWord', 'known 按 word：跨词库同名 dup 不算新词', false, p.newWords.some((w) => w.name === 'dup'))
+  suite.check(
+    'B due key',
+    'B-18.knownByWord',
+    'known 按 word：跨词库同名 dup 不算新词',
+    false,
+    p.newWords.some((w) => w.name === 'dup'),
+  )
   const records = await recs(core)
   seedRandom(SEED + 11)
   const dicts = new Set()
@@ -646,7 +740,13 @@ async function b18() {
       dicts.add(pk.dict)
     }
   }
-  suite.ok('B due key', 'B-18.dueByKey', 'due 按 key：同词两个词库都可能被抽到', dicts.has('dictA') && dicts.has('dictB'), Array.from(dicts))
+  suite.ok(
+    'B due key',
+    'B-18.dueByKey',
+    'due 按 key：同词两个词库都可能被抽到',
+    dicts.has('dictA') && dicts.has('dictB'),
+    Array.from(dicts),
+  )
   suite.ok('B due key', 'B-18.duePicked', '到期 dup 能被抽出（due 池按 key 含 2 条）', duePicks > 0, duePicks)
   // 备注：cached.due（展示用）按 word 去重为 1；取词 due 池按 key 为 2。差异已在报告中标注。
   const cached = await core.getCachedInfo(await recs(core))
@@ -669,15 +769,7 @@ const MIX_EXTRA_DUE = 150 // 额外到期记录：due>100 → refreshChance=0、
  * 下一级 MIX_NEXT 个未学词，另有 MIX_EXTRA_DUE 条到期记录撑住 due 池。
  */
 async function prepMix(opts = {}) {
-  const {
-    level = L1,
-    nextLevel = L2,
-    mastered = 80,
-    seenRest = true,
-    extraDue = MIX_EXTRA_DUE,
-    extraRefresh = 20,
-    failNext = false,
-  } = opts
+  const { level = L1, nextLevel = L2, mastered = 80, seenRest = true, extraDue = MIX_EXTRA_DUE, extraRefresh = 20, failNext = false } = opts
   const cur = range(MIX_CUR, 'p1w')
   const nxt = range(MIX_NEXT, 'p2w')
   const cfg = { [level]: cur, [nextLevel]: nxt }
@@ -739,7 +831,13 @@ async function b19() {
   // 90% 已高于毕业线 0.85：真实流程必已升级，此点只能做纯函数断言（不可采样）
   suite.near('B 掺入', 'B-19.m90', 'm=90% → 0.30（封顶；已过毕业线，仅纯函数口径）', 0.3, core.getMixRatio(90, 100), 0.02)
   const seq = [69, 70, 80, 85, 95].map((m) => core.getMixRatio(m, 100))
-  suite.ok('B 掺入', 'B-19.monotonic', '69/70/80/85/95 单调不减', seq.every((v, i) => i === 0 || v >= seq[i - 1]), seq)
+  suite.ok(
+    'B 掺入',
+    'B-19.monotonic',
+    '69/70/80/85/95 单调不减',
+    seq.every((v, i) => i === 0 || v >= seq[i - 1]),
+    seq,
+  )
   // v9.11 自洽：概率封顶 == 窗口封顶，不允许两套上限
   suite.check(
     'B 掺入',
@@ -771,13 +869,25 @@ async function b19() {
     )
     suite.check('B 掺入', `B-19.pickNull${m}`, `m=${m}% 采样无 null`, 0, r.nulls)
   }
-  suite.ok('B 掺入', 'B-19.pickMonotonic', '实际落点占比随掌握度单调不减', sampled.every((v, i) => i === 0 || v[1] >= sampled[i - 1][1] - 0.01), sampled.map((v) => [v[0], +(v[1] * 100).toFixed(1)]))
+  suite.ok(
+    'B 掺入',
+    'B-19.pickMonotonic',
+    '实际落点占比随掌握度单调不减',
+    sampled.every((v, i) => i === 0 || v[1] >= sampled[i - 1][1] - 0.01),
+    sampled.map((v) => [v[0], +(v[1] * 100).toFixed(1)]),
+  )
 
   // 达到毕业线（85%）后：取词前先升级，本级不再掺入（毕业与掺入封顶是同一点）
   const { core: grad } = await prepMix({ mastered: 85 })
   const g = await grad.pickDynamicWord({ records: await recs(grad), recent: [], mode: 'auto', previewBudget: 4 })
   suite.check('B 掺入', 'B-19.graduateAt85', 'm=85% 已达毕业线 → 取词即升级到下一级（不再掺入本级）', L2, grad.getPersistedLevelId())
-  suite.check('B 掺入', 'B-19.graduateNoPreview', '升级后的取词不是掺入词（level 已是下一级）', [L2, false], [g && g.level && g.level.id, !!(g && g.preview)])
+  suite.check(
+    'B 掺入',
+    'B-19.graduateNoPreview',
+    '升级后的取词不是掺入词（level 已是下一级）',
+    [L2, false],
+    [g && g.level && g.level.id, !!(g && g.preview)],
+  )
 
   // 末级 cet6：没有下一级 → 永远不掺入
   const lastLevel = LEARNING_PATH[LEARNING_PATH.length - 1].id
@@ -841,11 +951,15 @@ async function b20() {
     freeMax > cap && cappedMax <= cap,
     { cappedMax, freeMax },
   )
-  suite.ok('B 掺入', 'B-20.throttled', `窗口满额时确实会削额度（400 次里 budget 被削到 0 共 ${throttled} 次）`, throttled > 0, { throttled })
+  suite.ok('B 掺入', 'B-20.throttled', `窗口满额时确实会削额度（400 次里 budget 被削到 0 共 ${throttled} 次）`, throttled > 0, {
+    throttled,
+  })
   suite.ok(
     'B 掺入',
     'B-20.longRunRate',
-    `长期掺入率不高于概率上限（实测 ${(cappedRate * 100).toFixed(1)}% ≤ getMixRatio(84%)=${(core.getMixRatio(84, MIX_CUR) * 100).toFixed(1)}%+2%）`,
+    `长期掺入率不高于概率上限（实测 ${(cappedRate * 100).toFixed(1)}% ≤ getMixRatio(84%)=${(core.getMixRatio(84, MIX_CUR) * 100).toFixed(
+      1,
+    )}%+2%）`,
     cappedRate <= core.getMixRatio(84, MIX_CUR) + 0.02,
     { cappedRate, cap: core.getMixRatio(84, MIX_CUR) },
   )
@@ -886,15 +1000,33 @@ async function b21() {
     if (p && p.preview) pick = p
   }
   suite.ok('B 掺入', 'B-21.injected', '本级无新词且掌握 85% → 能注入下一级词', !!pick, pick && pick.word.name)
-  suite.ok('B 掺入', 'B-21.nextLevelWord', '注入词来自下一级词表（p2w*）', !!pick && pick.word.name.startsWith('p2w'), pick && pick.word.name)
+  suite.ok(
+    'B 掺入',
+    'B-21.nextLevelWord',
+    '注入词来自下一级词表（p2w*）',
+    !!pick && pick.word.name.startsWith('p2w'),
+    pick && pick.word.name,
+  )
   suite.check('B 掺入', 'B-21.noLevelJump', '注入词的 level 信息仍是本级（不跳级）', L1, pick && pick.level && pick.level.id)
-  suite.check('B 掺入', 'B-21.notRefresh', '注入词不算回顾/重练（refresh=false、无 hint）', [false, undefined], [pick && pick.refresh, pick && pick.hint])
+  suite.check(
+    'B 掺入',
+    'B-21.notRefresh',
+    '注入词不算回顾/重练（refresh=false、无 hint）',
+    [false, undefined],
+    [pick && pick.refresh, pick && pick.hint],
+  )
 
   // 反向进度：答完后本级 required/mastered 不变，下一级 seen+1
   await answer(core, pick.dict, pick.word.name)
   const after1 = await progress(core, L1)
   const after2 = await progress(core, L2)
-  suite.check('B 掺入', 'B-21.localUnchanged', '注入词答题后本级 required/mastered 不变', [before1.required, before1.mastered], [after1.required, after1.mastered])
+  suite.check(
+    'B 掺入',
+    'B-21.localUnchanged',
+    '注入词答题后本级 required/mastered 不变',
+    [before1.required, before1.mastered],
+    [after1.required, after1.mastered],
+  )
   suite.check('B 掺入', 'B-21.localDone', '注入词不影响本级 done（仍为 false）', false, after1.done)
   suite.check('B 掺入', 'B-21.nextSeen', '下一级 seen+1', before2.seen + 1, after2.seen)
   suite.check('B 掺入', 'B-21.nextMastered', '下一级 mastered 未因单次答对而算掌握', before2.mastered, after2.mastered)
@@ -915,7 +1047,13 @@ async function b21() {
     const p = await core.pickDynamicWord({ records: await recs(core), recent: [pick.word.name], mode: 'auto', previewBudget: 4 })
     if (p && p.preview) second = p
   }
-  suite.ok('B 掺入', 'B-21.recentExcluded', 'recent 窗口内的词不会被注入', !!second && second.word.name !== pick.word.name, second && second.word.name)
+  suite.ok(
+    'B 掺入',
+    'B-21.recentExcluded',
+    'recent 窗口内的词不会被注入',
+    !!second && second.word.name !== pick.word.name,
+    second && second.word.name,
+  )
 }
 
 // B-22 边界：下一级加载失败 / 下一级无新词 → 不注入且不返回 null
@@ -946,12 +1084,25 @@ async function b23() {
     const withBudget = await sampleMix(core, 3000, SEED + 230 + dueCount, 4)
     const noBudget = await sampleMix(core, 3000, SEED + 230 + dueCount, 0)
     suite.check('B 掺入', `B-23.noMix.${dueCount}`, `due=${dueCount} 时 3000 次取词 0 掺入`, 0, withBudget.previews)
-    suite.ok('B 掺入', `B-23.identical.${dueCount}`, `due=${dueCount} 时 budget=4 与 budget=0 取词序列完全一致（阈值下不掷骰）`, JSON.stringify(withBudget.seq) === JSON.stringify(noBudget.seq), {
-      diff: withBudget.seq.findIndex((n, i) => n !== noBudget.seq[i]),
-    })
+    suite.ok(
+      'B 掺入',
+      `B-23.identical.${dueCount}`,
+      `due=${dueCount} 时 budget=4 与 budget=0 取词序列完全一致（阈值下不掷骰）`,
+      JSON.stringify(withBudget.seq) === JSON.stringify(noBudget.seq),
+      {
+        diff: withBudget.seq.findIndex((n, i) => n !== noBudget.seq[i]),
+      },
+    )
     const expNew = (1 - core.getRefreshChance(dueCount)) * core.getNewRatio(dueCount)
     const newPicks = withBudget.seq.filter((n) => n && n.startsWith('p1w')).length / withBudget.seq.length
-    suite.near('B 掺入', `B-23.newRatio.${dueCount}`, `due=${dueCount} 新词占比 ≈ ${(expNew * 100).toFixed(1)}%（与 getNewRatio 期望一致）`, expNew, newPicks, 0.03)
+    suite.near(
+      'B 掺入',
+      `B-23.newRatio.${dueCount}`,
+      `due=${dueCount} 新词占比 ≈ ${(expNew * 100).toFixed(1)}%（与 getNewRatio 期望一致）`,
+      expNew,
+      newPicks,
+      0.03,
+    )
   }
 }
 
@@ -961,7 +1112,13 @@ for (const run of scenarios) {
   try {
     await run()
   } catch (e) {
-    suite.fail('SCENARIO', `${run.name}.exception`, `场景抛错：${e && e.message}`, 'no throw', String(e && e.stack ? e.stack.split('\n').slice(0, 5).join(' | ') : e))
+    suite.fail(
+      'SCENARIO',
+      `${run.name}.exception`,
+      `场景抛错：${e && e.message}`,
+      'no throw',
+      String(e && e.stack ? e.stack.split('\n').slice(0, 5).join(' | ') : e),
+    )
   }
 }
 

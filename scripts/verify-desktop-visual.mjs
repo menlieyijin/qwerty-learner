@@ -110,13 +110,20 @@ async function waitUntil(expression, timeoutMs = 15000) {
   return false
 }
 
+const missing = []
 function compare(name, actualBuf) {
   const file = join(BASELINE_DIR, `${name}-${PLATFORM}.png`)
-  if (UPDATE || !existsSync(file)) {
+  if (UPDATE) {
     mkdirSync(dirname(file), { recursive: true })
     writeFileSync(file, actualBuf)
     console.log(`BASE  ${name}（已写入 ${file}）`)
     return true
+  }
+  if (!existsSync(file)) {
+    // 没有基线就直接判过等于「首次不设防」：新平台/新机器必须先显式生成一次。
+    console.log(`FAIL  ${name} 缺少 ${PLATFORM} 基线：${file}`)
+    missing.push(`${name}-${PLATFORM}.png`)
+    return false
   }
   const base = PNG.sync.read(readFileSync(file))
   const cur = PNG.sync.read(actualBuf)
@@ -208,6 +215,11 @@ async function main() {
   }
 
   console.log(ok ? 'DESKTOP_VISUAL_PASS' : 'DESKTOP_VISUAL_FAIL')
+  if (missing.length) {
+    console.log(`\n缺少 ${missing.length} 个基线（${missing.join(', ')}）。首次在该平台运行请执行：`)
+    console.log('  npm run test:desktop-visual:update')
+    console.log('生成后请连同 tests/desktop-visual/ 一起提交。')
+  }
   process.exitCode = ok ? 0 : 1
 }
 

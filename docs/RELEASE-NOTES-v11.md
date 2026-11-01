@@ -135,3 +135,58 @@
 
 tsc + eslint 通过；`test:all` 95 条；`test:core` 309/309；`test:visual` 2/2；
 `test:desktop-visual` 5/5；冒烟 13/13；双目录安装 asar `F418D1EB…` 一致。
+
+---
+
+# v11.3.0（发布链跨平台 + 四个「看着有、其实没生效」）
+
+## 1. 发布/回滚不再绑定 Windows
+
+| 之前 | 现在 |
+| --- | --- |
+| `scripts/dsh-release.ps1`（346 行脚本语言实现），默认路径 `D:\整理\...` | `scripts/release.mjs`（纯 Node），默认 `release/` + `backup/`（已 gitignore） |
+| 回滚同理 | `scripts/rollback.mjs`，`npm run rollback` / `rollback:list` |
+| 打包用 `npx --yes @electron/asar@4.3.1` 现拉 | `@electron/asar` 进 devDependencies，离线可用 |
+| `npm run quality` 调 .ps1 | 纯 npm 链：tsc + eslint + 单测 + 属性测试 + 词库下载 + 核心回归 |
+
+`.ps1` 保留为薄包装（参数原样转发），只是兼容，不再承载逻辑。
+**等价性验证**：新版脚本对 v11.2.0 的构建产物打包出 `F418D1EB…`，与旧发布链**逐字节一致**。
+
+## 2. `fs.cpSync` 会让进程直接消失
+
+`fs.cpSync` 在本机 Node 22.22.2 / Windows 上对**任意**目录都会以 `0xC0000409` 终止进程——
+不是抛异常，`try/catch` 抓不到。受影响的真实路径是**主进程自动备份**（复制 IndexedDB / Local Storage）。
+两处都换成了自写遍历复制（`copyTree` / `copyTreeSync`），失败退回普通异常，按原逻辑「该项跳过并记日志」。
+
+## 3. 词库「断点续传」以前根本续不上
+
+原实现先把整个响应读进内存，再一次性写 `.part`；连接中断时没有任何字节落盘，
+所以下次只能从 0 开始 —— `.part` 和 `Range` 分支是死代码。
+现在改成**边收边写**，中断保留已收字节，下次带 `Range` 续传。
+新增 `scripts/verify-dict-fetch.mjs`（30 项，本地 HTTP 服务真发 `Range`）：
+断流后 `.part` 保留、续传请求头正确、文件完整。
+**反证**：把实现改回「整包再写」，3b/3d/3e 三条立刻失败（`partialSize: 0`、`lastRange: ""`）。
+
+## 4. 验证脚本不再误杀你的应用
+
+三个 CDP 脚本原来按进程名强杀全部实例——把用户正在用的应用一起杀掉；
+再用固定 `sleep 800ms` 等退出，偶发连到正在关闭的旧实例（`等待超时（首屏出词）`）。
+现在只清理**占用本脚本端口**的进程并轮询等端口释放；子进程退出改跨平台 `killChild`。
+另外首屏就绪条件原来要求词长 ≥2，遇到单字母词（`a` / `I`）会白等 30s，已改为「有词且字母已渲染」。
+
+## 5. 视觉基线缺文件不再算通过
+
+`test:desktop-visual` 原来「没有基线就写一份并判过」，等于新平台首次运行不设防。
+现在缺基线 → 失败，并提示 `test:desktop-visual:update`。
+
+## 本版验证
+
+| 检查 | 结果 |
+| --- | --- |
+| tsc + eslint | 通过 |
+| `test:all` | **125 条**（stats 17 / fuzz 5 / dict 30 / start-level 21 / pages 20 / typing 18 / csv 14） |
+| `test:core` | 309/309 + determinism |
+| `test:visual` | 2/2（自动起 dev server） |
+| `test:desktop-visual` | 5/5（view/data/dict/tools 0.000%，accent 0.004%） |
+| 隔离冒烟 | 13/13（含 `backupWorks`：走新的 `copyTreeSync`） |
+| 双目录安装 | asar `1D5502ED…` 两目录一致 |

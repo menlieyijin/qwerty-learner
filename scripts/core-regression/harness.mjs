@@ -158,7 +158,10 @@ export function setDictFile(file, names, { fail = false } = {}) {
     return
   }
   lexicon.failFiles.delete(file)
-  lexicon.files.set(file, names.map((n) => makeWord(n)))
+  lexicon.files.set(
+    file,
+    names.map((n) => makeWord(n)),
+  )
 }
 
 /**
@@ -171,10 +174,7 @@ export async function configureLevels(levelWords = {}) {
   for (let i = 0; i < LEARNING_PATH.length; i++) {
     const level = LEARNING_PATH[i]
     const configured = levelWords[level.id]
-    const names =
-      Array.isArray(configured) && configured.length
-        ? configured
-        : Array.from({ length: 20 }, (_, j) => `l${i}w${j}`)
+    const names = Array.isArray(configured) && configured.length ? configured : Array.from({ length: 20 }, (_, j) => `l${i}w${j}`)
     level.files.forEach((file, idx) => {
       const isFail = failSet.has(level.id) || failSet.has(file)
       setDictFile(file, isFail ? [] : idx === 0 ? names : [], { fail: isFail })
@@ -368,7 +368,7 @@ export function recSnap(rec, now) {
     lastResult: rec.lastResult,
     ease: Math.round(rec.ease * 100) / 100,
     due: rec.due,
-    dueFromNowMin: Math.round((rec.due - now) / MINUTE * 1000) / 1000,
+    dueFromNowMin: Math.round(((rec.due - now) / MINUTE) * 1000) / 1000,
     dueLocalMidnight: localMidnight(rec.due) === rec.due,
   }
 }

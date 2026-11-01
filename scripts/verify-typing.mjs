@@ -11,6 +11,7 @@
 //
 // 用法：node scripts/verify-typing.mjs [--exe <path>] [--port 9477]
 // 退出码：0 全过；1 有失败；2 环境问题。会强制结束正在运行的 Qwerty Learner。
+import { ensurePortFree, killChild } from './lib/app-files.mjs'
 import { resolveDesktopExe } from './lib/desktop-app.mjs'
 import { execFileSync, spawn } from 'node:child_process'
 import { mkdtempSync, rmSync } from 'node:fs'
@@ -61,7 +62,7 @@ function finish(code) {
     /* ignore */
   }
   try {
-    if (child) execFileSync('taskkill', ['/PID', String(child.pid), '/T', '/F'], { stdio: 'ignore' })
+    killChild(child)
   } catch {
     /* 已退出 */
   }
@@ -187,11 +188,11 @@ const chapterRows = () =>
   }))()`)
 
 async function main() {
-  try {
-    execFileSync('taskkill', ['/IM', 'Qwerty Learner.exe', '/F'], { stdio: 'ignore' })
-    await wait(800)
-  } catch {
-    /* 没有在运行 */
+  // 只清理占用本脚本端口的旧实例（不再全量 taskkill，避免杀掉用户正在用的应用），
+  // 并等端口真正释放后再启动；固定 sleep 会在 Windows 上偶发连到正在退出的旧实例。
+  if (!(await ensurePortFree(PORT))) {
+    console.error(`VERIFY_ERROR: 端口 ${PORT} 仍被占用，无法开始`)
+    return finish(2)
   }
 
   profileDir = mkdtempSync(join(tmpdir(), 'qz-verify-typing-'))
@@ -226,15 +227,24 @@ async function main() {
   await send('Runtime.enable')
 
   // 1) 首屏有词
+  // 只要求「有词、字母已渲染」。不能要求 >=2：默认词库里存在单字母词（如 "I"、"a"），
+  // 用词长当就绪条件会偶发等满 30s 后超时（现象是「等待超时（首屏出词）」且没有任何错误）。
+  // 需要多字母的场景（5d）在各自的用例里显式换词。
+  let lastState = null
   const first = await until(
     async () => {
       const s = await readWordState()
-      return s.word.length >= 2 && s.spans >= 2 ? s : null
+      lastState = s
+      return s.word.length >= 1 && s.spans >= 1 ? s : null
     },
     30000,
     '首屏出词',
-  )
-  check('1 首屏出现当前词', first.word.length >= 2, { word: first.word, letters: first.spans })
+  ).catch((e) => {
+    // 超时时把最后一次读到的状态带上，否则只有一句「null」，没法判断是没渲染还是条件不满足
+    throw new Error(`${e.message}；最后状态 ${JSON.stringify(lastState)}`)
+  })
+  check('1 首屏出现当前词', first.word.length >= 1, { word: first.word, letters: first.spans })
+  if (first.word.length < 2) console.log(`NOTE  首词是单字母词「${first.word}」，相关用例按词长自适应`)
 
   // 关闭「首次起点弹窗」干扰：如果存在就选“以后再说”，避免遮挡
   const picker = await ev(`!!document.querySelector('[data-testid="start-level-cet6"]')`)

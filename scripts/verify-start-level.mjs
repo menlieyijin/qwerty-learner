@@ -13,6 +13,7 @@
 // 退出码：0 全部通过；1 有断言失败；2 环境问题（连不上 / 启动失败 / 超时）。
 //
 // 注意：会强制结束正在运行的 Qwerty Learner（单实例锁会让新进程直接退出）。请先保存正在练的内容。
+import { ensurePortFree, killChild } from './lib/app-files.mjs'
 import { resolveDesktopExe } from './lib/desktop-app.mjs'
 import { spawn } from 'node:child_process'
 import { execFileSync } from 'node:child_process'
@@ -68,7 +69,7 @@ function finish(code) {
     /* ignore */
   }
   try {
-    if (child) execFileSync('taskkill', ['/PID', String(child.pid), '/T', '/F'], { stdio: 'ignore' })
+    killChild(child)
   } catch {
     /* 已经退出 */
   }
@@ -173,12 +174,11 @@ const reload = async () => {
 
 // --- 主流程 ---------------------------------------------------------------
 async function main() {
-  // 单实例锁：先结束所有正在运行的实例，否则新进程会把参数交给旧进程后直接退出
-  try {
-    execFileSync('taskkill', ['/IM', 'Qwerty Learner.exe', '/F'], { stdio: 'ignore' })
-    await wait(800)
-  } catch {
-    /* 没有在运行 */
+  // 只清理占用本脚本端口的旧实例（不再全量 taskkill，避免杀掉用户正在用的应用），
+  // 并等端口真正释放后再启动；固定 sleep 会在 Windows 上偶发连到正在退出的旧实例。
+  if (!(await ensurePortFree(PORT))) {
+    console.error(`VERIFY_ERROR: 端口 ${PORT} 仍被占用，无法开始`)
+    return finish(2)
   }
 
   profileDir = mkdtempSync(join(tmpdir(), 'qz-verify-'))

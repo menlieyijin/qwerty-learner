@@ -1,7 +1,7 @@
 // 跨平台解析桌面程序路径。
 // 优先级：显式参数 > QZ_VERIFY_EXE > QZ_TEST_APP_DIR > 仓库内常见产物目录 > 作者旧默认值。
 // 找不到时给出可执行的提示，而不是抛一个 Windows 路径错误。
-import { existsSync } from 'node:fs'
+import { existsSync, statSync } from 'node:fs'
 import path from 'node:path'
 
 const APP_NAME = 'Qwerty Learner'
@@ -23,9 +23,21 @@ export function resolveDesktopExe(explicit) {
   if (process.env.QZ_TEST_APP_DIR) dirs.push(process.env.QZ_TEST_APP_DIR)
   dirs.push(path.resolve('release', 'app'), path.resolve('release'), path.resolve('local-fork', 'dist'))
 
+  // 显式参数可能是可执行文件，也可能是安装目录 —— 目录要展开成平台对应的可执行文件，
+  // 否则会把目录当成程序去 spawn（ENOENT）。
+  const isDir = (p) => {
+    try {
+      return statSync(p).isDirectory()
+    } catch {
+      return false
+    }
+  }
   const candidates = []
-  if (explicit) candidates.push(explicit)
-  if (process.env.QZ_VERIFY_EXE) candidates.push(process.env.QZ_VERIFY_EXE)
+  for (const given of [explicit, process.env.QZ_VERIFY_EXE]) {
+    if (!given) continue
+    if (isDir(given)) candidates.push(...variants(given))
+    else candidates.push(given)
+  }
   for (const dir of dirs) candidates.push(...variants(dir))
 
   const found = candidates.find((p) => p && existsSync(p))
