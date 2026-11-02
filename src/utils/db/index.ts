@@ -1,5 +1,5 @@
-import type { IChapterRecord, IMemoryRecord, IReviewRecord } from './record'
-import { ChapterRecord, ReviewRecord, WordRecord } from './record'
+import type { IChapterRecord, IMemoryRecord } from './record'
+import { ChapterRecord, WordRecord } from './record'
 import { removeMemoryCache, upsertMemoryCache } from '@/utils/memoryCache'
 import { legacyMemoryKey, memoryKey, memoryKeyCandidates, normalizeWordKeyWord } from '@/utils/memoryKey'
 import { MEMORY_GRADUATE_STAGE, adaptiveDaysFromRecord, clampStage, ladderDays } from '@/utils/memoryLadder'
@@ -13,7 +13,6 @@ class RecordDB extends Dexie {
   // 调用方不再需要用 `as WordRecord` 把 IWordRecord 硬转成类实例。
   wordRecords!: Table<WordRecord, number>
   chapterRecords!: Table<IChapterRecord, number>
-  reviewRecords!: Table<IReviewRecord, number>
   memoryRecords!: Table<IMemoryRecord, string>
 
   constructor() {
@@ -35,6 +34,13 @@ class RecordDB extends Dexie {
     this.version(4).stores({
       memoryRecords: 'key,word,dict,due,[dict+due]',
     })
+    // v11.6：清掉历史残留 —— reviewRecords 已无读写方，wordRecords 的 [dict+chapter] 从未被查询；
+    // 补上真正需要的 [word+dict]（deleteConfirm 的 where({word,dict}) 依赖它，否则退化为全表过滤）。
+    this.version(5).stores({
+      wordRecords: '++id,word,timeStamp,dict,chapter,wrongCount,[word+dict]',
+      chapterRecords: '++id,timeStamp,dict,chapter,time,[dict+chapter]',
+      memoryRecords: 'key,word,dict,due,[dict+due]',
+    })
   }
 }
 
@@ -42,7 +48,6 @@ export const db = new RecordDB()
 
 db.wordRecords.mapToClass(WordRecord)
 db.chapterRecords.mapToClass(ChapterRecord)
-db.reviewRecords.mapToClass(ReviewRecord)
 
 // v9.9（Batch6 / DATA-001 验收缺陷修复）：启动即清理「导入中途被强杀」残留的 RecordDB-import-* 临时库。
 // 之前只有下一次导入开始时才清理 → 强杀一次会留下永久残留（实测 9 轮有 6 轮残留）。

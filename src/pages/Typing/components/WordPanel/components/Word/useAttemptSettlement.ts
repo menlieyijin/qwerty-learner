@@ -15,6 +15,8 @@ import { useCallback, useRef } from 'react'
  */
 export type AttemptMeta = {
   index: number
+  /** 创建本次作答时的章节代次；flush 时带回，reducer 会丢弃过期增量 */
+  epoch: number
   name: string
   dict?: string
   trans: string[]
@@ -31,8 +33,9 @@ export type AttemptMeta = {
   settled: boolean
 }
 
-export const createAttemptMeta = (index: number, word: Word): AttemptMeta => ({
+export const createAttemptMeta = (index: number, word: Word, epoch: number): AttemptMeta => ({
   index,
+  epoch,
   name: word.name,
   dict: word.dict,
   trans: normalizeTrans(word.trans),
@@ -58,12 +61,14 @@ type SaveWordRecordPayload = {
 
 type UseAttemptSettlementArgs = {
   word: Word
+  /** 当前章节代次（state.sessionEpoch） */
   /** 当前词在 chapterData 里的下标（换词时需要重置 meta） */
   index: number
   dispatch: Dispatch<TypingStateAction>
   saveWordRecord: (payload: SaveWordRecordPayload) => Promise<unknown>
   /** 组件持有、每次渲染同步更新的最新词状态引用 */
   wordStateRef: MutableRefObject<WordState>
+  sessionEpoch: number
 }
 
 /**
@@ -74,14 +79,16 @@ type UseAttemptSettlementArgs = {
  * - `persistOnce()`：把本次作答写入词记录，每个 attempt 只写一次，返回 Promise 供父级保序；
  * - `settleAttempt({persist})`：先 flush；`persist: true` 时再落库。
  */
-export function useAttemptSettlement({ word, index, dispatch, saveWordRecord, wordStateRef }: UseAttemptSettlementArgs) {
-  const attemptRef = useRef<AttemptMeta>(createAttemptMeta(index, word))
+export function useAttemptSettlement({ word, index, dispatch, saveWordRecord, wordStateRef, sessionEpoch }: UseAttemptSettlementArgs) {
+  const epochRef = useRef(sessionEpoch)
+  epochRef.current = sessionEpoch
+  const attemptRef = useRef<AttemptMeta>(createAttemptMeta(index, word, sessionEpoch))
   // 已发起的落库 Promise（父级 Skip 需要 await 它，保证 deferMemoryDue 在写记录之后执行）
   const persistPromiseRef = useRef<Promise<void> | null>(null)
 
   /** 换词时重置本次作答的 meta（原来在组件的换词 effect 里直接赋值） */
   const resetAttempt = useCallback((nextIndex: number, nextWord: Word) => {
-    attemptRef.current = createAttemptMeta(nextIndex, nextWord)
+    attemptRef.current = createAttemptMeta(nextIndex, nextWord, epochRef.current)
   }, [])
 
   const flushStats = useCallback(() => {
@@ -102,13 +109,14 @@ export function useAttemptSettlement({ word, index, dispatch, saveWordRecord, wo
     if (deltaCorrect === 0 && deltaWrong === 0 && Object.keys(deltaMistake).length === 0) return
     dispatch({
       type: TypingStateActionType.REPORT_WORD_RESULT,
-      payload: { index: meta.index, correctCount: deltaCorrect, wrongCount: deltaWrong, letterMistake: deltaMistake },
+      payload: { index: meta.index, epoch: meta.epoch, correctCount: deltaCorrect, wrongCount: deltaWrong, letterMistake: deltaMistake },
     })
   }, [dispatch, wordStateRef])
 
   const persistOnce = useCallback((): Promise<void> | undefined => {
     const meta = attemptRef.current
     if (meta.persisted) return persistPromiseRef.current ?? undefined
+    // 先置「已发起」防止并发重复写；失败时恢复，下一次 settle 仍可重试
     meta.persisted = true
     const ws = wordStateRef.current
     dispatch({ type: TypingStateActionType.SET_IS_SAVING_RECORD, payload: true })
@@ -122,9 +130,13 @@ export function useAttemptSettlement({ word, index, dispatch, saveWordRecord, wo
       letterMistake: ws.letterMistake,
       // v9.3：显式传递本次作答是否为回顾/重练，避免全局 refresh 标记残留
       isRefresh: meta.isRefresh,
-    }).catch((e) => {
-      console.error('save word record failed', e)
-    }) as Promise<void>
+    })
+      .then(() => undefined)
+      .catch((e) => {
+        meta.persisted = false
+        persistPromiseRef.current = null
+        console.error('[settlement] 作答记录保存失败，本次未计入错题本/记忆曲线，可重试', e)
+      })
     return persistPromiseRef.current
   }, [dispatch, saveWordRecord, wordStateRef])
 

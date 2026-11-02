@@ -45,7 +45,7 @@
 
 ## 快速开始
 
-需要 Node 18–22 与 npm ≥ 9：
+需要 Node 22（≥22.12 <23）与 npm ≥ 10：
 
 ```bash
 npm ci          # 严格按 package-lock.json 安装，可复现
@@ -65,37 +65,45 @@ src/                     网页端（React 18 + TS + Vite 4）
   pages/ErrorBook/       错题本（分组、分页、详情、导出）
   pages/Gallery-N/       词库与学习起点入口
 local-fork/              桌面端外壳源码（Electron 主进程 / preload / 页面内浮层与无头运行时）
+  icons/                 桌面图标产物（ico / icns / png，由 npm run icons 生成并校验）
 public/dicts/            385 本词库（体积主要来源，约 79 MB）
 docs/                    分支声明、技术文档、快速开始、第三方许可、审计闭环
-scripts/                 发布 / 回滚 / 质量门禁 / CDP 冒烟 / 起点选择行为验证
+scripts/                 发布 / 安装器 / 回滚 / 质量门禁 / CDP 冒烟 / 行为验证（templates/ 放 NSIS 脚本）
 ```
 
 ## 开发与验证
 
 > 标「桌面」的脚本会启动真实 Electron 程序，需要先指定程序路径：
 > `QZ_TEST_APP_DIR=<目录>` 或 `node scripts/verify-xxx.mjs --exe "<可执行文件>"`。
-> Windows 是 `Qwerty Learner.exe`，macOS 是 `Qwerty Learner.app/Contents/MacOS/Qwerty Learner`，Linux 是发布目录里的同名可执行文件。
+> Windows 是 `Qwerty Learner.exe`，Linux 是发布目录里的 `qwerty-learner`。
 
 | 命令 | 作用 |
 | --- | --- |
 | `npm run test:quality` | `tsc --noEmit` + `eslint src --max-warnings 0`（CI 同款） |
-| `npm run test:local` | CDP 冒烟 13 项（设置 7 页签 / qzRuntime / collectStats 结构 / 练习 / 备份 / 分析 / 错题本；需先启动带 `--remote-debugging-port=9472` 的实例） |
+| `npm run test:local` | CDP 冒烟 13 项（设置 7 页签 / qzRuntime / collectStats 结构 / 练习 / 备份 / 分析 / 错题本；需先启动带 `--remote-debugging-port=9472` 的实例；自启版见下一行） |
+| `npm run test:desktop-smoke` | 自启 + 13 项冒烟：自动用隔离 profile 启动程序、跑完退出（CI 与本地都推荐） |
 | `npm run test:start-level` | 起点选择行为验证 21 项（首启弹窗 → 选档 → 出对应词 → 重启保持 → 词库页修改 → 老用户不打扰） |
 | `npm run test:pages` | 页面级回归 20 项（错题本排序/详情/Esc/删除取消、设置 7 页签与桌面统计、脏 payload 不白屏） |
 | `npm run test:typing` | 打字主链路 18 项（进入输入态/错字标红/切词/落库/**逐字母错因**/暂停写会话与二次暂停 upsert/**暂停恢复不丢进度**/音效开关与滑块/默写） |
 | `npm run test:enhance` | 页面内浮层 9 项：词卡打开/空词、Esc、遮罩、关闭按钮、无残影、无异常（shadow root 内查询） |
+| `npm run test:enhance:detail` | 浮层细分 42 项：18 个入口、Shadow DOM 隔离、长词/XSS/emoji、toast 生命周期、深浅色、15 次开关无泄漏、只读 API 返回类型 |
 | `npm run test:csv` | 错题本 CSV 导出公式注入防护 14 项断言 |
 | `npm run test:core` | **核心算法回归 309 条**（SRS 120 + 自动进阶 189）+ 确定性门禁，真实源码打包仿真 |
-| `npm run test:all` | **一键跑完**：tsc/eslint + 正确率单测 + 属性测试 + 词库下载测试 + 核心回归 309 + 四个 CDP 行为脚本（不含 `test:visual` / `test:desktop-visual`，它们分别需要浏览器与桌面程序） |
+| `npm run test:review-persist` | 复习进度持久化 30 项：会话/下标拆分、往返一致、旧键迁移、损坏数据兜底 |
+| `npm run test:all` | **一键跑完**：图标一致性 + tsc/eslint + 正确率 + 属性测试 + 词库下载 + 核心回归 309 + 五个 CDP 行为脚本（不含 `test:visual` / `test:desktop-visual`，它们分别需要浏览器与桌面程序） |
 | `npm run test:stats` | 结果页正确率/错误分级的 17 条断言（空词表 0/0、NaN 兜底、0~100 夹取、分档边界） |
 | `npm run test:fuzz` | 纯函数属性测试：csvSafeCell / normalizeTrans / computeCorrectRate 各 800 组固定种子随机输入 |
 | `npm run test:dict` | 词库下载 45 项：白名单 / 断流续传（真实 Range）/ 慢速分块与超时 / 多轮中断 / 206 少给 / 空响应 / 脏 JSON / 超限 / 416 / 重定向 / 结构校验 |
 | `npm run test:visual` | 网页视觉回归：错题本空态 + 设置面板两张基线截图（自动拉起 dev server）；重建基线加 `--update-snapshots` |
 | `npm run test:desktop-visual` | **桌面**视觉回归：显示/数据/词库/工具四个设置页 + 玫瑰红强调色页，固定 1280×800 逐页对比；重建基线用 `test:desktop-visual:update` |
+| `npm run test:desktop-visual:apply -- <目录>` | 把 CI 产出的 Linux 基线（5 张 1280×800 PNG）校验后落进 `tests/desktop-visual/` |
+| `npm run test:icons` | 图标校验：ICO/ICNS 结构与尺寸 + 与 `src/assets/logo.svg` 重算结果逐字节比对 |
 | `npm run test:format` | prettier 全仓格式检查（`*.md`、生成物与安全窗口 HTML 已在 `.prettierignore` 说明） |
 | `npm run quality` | 质量门禁（格式 + tsc + eslint + 正确率 + 属性测试 + 词库下载 + 核心回归），跨平台 |
 | `npm run release` | 打包 asar：门禁 → build → asar → SHA256 → `release-info.json` |
-| `npm run shell` | **从零组装可运行外壳**：下载 Electron 发行包 → 解压 → 放入 asar → 平台重命名 → 体检 |
+| `npm run shell` | **从零组装可运行外壳**：下载 Electron 发行包 → 解压 → 放入 asar → 平台重命名 → 写图标/版本资源（rcedit）→ 体检；`--no-brand` 可跳过品牌化 |
+| `npm run package` | **打可分发产物**：Windows 用 NSIS 生成安装器并做静默安装/启动/卸载验证；Linux 出 tar.gz + .desktop |
+| `npm run icons` | 从当前品牌 SVG（`src/assets/logo.svg`）重新生成全部桌面图标 |
 | `npm run release:test` | 装到测试目录（`QZ_TEST_APP_DIR`）；加 `--smoke` 跑隔离冒烟 |
 | `npm run rollback` / `rollback:list` | 回滚到上一版本 / 列出可用备份 |
 | `npm run check:install` | 安装目录体检：可执行文件 / asar 结构 / 哈希 / `.tmp` 残留 / GPL 材料 |
@@ -106,11 +114,13 @@ scripts/                 发布 / 回滚 / 质量门禁 / CDP 冒烟 / 起点选
 | 场景 | 支持 |
 | --- | --- |
 | 网页版（`npm run build`） | Windows / macOS / Linux 均可构建；Chrome / Edge / Firefox / Safari 近两年版本 |
-| 桌面壳 | Electron 43.8.3，Windows 10+ / macOS 12+ / Linux（X11；Wayland 视发行版） |
-| 桌面壳的平台差异 | 开机自启仅 Windows / macOS（Linux 上开关置灰）；窗口透明度依赖系统合成器；托盘在部分 Linux 桌面需要 libappindicator |
+| 桌面壳 | Electron 43.8.3，Windows 10+ / Linux（X11；Wayland 视发行版） |
+| macOS | **不作为支持目标**（v11.6.0 起）：交叉组装代码仍在，但没有实机验证、没有签名/公证/dmg，不承诺可用 |
+| 安装包 | Windows：NSIS 安装器（当前用户，无需管理员）；Linux：tar.gz + .desktop |
+| 桌面壳的平台差异 | 开机自启仅 Windows（Linux 上开关置灰）；窗口透明度依赖系统合成器；托盘在部分 Linux 桌面需要 libappindicator |
 | 设置对话框 | 宽度 `min(800px, 100vw-32px)`、高度 `min(480px, 100vh-144px)`，1366×768 即可完整使用 |
-| Node | `>=18 <23`（CI 用 20）；构建脚本为 Node ESM，无 shell 依赖 |
-| 桌面验证脚本 | 通过 `QZ_TEST_APP_DIR` / `--exe` 定位程序，Windows / macOS / Linux 路径均已适配 |
+| Node | `>=22.12 <23`（CI 用 22）；构建脚本为 Node ESM，无 shell 依赖；`@electron/asar@4` 要求 22.12+ |
+| 桌面验证脚本 | 通过 `QZ_TEST_APP_DIR` / `--exe` 定位程序，Windows / Linux 路径均已适配；CI 跑两平台 |
 
 ## 数据、隐私与联网
 
@@ -138,6 +148,7 @@ scripts/                 发布 / 回滚 / 质量门禁 / CDP 冒烟 / 起点选
 | [docs/CONVENTIONS.md](./docs/CONVENTIONS.md) | 代码约定：目录分层、组件写法、样式、工具函数、命名、验证要求 |
 | [docs/REFACTOR-LOG.md](./docs/REFACTOR-LOG.md) | v10 重构逐条记录：问题 / 根因 / 修复 / 验证 / 风险 + 遗留清单 |
 | [docs/AUDIT-V11.md](./docs/AUDIT-V11.md) | v11 全栈审查（根因版）：P0/P1/P2 分组 + 正规化建议 |
+| [docs/AUDIT-v11.6.md](./docs/AUDIT-v11.6.md) | v11.6 全栈复审：模块逐条（位置/影响/级别/根因/修复）+ 架构级方案 + TypeWords 借鉴 |
 | [docs/RELEASE-NOTES-v11.md](./docs/RELEASE-NOTES-v11.md) | v11.0.0 发布说明（增强面板并入设置） |
 | [docs/RELEASE-NOTES-v10.md](./docs/RELEASE-NOTES-v10.md) | v10 发布说明（历史） |
 | [docs/UPSTREAM-PR-DRAFT.md](./docs/UPSTREAM-PR-DRAFT.md) | 可直接提交上游的 issue / PR 文稿（署名 dsh） |

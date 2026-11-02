@@ -2,8 +2,8 @@ import type { LearningStartId } from '@/utils/learningStart'
 import { LEARNING_START_OPTIONS } from '@/utils/learningStart'
 import { Dialog, Transition } from '@headlessui/react'
 import { Fragment } from 'react'
-import IconCheck from '~icons/heroicons/check-circle-solid'
-import IconXMark from '~icons/heroicons/x-mark-solid'
+import IconCheck from '~icons/tabler/circle-check'
+import IconXMark from '~icons/tabler/x'
 
 type LearningStartDialogProps = {
   open: boolean

@@ -281,6 +281,33 @@ S-4 也不是加长 sleep，而是把「杀谁」和「等到什么状态」这�
 
 ---
 
+
+---
+
+## 五之九、v11.6.0（批次 V）：把四条能力边界做成可复现的链路
+
+| # | 遗留 | 处理 | 验证 |
+| --- | --- | --- | --- |
+| V-1 | 没有桌面图标，任务栏/文件属性是 Electron 默认图标 | `scripts/icons.mjs`：SVG → 9 档 PNG → 自封装 ICO / ICNS（不依赖 ImageMagick / iconutil）；产物提交在 `local-fork/icons/`，`test:icons` 做结构 + 重算逐字节校验 | ICO 7 档 / ICNS 7 档；改 SVG 不重新生成会被 `--check` 拦下 |
+| V-2 | 不生成安装器，exe 版本元数据停在 9.8.0.0 | `scripts/package.mjs` + `scripts/templates/installer.nsi`：rcedit 2.0.0 品牌化 → NSIS 3.10 安装器 → 静默安装/体检/冒烟/卸载全流程验证；`shell.mjs` 默认也品牌化 | 安装器 110.8MB；静默安装 477 条目、asar 哈希一致、冒烟 13/13、卸载清理；FileVersion `11.6.0.0` |
+| V-3 | Linux 视觉基线缺失、桌面行为只在 Windows 跑过 | `.github/workflows/desktop.yml`：Windows/Linux matrix + xvfb/chrome-sandbox + installer job；缺基线时生成并上传 artifact，`test:desktop-visual:apply` 校验后落地 | 工作流已做 YAML 解析；Windows 端本地实跑 5/5；Linux 首次运行产出基线 |
+| V-4 | `enhance.js` 只有 9 条粗粒度用例 | `verify-enhance-detail.mjs`：42 项（入口面/隔离/边界输入/toast/主题/开关泄漏/只读 API/异常） | 42/42，连跑稳定 |
+| V-5 | 复审报告里四条「待改」：复习进度整份序列化、自动进阶错题必空、备份同步复制卡 UI、词库并发下载互相覆盖 | F-7 拆「会话 + 下标」双键 + 旧键迁移；F-8 按错题实际词库分组 + 记忆记录兜底；E-8 `copyTreeAsync` + `*.partial` 原子改名；E-9 同文件下载去重 | `test:review-persist` 30/30；F-8 走记忆曲线兜底可离线复习；备份日志显示 `backup-*.partial → backup-*` |
+
+**做这四件事时暴露并修掉的自身缺陷**（都已回填到发布说明）：
+
+1. `checkInstallDir` / `resolveDesktopExe` 永远按当前机器平台找 exe → 交叉组装 Linux 外壳必失败；
+   增加目标平台参数。
+2. `resourcesDirFor` 不认「外层目录里含 .app」→ 交叉组装 macOS 外壳报「缺少 resources」。
+3. `shell.mjs` 在 darwin 分支提前创建了目标 `Resources`，导致随后重命名目标非空 → 调整创建时机。
+4. Windows 上目录 rename 被文件系统代理拦成 EPERM（先建空目标再失败）→ 空目标清理重试 + 系统 `move`。
+5. Windows 的 GNU tar 把 `D:` 当远程主机 → 检测 GNU tar 后加 `--force-local`。
+6. NSIS `/D=` 不是最后一个参数 → 静默安装落到默认目录；调整顺序并改用不含空格的临时目录。
+7. 卸载器从安装目录运行会删不掉自己 → 去掉 `_?=`，让它复制到临时目录再运行；卸载段先切到 `$TEMP`。
+8. 安装后冒烟统计写成数 `PASS` 文本 → dsh-smoke 输出 JSON，改为解析并强制 13/13。
+
+---
+
 ## 六、遗留清单（未改或无法闭环，附具体差距）
 
 | # | 项 | 状态 | 差距 / 原因 |
@@ -296,6 +323,10 @@ S-4 也不是加长 sleep，而是把「杀谁」和「等到什么状态」这�
 | L-9 | 309 条核心回归脚本不在仓库 | **已闭环** | 已迁入 `scripts/core-regression`（路径仓库相对、产物 gitignore、`npm run test:core`），发布脚本默认改指仓库内。局限（非差距）：它是 stub 化的纯算法仿真，不等于真实浏览器/Electron 环境；界面/交互由冒烟、`test:pages`、`test:typing`、`test:visual` 覆盖 |
 | L-10 | 提交推送 | **已闭环** | 分支与标签均已推到 `menlieyijin/qwerty-learner`，远端与本地 HEAD 一致。推送路径有两种（都记录了）：① v10.2.1 之前：临时 unset 全局 `url.*.insteadOf` + 清空 `*_PROXY` 后 `git push` 直连；② v10.3.0：github.com:443 已完全不可达（6 次重试均 TCP 超时，直连与本地代理都不通），改用 GitHub **Git Data API**（`gh api` 建 blob → tree → commit → 更新 ref）复刻同一个提交，因元数据逐字一致，远端 commit SHA 与本地**完全相同**（`7352e3d`）。均未走 ghfast 传凭据 |
 | L-11 | 全仓 prettier 未统一 | **已闭环**（v10.2.1 格式化 + v10.4.0 视觉回归） | 格式化 18 个文件；v10.4.0 补上视觉基线（`test:visual`，2 张截图，连跑 3 次稳定），原「无像素级手段」的残余风险已消除。局限：基线是本机 Chromium 产物，换机器需 `--update-snapshots` 重建 |
+| L-13 | 没有图标与安装器（DSH-FORK §7.3 明确列为「不做」） | **已闭环**（v11.6.0） | 图标由 SVG 生成并逐字节校验；NSIS 安装器在 Windows 上真实走完静默安装/冒烟/卸载；Linux/macOS 产物见 `npm run package` |
+| L-14 | Linux 桌面行为与视觉没有在真实机器上跑过 | **部分闭环**（v11.6.0） | Windows/Linux CI 已入仓（Linux 用 xvfb + chrome-sandbox 4755）；基线缺失时生成 artifact 并给出落地命令。**首次 GitHub 运行前，仓库里仍只有 Windows 基线**；本地没有 Linux 机器可代跑。macOS 已按用户要求移出支持范围 |
+| L-15 | 代码签名 / 公证 / dmg / macOS 安装器 | **能力边界** | 需要 Apple 开发者证书与 macOS 工具链（codesign / notarytool / create-dmg），不在本仓库自签能力内；当前 macOS 产物未签名，首次打开需右键或去 quarantine |
+| L-16 | Electron 运行时升级（43.x 于 2027-01-05 EOL） | **未做（需单独决策）** | 升级需要重新下载/校验发行包、跑全部回归与安装器验证；脚本已支持 `--electron-version`，但本轮没有更换运行时 |
 | L-12 | 结果页空词表的正确率语义 | **已闭环**（v10.4.0） | 抽成 `computeCorrectRate` 纯函数，约定 0% 并写进注释/发布说明；`scripts/verify-stats.mjs` 用 15 条断言把这个边界固定下来 |
 
 ---
@@ -330,6 +361,7 @@ S-4 也不是加长 sleep，而是把「杀谁」和「等到什么状态」这�
 | `v11.4.0` | `4fff23d` | 弱网/多轮中断用例 / 安装目录体检 / 基线平台覆盖 / 门禁去重 | **13/13** + 桌面视觉 5/5 + 下载 45/45 + 体检 3/3 | `738E9E81…` |
 | `v11.5.0` | `99d3954` | 外壳自建（shell.mjs）/ 词卡浮层用例 / README 版本纠正 | **13/13** + 浮层 9/9 + 桌面视觉 5/5 + 下载 45/45 | `C895DFA5…` |
 | `v11.5.1` | `fc12ada` | FORK-NOTICE 数字去写死（随包重建） | **13/13** + 149 条 + 体检 3/3 | `01FEA493…` |
+| `v11.6.0` | 见 tag | 图标 / NSIS 安装器 / Windows+Linux CI / 浮层 42 项 / 全栈复审 | **13/13** + 221 条 + 安装器全流程 + 视觉 5/5 | `9532263C…` |
 
 > 回滚点同时保存在 tag（`v9.16-batchA` … `v10.0.0`）与分支历史里；回退前的 HEAD 另存为
 > `archive/v10-baseline-20261029` / `backup/v10-baseline`（均为 `b97eb62`，即本次「回退到 v9.15 重做」之前的树），

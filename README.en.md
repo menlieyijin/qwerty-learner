@@ -47,7 +47,7 @@ Full list: [docs/DSH-FORK_EN.md](./docs/DSH-FORK_EN.md).
 
 ## Quickstart
 
-Requires Node 18–22 and npm ≥ 9:
+Requires Node 22 (>=22.12 <23) and npm >= 10:
 
 ```bash
 npm ci          # installs exactly what package-lock.json pins
@@ -78,34 +78,48 @@ scripts/                 release / rollback / quality gate / CDP smoke / level-p
 | Command | What it does |
 | --- | --- |
 | `npm run test:quality` | `tsc --noEmit` + `eslint src --max-warnings 0` (same as CI) |
-| `npm run test:local` | 11-check CDP smoke (needs an instance started with `--remote-debugging-port=9472`) |
+| `npm run test:local` | 13-check CDP smoke (needs an instance started with `--remote-debugging-port=9472`) |
+| `npm run test:desktop-smoke` | Self-launching 13-check smoke with an isolated profile (recommended locally and in CI) |
 | `npm run test:start-level` | 21-check behavioural test for the level picker (first-run dialog → pick → correct dictionary → persists across restart → edit from dictionary page → existing users are not interrupted) |
 | `npm run test:pages` | 20-check page regression (error book sort/detail/Esc/delete-cancel, 7 settings tabs incl. desktop stats, malformed payload does not white-screen) |
 | `npm run test:typing` | 18-check typing pipeline (input state, wrong letter marked, word advance, persistence, per-letter mistake log, pause writes session incl. second-pause upsert, progress kept across pause/resume, sound switches/sliders, dictation) |
 | `npm run test:enhance` | 9 checks for in-page overlays: word card open/empty word, Esc, mask, close button, no residue, no errors (queried through the shadow root) |
+| `npm run test:enhance:detail` | 42 detailed overlay checks: 18 runtime entries, Shadow DOM isolation, long/XSS/emoji input, toast lifecycle, dark mode, 15 open/close cycles without leaks, read-only API shapes |
 | `npm run test:csv` | 14 assertions for CSV-export formula-injection hardening |
 | `npm run test:core` | **309 core-algorithm assertions** (120 SRS + 189 auto-advance) + determinism gate, simulated from real source |
-| `npm run test:all` | **Everything in one shot**: tsc/eslint + stats unit tests + property tests + 309 core assertions + the four CDP behaviour scripts (excludes `test:visual` / `test:desktop-visual`, which need a browser / desktop build) |
+| `npm run test:review-persist` | 30 review-persistence checks: session/index split, round-trip, legacy-key migration, corrupt-data fallback |
+| `npm run test:all` | **Everything in one shot**: icon consistency + tsc/eslint + stats + property tests + dict download + 309 core assertions + five CDP behaviour scripts (excludes `test:visual` / `test:desktop-visual`, which need a browser / desktop build) |
 | `npm run test:stats` | 17 assertions for the result-screen accuracy/mistake-level (0/0 boundary, NaN guards, 0–100 clamp, level thresholds) |
 | `npm run test:fuzz` | Property tests: csvSafeCell / normalizeTrans / computeCorrectRate, 800 seeded random inputs each |
 | `npm run test:dict` | 45 checks for dictionary download: allow-list / resume after drop (real Range) / slow chunks & timeout / repeated drops / short 206 / empty body / bad JSON / oversize / 416 / redirect / payload shape |
 | `npm run test:visual` | Web visual regression: error-book empty state + settings panel (auto-starts the dev server); add `--update-snapshots` to rebuild |
 | `npm run test:desktop-visual` | **Desktop** visual regression: display/data/dict/tools + rose-accent page at a fixed 1280×800 viewport; rebuild with `test:desktop-visual:update` |
+| `npm run test:desktop-visual:apply -- <dir>` | Validate and install Linux baselines produced by CI (five 1280×800 PNGs) |
+| `npm run test:icons` | Icon check: ICO/ICNS structure and byte-for-byte comparison against a re-render of `src/assets/logo.svg` |
 | `npm run test:format` | Repo-wide prettier check (`*.md`, generated files and the CSP-critical window HTML are listed in `.prettierignore`) |
 | `npm run quality` | Quality gate (format + tsc + eslint + stats + property tests + dict download + core regression), cross-platform |
-| `scripts/dsh-release.ps1` | Pack asar / test install / isolated smoke / dual-directory install |
-| `scripts/dsh-rollback.ps1` | Roll back to the previous build (saves a redo point first) |
+| `npm run release` | Pack the asar: gate → build → asar → SHA256 → `release-info.json` |
+| `npm run shell` | **Assemble a runnable shell from scratch**: download Electron → extract → drop in asar → platform rename → write icon/version resources (rcedit) → health check; `--no-brand` skips branding |
+| `npm run package` | **Build distributables**: Windows NSIS installer with silent install/launch/uninstall verification; Linux tar.gz + .desktop |
+| `npm run icons` | Regenerate all desktop icons from `src/assets/logo.svg` |
+| `npm run release:test` | Install into a test directory (`QZ_TEST_APP_DIR`); add `--smoke` for an isolated smoke run |
+| `npm run rollback` / `rollback:list` | Roll back to the previous build / list available backups |
+| `npm run check:install` | Install-directory health check: exe / asar structure / hash / `.tmp` leftovers / GPL files |
+| `scripts/dsh-release.ps1` | Thin PowerShell wrapper around `release.mjs` (legacy callers) |
+| `scripts/dsh-rollback.ps1` | Thin PowerShell wrapper around `rollback.mjs` |
 
 ## Compatibility
 
 | Scenario | Support |
 | --- | --- |
 | Web build (`npm run build`) | Builds on Windows / macOS / Linux; Chrome / Edge / Firefox / Safari (last two years) |
-| Desktop shell | Electron 43.8.3; Windows 10+ / macOS 12+ / Linux (X11; Wayland depends on distro) |
-| Desktop platform gaps | Auto-start is Windows/macOS only (toggle disabled on Linux); window opacity depends on the compositor; tray needs libappindicator on some Linux desktops |
+| Desktop shell | Electron 43.8.3; Windows 10+ / Linux (X11; Wayland depends on distro) |
+| macOS | **Not a supported target** as of v11.6.0: cross-build code remains, but there is no real-device verification, signing, notarisation or dmg |
+| Packages | Windows: NSIS installer (per-user, no admin); Linux: tar.gz + .desktop |
+| Desktop platform gaps | Auto-start is Windows-only (toggle disabled on Linux); window opacity depends on the compositor; tray needs libappindicator on some Linux desktops |
 | Settings dialog | `min(800px, 100vw-32px)` wide, `min(480px, 100vh-144px)` tall — usable on 1366×768 |
-| Node | `>=18 <23` (CI uses 20); scripts are Node ESM with no shell dependency |
-| Desktop verification | Locate the app via `QZ_TEST_APP_DIR` / `--exe`; Windows / macOS / Linux paths are handled |
+| Node | `>=22.12 <23` (CI uses 22); scripts are Node ESM with no shell dependency; `@electron/asar@4` requires 22.12+ |
+| Desktop verification | Locate the app via `QZ_TEST_APP_DIR` / `--exe`; Windows / Linux paths are handled. Two-platform CI: `.github/workflows/desktop.yml` |
 
 ## Data, privacy, network
 
@@ -136,6 +150,7 @@ scripts/                 release / rollback / quality gate / CDP smoke / level-p
 | [docs/CONVENTIONS.md](./docs/CONVENTIONS.md) | Conventions: layering, component authoring, styles, utils, naming, verification |
 | [docs/REFACTOR-LOG.md](./docs/REFACTOR-LOG.md) | v10 refactor log: issue / root cause / fix / verification / risk + backlog |
 | [docs/AUDIT-V11.md](./docs/AUDIT-V11.md) | v11 full-stack audit (root-cause): P0/P1/P2 + repo hardening |
+| [docs/AUDIT-v11.6.md](./docs/AUDIT-v11.6.md) | v11.6 full-stack re-audit: per-module findings + architecture plan + what to borrow from TypeWords |
 | [docs/RELEASE-NOTES-v11.md](./docs/RELEASE-NOTES-v11.md) | v11.0.0 release notes (enhancement panel merged into settings) |
 | [docs/RELEASE-NOTES-v10.md](./docs/RELEASE-NOTES-v10.md) | v10 release notes (historical) |
 | [docs/UPSTREAM-PR-DRAFT.md](./docs/UPSTREAM-PR-DRAFT.md) | Ready-to-submit upstream issue / PR drafts (signed dsh) |

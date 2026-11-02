@@ -1,4 +1,4 @@
-import classNames from 'classnames'
+import { cn } from '@/utils/ui'
 import type { FC } from 'react'
 import IconX from '~icons/tabler/x'
 
@@ -21,7 +21,7 @@ const CloseButton: FC<CloseButtonProps> = ({ className, label = '返回', onClos
     <button
       type="button"
       aria-label={label}
-      className={classNames(
+      className={cn(
         'inline-flex cursor-pointer items-center justify-center text-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400',
         className,
       )}

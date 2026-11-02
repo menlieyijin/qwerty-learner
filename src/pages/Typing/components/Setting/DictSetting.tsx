@@ -3,9 +3,11 @@ import styles from './index.module.css'
 import { useDesktopSettings } from './useDesktopSettings'
 import type { DictEntry } from '@/utils/desktop'
 import { desktop, runtime } from '@/utils/desktop'
+import { cn } from '@/utils/ui'
 import * as ScrollArea from '@radix-ui/react-scroll-area'
-import classNames from 'classnames'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import IconStar from '~icons/tabler/star'
+import IconStarFilled from '~icons/tabler/star-filled'
 
 const CATEGORIES = ['全部分类', 'CET', '考研', '雅思', '托福', 'GRE', '编程', '其他']
 const MODES = [
@@ -155,9 +157,9 @@ export default function DictSetting() {
                           setMsg(`收藏失败：${String((e as Error)?.message || e)}`)
                         }
                       }}
-                      className={classNames('text-base leading-none', isFav ? 'text-amber-500' : 'text-gray-300 hover:text-amber-400')}
+                      className={cn('leading-none', isFav ? 'text-amber-500' : 'text-gray-300 hover:text-amber-400')}
                     >
-                      {isFav ? '★' : '☆'}
+                      {isFav ? <IconStarFilled className="h-4 w-4" /> : <IconStar className="h-4 w-4" />}
                     </button>
                     <span className="min-w-0 flex-1 truncate text-sm text-gray-700 dark:text-gray-200" title={d.name}>
                       {d.name}

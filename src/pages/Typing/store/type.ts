@@ -51,4 +51,6 @@ export type TypingState = {
   isLoopSingleWord: boolean
   // 是否正在保存数据
   isSavingRecord: boolean
+  // 会话代次：重置章节/换库时 +1，用来丢弃「重置之后才到达」的旧结算增量
+  sessionEpoch: number
 }

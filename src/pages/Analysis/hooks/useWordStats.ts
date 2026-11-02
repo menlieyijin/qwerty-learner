@@ -138,40 +138,52 @@ async function getChapterStats(startTimeStamp: number, endTimeStamp: number): Pr
     return { isEmpty: true, exerciseRecord: [], wordRecord: [], wpmRecord: [], accuracyRecord: [], wrongTimeRecord: [] }
   }
 
-  let data: {
-    [x: string]: {
-      exerciseTime: number //练习次数
-      words: string[] //练习词数组（不去重）
-      totalTime: number //总计用时
-      wrongCount: number //错误次数
-      wrongKeys: string[] //按错的按键
-    }
-  } = {}
+  type Bucket = {
+    exerciseTime: number
+    words: Set<string>
+    wordCount: number
+    charLength: number
+    totalTime: number
+    wrongCount: number
+    wrongKeys: Map<string, number>
+  }
+  const newBucket = (): Bucket => ({
+    exerciseTime: 0,
+    words: new Set(),
+    wordCount: 0,
+    charLength: 0,
+    totalTime: 0,
+    wrongCount: 0,
+    wrongKeys: new Map(),
+  })
 
-  const dates = getDatesBetween(startTimeStamp * 1000, endTimeStamp * 1000)
-  data = dates
-    .map((date) => ({ [date]: { exerciseTime: 0, words: [], totalTime: 0, wrongCount: 0, wrongKeys: [] } }))
-    .reduce((acc, curr) => ({ ...acc, ...curr }), {})
+  const data = new Map<string, Bucket>()
+  for (const date of getDatesBetween(startTimeStamp * 1000, endTimeStamp * 1000)) data.set(date, newBucket())
 
-  for (let i = 0; i < records.length; i++) {
-    const record = records[i]
-    // v9.14（dsh，M4-003）：备份导入路径不校验列，旧备份可能缺 timeStamp/word/timing/mistakes；
+  // 一次遍历、就地累加：不再对每个日桶做数组/spread 复制（旧实现是 O(n²)）。
+  for (const record of records) {
+    // 备份导入路径不校验列，旧备份可能缺 timeStamp/word/timing/mistakes；
     // 逐条容错跳过脏记录，避免一条坏数据让整页统计抛 TypeError。
     if (!record || typeof record.word !== 'string' || !record.word) continue
     if (typeof record.timeStamp !== 'number' || !Number.isFinite(record.timeStamp)) continue
     const date = dayjs(record.timeStamp * 1000).format('YYYY-MM-DD')
-    const bucket = data[date]
+    const bucket = data.get(date)
     if (!bucket) continue
 
     bucket.exerciseTime += 1
-    bucket.words = [...bucket.words, record.word]
+    bucket.words.add(record.word)
+    bucket.wordCount += 1
+    bucket.charLength += record.word.length
     const timing = Array.isArray(record.timing) ? record.timing : []
     bucket.totalTime += timing.reduce((acc, curr) => acc + (Number(curr) || 0), 0)
     bucket.wrongCount += Number(record.wrongCount) || 0
-    bucket.wrongKeys = [...bucket.wrongKeys, ...Object.values(record.mistakes ?? {}).flat()]
+    for (const keys of Object.values(record.mistakes ?? {})) {
+      if (!Array.isArray(keys)) continue
+      for (const key of keys) bucket.wrongKeys.set(key, (bucket.wrongKeys.get(key) ?? 0) + 1)
+    }
   }
 
-  const RecordArray = Object.entries(data)
+  const RecordArray = [...data.entries()]
 
   // 练习次数统计
   const exerciseRecord: IWordStats['exerciseRecord'] = RecordArray.map(([date, { exerciseTime }]) => ({
@@ -182,24 +194,25 @@ async function getChapterStats(startTimeStamp: number, endTimeStamp: number): Pr
   // 练习词数统计（去重）
   const wordRecord: IWordStats['wordRecord'] = RecordArray.map(([date, { words }]) => ({
     date,
-    count: Array.from(new Set(words)).length,
-    level: getLevel(Array.from(new Set(words)).length),
+    count: words.size,
+    level: getLevel(words.size),
   }))
   // wpm=练习词数（不去重）/总时间
   // PAGES-007：totalTime 为 0（timing 全 0/空、导入数据）时不能产生 Infinity/NaN 进入图表
-  const wpmRecord: IWordStats['wpmRecord'] = RecordArray.map<[string, number]>(([date, { words, totalTime }]) => [
+  const wpmRecord: IWordStats['wpmRecord'] = RecordArray.map<[string, number]>(([date, { wordCount, totalTime }]) => [
     date,
-    totalTime > 0 ? Math.round(words.length / (totalTime / 1000 / 60)) : 0,
+    totalTime > 0 ? Math.round(wordCount / (totalTime / 1000 / 60)) : 0,
   ]).filter(([, value]) => Number.isFinite(value) && value > 0)
   // 正确率=每个单词的长度合计/(每个单词的长度合计+总错误次数)
-  const accuracyRecord: IWordStats['accuracyRecord'] = RecordArray.map<[string, number]>(([date, { words, wrongCount }]) => {
-    const totalChars = words.join('').length
-    const denominator = totalChars + wrongCount
-    return [date, denominator > 0 ? Math.round((totalChars / denominator) * 100) : 0]
+  const accuracyRecord: IWordStats['accuracyRecord'] = RecordArray.map<[string, number]>(([date, { charLength, wrongCount }]) => {
+    const denominator = charLength + wrongCount
+    return [date, denominator > 0 ? Math.round((charLength / denominator) * 100) : 0]
   }).filter(([, value]) => Number.isFinite(value) && value > 0)
   // 错误键统计（PAGES-008）：保留全量原始按键（大小写合并，空格/数字/标点/特殊键均保留），
   // 展示层再区分是否可映射到键盘图，避免空格/数字等高频错误被静默丢弃。
-  const allWrongTime = RecordArray.flatMap(([, { wrongKeys }]) => wrongKeys)
+  const allWrongTime = RecordArray.flatMap(([, { wrongKeys }]) =>
+    [...wrongKeys.entries()].flatMap(([key, count]) => Array.from({ length: count }, () => key)),
+  )
   const wrongTimeRecord = buildWrongKeyStats(allWrongTime)
 
   return { exerciseRecord, wordRecord, wpmRecord, accuracyRecord, wrongTimeRecord }

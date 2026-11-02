@@ -55,7 +55,7 @@ export function useWordList(): UseWordListResult {
   const setLevelInfo = useSetAtom(autoLevelInfoAtom)
   const [words, setWords] = useState<WordWithIndex[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [error] = useState<Error | undefined>(undefined)
+  const [error, setError] = useState<Error | undefined>(undefined)
   const recentRef = useRef<string[]>([])
   // v9.11：最近 MIX_WINDOW_SIZE 次取词是否为「掺入的上级词」（会话级，随 recentRef 一起重置）
   const previewWindowRef = useRef<boolean[]>([])
@@ -134,6 +134,7 @@ export function useWordList(): UseWordListResult {
           previewBudget: previewBudgetOf(previewWindowRef.current),
         })
         if (cancelled) return
+        setError(undefined)
         if (pick) {
           previewWindowRef.current = pushPreviewWindow(previewWindowRef.current, pick.preview)
           setWords([toIndexWord(pick.word, pick.dict, 0, pick.hint, pick.refresh)])
@@ -145,7 +146,10 @@ export function useWordList(): UseWordListResult {
         }
       } catch (e) {
         console.error('initial word failed', e)
-        if (!cancelled) setWords([])
+        if (!cancelled) {
+          setWords([])
+          setError(e instanceof Error ? e : new Error(String(e)))
+        }
       } finally {
         if (!cancelled) setIsLoading(false)
       }
@@ -197,6 +201,7 @@ export function useWordList(): UseWordListResult {
           return toIndexWord(pick.word, pick.dict, 0, pick.hint, pick.refresh)
         } catch (e) {
           console.error('next word failed', e)
+          setError(e instanceof Error ? e : new Error(String(e)))
           return null
         }
       }

@@ -7,12 +7,14 @@ import RowDetail from './RowDetail'
 import { buildDeleteConfirmText } from './deleteConfirm'
 import { useGroupedWrongRecords } from './hooks/useGroupedWrongRecords'
 import { currentRowDetailAtom } from './store'
+import type { groupedWordRecords as GroupedWrongRecords } from './type'
 import CloseButton from '@/components/CloseButton'
 import { LoadingUI } from '@/components/Loading'
 import { useDeleteWordRecord } from '@/hooks/useRecordMutations'
 import { idDictionaryMap } from '@/resources/dictionary'
 import { currentDictIdAtom, reviewModeInfoAtom } from '@/store'
 import type { Word } from '@/typings'
+import { db } from '@/utils/db'
 import { ReviewRecord } from '@/utils/db/record'
 import { wordListFetcher } from '@/utils/wordListFetcher'
 import * as ScrollArea from '@radix-ui/react-scroll-area'
@@ -98,32 +100,62 @@ export function ErrorBook() {
   }
 
   // v7：保留官方「错题回顾」功能，入口移到错题本（不再依赖词典章节弹窗）
+  // v11.6（F-8 根因）：原先只取 `currentDictId` 的错题。自动进阶下 currentDictId 常是当前级别词库，
+  // 而错题属于练习时所在的词库，于是「错题本有几十条，点回顾却提示当前词典没有错题」。
+  // 现在按错题实际所属词库分组：优先当前词典，其次错题最多的词典，并在按钮下方说明切换到了哪个库。
+  const [reviewHint, setReviewHint] = useState('')
   const startWrongReview = useCallback(async () => {
-    const dict = idDictionaryMap[currentDictId] ?? idDictionaryMap.cet4
-    const groups = groupedRecords.filter((g) => g.dict === dict.id)
-    if (!groups.length) {
-      alert('当前词典还没有错题')
+    if (!groupedRecords.length) {
+      alert('错题本还是空的，先去练几组吧')
       return
     }
-    let list: Word[] = []
-    try {
-      list = await wordListFetcher(dict.url)
-    } catch {
-      alert('词库读取失败')
-      return
+    const byDict = new Map<string, GroupedWrongRecords[]>()
+    for (const group of groupedRecords) {
+      const bucket = byDict.get(group.dict)
+      if (bucket) bucket.push(group)
+      else byDict.set(group.dict, [group])
     }
-    // v9.14（dsh，M4-012/M4-017）：list.find（O(n·m)）改为按词名建 Map，并用类型守卫取代 `as Word[]`。
-    // 部分词库存在同名词条，这里保留「首次出现」（与原先 list.find 取第一条的语义一致）。
+    const preferred = byDict.has(currentDictId) ? currentDictId : null
+    const targetId = preferred ?? [...byDict.entries()].sort((a, b) => b[1].length - a[1].length)[0][0]
+    const groups = byDict.get(targetId) ?? []
+    const dict = idDictionaryMap[targetId]
+    setReviewHint(preferred || !dict ? '' : `当前词典没有错题，将从「${dict.name}」的 ${groups.length} 个错题开始`)
+
+    // 词库优先（有音标/词形），读不到时回退记忆曲线里保存的 trans/phone：
+    // 断网也能复习，不会因为一次词库请求失败就整条路走不通。
     const wordsByName = new Map<string, Word>()
-    for (const word of list) {
-      if (!wordsByName.has(word.name)) wordsByName.set(word.name, word)
+    if (dict) {
+      try {
+        const list: Word[] = await wordListFetcher(dict.url)
+        for (const word of list) {
+          if (!wordsByName.has(word.name)) wordsByName.set(word.name, word)
+        }
+      } catch (e) {
+        console.error('错题回顾：词库读取失败，回退到本地记忆记录', e)
+      }
     }
-    const words = groups.map((g) => wordsByName.get(g.word)).filter((word): word is Word => !!word)
+    const missing = groups.filter((g) => !wordsByName.has(g.word))
+    if (missing.length) {
+      const fallback = await db.memoryRecords.where('dict').equals(targetId).toArray()
+      const memoryByName = new Map(fallback.map((record) => [record.word, record]))
+      for (const group of missing) {
+        const memory = memoryByName.get(group.word)
+        if (!memory) continue
+        wordsByName.set(group.word, {
+          name: group.word,
+          trans: memory.trans ?? [],
+          usphone: memory.phone ?? '',
+          ukphone: memory.phone ?? '',
+          dict: targetId,
+        })
+      }
+    }
+    const words = groups.map((group) => wordsByName.get(group.word)).filter((word): word is Word => !!word)
     if (!words.length) {
-      alert('没有可复习的错题')
+      alert(`「${dict?.name ?? targetId}」的错题缺少释义数据，暂时无法复习；可在设置里重新下载该词库后重试`)
       return
     }
-    setReviewModeInfo({ isReviewMode: true, reviewRecord: new ReviewRecord(dict.id, words) })
+    setReviewModeInfo({ isReviewMode: true, reviewKind: 'wrong', reviewRecord: new ReviewRecord(targetId, words) })
     navigate('/')
   }, [currentDictId, groupedRecords, navigate, setReviewModeInfo])
 
@@ -140,6 +172,7 @@ export function ErrorBook() {
           <h1 className="font-lighter mr-4 w-auto self-end text-gray-500 opacity-70">Tip: 点击错误单词查看详细信息 </h1>
           <CloseButton className="h-7 w-7" onClose={onBack} />
         </div>
+        {reviewHint && <p className="mr-8 mt-1 self-end text-xs text-amber-600 dark:text-amber-400">{reviewHint}</p>}
 
         <div className="flex w-full flex-1 select-text items-start justify-center overflow-hidden">
           <div className="flex h-full w-5/6 flex-col pt-10">

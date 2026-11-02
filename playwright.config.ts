@@ -10,9 +10,17 @@ import { defineConfig, devices } from '@playwright/test'
  * See https://playwright.dev/docs/test-configuration.
  */
 // 只有当 baseURL 指向本机时，才自动拉起 dev server（线上巡检/自定义地址不启动多余进程）
-const localBaseUrl = /^http:/ /////(127//.0//.0//.1|localhost)(://d+)?/.test(process.env.QZ_E2E_BASE_URL || '')
-  ? process.env.QZ_E2E_BASE_URL
-  : null
+function localBaseUrlOf(raw: string | undefined): string | null {
+  if (!raw) return null
+  try {
+    const u = new URL(raw)
+    if (!['http:', 'https:'].includes(u.protocol)) throw new Error(`协议不支持：${u.protocol}`)
+    return ['127.0.0.1', 'localhost', '::1', '[::1]'].includes(u.hostname) ? raw : null
+  } catch (e) {
+    throw new Error(`QZ_E2E_BASE_URL 不是合法 URL：${raw}（${(e as Error).message}）`)
+  }
+}
+const localBaseUrl = localBaseUrlOf(process.env.QZ_E2E_BASE_URL)
 
 export default defineConfig({
   testDir: './tests/e2e',

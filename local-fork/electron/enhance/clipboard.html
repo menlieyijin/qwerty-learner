@@ -17,7 +17,10 @@
   .bar { display: flex; align-items: center; justify-content: space-between; padding: 7px 12px;
     background: linear-gradient(135deg,#4f46e5,#7c3aed); border-radius: 11px 11px 0 0; }
   .bar .t { font-size: 11px; font-weight: 700; letter-spacing: .4px; opacity: .95; }
-  .bar .x { background: none; border: none; color: #fff; font-size: 15px; cursor: pointer; opacity: .8; }
+  .bar .x { display:inline-flex; align-items:center; justify-content:center; background: none; border: none; color: #fff; cursor: pointer; opacity: .8; width:24px; height:24px; border-radius:5px; }
+  .bar .x:hover { opacity: 1; background: rgba(255,255,255,.12); }
+  .bar .x svg { display:block; }
+  button svg { display:inline-block; vertical-align:-2px; margin-right:4px; }
   .body { flex: 1; padding: 9px 13px; display: flex; flex-direction: column; gap: 7px; overflow: hidden; }
   .row1 { display: flex; align-items: baseline; gap: 8px; }
   .word { font-size: 25px; font-weight: 800; color: #fff; letter-spacing: .5px; word-break: break-word; }
@@ -44,7 +47,7 @@
 <body>
   <div class="bar">
     <span class="t">剪贴板查词 · Qwerty Plus（免费释义）</span>
-    <button class="x" id="close" title="关闭">✕</button>
+    <button class="x" id="close" title="关闭" aria-label="关闭"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
   </div>
   <div class="body">
     <div class="row1"><span class="word" id="word">—</span><span class="ph" id="ph"></span></div>
@@ -52,7 +55,7 @@
     <div class="en" id="en"></div>
     <div class="out" id="out"></div>
     <div class="btns">
-      <button class="primary" id="speak">🔊 发音</button>
+      <button class="primary" id="speak"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>发音</button>
       <button class="ghost" id="copy">复制</button>
       <button class="ghost" id="lookup">重新查词</button>
       <span class="offline" id="offline" style="display:none">离线 / 缓存</span>

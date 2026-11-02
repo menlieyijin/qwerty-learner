@@ -18,7 +18,7 @@ import type { Word } from '@/typings'
 import type { IMemoryRecord } from '@/utils/db/record'
 import { LEARNING_PATH, loadLevelWords } from '@/utils/learningPath'
 import type { LearningLevel } from '@/utils/learningPath'
-import { clearMemoryCache } from '@/utils/memoryCache'
+import { clearMemoryCache, getMemoryRevision } from '@/utils/memoryCache'
 import { memoryKey, normalizeWordName } from '@/utils/memoryKey'
 import { normalizeTrans } from '@/utils/trans'
 
@@ -729,7 +729,13 @@ function compareRecords(a: IMemoryRecord, b: IMemoryRecord): number {
   return (Number(a.attempts) || 0) - (Number(b.attempts) || 0)
 }
 
+let bestRecordMemo: { source: IMemoryRecord[]; revision: number; best: Map<string, IMemoryRecord> } | null = null
+
+/** 按词取「最佳记录」的只读缓存：records 数组与 memoryCache 版本都没变时直接复用，
+ *  避免每次换词都重新遍历全部记忆记录（O(N)，2 万条时是可感知的卡顿）。 */
 function buildBestRecordMap(records: IMemoryRecord[]): Map<string, IMemoryRecord> {
+  const revision = getMemoryRevision()
+  if (bestRecordMemo && bestRecordMemo.source === records && bestRecordMemo.revision === revision) return bestRecordMemo.best
   const best = new Map<string, IMemoryRecord>()
   for (const record of records) {
     if (!record || !record.word) continue
@@ -738,6 +744,7 @@ function buildBestRecordMap(records: IMemoryRecord[]): Map<string, IMemoryRecord
     const prev = best.get(key)
     if (!prev || compareRecords(record, prev) > 0) best.set(key, record)
   }
+  bestRecordMemo = { source: records, revision, best }
   return best
 }
 

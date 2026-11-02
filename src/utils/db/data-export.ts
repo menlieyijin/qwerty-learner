@@ -5,6 +5,7 @@ import { clearMemoryCache } from '../memoryCache'
 import { recordDataAction } from '../mixpanel'
 import { cleanupStaleTempImportDbs, createTempImportDbName } from './temp-import-db'
 import { DUE_REVIEW_WORDS_STORAGE_KEY, REVALUATE_LEVEL_STORAGE_KEY, REVIEW_MODE_INFO_STORAGE_KEY } from '@/constants'
+import { REVIEW_INDEX_STORAGE_KEY, REVIEW_SESSION_STORAGE_KEY } from '@/store/reviewPersistence'
 import { AUTO_LEVEL_STORAGE_KEY } from '@/utils/autoLevel'
 import Dexie from 'dexie'
 import type * as PakoModule from 'pako'
@@ -240,7 +241,10 @@ export async function importDatabase(onStart: () => void, callback: (importProgr
       localStorage.removeItem(AUTO_LEVEL_STORAGE_KEY)
       localStorage.removeItem(REVALUATE_LEVEL_STORAGE_KEY)
       localStorage.removeItem(DUE_REVIEW_WORDS_STORAGE_KEY)
+      // v11.6：复习进度拆成「会话 + 下标」两个键，旧键一并清理
       localStorage.removeItem(REVIEW_MODE_INFO_STORAGE_KEY)
+      localStorage.removeItem(REVIEW_SESSION_STORAGE_KEY)
+      localStorage.removeItem(REVIEW_INDEX_STORAGE_KEY)
       // v9.5（DATA-003）：导入的是旧机器数据，memoryKey 大小写迁移可能尚未在本机跑过；
       // 清掉标记让 reload 后重新执行迁移（只复制不删旧记录，幂等）。
       localStorage.removeItem(MEMORY_KEY_CASE_MIGRATED_KEY)

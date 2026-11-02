@@ -1,0 +1,167 @@
+# 桌面壳（Electron）的行为与视觉回归：Windows / Linux（macOS 不在支持范围）。
+#
+# 网页层由 Fork Quality 覆盖；这里只跑必须「真实桌面程序」的检查：
+#   冒烟 13 项、页面回归、输入/结算、首启选档、词卡浮层（含细分用例）、设置页视觉基线。
+#
+# Linux 没有显示器，用 xvfb 提供虚拟 X；Windows runner 自带桌面会话。
+# 视觉基线按平台存放（字体渲染不同），缺基线时本工作流会生成并作为 artifact 上传，
+# 下载后用 `npm run test:desktop-visual:apply -- <目录>` 落到仓库并提交。
+name: Desktop (Electron)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [dsh-local-v8]
+    paths:
+      - 'local-fork/**'
+      - 'src/**'
+      - 'scripts/**'
+      - 'tests/desktop-visual/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/desktop.yml'
+
+concurrency:
+  group: desktop-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  behavior:
+    # 只在本 fork 跑：需要下载 Electron 与运行 GUI，成本高
+    if: github.repository == 'menlieyijin/qwerty-learner'
+    name: behavior (${{ matrix.platform }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: win32
+          - os: ubuntu-latest
+            platform: linux
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Linux GUI dependencies
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb libnss3 libgbm1 libgtk-3-0 libasound2t64 fonts-noto-cjk || \
+            sudo apt-get install -y xvfb libnss3 libgbm1 libgtk-3-0 libasound2 fonts-noto-cjk
+
+      - name: Build web assets
+        run: npm run build
+
+      - name: Stage app.asar
+        run: node scripts/release.mjs --skip-check --skip-audit --skip-build
+
+      - name: Assemble desktop shell
+        shell: bash
+        run: |
+          node scripts/shell.mjs --force
+          APP_DIR="$PWD/release/shell-$(node -p process.platform)-$(node -p process.arch)"
+          echo "QZ_TEST_APP_DIR=$APP_DIR" >> "$GITHUB_ENV"
+          echo "QZ_PLATFORM=$(node -p process.platform)" >> "$GITHUB_ENV"
+          # Linux 上 Electron 的 SUID sandbox 必须 root 拥有且 4755，否则启动直接报错
+          if [ "$(node -p process.platform)" = "linux" ]; then
+            sudo chown root:root "$APP_DIR/chrome-sandbox"
+            sudo chmod 4755 "$APP_DIR/chrome-sandbox"
+          fi
+
+      - name: Smoke (13 checks)
+        shell: bash
+        run: |
+          if [ "$QZ_PLATFORM" = "linux" ]; then xvfb-run -a npm run test:desktop-smoke; else npm run test:desktop-smoke; fi
+
+      - name: Page / typing / start-level
+        shell: bash
+        run: |
+          set -e
+          for t in pages typing start-level; do
+            echo "== npm run test:$t"
+            if [ "$QZ_PLATFORM" = "linux" ]; then xvfb-run -a npm run "test:$t"; else npm run "test:$t"; fi
+          done
+
+      - name: Word card overlay (base + detail)
+        shell: bash
+        run: |
+          set -e
+          for t in enhance enhance:detail; do
+            echo "== npm run test:$t"
+            if [ "$QZ_PLATFORM" = "linux" ]; then xvfb-run -a npm run "test:$t"; else npm run "test:$t"; fi
+          done
+
+      - name: Desktop visual baseline
+        shell: bash
+        run: |
+          set -e
+          COUNT=$(ls tests/desktop-visual/*-"$QZ_PLATFORM".png 2>/dev/null | wc -l)
+          if [ "$COUNT" -eq 0 ]; then
+            echo "::warning::$QZ_PLATFORM 还没有视觉基线，先生成并作为 artifact 上传；下载后提交到 tests/desktop-visual/"
+            if [ "$QZ_PLATFORM" = "linux" ]; then xvfb-run -a npm run test:desktop-visual:update; else npm run test:desktop-visual:update; fi
+            echo "BASELINE_GENERATED=1" >> "$GITHUB_ENV"
+          else
+            if [ "$QZ_PLATFORM" = "linux" ]; then xvfb-run -a npm run test:desktop-visual; else npm run test:desktop-visual; fi
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: always() && env.BASELINE_GENERATED == '1'
+        with:
+          name: desktop-baseline-${{ matrix.platform }}
+          path: tests/desktop-visual/*-${{ matrix.platform }}.png
+          retention-days: 30
+
+      - name: Diagnostics on failure
+        if: failure()
+        shell: bash
+        run: |
+          ls -la tests/desktop-visual || true
+          ls -la release/shell-* 2>/dev/null | head -30 || true
+
+  installer:
+    # 只在 Windows 上产出安装器：rcedit 是 PE 工具，NSIS 安装器也是 Windows 产物
+    if: github.repository == 'menlieyijin/qwerty-learner'
+    name: installer (win32)
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web assets
+        run: npm run build
+
+      - name: Stage app.asar
+        run: node scripts/release.mjs --skip-check --skip-audit --skip-build
+
+      - name: Assemble + brand shell
+        run: node scripts/shell.mjs --force
+
+      - name: Build installer + silent install/uninstall verification
+        run: node scripts/package.mjs
+        env:
+          QZ_TOOLS_DIR: ${{ runner.temp }}/qz-tools
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: |
+            release/QwertyLearner-*-Setup.exe
+            release/SHA256SUMS-*.txt
+          retention-days: 14

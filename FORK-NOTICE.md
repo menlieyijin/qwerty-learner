@@ -36,8 +36,8 @@
 | 上游在线站点 | <https://qwerty.kaiyi.cool/>（本分支不部署、不运营该站点） |
 | 本分支仓库 | <https://github.com/menlieyijin/qwerty-learner>（GitHub fork） |
 | 本分支名称 | `dsh-local-v8` |
-| 相对上游的提交 | 随分支增长，不写死：`git rev-list --count 1182426..dsh-local-v8`。v11.5.0 时点为 68 个（55 个带 `Signed-off-by`） |
-| 里程碑 tag | `v7.1-dsh-local` … `v9.9-dsh-local`（早期）、`v9.16-batchA` … `v10.7.0`（v10 重构逐批）、`v11.0.0` … `v11.5.0`（v11 结构收尾）；共 48 个，`git tag` 可列全 |
+| 相对上游的提交 | 以 `git rev-list --count 1182426..dsh-local-v8` 为准（v11.6.0 时点以命令输出为准；数量随提交增长，不在文档里承诺固定值） |
+| 里程碑 tag | `v7.1-dsh-local` … `v9.9-dsh-local`（早期）、`v9.16-batchA` … `v10.7.0`（v10 重构逐批）、`v11.0.0` … `v11.6.0`（v11 结构收尾）；共 51 个，`git tag` 可列全 |
 
 说明：
 
@@ -67,7 +67,7 @@
   1. 随附完整对应源码（含本分支的修改），或按 GPL-3.0 提供源码的等效方式；
   2. 保留 `LICENSE` 与全部版权声明；
   3. 明确标注本分支相对上游做了修改（本文件即该声明）。
-- 构建脚本 `scripts/dsh-release.ps1` 在组装 `app.asar` 时会把 `LICENSE` 与 `FORK-NOTICE.md` 一并打包进 asar，便于二进制分发时随附许可与修改声明。
+- 构建脚本 `scripts/release.mjs` 在组装 `app.asar` 时会把 `LICENSE` 与 `FORK-NOTICE.md` 一并打包进 asar；`scripts/package.mjs` 生成的 Windows 安装器与 Linux/macOS 产物同样带上这两份文件，便于二进制分发时随附许可与修改声明。
 - 上游作者与贡献者的署名方式保持不变；本分支不冒用、不替换上游身份。
 - 本分支新增代码的著作权归其各自作者所有（本分支修改主要由 dsh 完成，见下一节）。
 
@@ -76,10 +76,10 @@
 | 项 | 内容 |
 | --- | --- |
 | 修改者 | **dsh（DeepSeek Harness）** |
-| 提交作者 / 署名 | `dsh <dsh@dsh.local>`；**部分提交**带 `Signed-off-by: dsh <dsh@dsh.local>`（v9.3 起陆续加入；v11.5.0 时点为 55/68，其余提交在提交说明中署名 dsh） |
-| 本地修改时间 | 2026-10-21 ~ 2026-10-28（本分支 git 提交日期 2026-10-25 ~ 2026-10-28） |
-| 本地版本迭代 | v1 ~ v9.15 |
-| 当前应用版本 | `1.0.0-enhanced-v9.15`（唯一来源：`local-fork/package.json`） |
+| 提交作者 / 署名 | `dsh <dsh@dsh.local>`；**部分提交**带 `Signed-off-by: dsh <dsh@dsh.local>`（v9.3 起陆续加入；具体以 `git log --grep=Signed-off-by` 为准） |
+| 本地修改时间 | 2026-10-21 ~ 2026-11-01（本分支 git 提交日期 2026-10-25 ~ 2026-11-01） |
+| 本地版本迭代 | v1 ~ v11.6.0 |
+| 当前应用版本 | 以 `local-fork/package.json` 为准（v11.6.0 时为 `1.0.0-enhanced-v11.6.0`） |
 
 约定：
 

@@ -1,7 +1,7 @@
 import { recordAnalysisAction } from '@/utils/mixpanel'
 import { useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import ChartPie from '~icons/heroicons/chart-pie-solid'
+import ChartPie from '~icons/tabler/chart-pie'
 
 const AnalysisButton = () => {
   const navigate = useNavigate()

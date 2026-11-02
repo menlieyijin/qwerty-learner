@@ -1,6 +1,6 @@
 import { LoadingUI } from '@/components/Loading'
 import type { FC } from 'react'
-import ErrorIcon from '~icons/ic/outline-error'
+import ErrorIcon from '~icons/tabler/alert-circle'
 
 type LoadingWordUIProps = {
   className?: string

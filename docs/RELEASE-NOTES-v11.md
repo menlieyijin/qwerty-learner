@@ -299,3 +299,109 @@ node scripts/shell.mjs --asar <app.asar>         # 指定包
 
 验证：`test:all` 149 条、`test:core` 309/309、`test:visual` 2/2、`test:desktop-visual` 5/5、
 隔离冒烟 13/13、安装体检 3/3；asar `01FEA493…`，双目录一致。
+
+---
+
+# v11.6.0（安装器 / 图标 / 三平台 CI / 浮层细分用例）
+
+这一版处理的是上一版明确留下的四条「能力边界」，不是再加功能：
+
+## 1. 桌面图标（Windows / macOS / Linux）
+
+- 新增 `scripts/icons.mjs`：从品牌 SVG（当前 `src/assets/logo.svg`）渲染 16–1024 共 11 档 PNG，
+  再自己封装 ICO 与 ICNS。图标造型会按用户提供的参考图另行重做；本版先把「生成 + 校验 + 打包」链路做通。
+  ICO 用 PNG 压缩条目（Vista+ 支持），ICNS 覆盖 16/32/64/128/256/512/1024，不依赖 ImageMagick、
+  `iconutil`、`png2icns`，三平台产物逐字节一致。
+- 生成物提交在 `local-fork/icons/`（`icon.ico` / `icon.icns` / `icon.png` + 各档 PNG + `manifest.json`）。
+- `npm run test:icons` 做两层校验：结构（ICO 目录项、ICNS 块类型与尺寸）+ 与 SVG 重算结果**逐字节比对**，
+  「改了 SVG 忘了重新生成」会失败。
+- 站点 favicon / PWA 图标与桌面图标从同一 SVG 生成，保证两端口径一致。
+- 前端不再混用 heroicons / weui / fa / bxs / icon-park 等图标家族，58 处图标全部统一为 tabler；
+  仅有的 emoji（✨ / ★ / ☆ / 🔊 / ✕）改为内联或组件化 SVG。
+
+## 2. Windows 安装器（NSIS 3.10）+ 外壳品牌化
+
+- `npm run package`：
+  1) rcedit 2.0.0 写入图标与版本资源（`FileVersion 11.6.0.0`，`ProductVersion 1.0.0-enhanced-v11.6.0`）；
+  2) makensis 生成 `QwertyLearner-v11.6.0-win-x64-Setup.exe`（当前用户安装，无需管理员）；
+  3) **静默安装到临时目录 → 体检（asar 哈希/条目/GPL）→ 启动冒烟 13 项 → 静默卸载 → 断言目录清理**。
+- 安装器内容：主程序 + 开始菜单 + 可选桌面快捷方式 + 卸载信息（HKCU，控制面板可见）；
+  卸载只删程序目录与快捷方式，**保留学习数据**；目录里写 `.qz-install` 标记，没有标记时只删已知文件，
+  不会 `RMDir /r` 用户自选目录。
+- `npm run shell` 默认也做品牌化（`--no-brand` 可关）：以前自建外壳的任务栏图标与文件属性显示 Electron，
+  现在与安装器一致。rcedit/NSIS 按需下载到 `.tools/`（已 gitignore），rcedit 校验 SHA256，
+  也支持 `QZ_RCEDIT_EXE` / `QZ_NSIS_DIR` 完全离线。
+- 版本号映射集中在 `numericVersion()`：`1.0.0-enhanced-v11.6.0 → 11.6.0.0`，
+  不再出现「exe 文件版本停在 9.8.0.0」的旧问题。
+
+## 3. Linux 产物（macOS 不再作为支持目标）
+
+- Linux：`QwertyLearner-v11.6.0-linux-x64.tar.gz`，含 `qwerty-learner.desktop`、`qwerty-learner.png`、
+  LICENSE / FORK-NOTICE；`package.mjs` 会回读 tar 清单确认关键文件在。
+- macOS：按用户要求**不再投入**。交叉组装/Info.plist 代码保留在脚本里，但没有实机验证、签名、公证与 dmg，
+  文档与 CI 都不再把它列为支持平台。
+- Windows 安装器未签名（没有代码签名证书）；首次运行 SmartScreen 可能提示，这是证书边界，不是脚本缺陷。
+
+## 4. 两平台桌面 CI
+
+- 新增 `.github/workflows/desktop.yml`：Windows / Linux 跑
+  自启冒烟、页面、输入、起点、浮层基础+细分、桌面视觉；Linux 用 `xvfb`，并修正 Electron
+  `chrome-sandbox` 的 root/4755 权限。
+- 单独 `installer` job 在 Windows 上真实构建安装器并跑安装/启动/卸载验证，产物与 SHA256 上传 artifact。
+- 视觉基线缺失时不会「静默判过」：工作流生成基线并上传 artifact，下载后用
+  `npm run test:desktop-visual:apply -- <目录>` 校验（5 张、1280×800、非纯色）后写入仓库。
+  Windows 基线已在实机生成；Linux 基线由该工作流首次运行时产出。
+
+## 5. 浮层细分用例（42 项）
+
+`npm run test:enhance:detail` 补的是基础用例没覆盖的部分：18 个运行时入口、Shadow DOM 隔离、
+词卡在视口内/宽度上限/滚动、点内容不关闭、Esc/遮罩/✕、空词、200 字符长词、XSS 字符串按文本显示、
+中文/引号/emoji、toast 叠加与自动清理、深浅色同步、换强调色、只读 API 返回类型、
+15 次开关无节点增长、无滚动锁残留、全程无异常/无控制台错误。
+
+## 6. 做这四件事时暴露并修掉的缺陷
+
+| 问题 | 根因 | 修复 |
+| --- | --- | --- |
+| 交叉组装 Linux 外壳时体检失败 | `checkInstallDir` 永远按**当前机器**平台找 exe | `resolveDesktopExe` / `checkInstallDir` 增加目标平台参数，`shell.mjs` 传入 `--platform` |
+| 交叉组装 macOS 外壳时「缺少 resources」 | `resourcesDirFor` 只认「目录本身以 .app 结尾」 | 支持「外层目录里含 .app」的布局 |
+| macOS 外壳解压后重命名 EPERM | Windows 文件系统代理先建目标再报错；且脚本提前创建了目标 Resources | 目标为空才清理重试；Windows 目录改用系统 `move`；darwin 分支延后创建 Resources |
+| Windows 上打 Linux tar.gz 报 `Cannot connect to D:` | GNU tar 把盘符当远程主机 | 检测 GNU tar 后加 `--force-local` |
+| 安装器静默安装到了默认目录 | NSIS 的 `/D=` 必须是最后一个参数 | 调整参数顺序，并用不含空格的临时目录 |
+| 卸载后残留 Uninstall.exe | 卸载器从安装目录运行，删不掉自己 | 去掉 `_?=`，让它复制到临时目录再运行；卸载段先 `SetOutPath $TEMP` |
+| 「冒烟通过（0 项 PASS）」 | dsh-smoke 输出 JSON，不是 PASS 文本 | 解析 JSON 并要求 13/13 全 true |
+| 非 macOS 上 .app 的 Info.plist 改不了 | 只有 `plutil` | 增加 XML plist 文本补丁；二进制 plist 仍提示必须在 macOS 上重跑 |
+
+## 本版验证
+
+| 检查 | 结果 |
+| --- | --- |
+| `test:icons` | PASS（ICO 7 档 / ICNS 7 档 / 1024 PNG，逐字节一致） |
+| `test:core` | 309/309 |
+| `test:all`（含新增 42 项浮层细分） | 全部通过 |
+| 隔离冒烟（自建外壳） | 13/13 |
+| 桌面视觉（Windows） | 5/5，差异 ≤0.004% |
+| 安装器 | 110.8MB；静默安装 → 体检 477 条目 → 冒烟 13/13 → 卸载清理 |
+| Linux 产物 | tar.gz 142.4MB，包含 desktop/icon/LICENSE |
+| CI 工作流 | YAML 校验；Windows/Linux 与 installer job 已接入（首次运行会生成 Linux 基线） |
+
+## 复审追加（v11.6.0 发布前，全栈根因修复）
+
+发布前又做了一轮逐目录审查，详见 [`AUDIT-v11.6.md`](./AUDIT-v11.6.md)。本版同时修掉：
+
+- **P0 构建阻断**：`@electron/asar@4` 要求 Node ≥22.12，而 engines/.nvmrc/Docker/CI 仍是 18~20 → `npm run release` 必失败、桌面 CI 三个 job 必红。已统一到 Node 22.12（含预检与安装脚本）。
+- **P1 数据可靠性**：备份并发重入/同秒同名/修剪误删；退出与重启不等备份收尾；全量导入逐表 clear 无事务；词记录失败被吞但 SRS 仍推进；DB 读失败伪装成「已全部学完」；重置章节时旧结算污染新章节。
+- **P1 性能**：统计页 O(n²) 日桶；每次换词 4~6 次全表聚合；首屏静态 xlsx 429KB。
+- **P2 安全/稳定**：剪贴板小窗共享 43 个 IPC 通道；导航放行 app 内任意 HTML；查词缓存 `__proto__` 污染；窗口状态缺字段导致无窗口；设置文件损坏被静默覆盖；统计字段 Infinity 进托盘；快捷键换键失败连旧键一起丢。
+- **工程一致性**：classnames 全量并入 `cn()`；删除 6 个死依赖（`@svgr/*` 保留，构建期需要）；`playwright.config.ts` 纳入类型检查；Docker 增加 `.dockerignore`；生产构建保留 `console.error`；Electron 发行包强制 SHA256 校验。
+- **收尾四项（原「待改」）**：
+  - F-7 复习进度拆成「会话 + 下标」两个 localStorage 键，翻词只写 30B；旧键自动迁移，新增 `test:review-persist` 30 项。
+  - F-8 错题回顾不再按 `currentDictId` 过滤：按错题实际词库分组、词库读不到时用记忆记录兜底，自动进阶用户不再遇到「当前词典没有错题」。
+  - E-8 备份复制改全异步（每 64 个条目让出事件循环）+ `*.partial` 原子改名，修剪只认完整目录；删掉不再使用的 `copyTreeSync`。
+  - E-9 同一词库文件的并发下载去重，连点重试不再互相覆盖 `.part`。
+
+验证：`test:all` 221 项、核心回归 309/309、安装器全流程、桌面视觉 5/5（基线随图标/文案更新）、`npm run test:icons` 逐字节一致。
+
+### 参考 TypeWords 的后续优化
+
+对 `zyronon/TypeWords` 做了源码级对照（不是只看 README），可借鉴项与落地顺序写在 `AUDIT-v11.6.md` §6：FSRS 调度器、紧凑持久化、计时片段、输入动作抽象、虚拟列表、版本化备份、阶段式练习。明确不照搬 Nuxt 技术栈、默认云同步、emoji 文案与 14 语言 i18n。

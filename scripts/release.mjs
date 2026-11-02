@@ -14,7 +14,8 @@
 import { cleanEnv, copyFileAtomic, copyLegalFiles, copyTree, resourcesDirFor, sha256, sizeOf, stampNow, stopApp } from './lib/app-files.mjs'
 import { resolveDesktopExe } from './lib/desktop-app.mjs'
 import { checkInstallDir } from './lib/install-check.mjs'
-import { spawn, spawnSync } from 'node:child_process'
+import { runSmoke } from './lib/smoke.mjs'
+import { spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -88,47 +89,6 @@ function run(cmd, args, { logFile, label, env } = {}) {
 }
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms))
-
-async function waitCdp(port, timeoutMs = 45000) {
-  const deadline = Date.now() + timeoutMs
-  while (Date.now() < deadline) {
-    try {
-      const r = await fetch(`http://127.0.0.1:${port}/json/version`, { signal: AbortSignal.timeout(2000) })
-      if (r.ok) {
-        const j = await r.json()
-        if (j.webSocketDebuggerUrl) return true
-      }
-    } catch {
-      /* 还没起来 */
-    }
-    await wait(400)
-  }
-  return false
-}
-
-async function runSmoke(exe, userDir, plusDir, port, logDir, stamp) {
-  fs.mkdirSync(userDir, { recursive: true })
-  fs.mkdirSync(plusDir, { recursive: true })
-  const env = cleanEnv({ QZ_USER_DATA: userDir, QZ_PLUS_DIR: plusDir, QZ_ALLOW_MULTI: '1', QZ_SMOKE_PORT: String(port) })
-  const proc = spawn(exe, [`--remote-debugging-port=${port}`], { env, stdio: 'ignore', detached: false })
-  try {
-    if (!(await waitCdp(port))) die(`CDP ${port} 在 45s 内未就绪`)
-    const res = spawnSync(process.execPath, [path.join(REPO, 'scripts', 'dsh-smoke.mjs')], { cwd: REPO, encoding: 'utf8', env })
-    const out = `${res.stdout || ''}${res.stderr || ''}`
-    const logFile = path.join(logDir, `smoke-${stamp}.txt`)
-    fs.writeFileSync(logFile, out)
-    console.log(out.trim())
-    if (res.status !== 0) die(`冒烟测试失败（exit ${res.status}），详见 ${logFile}`)
-    ok('冒烟测试通过')
-  } finally {
-    try {
-      proc.kill('SIGKILL')
-    } catch {
-      /* ignore */
-    }
-    stopApp(exe)
-  }
-}
 
 // ---------------------------------------------------------------- 0. 基础信息
 fs.mkdirSync(REPO, { recursive: true })
@@ -250,7 +210,18 @@ try {
   step('打包 app.asar（本地 @electron/asar，无需联网）')
   const asarBin = path.join(REPO, 'node_modules', '@electron', 'asar', 'bin', 'asar.mjs')
   if (!fs.existsSync(asarBin)) die('缺少 @electron/asar，请先 npm install')
-  run(nodeBin(), [asarBin, 'pack', stage, asarOut], { label: 'asar pack' })
+  // 先打到 staging 之外再移进来：避免 asar 把上一次的 app.asar 当成源文件打进去（体积翻倍/自我包含）
+  const asarTmp = path.join(stageRoot, `.app-${stamp}.asar`)
+  try {
+    run(nodeBin(), [asarBin, 'pack', stage, asarTmp], { label: 'asar pack' })
+    fs.renameSync(asarTmp, asarOut)
+  } finally {
+    try {
+      if (fs.existsSync(asarTmp)) fs.rmSync(asarTmp, { force: true })
+    } catch {
+      /* 已移走 */
+    }
+  }
   hash = sha256(asarOut)
   size = sizeOf(asarOut)
   step(`产物：${asarOut}`)
@@ -300,7 +271,14 @@ if (testInstall) {
     fs.mkdirSync(smokeRoot, { recursive: true })
     stopApp(testAppDir)
     await wait(600)
-    await runSmoke(exe, path.join(smokeRoot, `userdata-${stamp}`), path.join(smokeRoot, `plus-${stamp}`), 9472, logDir, stamp)
+    const smokeOut = await runSmoke(exe, {
+      port: 9472,
+      userDir: path.join(smokeRoot, `userdata-${stamp}`),
+      plusDir: path.join(smokeRoot, `plus-${stamp}`),
+      logFile: path.join(logDir, `smoke-${stamp}.txt`),
+    })
+    console.log(smokeOut.trim())
+    ok('冒烟测试通过')
   }
 }
 function testRoot(dir) {
@@ -315,13 +293,18 @@ if (install) {
   stopApp()
   await wait(400)
 
-  const firstResources = resourcesDirFor(installDirs[0])
-  const firstTarget = path.join(firstResources, 'app.asar')
-  const oldHash = sha256(firstTarget)
-  const backupPath = path.join(backupDir, `app.asar.before-${ver}-${stamp}.asar`)
-  fs.copyFileSync(firstTarget, backupPath)
-  if (sha256(backupPath) !== oldHash) die(`备份校验失败：${backupPath}`)
-  ok(`已备份当前 asar：${backupPath}（sha256=${oldHash}）`)
+  // 每个安装目录各备份一份：只备份第一个目录时，若某个目录在安装窗口期被外部改动，
+  // 回滚会把第一份写回所有目录，造成版本混用。
+  const backups = new Map()
+  for (const [index, dir] of installDirs.entries()) {
+    const target = path.join(resourcesDirFor(dir), 'app.asar')
+    const oldHash = sha256(target)
+    const backupPath = path.join(backupDir, `app.asar.before-${ver}-${stamp}-${index}.asar`)
+    fs.copyFileSync(target, backupPath)
+    if (sha256(backupPath) !== oldHash) die(`备份校验失败：${backupPath}`)
+    backups.set(dir, { backupPath, oldHash })
+    ok(`已备份 ${dir} -> ${backupPath}（sha256=${oldHash}）`)
+  }
 
   const installed = []
   const newHashes = []
@@ -339,12 +322,25 @@ if (install) {
     }
   } catch (e) {
     warn(`安装失败，回滚到备份：${e.message}`)
+    const rollbackFailures = []
     for (const item of installed) {
+      const backup = backups.get(item.dir)
       try {
-        copyFileAtomic(backupPath, item.target)
-      } catch {
-        warn(`回滚失败：${item.target}`)
+        if (!backup) throw new Error('缺少该目录的备份')
+        copyFileAtomic(backup.backupPath, item.target)
+        if (sha256(item.target) !== backup.oldHash) throw new Error('回滚后哈希不一致')
+      } catch (rollbackError) {
+        rollbackFailures.push({ dir: item.dir, error: String(rollbackError.message || rollbackError) })
+        warn(`回滚失败：${item.target}（${rollbackError.message || rollbackError}）`)
       }
+    }
+    if (rollbackFailures.length) {
+      fs.writeFileSync(
+        path.join(logDir, `partial-rollback-${stamp}.json`),
+        JSON.stringify({ version: ver, at: new Date().toISOString(), failures: rollbackFailures }, null, 2),
+      )
+      process.exitCode = 3
+      warn(`有 ${rollbackFailures.length} 个目录未能回滚，详见 logs/partial-rollback-${stamp}.json`)
     }
     // 防御性清理失败瞬间可能残留的 .tmp-*
     for (const dir of installDirs) {

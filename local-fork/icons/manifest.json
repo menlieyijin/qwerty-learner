@@ -1,0 +1,52 @@
+{
+  "source": "src/assets/logo.svg",
+  "sourceSha256": "95f41da416500622b40295482f4eb0d3e616cead1fe16e03ea718b99d09909d0",
+  "note": "由 npm run icons 从 src/assets/logo.svg 生成，勿手改；GPL-3.0，见 FORK-NOTICE.md。",
+  "pngSizes": [
+    16,
+    24,
+    32,
+    48,
+    64,
+    128,
+    180,
+    192,
+    256,
+    512,
+    1024
+  ],
+  "icoSizes": [
+    16,
+    24,
+    32,
+    48,
+    64,
+    128,
+    256
+  ],
+  "icns": {
+    "16": "icp4",
+    "32": "icp5",
+    "64": "icp6",
+    "128": "ic07",
+    "256": "ic08",
+    "512": "ic09",
+    "1024": "ic10"
+  },
+  "files": {
+    "icon-1024.png": "34c43131df9e2c2a9379466fe0e9ff886c0e4e1e011fd046bd6545cdf29eac8e",
+    "icon-128.png": "43f40f941ae68929f02e5fea9e3b6a7ae2f7c6055e7bbed8c3672c131760e617",
+    "icon-16.png": "261f4d338c7263a2e04bfa5b48a9d0a6e75d778cf7b096cd25b768446d3709bc",
+    "icon-180.png": "6c2162873f888482d6654320b79719177277ce4cf42d754564cebc5da3dcd793",
+    "icon-192.png": "3a6fa7da57c25ddade0dc53d66c2a1777b26c61714ce3f1989e2693cf64b35af",
+    "icon-24.png": "a2597e2a36175d5ba86165b082dfde77d76a5d09aa824365968587b0a86084b5",
+    "icon-256.png": "11ecc05b15ab285d835a8cda6e793a3f552897c3c927700297a8402db179d670",
+    "icon-32.png": "8c884012ebfb6c3424fb74058e5890681c0804c66d1726f4d7de434612349ae3",
+    "icon-48.png": "863b01e670c0e0d55825a01fc14cc1fabc23782aecb7e3eb4244b144bdfbfaaa",
+    "icon-512.png": "3dcb3504a3abd64072640711af6b9563ea2eb90d912fe525d89aac8217bacbbc",
+    "icon-64.png": "4afcaf31e53c1fe7622509e02ffbd33bba148bad8fa6948976dadc8600ab4f6b",
+    "icon.icns": "6d8396cb8ec30551f882240198b69013c2206d2400d54bc7938a1acd7776365e",
+    "icon.ico": "c692fd89dc93bd7d16bb46c8eb9d124f9468262dc7b1e76954acf9c44a092438",
+    "icon.png": "34c43131df9e2c2a9379466fe0e9ff886c0e4e1e011fd046bd6545cdf29eac8e"
+  }
+}

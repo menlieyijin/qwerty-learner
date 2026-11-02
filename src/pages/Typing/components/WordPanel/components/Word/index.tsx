@@ -52,6 +52,7 @@ export default function WordComponent({ word, onFinish }: { word: Word; onFinish
     dispatch,
     saveWordRecord,
     wordStateRef,
+    sessionEpoch: state.sessionEpoch,
   })
   // v9.4（TYP-009）：词已完成、下一词尚未挂载的窗口期内按下的键先缓存，切词后重放到新词，
   // 既不会误判成当前词的越界错误，也不会把「下一词的第一个键」吞掉。

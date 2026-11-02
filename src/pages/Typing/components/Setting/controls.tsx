@@ -1,7 +1,7 @@
 import styles from './index.module.css'
+import { cn } from '@/utils/ui'
 import { Switch } from '@headlessui/react'
 import * as Slider from '@radix-ui/react-slider'
-import classNames from 'classnames'
 import type { ReactNode } from 'react'
 
 // 设置面板共用控件：新面板一律用这些，避免每个面板各写一套 class / 各写一个 Switch。
@@ -9,7 +9,7 @@ import type { ReactNode } from 'react'
 export function Section({ label, description, children }: { label: string; description?: string; children: ReactNode }) {
   return (
     // 设置对话框外层是 text-center，桌面面板必须显式 text-left，否则标签/列表会居中
-    <div className={classNames(styles.section, 'text-left')}>
+    <div className={cn(styles.section, 'text-left')}>
       <span className={styles.sectionLabel}>{label}</span>
       {description ? <span className={styles.sectionDescription}>{description}</span> : null}
       {children}
@@ -19,12 +19,12 @@ export function Section({ label, description, children }: { label: string; descr
 
 export function Row({ label, hint, children, stacked }: { label: string; hint?: string; children: ReactNode; stacked?: boolean }) {
   return (
-    <div className={classNames('w-full pl-4', stacked ? 'flex flex-col gap-2' : 'flex items-center justify-between gap-4')}>
+    <div className={cn('w-full pl-4', stacked ? 'flex flex-col gap-2' : 'flex items-center justify-between gap-4')}>
       <div className="min-w-0">
         <div className="text-sm font-medium text-gray-600 dark:text-gray-300">{label}</div>
         {hint ? <div className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{hint}</div> : null}
       </div>
-      <div className={classNames('shrink-0', stacked && 'w-full')}>{children}</div>
+      <div className={cn('shrink-0', stacked && 'w-full')}>{children}</div>
     </div>
   )
 }
@@ -46,7 +46,7 @@ export function Toggle({
       checked={checked}
       onChange={onChange}
       disabled={disabled}
-      className={classNames('switch-root', disabled && 'cursor-not-allowed opacity-50')}
+      className={cn('switch-root', disabled && 'cursor-not-allowed opacity-50')}
     >
       <span aria-hidden="true" className="switch-thumb" />
     </Switch>
@@ -140,7 +140,7 @@ export function Btn({
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className={classNames(
+      className={cn(
         'rounded-lg px-3 py-1 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40',
         variant === 'primary' && 'bg-indigo-400 text-white hover:bg-indigo-500',
         variant === 'ghost' &&

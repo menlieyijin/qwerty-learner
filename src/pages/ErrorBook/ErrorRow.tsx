@@ -9,7 +9,7 @@ import { useSetAtom } from 'jotai'
 import type { FC } from 'react'
 import { useCallback } from 'react'
 import type { KeyboardEvent } from 'react'
-import DeleteIcon from '~icons/weui/delete-filled'
+import DeleteIcon from '~icons/tabler/trash'
 
 type IErrorRowProps = {
   record: groupedWordRecords

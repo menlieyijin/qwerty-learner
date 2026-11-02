@@ -22,3 +22,8 @@ test-results/
 local-fork/electron/enhance/dict-map.json
 local-fork/electron/enhance/dict-meta.json
 local-fork/electron/enhance/clipboard.html
+
+# NSIS 脚本必须是带 BOM 的 UTF-8（makensis 靠 BOM 判编码），格式化会破坏它
+scripts/templates/*.nsi
+# 图标为生成物（npm run icons），逐字节由 manifest 校验
+local-fork/icons/

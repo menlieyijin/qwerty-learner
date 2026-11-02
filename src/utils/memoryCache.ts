@@ -10,6 +10,8 @@ import type { IMemoryRecord } from './db/record'
  * - 迁移/批量写时 clear，下次读取重新加载。
  */
 let cache: IMemoryRecord[] | null = null
+// 派生视图（去重结果、按词 best map）的失效依据：任何增删改都 +1
+let revision = 0
 
 export function getMemoryCache(): IMemoryRecord[] | null {
   return cache
@@ -17,6 +19,7 @@ export function getMemoryCache(): IMemoryRecord[] | null {
 
 export function setMemoryCache(list: IMemoryRecord[]): void {
   cache = list
+  revision += 1
 }
 
 export function upsertMemoryCache(rec: IMemoryRecord): void {
@@ -24,14 +27,21 @@ export function upsertMemoryCache(rec: IMemoryRecord): void {
   const index = cache.findIndex((item) => item.key === rec.key)
   if (index >= 0) cache[index] = rec
   else cache.push(rec)
+  revision += 1
 }
 
 export function removeMemoryCache(key: string): void {
   if (!cache) return
   const index = cache.findIndex((item) => item.key === key)
   if (index >= 0) cache.splice(index, 1)
+  revision += 1
 }
 
 export function clearMemoryCache(): void {
   cache = null
+  revision += 1
+}
+
+export function getMemoryRevision(): number {
+  return revision
 }

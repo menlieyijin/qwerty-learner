@@ -14,7 +14,7 @@ import { recordShareAction } from '@/utils/mixpanel'
 import { Dialog, Transition } from '@headlessui/react'
 import { useAtomValue } from 'jotai'
 import { Fragment, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import IconXMark from '~icons/heroicons/x-mark-solid'
+import IconXMark from '~icons/tabler/x'
 
 const PIC_RATIO = 3
 /** SHARE-001：分享图生成超时（字体/图片远程拉取失败时 html-to-image 可能长时间挂起）。 */

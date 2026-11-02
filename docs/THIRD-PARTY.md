@@ -47,8 +47,9 @@
 
 | 文件 | 说明 |
 | --- | --- |
-| `public/icon.ico`、`public/icon-256.png` | 项目 logo 派生（Q 键键帽风格），源自上游图标设计；上游 README 致谢 [libregd](https://github.com/libregd) 提供图标设计。按 GPL-3.0 随本分支分发。 |
-| `src/assets/logo.svg` 等 | 上游视觉资产，按上游 GPL-3.0 保留。 |
+| `local-fork/icons/*` | 由 `src/assets/logo.svg` 生成（ICO / ICNS / 多档 PNG），`npm run test:icons` 逐字节校验；按 GPL-3.0 随本分支分发。 |
+| `public/favicon.ico`、`public/icon-*.png`、`public/android-chrome-*`、`public/apple-touch-icon.png` | 同一 SVG 同步生成的站点图标，保证桌面端与网页端一致。 |
+| `src/assets/logo.svg` | 当前品牌标志（Q 键键帽）；源自上游图标设计，上游 README 致谢 [libregd](https://github.com/libregd)。按 GPL-3.0 随本分支分发。 |
 
 ## 5. 文档截图
 

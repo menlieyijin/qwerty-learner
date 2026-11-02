@@ -1,7 +1,7 @@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import type { FC } from 'react'
 import { useCallback } from 'react'
-import PhWarning from '~icons/ph/warning'
+import PhWarning from '~icons/tabler/alert-triangle'
 
 export type ITipAlert = {
   className?: string

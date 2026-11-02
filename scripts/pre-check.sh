@@ -31,15 +31,16 @@ else
     git --version
 fi
 
-# 检测 Node / npm 是否满足 engines（node >=18 <23、npm >=9）
+# 检测 Node / npm 是否满足 engines（node >=22.12 <23、npm >=10）
 # v9.16（dsh，M4-002）：不再检测/自动安装 yarn —— 仓库已统一到 npm + package-lock.json。
 if ! type node >/dev/null 2>&1; then
-    echo "未检测到 Node.js，请安装 Node 18/20/22 LTS (https://nodejs.org/en/download)"
+    echo "未检测到 Node.js，请安装 Node 22 LTS（>=22.12） (https://nodejs.org/en/download)"
 else
     node_version=$(node -v | tr -d 'v')
     node_major=${node_version%%.*}
-    if [ "$node_major" -lt 18 ] || [ "$node_major" -ge 23 ]; then
-        echo "Node 版本不满足要求：当前 $node_version，需要 18 ~ 22（见 package.json 的 engines）"
+    node_minor=$(echo "$node_version" | cut -d. -f2)
+    if [ "$node_major" -lt 22 ] || [ "$node_major" -ge 23 ] || { [ "$node_major" -eq 22 ] && [ "$node_minor" -lt 12 ]; }; then
+        echo "Node 版本不满足要求：当前 $node_version，需要 >=22.12 <23（见 package.json 的 engines）"
     else
         echo "检测到 Node 环境，版本为：$node_version"
     fi
@@ -50,8 +51,8 @@ if ! type npm >/dev/null 2>&1; then
 else
     npm_version=$(npm -v)
     npm_major=${npm_version%%.*}
-    if [ "$npm_major" -lt 9 ]; then
-        echo "npm 版本过低：当前 $npm_version，需要 >=9（可执行 npm install -g npm@10）"
+    if [ "$npm_major" -lt 10 ]; then
+        echo "npm 版本过低：当前 $npm_version，需要 >=10（可执行 npm install -g npm@10）"
     else
         echo "检测到 npm 环境，版本为：$npm_version"
     fi

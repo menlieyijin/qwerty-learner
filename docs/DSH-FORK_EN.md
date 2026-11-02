@@ -202,7 +202,7 @@ npm run rollback
 - App version single source: `local-fork/package.json` → `version` (read by main process, preload via `app:version-sync`, injected panel via `window.__QZ_VERSION__`).
 - Root `package.json` stays at upstream `0.1.0` and is not the desktop version.
 - Milestone tags: `vX.Y-dsh-local` (v7.1, v8.9, v9.0, v9.2, v9.3, v9.5, v9.6, v9.7, v9.8, v9.9; v9.10–v9.15 are not tagged yet). v9.1/v9.2 and v9.4/v9.5 were released in shared commits, so no separate tags.
-- Installer exe metadata is written by rcedit only during runtime upgrades and may lag the app version (currently FileVersion 9.8.0.0 while the app is v9.15).
+- Installer/exe metadata is written by rcedit at shell-assembly time from `local-fork/package.json` (currently FileVersion 11.6.0.0).
 
 ## 8. Security design
 

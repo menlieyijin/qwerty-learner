@@ -6,19 +6,19 @@ import path from 'node:path'
 
 const APP_NAME = 'Qwerty Learner'
 
-function variants(dir) {
-  if (process.platform === 'darwin') {
+function variants(dir, platform) {
+  if (platform === 'darwin') {
     // 允许直接传 .app 包路径
     if (dir.endsWith('.app')) return [path.join(dir, 'Contents', 'MacOS', APP_NAME)]
     return [path.join(dir, `${APP_NAME}.app`, 'Contents', 'MacOS', APP_NAME), path.join(dir, APP_NAME)]
   }
-  if (process.platform === 'win32') {
+  if (platform === 'win32') {
     return [path.join(dir, `${APP_NAME}.exe`)]
   }
   return [path.join(dir, 'qwerty-learner'), path.join(dir, APP_NAME), path.join(dir, `${APP_NAME}.AppImage`)]
 }
 
-export function resolveDesktopExe(explicit) {
+export function resolveDesktopExe(explicit, platform = process.platform) {
   const dirs = []
   if (process.env.QZ_TEST_APP_DIR) dirs.push(process.env.QZ_TEST_APP_DIR)
   dirs.push(path.resolve('release', 'app'), path.resolve('release'), path.resolve('local-fork', 'dist'))
@@ -35,10 +35,10 @@ export function resolveDesktopExe(explicit) {
   const candidates = []
   for (const given of [explicit, process.env.QZ_VERIFY_EXE]) {
     if (!given) continue
-    if (isDir(given)) candidates.push(...variants(given))
+    if (isDir(given)) candidates.push(...variants(given, platform))
     else candidates.push(given)
   }
-  for (const dir of dirs) candidates.push(...variants(dir))
+  for (const dir of dirs) candidates.push(...variants(dir, platform))
 
   const found = candidates.find((p) => p && existsSync(p))
   if (found) return found
@@ -49,7 +49,7 @@ export function resolveDesktopExe(explicit) {
       '  1) node scripts/verify-xxx.mjs --exe "<可执行文件路径>"',
       '  2) 设置环境变量 QZ_VERIFY_EXE',
       '  3) 设置 QZ_TEST_APP_DIR 指向包含程序的目录',
-      `当前平台：${process.platform}；已尝试：`,
+      `当前平台：${platform}（校验目标）；已尝试：`,
       ...candidates.map((p) => `  - ${p}`),
     ].join('\n'),
   )

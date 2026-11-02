@@ -2,6 +2,7 @@ import InfoPanel from '@/components/InfoPanel'
 import { trackPromotionEvent } from '@/utils/trackEvent'
 import { useCallback, useState } from 'react'
 import IconBook2 from '~icons/tabler/book-2'
+import IconSparkles from '~icons/tabler/sparkles'
 
 export default function DictRequest() {
   const [showPanel, setShowPanel] = useState(false)
@@ -56,7 +57,7 @@ export default function DictRequest() {
       >
         <IconBook2 className="h-4 w-4" />
         <span>寻找更多词典</span>
-        <span className="transform transition-transform group-hover:translate-x-1">✨</span>
+        <IconSparkles className="h-4 w-4 transform transition-transform group-hover:translate-x-1" aria-hidden="true" />
       </button>
     </>
   )

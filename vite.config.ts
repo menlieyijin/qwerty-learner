@@ -44,8 +44,10 @@ export default defineConfig(async ({ mode }) => {
       // 目标：首屏主 chunk 从 ~1.55MB 降到 < 1MB，并让 xlsx/echarts 这类大库能被浏览器单独缓存。
       // 约束（保证不改变运行行为）：只对 node_modules 里的库分组，vendor chunk 之间可以互相 import，
       // 但绝不回指 app 代码（避免 chunk 循环导致运行时 TDZ）；入口与 app 源码仍由 rollup 决定。
-      // 注意：core-js / react-app-polyfill 这类 polyfill 必须最先执行，故意留在入口 chunk，不单独拆。
-      chunkSizeWarningLimit: 1024,
+      // 目标与 Electron 43 / 现代浏览器一致；tsconfig 的 target 只影响类型检查，这里才是产物基线。
+      target: 'es2020',
+      // 500KB 是 Vite 默认告警线；不要再调高掩盖体积回归。
+      chunkSizeWarningLimit: 600,
       rollupOptions: {
         output: {
           manualChunks(id: string) {
@@ -73,7 +75,9 @@ export default defineConfig(async ({ mode }) => {
       },
     },
     esbuild: {
-      drop: mode === 'development' ? [] : ['console', 'debugger'],
+      // 只去掉调试输出，保留 console.warn/error：错误分支不能因为「剥 console」而彻底静默。
+      drop: mode === 'development' ? [] : ['debugger'],
+      pure: mode === 'development' ? [] : ['console.log', 'console.debug', 'console.info'],
     },
     define: {
       REACT_APP_DEPLOY_ENV: JSON.stringify(process.env.REACT_APP_DEPLOY_ENV),

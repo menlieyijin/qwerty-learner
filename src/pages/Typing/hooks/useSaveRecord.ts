@@ -92,14 +92,22 @@ export function useSaveWordRecord() {
       try {
         dbID = await db.wordRecords.add(wordRecord)
       } catch (e) {
-        console.error(e)
+        dispatch?.({ type: TypingStateActionType.SET_IS_SAVING_RECORD, payload: false })
+        throw e
       }
       // v7：写入/更新记忆曲线记录（按艾宾浩斯阶梯安排下一次复习）
+      // 一致性：词记录写成功、记忆曲线写失败时回滚词记录；否则会出现「SRS 认为没练过、错题本却有记录」。
       const totalMs = timing.reduce((acc, cur) => acc + cur, 0)
       try {
         await updateMemoryProgress(recordDict, word, wrongCount, totalMs, trans, phone, !!isRefresh)
       } catch (e) {
-        console.error('save memory progress failed', e)
+        try {
+          await db.wordRecords.delete(dbID)
+        } catch (rollbackError) {
+          console.error('rollback word record failed', rollbackError)
+        }
+        dispatch?.({ type: TypingStateActionType.SET_IS_SAVING_RECORD, payload: false })
+        throw e
       }
       // v8 错词当场重现：本次会话内隔几个词再练一次（不影响 memoryRecords 的 10 分钟档）
       if (Number(wrongCount) > 0) {

@@ -34,6 +34,10 @@
     if (n > 1e15) return Math.floor(n / 1000) // 微秒 → 毫秒
     return n
   }
+  const ICON_X =
+    '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>'
+  const ICON_VOLUME =
+    '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>'
   const esc = (s) =>
     String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v))
@@ -897,7 +901,7 @@
       <div class="wc-head"><div><div class="wc-word">${esc(
         word,
       )}</div><div class="wc-ph" id="wc-ph"></div><div class="wc-src" id="wc-src"></div></div>
-        <button class="wc-close" id="wc-close" title="关闭">✕</button></div>
+        <button class="wc-close" id="wc-close" title="关闭" aria-label="关闭">${ICON_X}</button></div>
       <div id="wc-body"><div class="wc-loading">查询中…</div></div></div></div>`
     $('#wc-mask').addEventListener('click', (e) => {
       if (e.target.id === 'wc-mask') closeWordCard()
@@ -975,7 +979,7 @@
         '</div></div>'
     }
     html += `<div class="wc-actions" style="margin-top:16px">
-      <button class="btn primary sm" id="wc-pron">🔊 发音</button>
+      <button class="btn primary sm" id="wc-pron">${ICON_VOLUME}<span>发音</span></button>
       <button class="btn sm ghost" id="wc-copy">复制单词</button>
     </div>`
     body.innerHTML = html
@@ -1280,33 +1284,49 @@
         if (!window.confirm('自动备份失败，仍要继续导入？')) return
       }
       toast('正在导入…')
+      // ---- 先做完整预校验，再碰主库：任何一行不合法都不写入 ----
+      const validateRows = (rows, keyPath, label) => {
+        if (!Array.isArray(rows)) throw new Error(label + ' 不是数组')
+        for (let i = 0; i < rows.length; i++) {
+          const row = rows[i]
+          if (!row || typeof row !== 'object' || Array.isArray(row)) throw new Error(label + ' 第 ' + (i + 1) + ' 行不是对象')
+          if (typeof keyPath === 'string' && row[keyPath] === undefined) throw new Error(label + ' 第 ' + (i + 1) + ' 行缺少主键 ' + keyPath)
+        }
+      }
       let db = null
       try {
         db = await idbOpen('RecordDB')
         const stores = Array.from(db.objectStoreNames || [])
-        for (const store of stores) {
-          const rows = data.recordDb[store]
-          if (!Array.isArray(rows)) continue
-          await new Promise((resolve, reject) => {
-            const tx = db.transaction(store, 'readwrite')
-            const os = tx.objectStore(store)
-            try {
+        // 只导入备份里真实存在的表：旧备份缺少新表时保留当前数据，而不是静默清空
+        const present = stores.filter((name) => data.recordDb[name] !== undefined)
+        if (!present.length) throw new Error('备份中没有任何可导入的数据表')
+        for (const name of present) {
+          const tx = db.transaction(name, 'readonly')
+          validateRows(data.recordDb[name], tx.objectStore(name).keyPath, name)
+          tx.abort()
+        }
+        // 一个跨 store 事务：clear + put 全部成功才提交，任一失败整体回滚
+        await new Promise((resolve, reject) => {
+          const tx = db.transaction(present, 'readwrite')
+          try {
+            for (const name of present) {
+              const os = tx.objectStore(name)
               os.clear()
+              for (const row of data.recordDb[name]) os.put(row)
+            }
+          } catch (e) {
+            try {
+              tx.abort()
             } catch {
               /* ignore */
             }
-            for (const row of rows) {
-              try {
-                os.put(row)
-              } catch {
-                /* ignore */
-              }
-            }
-            tx.oncomplete = () => resolve()
-            tx.onerror = () => reject(tx.error || new Error('write ' + store))
-            tx.onabort = () => reject(tx.error || new Error('abort ' + store))
-          })
-        }
+            reject(e)
+            return
+          }
+          tx.oncomplete = () => resolve()
+          tx.onerror = () => reject(tx.error || new Error('import transaction failed'))
+          tx.onabort = () => reject(tx.error || new Error('import transaction aborted'))
+        })
       } finally {
         try {
           if (db) db.close()
@@ -1320,23 +1340,27 @@
           pdb = await idbOpen('QwertyPlusDB', 3, (d) => {
             if (!d.objectStoreNames.contains('dicts')) d.createObjectStore('dicts', { keyPath: 'name' })
           })
+          for (const row of data.customDicts) {
+            if (!row || typeof row !== 'object' || typeof row.name !== 'string' || !row.name) throw new Error('自定义词库数据不合法')
+          }
           await new Promise((resolve, reject) => {
             const tx = pdb.transaction('dicts', 'readwrite')
             const os = tx.objectStore('dicts')
             try {
               os.clear()
-            } catch {
-              /* ignore */
-            }
-            for (const row of data.customDicts) {
+              for (const row of data.customDicts) os.put(row)
+            } catch (e) {
               try {
-                os.put(row)
+                tx.abort()
               } catch {
                 /* ignore */
               }
+              reject(e)
+              return
             }
             tx.oncomplete = () => resolve()
             tx.onerror = () => reject(tx.error || new Error('custom dict import'))
+            tx.onabort = () => reject(tx.error || new Error('custom dict import aborted'))
           })
         } finally {
           try {
@@ -1667,7 +1691,4 @@
 
   if (api.onBackupRequest) api.onBackupRequest(handleBackupRequest)
 
-  api.onClipboardWord((word) => {
-    toast('剪贴板查词: ' + word, 3000)
-  })
 })()

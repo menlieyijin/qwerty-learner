@@ -21,7 +21,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useHotkeys } from 'react-hotkeys-hook'
 import { useNavigate } from 'react-router-dom'
 import { useImmer } from 'use-immer'
-import IconInfo from '~icons/ic/outline-info'
+import IconInfo from '~icons/tabler/info-circle'
 
 export type { GalleryState } from './context'
 

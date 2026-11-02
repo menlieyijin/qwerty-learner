@@ -11,7 +11,7 @@ import path from 'node:path'
 const REQUIRED = ['/package.json', '/electron/main.js', '/build/index.html']
 const LEGAL = ['LICENSE', 'FORK-NOTICE.md']
 
-export function checkInstallDir(dir, { expectedHash = '' } = {}) {
+export function checkInstallDir(dir, { expectedHash = '', platform = process.platform } = {}) {
   const issues = []
   const info = { dir: path.resolve(dir) }
 
@@ -21,7 +21,7 @@ export function checkInstallDir(dir, { expectedHash = '' } = {}) {
 
   let exe = ''
   try {
-    exe = resolveDesktopExe(dir)
+    exe = resolveDesktopExe(dir, platform)
     info.exe = exe
   } catch (e) {
     issues.push(`找不到可执行文件：${e.message.split('\n')[0]}`)

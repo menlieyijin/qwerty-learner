@@ -45,15 +45,17 @@ if (!(Test-CommandInstalled git)) {
     git --version
 }
 
-# 检测 Node / npm 是否满足 engines（node >=18 <23、npm >=9）
+# 检测 Node / npm 是否满足 engines（node >=22.12 <23、npm >=10）
 # v9.16（dsh，M4-002）：不再检测/自动安装 yarn —— 仓库已统一到 npm + package-lock.json。
 if (!(Test-CommandInstalled node)) {
-    Write-Host "未检测到 Node.js，请手动安装 Node 18/20/22 LTS (https://nodejs.org/en/download)"
+    Write-Host "未检测到 Node.js，请手动安装 Node 22 LTS（>=22.12） (https://nodejs.org/en/download)"
 }else{
     $nodeVersion = (node -v).TrimStart('v')
-    $nodeMajor = [int]($nodeVersion.Split('.')[0])
-    if ($nodeMajor -lt 18 -or $nodeMajor -ge 23) {
-        Write-Host "Node 版本不满足要求：当前 $nodeVersion，需要 18 ~ 22（见 package.json 的 engines）"
+    $nodeParts = $nodeVersion.Split('.')
+    $nodeMajor = [int]$nodeParts[0]
+    $nodeMinor = [int]$nodeParts[1]
+    if ($nodeMajor -lt 22 -or $nodeMajor -ge 23 -or ($nodeMajor -eq 22 -and $nodeMinor -lt 12)) {
+        Write-Host "Node 版本不满足要求：当前 $nodeVersion，需要 >=22.12 <23（见 package.json 的 engines）"
     }else{
         Write-Host "检测到 Node 环境，版本为：$nodeVersion"
     }
@@ -64,8 +66,8 @@ if (!(Test-CommandInstalled npm)) {
 }else{
     $npmVersion = (npm -v).Trim()
     $npmMajor = [int]($npmVersion.Split('.')[0])
-    if ($npmMajor -lt 9) {
-        Write-Host "npm 版本过低：当前 $npmVersion，需要 >=9（可执行 npm install -g npm@10）"
+    if ($npmMajor -lt 10) {
+        Write-Host "npm 版本过低：当前 $npmVersion，需要 >=10（可执行 npm install -g npm@10）"
     }else{
         Write-Host "检测到 npm 环境，版本为：$npmVersion"
     }

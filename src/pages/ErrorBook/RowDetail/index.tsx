@@ -14,10 +14,10 @@ import { idDictionaryMap } from '@/resources/dictionary'
 import { useSetAtom } from 'jotai'
 import { useCallback, useMemo, useRef } from 'react'
 import { useHotkeys } from 'react-hotkeys-hook'
-import HashtagIcon from '~icons/heroicons/chart-pie-20-solid'
-import CheckCircle from '~icons/heroicons/check-circle-20-solid'
-import ClockIcon from '~icons/heroicons/clock-20-solid'
-import XCircle from '~icons/heroicons/x-circle-20-solid'
+import HashtagIcon from '~icons/tabler/chart-pie'
+import CheckCircle from '~icons/tabler/circle-check'
+import XCircle from '~icons/tabler/circle-x'
+import ClockIcon from '~icons/tabler/clock'
 
 type RowDetailProps = {
   currentRowDetail: groupedWordRecords

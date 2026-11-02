@@ -1,8 +1,8 @@
-import classNames from 'classnames'
+import { cn } from '@/utils/ui'
 import type { ElementType, SVGAttributes } from 'react'
-import IconExclamationTriangle from '~icons/heroicons/exclamation-triangle-solid'
-import IconHandThumbUp from '~icons/heroicons/hand-thumb-up-solid'
-import IconHeart from '~icons/heroicons/heart-solid'
+import IconExclamationTriangle from '~icons/tabler/alert-triangle'
+import IconHeart from '~icons/tabler/heart'
+import IconHandThumbUp from '~icons/tabler/thumb-up'
 
 type IconMapper = {
   icon: ElementType<SVGAttributes<SVGSVGElement>>
@@ -33,7 +33,7 @@ const ConclusionBar = ({ mistakeLevel, mistakeCount }: ConclusionBarProps) => {
 
   return (
     <div className="flex h-10 flex-row items-center">
-      <Icon className={classNames(className, 'h-5 w-5')} />
+      <Icon className={cn(className, 'h-5 w-5')} />
       <span className="ml-2 inline-block align-middle text-sm font-medium leading-10 text-gray-700 sm:text-sm md:text-base">
         {text(mistakeCount)}
       </span>

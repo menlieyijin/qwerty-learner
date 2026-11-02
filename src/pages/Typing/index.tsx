@@ -27,7 +27,7 @@ import { useImmerReducer } from 'use-immer'
 
 function App() {
   const [state, dispatch] = useImmerReducer(typingReducer, structuredClone(initialState))
-  const { words, isLoading, nextWord } = useWordList()
+  const { words, isLoading, error: wordListError, nextWord } = useWordList()
 
   const [currentDictId, setCurrentDictId] = useAtom(currentDictIdAtom)
   const currentChapter = useAtomValue(currentChapterAtom)
@@ -148,6 +148,14 @@ function App() {
     startBufferRef.current = []
     const timers = buffer.map((key, i) =>
       window.setTimeout(() => {
+        // code 词库走 textarea 的 input 事件，合成 keydown 不会产生输入；
+        // 有焦点在 textarea 时直接写入并派发 input，其余情况仍走 keydown 监听。
+        const active = document.activeElement
+        if (active instanceof HTMLTextAreaElement) {
+          active.value = key
+          active.dispatchEvent(new InputEvent('input', { data: key, inputType: 'insertText', bubbles: true }))
+          return
+        }
         window.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }))
       }, 20 * (i + 1)),
     )
@@ -290,9 +298,11 @@ function App() {
               </div>
             ) : noMoreWords || (!state.isFinished && words.length === 0) ? (
               <div className="flex flex-col items-center justify-center gap-3 text-center">
-                <p className="text-xl text-gray-600 dark:text-gray-300">当前没有可练习的词</p>
+                <p className="text-xl text-gray-600 dark:text-gray-300">{wordListError ? '本地学习数据读取失败' : '当前没有可练习的词'}</p>
                 <p className="max-w-lg text-sm text-gray-500 dark:text-gray-400">
-                  词库已全部学完且暂时没有到期复习词；若自动进阶已走完 13 级，可到词库画廊选择其他词库继续，或稍后再来复习。
+                  {wordListError
+                    ? '数据仍在本地数据库中，不代表进度被清空。请关闭其它占用数据库的标签页后重试；若持续失败，可在设置里先导出备份。'
+                    : '词库已全部学完且暂时没有到期复习词；若自动进阶已走完 13 级，可到词库画廊选择其他词库继续，或稍后再来复习。'}
                 </p>
                 <div className="flex gap-3">
                   <button className="my-btn-primary bg-indigo-500 hover:bg-indigo-400" onClick={() => window.location.reload()}>

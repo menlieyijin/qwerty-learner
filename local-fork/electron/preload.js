@@ -32,7 +32,7 @@ function onEvent(cb) {
   }
 }
 function onClipboardWord(cb) {
-  if (typeof cb !== 'function') return
+  if (typeof cb !== 'function') return () => {}
   const handler = (_e, word) => {
     try {
       cb(word)
@@ -41,6 +41,13 @@ function onClipboardWord(cb) {
     }
   }
   ipcRenderer.on('clipboard:word', handler)
+  return () => {
+    try {
+      ipcRenderer.removeListener('clipboard:word', handler)
+    } catch {
+      /* ignore */
+    }
+  }
 }
 
 contextBridge.exposeInMainWorld('qwertyEnhance', {
@@ -63,14 +70,22 @@ contextBridge.exposeInMainWorld('qwertyEnhance', {
   backupNow: () => ipcRenderer.invoke('backup:now'),
   // —— v8.9：逻辑备份快照（主进程备份时请求，渲染端收集数据后回传）——
   onBackupRequest: (cb) => {
-    if (typeof cb !== 'function') return
-    ipcRenderer.on('backup:request', () => {
+    if (typeof cb !== 'function') return () => {}
+    const handler = () => {
       try {
         cb()
       } catch {
         /* ignore */
       }
-    })
+    }
+    ipcRenderer.on('backup:request', handler)
+    return () => {
+      try {
+        ipcRenderer.removeListener('backup:request', handler)
+      } catch {
+        /* ignore */
+      }
+    }
   },
   writeBackupSnapshot: (json) => ipcRenderer.invoke('backup:writeSnapshot', json),
   openPath: (which) => ipcRenderer.invoke('app:openPath', which),

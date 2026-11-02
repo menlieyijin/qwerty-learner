@@ -151,9 +151,20 @@ let settings = { ...DEFAULT_SETTINGS }
 function loadSettings() {
   try {
     const raw = JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf-8'))
+    if (!raw || typeof raw !== 'object') throw new Error('settings is not an object')
     settings = { ...DEFAULT_SETTINGS, ...raw }
-  } catch {
+  } catch (e) {
     settings = { ...DEFAULT_SETTINGS }
+    // 损坏的文件先留档再回落默认值，避免第一次 saveSettings 就把它覆盖掉（用户偏好全丢且无从恢复）
+    try {
+      if (fs.existsSync(SETTINGS_FILE)) {
+        const bad = `${SETTINGS_FILE}.corrupt-${Date.now()}`
+        fs.renameSync(SETTINGS_FILE, bad)
+        logError('settings-load', `损坏的设置已留档：${bad}（${e.message || e}）`)
+      }
+    } catch (renameError) {
+      logError('settings-load-backup', renameError)
+    }
   }
   // 开机自启以系统真实状态为准
   try {
@@ -168,6 +179,13 @@ function saveSettings() {
   try {
     const tmp = SETTINGS_FILE + '.tmp'
     fs.writeFileSync(tmp, JSON.stringify(settings, null, 2), 'utf-8')
+    if (fs.existsSync(SETTINGS_FILE)) {
+      try {
+        fs.copyFileSync(SETTINGS_FILE, SETTINGS_FILE + '.bak')
+      } catch {
+        /* 备份失败不阻塞保存 */
+      }
+    }
     fs.renameSync(tmp, SETTINGS_FILE)
   } catch (e) {
     logError('settings-save', e)
@@ -176,7 +194,8 @@ function saveSettings() {
 function publicSettings() {
   const rest = { ...settings }
   delete rest.aiKey // 历史字段，不再使用（免费释义无需 Key）
-  return { ...rest, version: APP_VERSION, plusDir: PLUS_DIR, userDataDir: USER_DATA, exportsDir: EXPORTS_DIR }
+  // 不再下发绝对路径：前端没有消费方，导出/备份里带上会泄露本机目录结构
+  return { ...rest, version: APP_VERSION }
 }
 
 // ---------------------------------------------------------------------------
@@ -294,20 +313,26 @@ let snapshotPending = null // 等待渲染端逻辑备份快照的 pending resol
 //   mainWindow / clipboardWin 是后声明的模块级变量，包装函数只在调用时读取，
 //   因此 registerIpc() 中提前引用不会踩 TDZ。
 // ---------------------------------------------------------------------------
-function isTrustedWebContents(wc) {
-  if (!wc) return false
+function roleOf(wc) {
+  if (!wc) return null
   try {
-    if (mainWindow && !mainWindow.isDestroyed() && wc === mainWindow.webContents) return true
-    if (clipboardWin && !clipboardWin.isDestroyed() && wc === clipboardWin.webContents) return true
+    if (mainWindow && !mainWindow.isDestroyed() && wc === mainWindow.webContents) return 'main'
+    if (clipboardWin && !clipboardWin.isDestroyed() && wc === clipboardWin.webContents) return 'clipboard'
   } catch {
     /* ignore */
   }
-  return false
+  return null
 }
+
+// 剪贴板小窗展示的是远端词典内容，是全应用攻击面最高的渲染进程。
+// 只允许它调用「查词 + 关闭」两个通道；其余 40+ 通道即使 preload 被绕过也拿不到。
+const CLIPBOARD_CHANNELS = new Set(['free:lookup', 'clipboard:close'])
+
 function handle(channel, fn) {
   ipcMain.handle(channel, (event, ...args) => {
-    if (!isTrustedWebContents(event && event.sender)) {
-      logError('ipc-deny', channel)
+    const role = roleOf(event && event.sender)
+    if (!role || (role === 'clipboard' && !CLIPBOARD_CHANNELS.has(channel))) {
+      logError('ipc-deny', `${role || 'unknown'}:${channel}`)
       throw new Error('forbidden')
     }
     return fn(event, ...args)
@@ -319,7 +344,16 @@ function handle(channel, fn) {
 // ---------------------------------------------------------------------------
 function loadWindowState() {
   try {
-    return JSON.parse(fs.readFileSync(STATE_FILE, 'utf-8'))
+    const raw = JSON.parse(fs.readFileSync(STATE_FILE, 'utf-8'))
+    if (!raw || typeof raw !== 'object') return null
+    const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : null)
+    const width = num(raw.width)
+    const height = num(raw.height)
+    const x = num(raw.x)
+    const y = num(raw.y)
+    // 缺 width/height 或类型不对时整体丢弃：Math.max(900, undefined) 会变 NaN，BrowserWindow 直接抛错
+    if (width === null || height === null) return null
+    return { x, y, width: Math.min(10000, Math.max(900, Math.round(width))), height: Math.min(10000, Math.max(600, Math.round(height))), maximized: !!raw.maximized }
   } catch {
     return null
   }
@@ -336,7 +370,7 @@ function saveWindowState(win) {
   }
 }
 function isVisibleOnSomeDisplay(s) {
-  if (!s || typeof s.x !== 'number') return false
+  if (!s || !Number.isFinite(s.x) || !Number.isFinite(s.y)) return false
   try {
     return screen.getAllDisplays().some((d) => {
       const a = d.bounds
@@ -463,30 +497,56 @@ function requestRendererSnapshot() {
 // 不用 fs.cpSync：部分 Node 版本在 Windows 上对任意目录都会以 0xC0000409（STATUS_STACK_BUFFER_OVERRUN）
 // 直接终止进程 —— 这是硬崩，try/catch 抓不到，备份会连带整个应用退出。手写遍历失败时抛普通异常，
 // 由调用方按「该备份项跳过并记日志」处理，与原来的行为一致。
-function copyTreeSync(src, dst) {
-  fs.mkdirSync(dst, { recursive: true })
-  for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
+
+/**
+ * 异步版目录复制（v11.6 / E-8）。
+ *
+ * 旧实现用 copyTreeSync：备份几十万个小文件（IndexedDB 的 LevelDB 目录很碎）时
+ * 会把 Electron 主进程的事件循环按住几十秒，窗口无响应、托盘菜单点不动。
+ * 这里改为全异步，并且每复制 64 个条目 `setImmediate` 让出一次，
+ * 让 IPC / 窗口消息始终有机会被处理。
+ */
+async function copyTreeAsync(src, dst, budget = { count: 0 }) {
+  await fs.promises.mkdir(dst, { recursive: true })
+  const entries = await fs.promises.readdir(src, { withFileTypes: true })
+  for (const entry of entries) {
     const from = path.join(src, entry.name)
     const to = path.join(dst, entry.name)
-    if (entry.isDirectory()) copyTreeSync(from, to)
-    else if (entry.isSymbolicLink()) {
+    if (entry.isDirectory()) {
+      await copyTreeAsync(from, to, budget)
+    } else if (entry.isSymbolicLink()) {
       try {
-        fs.unlinkSync(to)
+        await fs.promises.unlink(to)
       } catch {
         /* 目标不存在 */
       }
-      fs.symlinkSync(fs.readlinkSync(from), to)
-    } else fs.copyFileSync(from, to) // 覆盖同名（等价于原 cpSync 的 force + errorOnExist:false）
+      await fs.promises.symlink(await fs.promises.readlink(from), to)
+    } else {
+      await fs.promises.copyFile(from, to) // 覆盖同名（等价于原 cpSync 的 force + errorOnExist:false）
+    }
+    budget.count += 1
+    if (budget.count % 64 === 0) await new Promise((r) => setImmediate(r))
   }
 }
 
+let backupRunning = null
+
 function runBackup(reason = 'auto') {
-  return new Promise((resolve) => {
+  // 重入保护：定时器 / 托盘 / 面板 / 导入前备份共用同一次执行，
+  // 避免同秒目录互相覆盖、修剪时删掉另一路正在写的备份。
+  if (backupRunning) return backupRunning
+  const p = new Promise((resolve) => {
+    // 在 try 外声明：catch 里要清理半份目录（const 在 catch 里会 TDZ）
+    let dest = null
     ;(async () => {
       try {
         const now = new Date()
         const stamp = now.toISOString().replace(/[-:]/g, '').replace('T', '-').slice(0, 15) // YYYYMMDD-HHmmss
-        const dest = path.join(BACKUP_DIR, `backup-${stamp}`)
+        // 加随机后缀：同秒并发也不会落到同一个目录
+        const finalDest = path.join(BACKUP_DIR, `backup-${stamp}-${crypto.randomUUID().slice(0, 8)}`)
+        // 先写 *.partial，全部写完后原子改名：中途崩溃/断电不会留下「看起来完整」的半份备份，
+        // 修剪逻辑也不会把它当成可用备份。
+        dest = `${finalDest}.partial`
         fs.mkdirSync(dest, { recursive: true })
         // v8.9：先写渲染端逻辑快照 data.json（8 秒超时；失败/超时不影响下面的目录副本兜底）
         let snapshotBytes = 0
@@ -511,7 +571,7 @@ function runBackup(reason = 'auto') {
           const src = path.join(USER_DATA, name)
           if (fs.existsSync(src)) {
             try {
-              copyTreeSync(src, path.join(dest, name))
+              await copyTreeAsync(src, path.join(dest, name))
               copied.push(name)
             } catch (e) {
               logError('backup-copy-' + name, e)
@@ -522,7 +582,7 @@ function runBackup(reason = 'auto') {
           const src = path.join(USER_DATA, name)
           if (fs.existsSync(src)) {
             try {
-              fs.copyFileSync(src, path.join(dest, name))
+              await fs.promises.copyFile(src, path.join(dest, name))
               copied.push(name)
             } catch (e) {
               logError('backup-copy-' + name, e)
@@ -546,15 +606,33 @@ function runBackup(reason = 'auto') {
         } catch {
           /* ignore */
         }
-        // 保留最近 7 份
-        const dirs = fs
-          .readdirSync(BACKUP_DIR)
-          .filter((n) => n.startsWith('backup-'))
-          .map((n) => ({ n, t: fs.statSync(path.join(BACKUP_DIR, n)).mtimeMs }))
-          .sort((a, b) => b.t - a.t)
+        // 原子改名：从这里开始它才是一份「完整备份」
+        await fs.promises.rename(dest, finalDest)
+        // 保留最近 7 份（含本次）；只统计完整目录，*.partial 不参与排序
+        const nowMs = Date.now()
+        const FULL_BACKUP = /^backup-\d{8}-\d{6}-[0-9a-f]{8}$/
+        const entries = await fs.promises.readdir(BACKUP_DIR, { withFileTypes: true })
+        const dirs = []
+        for (const entry of entries) {
+          if (!entry.isDirectory()) continue
+          const full = path.join(BACKUP_DIR, entry.name)
+          const stat = await fs.promises.stat(full).catch(() => null)
+          if (!stat) continue
+          if (FULL_BACKUP.test(entry.name)) {
+            dirs.push({ n: entry.name, t: stat.mtimeMs })
+          } else if (entry.name.endsWith('.partial') && nowMs - stat.mtimeMs > 24 * 60 * 60 * 1000) {
+            // 上次崩溃留下的半份备份，超过一天就清掉
+            try {
+              await fs.promises.rm(full, { recursive: true, force: true })
+            } catch (e) {
+              logError('backup-prune-partial', e)
+            }
+          }
+        }
+        dirs.sort((a, b) => b.t - a.t)
         for (const d of dirs.slice(7)) {
           try {
-            fs.rmSync(path.join(BACKUP_DIR, d.n), { recursive: true, force: true })
+            await fs.promises.rm(path.join(BACKUP_DIR, d.n), { recursive: true, force: true })
           } catch (e) {
             logError('backup-prune', e)
           }
@@ -563,17 +641,27 @@ function runBackup(reason = 'auto') {
         saveSettings()
         logRenderer(
           'backup',
-          `backup ok (${reason}) -> ${dest}, copied: ${copied.join(',') || 'nothing'}, snapshot: ${
+          `backup ok (${reason}) -> ${finalDest}, copied: ${copied.join(',') || 'nothing'}, snapshot: ${
             snapshotBytes ? snapshotBytes + 'B' : 'none'
           }`,
         )
-        resolve({ ok: true, path: dest, copied, snapshot: snapshotBytes || 0 })
+        resolve({ ok: true, path: finalDest, copied, snapshot: snapshotBytes || 0 })
       } catch (e) {
         logError('backup', e)
+        // 失败时清掉半份目录，避免占空间、也避免被误认为可恢复备份
+        try {
+          if (typeof dest === 'string' && dest.endsWith('.partial')) await fs.promises.rm(dest, { recursive: true, force: true })
+        } catch {
+          /* ignore */
+        }
         resolve({ ok: false, error: String((e && e.message) || e) })
       }
     })()
   })
+  backupRunning = p.finally(() => {
+    backupRunning = null
+  })
+  return backupRunning
 }
 function scheduleDailyBackup() {
   const tryRun = async () => {
@@ -749,7 +837,7 @@ function createClipboardWindow() {
   })
   clipboardWin.loadFile(path.join(__dirname, 'enhance/clipboard.html'))
   // v8.9：剪贴板小窗同样加导航/外链守卫
-  hardenWebContents(clipboardWin.webContents)
+  hardenWebContents(clipboardWin.webContents, { allowClipboard: true })
   clipboardWin.on('closed', () => {
     clipboardWin = null
   })
@@ -796,6 +884,9 @@ function startClipboardWatch() {
       return
     }
     try {
+      // 先探测格式再读全文：图片/文件/富文本剪贴板不应把整块内容搬进主进程
+      const formats = clipboard.availableFormats('clipboard') || []
+      if (!formats.some((f) => String(f).startsWith('text/plain'))) return
       const text = (clipboard.readText() || '').trim()
       if (!text || text === lastClipboardText) return
       lastClipboardText = text
@@ -806,7 +897,7 @@ function startClipboardWatch() {
     } catch (e) {
       logError('clipboard-watch', e)
     }
-  }, 1200)
+  }, 1500)
 }
 function stopClipboardWatch() {
   if (!clipboardTimer) return
@@ -816,6 +907,8 @@ function stopClipboardWatch() {
     /* ignore */
   }
   clipboardTimer = null
+  // 关闭开关后复位，重新开启时能立刻响应同一个词
+  lastClipboardText = ''
 }
 function syncClipboardWatch() {
   if (settings.clipboardWatch) startClipboardWatch()
@@ -1110,10 +1203,25 @@ async function checkDictUpdates() {
 }
 // fetchDictToFile 见 lib/dict-fetch.js（含 .part 续传与落盘前校验）
 
-async function downloadDictUpdate(name, downloadUrl) {
+// v11.6（E-9）：同一个词库文件同时只跑一次下载。
+// 面板里连点重试 / 多个入口同时触发时，旧实现会并发写同一个 .part 文件 →
+// 两个 Range 请求互相覆盖，最终落盘的 json 被截断或 hash 不符。
+const dictDownloadInFlight = new Map()
+
+function downloadDictUpdate(name, downloadUrl) {
+  const file = path.basename(String(name || ''))
+  if (!/^[A-Za-z0-9._\-]+\.json$/.test(file)) return Promise.resolve({ ok: false, error: '非法文件名' })
+  const running = dictDownloadInFlight.get(file)
+  if (running) return running
+  const task = doDownloadDictUpdate(file, downloadUrl).finally(() => {
+    dictDownloadInFlight.delete(file)
+  })
+  dictDownloadInFlight.set(file, task)
+  return task
+}
+
+async function doDownloadDictUpdate(file, downloadUrl) {
   try {
-    const file = path.basename(String(name || ''))
-    if (!/^[A-Za-z0-9._\-]+\.json$/.test(file)) return { ok: false, error: '非法文件名' }
     fs.mkdirSync(UPDATE_DIR, { recursive: true })
     // v9.4（SHELL-003）：只使用受信来源；渲染端传入的非白名单 URL 直接丢弃并回退官方源
     const requested = []
@@ -1386,12 +1494,38 @@ function loadJsonSafe(file, fallback) {
 }
 let wordCache = loadJsonSafe(WORD_CACHE_FILE, {})
 let transCache = loadJsonSafe(TRANS_CACHE_FILE, {})
+
+// 缓存键来自用户输入，必须防原型键：wordCache['__proto__'] 会改掉整个对象的原型，
+// 且 Object.keys/pruneCache 看不到，跨会话落盘后所有未命中词都会读到同一个伪缓存。
+const RESERVED_KEYS = new Set(['__proto__', 'constructor', 'prototype'])
+function cacheGet(obj, key) {
+  if (RESERVED_KEYS.has(key)) return undefined
+  return Object.prototype.hasOwnProperty.call(obj, key) ? obj[key] : undefined
+}
+function cacheSet(obj, key, value) {
+  if (RESERVED_KEYS.has(key)) return
+  Object.defineProperty(obj, key, { value, enumerable: true, writable: true, configurable: true })
+}
 let cacheSaveTimer = null
 function pruneCache(obj, max) {
   const keys = Object.keys(obj)
   if (keys.length <= max) return
   const old = keys.map((k) => [k, (obj[k] && obj[k].ts) || 0]).sort((a, b) => a[1] - b[1])
   for (const [k] of old.slice(0, keys.length - max)) delete obj[k]
+}
+function saveCachesNow() {
+  if (cacheSaveTimer) {
+    clearTimeout(cacheSaveTimer)
+    cacheSaveTimer = null
+  }
+  try {
+    pruneCache(wordCache, 3000)
+    pruneCache(transCache, 2000)
+    fs.writeFileSync(WORD_CACHE_FILE, JSON.stringify(wordCache), 'utf-8')
+    fs.writeFileSync(TRANS_CACHE_FILE, JSON.stringify(transCache), 'utf-8')
+  } catch (e) {
+    logError('free-cache-save', e)
+  }
 }
 function scheduleCacheSave() {
   if (cacheSaveTimer) return
@@ -1485,7 +1619,7 @@ function localExtraForWord(word) {
 function localDictLookup(word, dictId) {
   const map = getDictMap()
   const id = parseDictId(dictId)
-  const file = map[id] || map['google-10000-english'] || 'google-10000-english.json'
+  const file = (Object.prototype.hasOwnProperty.call(map, id) ? map[id] : '') || map['google-10000-english'] || 'google-10000-english.json'
   const dict = loadDictFile(file)
   const hit = dict.get(word.toLowerCase())
   if (!hit) return null
@@ -1612,7 +1746,7 @@ async function lookupWordFree(rawWord, rawDictId) {
     .replace(/\s+/g, ' ')
   if (!word) return { ok: false, error: '请输入要查询的单词' }
   const key = word.toLowerCase()
-  const cached = wordCache[key]
+  const cached = cacheGet(wordCache, key)
   if (!settings.onlineLookup) {
     if (cached && cached.data) return { ...cached.data, cached: true, offline: true }
     const localOffline = localDictLookup(word, rawDictId)
@@ -1640,7 +1774,7 @@ async function lookupWordFree(rawWord, rawDictId) {
   const result = buildWordResult(word, local, yd, dictApi, { offline: false })
   if (result.ok) {
     if (yd || dictApi) {
-      wordCache[key] = { ts: Date.now(), data: { ...result, cached: false } }
+      cacheSet(wordCache, key, { ts: Date.now(), data: { ...result, cached: false } })
       scheduleCacheSave()
     }
     return result
@@ -1656,7 +1790,7 @@ async function translateSentenceFree(rawText) {
     .slice(0, 600)
   if (!text) return { ok: false, error: '句子为空' }
   const key = text.toLowerCase()
-  const cached = transCache[key]
+  const cached = cacheGet(transCache, key)
   if (!settings.onlineLookup) {
     if (cached && cached.text) return { ok: true, text: cached.text, source: cached.source || 'cache', cached: true, offline: true }
     return { ok: false, offline: true, error: '离线模式：暂无该句缓存' }
@@ -1672,7 +1806,7 @@ async function translateSentenceFree(rawText) {
     let tr = rd && rd.translatedText ? String(rd.translatedText).trim() : ''
     const quota = !!(json && json.quotaFinished)
     if (tr && /[\u3400-\u9fff]/.test(tr) && !quota) {
-      transCache[key] = { ts: Date.now(), text: tr, source: 'MyMemory' }
+      cacheSet(transCache, key, { ts: Date.now(), text: tr, source: 'MyMemory' })
       scheduleCacheSave()
       return { ok: true, text: tr, source: 'MyMemory' }
     }
@@ -1689,7 +1823,7 @@ async function translateSentenceFree(rawText) {
       .join('')
       .trim()
     if (tr && /[\u3400-\u9fff]/.test(tr)) {
-      transCache[key] = { ts: Date.now(), text: tr, source: 'Google' }
+      cacheSet(transCache, key, { ts: Date.now(), text: tr, source: 'Google' })
       scheduleCacheSave()
       return { ok: true, text: tr, source: 'Google' }
     }
@@ -1718,7 +1852,7 @@ async function hoverTranslateFree(rawWord, rawDictId) {
     hoverLocalCache.set(key, { text, source: '本地词库' })
     return { ok: true, word, text, source: '本地词库', cached: false, offline: !settings.onlineLookup }
   }
-  const cached = wordCache[key]
+  const cached = cacheGet(wordCache, key)
   const shortFromCache =
     cached && cached.data && cached.data.zhLines && cached.data.zhLines.length ? cached.data.zhLines.map((x) => x.text).join('；') : ''
   if (shortFromCache) {
@@ -1791,7 +1925,7 @@ const CSP_BASE_DIRECTIVES = [
   "font-src 'self' data:",
   "media-src 'self' qzcache: https://dict.youdao.com blob: data:",
   // 允许：本地词库(file:// self)、在线更新词库覆盖(qzcache:)、发音音频、以及现有前端埋点域名（保持行为不变）
-  "connect-src 'self' qzcache: https://dict.youdao.com https://api.dictionaryapi.dev https://api.mymemory.translated.net https://translate.googleapis.com https://api-js.mixpanel.com https://api.mixpanel.com https://*.mixpanel.com https://vitals.vercel-insights.com https://*.vercel-insights.com",
+  "connect-src 'self' qzcache: https://dict.youdao.com https://api.dictionaryapi.dev https://api.mymemory.translated.net https://translate.googleapis.com",
   "worker-src 'self' blob:",
   "object-src 'none'",
   "base-uri 'self'",
@@ -1803,7 +1937,7 @@ function buildMainWindowCsp(inlineScriptHashes) {
   const scriptSrc =
     Array.isArray(inlineScriptHashes) && inlineScriptHashes.length
       ? `script-src 'self' ${inlineScriptHashes.join(' ')}`
-      : "script-src 'self' 'unsafe-inline'" // 兜底：解析失败时保持旧行为
+      : "script-src 'self' 'unsafe-inline'" // 兜底：保留首屏主题脚本可执行（见下方 logError 告警）
   return [scriptSrc, ...CSP_BASE_DIRECTIVES].join('; ')
 }
 // 缓存：html 路径 + mtime + size -> 内联脚本 hash 列表
@@ -1828,10 +1962,11 @@ function inlineScriptHashesFor(htmlPath) {
     }
     cspInlineHashCache.set(key, hashes)
     if (hashes.length) logRenderer('csp', `inline script hashes=${hashes.length}`)
-    else logRenderer('csp', 'no inline script found, fallback to unsafe-inline')
+    else logRenderer('csp', 'no inline script found')
     return hashes
   } catch (e) {
-    logError('csp-hash', e)
+    // 只有读不到构建入口时才会走到这里；仍保留 unsafe-inline 以免白屏，但必须按错误级别留痕
+    logError('csp-hash-degraded', e)
     return null
   }
 }
@@ -1864,7 +1999,7 @@ function registerVersionChannel() {
   try {
     ipcMain.on('app:version-sync', (e) => {
       try {
-        e.returnValue = isTrustedWebContents(e.sender) ? APP_VERSION : null
+        e.returnValue = roleOf(e.sender) ? APP_VERSION : null
       } catch {
         e.returnValue = null
       }
@@ -1904,7 +2039,7 @@ function devServerUrl() {
   return devServerUrlCache
 }
 
-function hardenWebContents(wc) {
+function hardenWebContents(wc, { allowClipboard = false } = {}) {
   if (!wc) return
   const guard = (event, url) => {
     const raw = String(url || '')
@@ -1914,10 +2049,13 @@ function hardenWebContents(wc) {
       const u = new URL(raw)
       let allowed = false
       if (u.protocol === 'file:') {
+        // 只允许主入口文档：以前「app 目录内任意文件」都放行，等于把 asar 里的任意 HTML
+        // 都当成可信页面（它们会带着 preload 拿到 IPC）。静态资源不会触发 will-navigate，无需放行。
         const appPath = path.resolve(app.getAppPath())
         const target = path.resolve(fileURLToPath(u))
-        const rel = path.relative(appPath, target)
-        allowed = rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel))
+        const allowedDocs = new Set([path.join(appPath, 'build', 'index.html')])
+        if (allowClipboard) allowedDocs.add(path.join(__dirname, 'enhance', 'clipboard.html'))
+        allowed = allowedDocs.has(target)
       }
       if (!allowed) {
         event.preventDefault()
@@ -1941,6 +2079,12 @@ function hardenWebContents(wc) {
     wc.on('will-redirect', guard)
   } catch (e) {
     logError('navigation-guard', e)
+  }
+  try {
+    // 子框架同样不能导航到本地其它 HTML（CSP frame-src 'none' 是第二道防线）
+    wc.on('will-frame-navigate', (event) => guard(event, event.url))
+  } catch (e) {
+    logError('navigation-guard-frame', e)
   }
   try {
     wc.setWindowOpenHandler(({ url }) => {
@@ -2142,31 +2286,54 @@ function createWindow() {
 // ---------------------------------------------------------------------------
 // 快捷键 / 自启 / IPC
 // ---------------------------------------------------------------------------
+const activeShortcuts = new Map()
+
 function registerShortcuts() {
-  try {
-    globalShortcut.unregisterAll()
-  } catch {
-    /* ignore */
-  }
-  const reg = (accel, fn, label) => {
-    if (!accel) return
+  const failures = []
+  const apply = (label, accel, fn) => {
+    if (!accel) {
+      const old = activeShortcuts.get(label)
+      if (old) {
+        try {
+          globalShortcut.unregister(old)
+        } catch {
+          /* ignore */
+        }
+        activeShortcuts.delete(label)
+      }
+      return
+    }
+    if (activeShortcuts.get(label) === accel) return
+    let ok = false
     try {
-      const ok = globalShortcut.register(accel, fn)
-      logRenderer('shortcut', `${label} ${accel} registered=${ok}`)
-      if (!ok) logRenderer('shortcut', `register failed: ${accel} (${label})`)
+      // 先注册新键，成功后才注销旧键：新键被其它软件占用时，旧快捷键仍然可用
+      ok = globalShortcut.register(accel, fn)
     } catch (e) {
       logError('shortcut-' + label, e)
     }
+    if (!ok) {
+      failures.push({ label, accel })
+      logRenderer('shortcut', `register failed: ${accel} (${label})，保留旧快捷键`)
+      return
+    }
+    const old = activeShortcuts.get(label)
+    if (old && old !== accel) {
+      try {
+        globalShortcut.unregister(old)
+      } catch {
+        /* ignore */
+      }
+    }
+    activeShortcuts.set(label, accel)
+    logRenderer('shortcut', `${label} ${accel} registered=true`)
   }
-  reg(settings.shortcutToggle || 'CommandOrControl+Alt+Q', () => toggleMainWindow(), 'toggle')
-  reg(
-    settings.shortcutMini || 'CommandOrControl+Alt+M',
-    () => {
-      setMiniMode(!settings.miniMode)
-      updateTrayMenu()
-    },
-    'mini',
-  )
+
+  apply('toggle', settings.shortcutToggle || 'CommandOrControl+Alt+Q', () => toggleMainWindow())
+  apply('mini', settings.shortcutMini || 'CommandOrControl+Alt+M', () => {
+    setMiniMode(!settings.miniMode)
+    updateTrayMenu()
+  })
+  return failures
 }
 
 function setAutoStart(on) {
@@ -2242,13 +2409,18 @@ function registerIpc() {
       if (typeof patch.alwaysOnTop === 'boolean') setAlwaysOnTop(patch.alwaysOnTop)
       if (typeof patch.miniMode === 'boolean') setMiniMode(patch.miniMode)
       if (typeof patch.autoStart === 'boolean') setAutoStart(patch.autoStart)
-      if (typeof patch.shortcutToggle === 'string' || typeof patch.shortcutMini === 'string') registerShortcuts()
+      let shortcutError
+      if (typeof patch.shortcutToggle === 'string' || typeof patch.shortcutMini === 'string') {
+        const failed = registerShortcuts()
+        if (failed.length) shortcutError = `快捷键被占用：${failed.map((f) => f.accel).join(', ')}（已保留原快捷键）`
+      }
       if (typeof patch.clipboardWatch === 'boolean') syncClipboardWatch()
       if (patch.pronCache !== undefined) {
         /* 拦截器读取 settings，实时生效 */
       }
       sendEvent('settings', publicSettings())
       updateTrayMenu()
+      return shortcutError ? { ...publicSettings(), shortcutError } : publicSettings()
     }
     return publicSettings()
   })
@@ -2298,12 +2470,17 @@ function registerIpc() {
   })
   handle('stats:update', (_e, stats) => {
     if (!stats || typeof stats !== 'object') return { ok: false }
+    const clampInt = (v, min, max, fallback = 0) => {
+      const n = Math.trunc(Number(v))
+      return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : fallback
+    }
+    const rawRatio = Number(stats.ratio)
     const safe = {
-      date: String(stats.date || ''),
-      words: Number(stats.words) || 0,
-      goal: Number(stats.goal) || settings.dailyGoal,
-      streak: Number(stats.streak) || 0,
-      ratio: Math.min(1, Math.max(0, Number(stats.ratio) || 0)),
+      date: /^\d{4}-\d{2}-\d{2}$/.test(String(stats.date || '')) ? String(stats.date) : '',
+      words: clampInt(stats.words, 0, 1e6),
+      goal: clampInt(stats.goal, 1, 10000, clampInt(settings.dailyGoal, 1, 10000, 30)),
+      streak: clampInt(stats.streak, 0, 1e5),
+      ratio: Number.isFinite(rawRatio) ? Math.min(1, Math.max(0, rawRatio)) : 0,
     }
     // v8.9 性能：渲染端每 60 秒上报一次，内容没变化就直接返回（不写盘 / 不重建托盘 / 不刷进度条）
     const statsKey = JSON.stringify(safe)
@@ -2330,7 +2507,7 @@ function registerIpc() {
       saveSettings()
       try {
         if (Notification.isSupported())
-          new Notification({ title: '🎉 今日目标达成', body: `今天已练习 ${safe.words} 词，连续打卡 ${safe.streak} 天！` }).show()
+          new Notification({ title: '今日目标达成', body: `今天已练习 ${safe.words} 词，连续打卡 ${safe.streak} 天！` }).show()
       } catch {
         /* ignore */
       }
@@ -2374,16 +2551,22 @@ function registerIpc() {
       dictupdate: UPDATE_DIR,
       exports: EXPORTS_DIR,
     }
+    if (!Object.prototype.hasOwnProperty.call(map, which)) return { ok: false }
     const p = map[which]
     if (!p) return { ok: false }
     shell.openPath(p)
     return { ok: true, path: p }
   })
-  handle('app:relaunch', () => {
+  handle('app:relaunch', async () => {
     try {
       isQuitting = true
+      // 走正常退出链路（will-quit 会等备份收尾），不要 app.exit(0) 硬切
+      if (mainWindow && !mainWindow.isDestroyed()) saveWindowState(mainWindow)
+      saveSettings()
+      saveCachesNow()
+      if (backupRunning) await Promise.race([backupRunning, new Promise((r) => setTimeout(r, 8000))])
       app.relaunch()
-      app.exit(0)
+      app.quit()
       return { ok: true }
     } catch (e) {
       return { ok: false, error: String(e.message || e) }
@@ -2568,8 +2751,20 @@ if (!gotLock) {
     if (process.platform !== 'darwin') app.quit()
   })
 
-  app.on('will-quit', () => {
+  let quitFlushStarted = false
+  app.on('will-quit', (e) => {
     isQuitting = true
+    // 备份可能正在等渲染端快照（最多 8s）：先阻止退出，收尾后再真正退出。
+    if (backupRunning && !quitFlushStarted) {
+      e.preventDefault()
+      quitFlushStarted = true
+      Promise.race([backupRunning, new Promise((r) => setTimeout(r, 8000))]).finally(() => {
+        saveCachesNow()
+        app.quit()
+      })
+      return
+    }
+    saveCachesNow()
     try {
       globalShortcut.unregisterAll()
     } catch {

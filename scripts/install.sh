@@ -1,4 +1,5 @@
-cd `dirname $0`
+set -euo pipefail
+cd "$(dirname "$0")"
 
 # 判断是否安装了 Node
 if ! type node >/dev/null 2>&1; then
@@ -13,20 +14,18 @@ fi
 
 cd ..
 echo "开始安装依赖..."
-# 有 package-lock.json 时用 npm ci（严格按锁安装，可复现）；锁文件缺失时退回 npm install
-if [ -f package-lock.json ]; then
-	npm ci --registry=https://registry.npmmirror.com || npm install --registry=https://registry.npmmirror.com
-else
-	npm install --registry=https://registry.npmmirror.com
+# 只允许 npm ci：锁文件与 package.json 不一致时应当报错，而不是悄悄重写依赖树
+if [ ! -f package-lock.json ]; then
+	echo "缺少 package-lock.json，拒绝安装（请先在仓库根执行 npm install 并提交锁文件）"
+	exit 1
 fi
+npm ci --registry=https://registry.npmmirror.com
 echo "依赖安装完成，启动程序..."
 
-# 在浏览器中打开
-open http://localhost:5173/
-
-# 本地开启服务
+# 启动开发服务器（默认 http://localhost:5173，由 Vite 打印实际地址）
 npm run start
 
 # 返回原始目录并退出
-cd `dirname $0`
+set -euo pipefail
+cd "$(dirname "$0")"
 exit

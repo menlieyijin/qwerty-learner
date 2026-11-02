@@ -2,7 +2,7 @@ import { hintSoundsConfigAtom, keySoundsConfigAtom } from '@/store'
 import { Popover, Switch, Transition } from '@headlessui/react'
 import { useAtom } from 'jotai'
 import { Fragment, useCallback } from 'react'
-import IconSpeakerWave from '~icons/heroicons/speaker-wave-solid'
+import IconSpeakerWave from '~icons/tabler/volume'
 
 export default function SoundSwitcher() {
   const [keySoundsConfig, setKeySoundsConfig] = useAtom(keySoundsConfigAtom)

@@ -1,6 +1,32 @@
 # .gitattributes
+# 文本文件统一 LF（跨平台一致）；二进制资产绝不做换行转换。
 * text eol=lf
+
+# 图片 / 图标：按字节保存（icns 曾被 `* text` 当文本转换，导致 macOS 图标损坏）
 *.png binary
+*.jpg binary
 *.jpeg binary
+*.gif binary
+*.webp binary
 *.ico binary
+*.icns binary
+
+# 音视频 / 字体 / 压缩包 / 可执行产物
 *.wav binary
+*.mp3 binary
+*.ogg binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.zip binary
+*.gz binary
+*.tgz binary
+*.7z binary
+*.exe binary
+*.dll binary
+*.node binary
+*.asar binary
+
+# NSIS 脚本必须是「带 BOM 的 UTF-8」：makensis 靠 BOM 判编码，任何换行/编码转换都可能让它读错
+scripts/templates/*.nsi -text

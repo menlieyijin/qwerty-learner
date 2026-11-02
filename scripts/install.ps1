@@ -26,16 +26,15 @@ if (!(Test-CommandInstalled node)) {
     Write-Host "已安装nodejs!"
     Set-Location ..
     Write-Host "开始安装依赖..."
-    # 有 package-lock.json 时用 npm ci（严格按锁安装，可复现）；锁文件缺失时退回 npm install
-    if (Test-Path "package-lock.json") {
-        npm ci --registry=https://registry.npmmirror.com
-        if ($LASTEXITCODE -ne 0) { npm install --registry=https://registry.npmmirror.com }
+    # 只允许 npm ci：锁文件与 package.json 不一致时应当报错，而不是悄悄重写依赖树
+    if (!(Test-Path "package-lock.json")) {
+        Write-Host "缺少 package-lock.json，拒绝安装（请先在仓库根执行 npm install 并提交锁文件）"
+        Set-Location $location
+        exit 1
     }
-    else {
-        npm install --registry=https://registry.npmmirror.com
-    }
+    npm ci --registry=https://registry.npmmirror.com
     if ($LASTEXITCODE -ne 0) {
-        Write-Host "依赖安装失败，请检查 Node 版本是否满足 engines（node >=18 <23）与网络"
+        Write-Host "依赖安装失败，请检查 Node 版本是否满足 engines（node >=22.12 <23）与网络"
         Set-Location $location
         exit 1
     }

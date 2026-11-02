@@ -29,6 +29,7 @@ export const initialState: TypingState = {
   isTransVisible: true,
   isLoopSingleWord: false,
   isSavingRecord: false,
+  sessionEpoch: 0,
 }
 
 export const initialUserInputLog: UserInputLog = {
@@ -77,7 +78,8 @@ export type TypingStateAction =
   | {
       type: TypingStateActionType.REPORT_WORD_RESULT
       // v9.4：payload.index 显式指定结算的单词下标（未完成结算发生在切词/切库之后，不能再用 state.index）
-      payload: { index?: number; correctCount: number; wrongCount: number; letterMistake: LetterMistakes }
+      // v11.6：epoch 用来拒绝「章节已重置后才到达」的旧增量（否则上一词会污染新章节统计）
+      payload: { index?: number; epoch?: number; correctCount: number; wrongCount: number; letterMistake: LetterMistakes }
     }
   | {
       type: TypingStateActionType.NEXT_WORD
@@ -112,6 +114,7 @@ export const typingReducer = (state: TypingState, action: TypingStateAction) => 
       newState.chapterData.index = initialIndex
       newState.chapterData.words = words
       newState.chapterData.userInputLogs = words.map((_, index) => ({ ...structuredClone(initialUserInputLog), index }))
+      newState.sessionEpoch = state.sessionEpoch + 1
 
       return newState
     }
@@ -150,7 +153,9 @@ export const typingReducer = (state: TypingState, action: TypingStateAction) => 
     case TypingStateActionType.REPORT_WORD_RESULT: {
       // v9.1：一个词完成时一次性累加，避免每敲一个字母就让整个练习页重渲染
       // v9.4：支持 index 显式指定（未完成结算 / 暂停结算发生在切词之后），并保持「增量」语义以便重复调用幂等
-      const { correctCount = 0, wrongCount = 0, letterMistake } = action.payload
+      const { correctCount = 0, wrongCount = 0, letterMistake, epoch } = action.payload
+      // 旧会话的增量直接丢弃：章节已重置，旧下标对应的是另一个词
+      if (epoch !== undefined && epoch !== state.sessionEpoch) break
       const targetIndex = action.payload.index ?? state.chapterData.index
       state.chapterData.correctCount += correctCount
       state.chapterData.wrongCount += wrongCount
@@ -213,6 +218,7 @@ export const typingReducer = (state: TypingState, action: TypingStateAction) => 
       newState.isTyping = true
       newState.chapterData.words = action.shouldShuffle ? shuffle(state.chapterData.words) : state.chapterData.words
       newState.isTransVisible = state.isTransVisible
+      newState.sessionEpoch = state.sessionEpoch + 1
       return newState
     }
     case TypingStateActionType.NEXT_CHAPTER: {
@@ -220,6 +226,7 @@ export const typingReducer = (state: TypingState, action: TypingStateAction) => 
       newState.chapterData.userInputLogs = state.chapterData.words.map((_, index) => ({ ...structuredClone(initialUserInputLog), index }))
       newState.isTyping = true
       newState.isTransVisible = state.isTransVisible
+      newState.sessionEpoch = state.sessionEpoch + 1
       return newState
     }
     case TypingStateActionType.TOGGLE_TRANS_VISIBLE:

@@ -1,7 +1,7 @@
 import standTypingHandPosition from '@/assets/standard_typing_hand_position.png'
 import { Dialog, Transition } from '@headlessui/react'
 import { Fragment, useState } from 'react'
-import IconKeyboard from '~icons/ic/round-keyboard'
+import IconKeyboard from '~icons/tabler/keyboard'
 import IconX from '~icons/tabler/x'
 
 export default function HandPositionIllustration() {

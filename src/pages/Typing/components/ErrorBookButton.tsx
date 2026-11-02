@@ -1,7 +1,7 @@
 import { recordErrorBookAction } from '@/utils/mixpanel'
 import { useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import IconBook from '~icons/bxs/book'
+import IconBook from '~icons/tabler/book'
 
 const ErrorBookButton = () => {
   const navigate = useNavigate()

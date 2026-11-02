@@ -11,5 +11,5 @@
     // 这些库的类型不参与本项目产物，跳过声明文件检查是 TS 官方推荐做法（与根 tsconfig.json 一致）。
     "skipLibCheck": true
   },
-  "include": ["vite.config.ts"]
+  "include": ["vite.config.ts", "playwright.config.ts"]
 }

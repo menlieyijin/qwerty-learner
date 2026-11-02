@@ -12,10 +12,10 @@ import { CTRL } from '@/utils'
 import { useAtom } from 'jotai'
 import { useContext } from 'react'
 import { useHotkeys } from 'react-hotkeys-hook'
-import IconMoon from '~icons/heroicons/moon-solid'
-import IconSun from '~icons/heroicons/sun-solid'
 import IconLanguage from '~icons/tabler/language'
 import IconLanguageOff from '~icons/tabler/language-off'
+import IconMoon from '~icons/tabler/moon'
+import IconSun from '~icons/tabler/sun'
 
 export default function Switcher() {
   const [isOpenDarkMode, setIsOpenDarkMode] = useAtom(isOpenDarkModeAtom)

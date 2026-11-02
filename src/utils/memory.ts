@@ -16,7 +16,7 @@ import type { LevelProgress } from './autoLevel'
 import { db } from './db'
 import type { IMemoryRecord } from './db/record'
 import { LEARNING_PATH, loadDictWords, loadLevelWords } from './learningPath'
-import { clearMemoryCache, getMemoryCache, setMemoryCache } from './memoryCache'
+import { clearMemoryCache, getMemoryCache, getMemoryRevision, setMemoryCache } from './memoryCache'
 import { legacyMemoryKey, memoryKey, normalizeWordKeyWord, normalizeWordName } from './memoryKey'
 import { MEMORY_LADDER } from './memoryLadder'
 import { takeRequeueWord } from './sessionRequeue'
@@ -223,10 +223,16 @@ export async function migrateMemoryKeyCase(): Promise<number> {
  * - 只有 legacy 记录（尚未迁移的数据）时保留 legacy，保证功能可用；
  * - `march` 与 `March` 的 canonical key 不同 → 两条都会保留（这正是本次修复的目标）。
  */
+let canonicalMemo: { source: IMemoryRecord[]; revision: number; out: IMemoryRecord[] } | null = null
+
+/** 去重结果的只读缓存：memoryCache 的 revision 不变时直接复用，避免每次换词/每张词库卡都 O(N) 重算。
+ *  返回值约定只读；调用方不得原地 sort/splice（当前调用方均只遍历/查找）。 */
 export function canonicalizeMemoryRecords(records: IMemoryRecord[]): IMemoryRecord[] {
   // v9.13（M1-016）：非法输入（undefined / 对象 / 旧缓存注入）一律返回空数组，不再把非数组原样透出给
   // 调用方去 `.map/.filter`（备份恢复、旧缓存注入时会在 UI 里直接 TypeError）。
   if (!Array.isArray(records) || records.length === 0) return []
+  const rev = getMemoryRevision()
+  if (canonicalMemo && canonicalMemo.source === records && canonicalMemo.revision === rev) return canonicalMemo.out
   const byCanonicalKey = new Map<string, IMemoryRecord>()
   const order: string[] = []
   for (const rec of records) {
@@ -250,6 +256,7 @@ export function canonicalizeMemoryRecords(records: IMemoryRecord[]): IMemoryReco
     const rec = byCanonicalKey.get(key)
     if (rec) out.push(rec)
   }
+  canonicalMemo = { source: records, revision: rev, out }
   return out
 }
 
@@ -488,11 +495,10 @@ export async function getMemoryRecords(): Promise<IMemoryRecord[]> {
   try {
     records = await db.memoryRecords.toArray()
   } catch (e) {
-    // v9.13（M1-008）：「读失败」与「空表」是两回事，但本函数的调用方（pages/Typing/hooks/useWordList.ts）
-    // 只按数组消费、且属跨域改动，本轮不改签名：**保留返回空表**，但必须打出与「新用户/空库」可区分的日志，
-    // 否则 IndexedDB 读取失败（配额满/被其它标签页阻塞/隐私模式）看起来就像「学习进度被清空」。
-    console.error('[memory] 读取记忆记录失败，本次返回空表（数据仍在库里，不代表已清空；到期池/已学词将为空）', e)
-    return []
+    // v11.6（根因）：读失败必须向上抛，不能伪装成「空表」——否则 UI 会显示「词库已全部学完」，
+    // 用户以为学习进度被清空。调用方（useWordList）据此显示可重试的错误态。
+    console.error('[memory] 读取记忆记录失败（数据仍在库里，不代表已清空）', e)
+    throw e
   }
   // 补释义会回写库（trans/phone），它失败不该让整次读取退化成「没有任何记录」
   try {

@@ -513,15 +513,38 @@ macOS/Linux 用 `unzip`）→ 放入 `resources/app.asar` 并删掉 `default_app
 macOS `Electron.app` → `Qwerty Learner.app` 并 `plutil` 改正 Info.plist）→ 复制 `LICENSE` / `FORK-NOTICE.md`
 → 写 `shell-info.json` → 跑一次目录体检。
 
-- **不生成安装器与图标**：那需要 `rcedit` / `.icns` / NSIS 等平台工具链，见 §7.4 与 `Electron-EOL.md`；
-  本脚本产出的是「绿色目录」，可直接启动、可用于冒烟与视觉回归。
-- macOS 的 Info.plist 只能用 `plutil` 改，所以在非 macOS 上交叉产出 `.app` 会警告，需要在 macOS 上再跑一次。
+- **默认品牌化（Windows）**：用 rcedit 写入图标与版本资源，任务栏/文件属性不再显示 Electron。
+  首次运行会把 rcedit 下载到 `.tools/` 并校验 SHA256；`--no-brand` 可关闭，`QZ_RCEDIT_EXE` 可指定离线文件。
+- **图标**由 `npm run icons` 从 `src/assets/logo.svg` 生成（ico / icns / png），产物在 `local-fork/icons/`；
+  `npm run test:icons` 会与重算结果逐字节比对。
+- macOS 优先用 `plutil` 改 Info.plist；非 macOS 上会改 XML 文本（名称 / 图标 / bundle id），
+  二进制 plist 仍会提示必须在 macOS 上重跑。
 - 组装后可直接验证：
 
 ```bash
-QZ_TEST_APP_DIR=release/shell-win32-x64 npm run test:local   # 冒烟（需先起带 CDP 的实例，见脚本头）
+QZ_TEST_APP_DIR=release/shell-win32-x64 npm run test:desktop-smoke   # 自启 + 13 项
 QZ_TEST_APP_DIR=release/shell-win32-x64 npm run test:desktop-visual
 ```
+
+### 7.3.2 打安装包（`npm run package`）
+
+```bash
+npm run shell                 # 先有 release/shell-<platform>-<arch>
+npm run package               # 当前平台；默认做安装/启动/卸载验证
+npm run package -- --no-verify
+npm run package -- --platform linux --app-dir release/shell-linux-x64 --no-verify
+```
+
+- Windows：rcedit 品牌化 → NSIS 3.10 安装器（当前用户安装，无需管理员）→ **静默安装到临时目录 →
+  哈希/条目/GPL 体检 → 启动冒烟 13 项 → 静默卸载 → 断言目录清理**。
+  安装器含开始菜单、可选桌面快捷方式（测试用 `/NODESKTOP` 跳过）与 HKCU 卸载信息；
+  卸载保留学习数据，且只删带 `.qz-install` 标记的安装目录。
+- Linux：`tar.gz`，追加 `qwerty-learner.desktop`、`qwerty-learner.png`、LICENSE / FORK-NOTICE，并回读清单校验。
+- macOS：写入 `icon.icns` 与 `CFBundleIconFile` / `CFBundleIdentifier`；macOS 上用 `ditto` 打 zip，
+  其它平台没有 zip/ditto 时退化为 tar.gz 并提示。
+- 工具链按需下载到 `.tools/`（gitignore），rcedit 校验 SHA256，NSIS 校验整包哈希；
+  离线可设 `QZ_RCEDIT_EXE` / `QZ_NSIS_DIR` / `QZ_NSIS_ZIP`。
+- **未做**：代码签名、公证、dmg。macOS 产物首次打开需右键「打开」或 `xattr -dr com.apple.quarantine`。
 
 ### 7.3.1 安装
 
@@ -536,7 +559,8 @@ QZ_TEST_APP_DIR=release/shell-win32-x64 npm run test:desktop-visual
 
 ### 7.4 运行时升级（单独决策）
 
-- Electron 运行时不在构建流水线内：需下载官方预构建二进制、校验 SHA256、用 `rcedit` 写入 Windows 图标/版本元数据（否则任务栏与文件属性会显示 Electron 品牌），再逐文件备份替换。
+- Electron 运行时不在构建流水线内：需下载官方预构建二进制、校验 SHA256，再逐文件备份替换。
+  Windows 的图标/版本元数据已由 `shell.mjs` / `package.mjs` 自动调用 rcedit 写入；升级运行时后重跑这两步即可。
 - 当前运行时：**Electron 43.8.3 / Chromium 150.0.7871.250**；43.x 官方支持至 **2027-01-05**。
 - 详细步骤、校验清单、回滚方法与 EOL 说明见 [`Electron-EOL.md`](Electron-EOL.md)。升级运行时属于高风险操作，必须用户单独确认。
 
@@ -548,7 +572,7 @@ QZ_TEST_APP_DIR=release/shell-win32-x64 npm run test:desktop-visual
 | `main.js` / preload / 注入面板 | 运行时读取上面的版本（`app:version-sync`、`window.__QZ_VERSION__`） | 自动 |
 | 根 `package.json` `version` | 上游网页工程版本，**不用于桌面版本** | `0.1.0`（保持上游，不改） |
 | Git tag | 里程碑标记 | `vX.Y-dsh-local` |
-| 安装 exe 文件元数据 | 运行时升级时由 rcedit 写入，可能滞后于应用版本 | `FileVersion 9.8.0.0` |
+| 安装 exe 文件元数据 | 组装外壳时由 rcedit 按 `local-fork/package.json` 写入 | `FileVersion 11.6.0.0` / `ProductVersion 1.0.0-enhanced-v11.6.0` |
 
 发版约定：
 

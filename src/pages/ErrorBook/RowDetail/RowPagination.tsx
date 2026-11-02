@@ -5,8 +5,8 @@ import type { FC } from 'react'
 import { useMemo } from 'react'
 import { useCallback } from 'react'
 import { useHotkeys } from 'react-hotkeys-hook'
-import NextIcon from '~icons/ooui/next-ltr'
-import PrevIcon from '~icons/ooui/next-rtl'
+import PrevIcon from '~icons/tabler/chevron-left'
+import NextIcon from '~icons/tabler/chevron-right'
 
 type IRowPaginationProps = {
   className?: string

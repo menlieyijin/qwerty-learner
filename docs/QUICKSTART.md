@@ -93,7 +93,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\dsh-rollback.ps1
 
 | 现象 | 原因 / 处理 |
 | --- | --- |
-| `npm ci` 报 `EBADENGINE` | Node 版本超出 `>=18 <23`；用 `nvm use 20` 切回 |
+| `npm ci` 报 `EBADENGINE` | Node 版本超出 `>=22.12 <23`；用 `nvm use 22` 切回 |
 | `npm ci` 报 `EUSAGE: lock file does not satisfy` | 有人手改过 `package.json` 依赖但没更新锁；跑一次 `npm install --package-lock-only` 后提交锁文件 |
 | `husky install` 失败（`.git can't be found`） | 在非 git 目录安装依赖；忽略即可 |
 | 页面一直「加载中」 | 用了 `file://` 打开，见第 3 节 |

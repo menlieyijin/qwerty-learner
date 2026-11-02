@@ -79,7 +79,10 @@ v10 已修的 6 个缺陷（CSV 公式注入、脏 payload 白屏、非 git 构�
 
 | 项 | 说明 |
 | --- | --- |
-| 桌面视觉基线 | 已有 5 页（含强调色），但基线按平台/字体渲染，换机器或系统版本需 `test:desktop-visual:update` 重建；Linux/macOS 尚未在真实机器上生成基线 |
+| 桌面视觉基线 | Windows 已有 5 页（含强调色）；Linux 由 `.github/workflows/desktop.yml` 首次运行时生成 artifact，`test:desktop-visual:apply` 校验落地。基线仍按平台/字体渲染，换机器或系统版本需 `test:desktop-visual:update` 重建 |
+| Linux 实机 | 外壳已交叉组装并通过目录体检，但本机无法启动验证；首次真实运行在 CI（xvfb + chrome-sandbox）。CI 未跑过之前只能算「已接线」。macOS 已移出支持范围 |
+| 代码签名 | Windows 安装器未签名（无证书），首次运行可能触发 SmartScreen；这是证书边界，不是脚本缺口 |
+| 安装器仅在 Windows 验证 | Linux 产物是 tar.gz（无系统包管理器集成）；Windows 安装器已走完静默安装/冒烟/卸载，但没有在 Windows 10 老版本与多用户切换场景下实测 |
 | 词库在线更新 | 有 `.part` + Range 续传，但没有网络故障注入用例；多镜像源之间可能复用同一个 `.part`，靠 JSON 校验兜底 |
 | 模糊测试深度 | `test:fuzz` 是固定种子的属性测试（3 个纯函数 × 800 组），不是覆盖全部输入面的 fuzz/渗透测试 |
 | 强调色 | 已变量化（P2-6 关闭）；新增主题仍需补一组变量并跑两套视觉基线 |
@@ -87,7 +90,7 @@ v10 已修的 6 个缺陷（CSV 公式注入、脏 payload 白屏、非 git 构�
 ## 仓库正规化建议（按收益排序）
 
 1. `scripts/` 拆 `release/ | verify/ | core-regression/`，`package.json` 只留入口。
-2. CI 分级：PR 跑 `test:quality + test:stats + test:core`（纯 Node，约 1 分钟）；nightly 跑 Electron 冒烟与视觉。
+2. ~~CI 分级~~（v11.6.0 已加 `desktop.yml`）：PR 仍需补一条「纯 Node 快速门禁」的 required check；Electron 三平台 job 建议只在 `workflow_dispatch` 与主分支 push 跑，避免 PR 成本过高。
 3. Dependabot（grouped）+ 每月 `npm run deps:unused` 清理。
 4. conventional commits → 自动 CHANGELOG；文档不再手写版本号（已改为读 `local-fork/package.json`）。
 5. 分支保护 + PR 模板勾选「改了什么跑什么」。

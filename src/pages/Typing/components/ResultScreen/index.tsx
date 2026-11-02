@@ -20,7 +20,7 @@ import { useCallback, useContext, useEffect, useMemo } from 'react'
 import type { KeyboardEvent } from 'react'
 import { useHotkeys } from 'react-hotkeys-hook'
 import { useNavigate } from 'react-router-dom'
-import IexportWords from '~icons/icon-park-outline/excel'
+import IexportWords from '~icons/tabler/file-spreadsheet'
 import IconX from '~icons/tabler/x'
 
 const ResultScreen = () => {

@@ -77,9 +77,14 @@ export function copyTree(src, dst) {
  */
 export function resourcesDirFor(appDir) {
   const dir = path.resolve(appDir)
-  const candidates = dir.endsWith('.app')
-    ? [path.join(dir, 'Contents', 'Resources')]
-    : [path.join(dir, 'resources'), path.join(dir, 'Contents', 'Resources')]
+  const candidates = [path.join(dir, 'resources'), path.join(dir, 'Contents', 'Resources')]
+  // 传入的是「包含 .app 的外层目录」时，也要能找到包内的 Resources
+  if (fs.existsSync(dir) && fs.statSync(dir).isDirectory()) {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (entry.isDirectory() && entry.name.endsWith('.app')) candidates.push(path.join(dir, entry.name, 'Contents', 'Resources'))
+    }
+  }
+  if (dir.endsWith('.app')) candidates.unshift(path.join(dir, 'Contents', 'Resources'))
   const found = candidates.find((p) => fs.existsSync(p))
   if (!found) throw new Error(`不是可识别的安装目录（缺少 resources）：${dir}`)
   return found
@@ -101,12 +106,46 @@ export function stopApp(prefix = '') {
   spawnSync('pkill', ['-x', APP_NAME], { stdio: 'ignore' })
 }
 
+/** 解压 zip。Windows 自带 bsdtar；macOS/Linux 用 unzip；都失败再试 bsdtar/tar。 */
+export function extractZip(zip, dest) {
+  const candidates =
+    process.platform === 'win32'
+      ? [
+          { cmd: path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'tar.exe'), args: ['-xf', zip, '-C', dest] },
+          { cmd: 'unzip', args: ['-q', '-o', zip, '-d', dest] },
+        ]
+      : [
+          { cmd: 'unzip', args: ['-q', '-o', zip, '-d', dest] },
+          { cmd: 'bsdtar', args: ['-xf', zip, '-C', dest] },
+          { cmd: 'tar', args: ['-xf', zip, '-C', dest] },
+        ]
+  for (const c of candidates) {
+    const r = spawnSync(c.cmd, c.args, { stdio: 'ignore' })
+    if (r.status === 0) return c.cmd
+  }
+  throw new Error('解压失败：没有可用的 zip 解压工具（Windows 需要 System32\\tar.exe，macOS/Linux 需要 unzip 或 bsdtar）')
+}
+
 /** 安装/外壳目录根部的 GPL 材料：LICENSE 与 fork 声明必须随包分发 */
 export function copyLegalFiles(dir, repoRoot) {
   for (const f of ['LICENSE', 'FORK-NOTICE.md']) {
     const src = path.join(repoRoot, f)
     if (fs.existsSync(src)) fs.copyFileSync(src, path.join(dir, f))
   }
+}
+
+/**
+ * 修改 XML 格式 plist 的字符串键（非 macOS 上没有 plutil 时的退路）。
+ * 二进制 plist 返回 false，交由调用方提示「必须在 macOS 上重跑」。
+ */
+export function patchPlistKey(file, key, value) {
+  const buf = fs.readFileSync(file)
+  if (buf.subarray(0, 6).toString('ascii') === 'bplist') return false
+  const text = buf.toString('utf8')
+  const re = new RegExp(`(<key>${key}</key>\\s*<string>)[^<]*(</string>)`)
+  if (!re.test(text)) return false
+  fs.writeFileSync(file, text.replace(re, `$1${value}$2`))
+  return true
 }
 
 /** 从备份文件名里解析版本号（兼容历史命名） */

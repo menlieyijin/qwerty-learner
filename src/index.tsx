@@ -10,7 +10,6 @@ import { initTelemetry } from '@/utils/telemetry'
 import 'animate.css'
 import { useAtomValue } from 'jotai'
 import React, { Suspense, lazy, useEffect } from 'react'
-import 'react-app-polyfill/stable'
 import { createRoot } from 'react-dom/client'
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 

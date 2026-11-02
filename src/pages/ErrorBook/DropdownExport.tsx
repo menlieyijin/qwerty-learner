@@ -8,7 +8,7 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { saveAs } from 'file-saver'
 import type { FC } from 'react'
 import { useState } from 'react'
-import * as XLSX from 'xlsx'
+import type { BookType } from 'xlsx'
 
 /** 导出只需要这几个字段；与 ErrorBook 里 groupedWordRecords 结构兼容（结构性类型，无需耦合其定义） */
 export type ExportableRecord = {
@@ -93,10 +93,12 @@ const DropdownExport: FC<DropdownProps> = ({ renderRecords }) => {
                 词典: csvSafeCell(item.词典),
               }))
             : ExportData
+        // 按需加载：xlsx 只在导出 Excel 时用，不能让所有用户首屏下载 430KB
+        const XLSX = await import('xlsx')
         const worksheet = XLSX.utils.json_to_sheet(rows)
         const workbook = XLSX.utils.book_new()
         XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1')
-        const excelBuffer = XLSX.write(workbook, { bookType: bookType as XLSX.BookType, type: 'array' })
+        const excelBuffer = XLSX.write(workbook, { bookType: bookType as BookType, type: 'array' })
         blob = new Blob([excelBuffer], { type: 'application/octet-stream' })
       }
 

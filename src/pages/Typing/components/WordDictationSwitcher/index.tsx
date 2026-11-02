@@ -4,10 +4,10 @@ import { Listbox, Popover, Switch, Transition } from '@headlessui/react'
 import { useAtom } from 'jotai'
 import { Fragment, useLayoutEffect, useState } from 'react'
 import { useHotkeys } from 'react-hotkeys-hook'
-import IconEyeSlash from '~icons/heroicons/eye-slash-solid'
-import IconEye from '~icons/heroicons/eye-solid'
 import IconCheck from '~icons/tabler/check'
 import IconChevronDown from '~icons/tabler/chevron-down'
+import IconEye from '~icons/tabler/eye'
+import IconEyeSlash from '~icons/tabler/eye-off'
 
 const wordDictationTypeList: { name: string; type: WordDictationType }[] = [
   {

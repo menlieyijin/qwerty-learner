@@ -1,0 +1,14 @@
+node_modules
+build
+build-old-*
+release
+backup
+logs
+playwright-report
+test-results
+stats.html
+.tools
+.git
+.github
+docs
+*.tsbuildinfo
