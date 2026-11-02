@@ -1,11 +1,19 @@
 # v11.6.0 全栈审查（根因版）
 
 - 审查对象：`qwerty-src`（React 18 + Vite + TS 前端，Electron 43 外壳，IndexedDB 本地库）
-- 审查时点：2026-11-02，对应 `v11.6.0`（`c505413`）
+- 审查时点：2026-11-02，对应 `v11.6.0`（`c505413`）；`v11.6.1` 为增量（统计聚合拆分 + 计时可见性修复 + 补齐 TypeWords 全量盘点）
 - 方法：逐目录读代码 → 对高风险路径做反证（读失败、脏备份、并发备份、异常窗口状态、超大词表）→ 用自动化断言固化结论
 - 结构：先给**覆盖矩阵**与**问题总表**（位置/影响/级别/状态），再按模块逐条给根因与修复；数据库、接口单独成章；最后是与 TypeWords 的源码级对照与架构级方案
 
 > 术语说明：本项目**没有服务端**。「后端」指 Electron 主进程（`local-fork/electron/main.js`）、preload 桥、页面内浮层运行时与本地文件/网络出口；「数据库」指浏览器 IndexedDB（Dexie `RecordDB`、增强面板的 `QwertyPlusDB`）；「接口」指 IPC 通道与事件通道。
+
+## 0. 本轮改进方向（v11.6.1 增量）
+
+上一版报告留了三个薄弱点，这一轮针对性补：
+
+1. **性能结论从形容词变成实测数字**：把统计聚合抽成纯函数 `wordStatsAggregate.ts`，新增 `npm run test:word-stats`——23 项口径/脏数据断言，外加与「上一版实现」「v11.6 之前的数组展开实现」的同数据对照（同日 1 万条 629.1ms → 28.6ms）。
+2. **计时语义补一半**：发现窗口最小化/切走时仍每秒累加学习时间（F-11），已改为不可见不累计；完整「暂停原因 + 计时片段」模型列为下一步（§9.2）。
+3. **TypeWords 从「读过几个文件」变成全量盘点**：213 个文件按 9 个分区清点，逐条标「已采纳 / 值得做 / 不采纳」，并补上两条此前漏掉的候选（计时片段、空闲暂停）与两条不采纳理由（`event.code`、`word-test`）。
 
 ## 0. 覆盖矩阵
 
@@ -43,7 +51,7 @@
 | B-11 | 发布 | `scripts/package.mjs:writeSums` | 同版本分平台打包时校验和文件互相覆盖 → 先出的产物失去校验和 | P2 | 已修 |
 | B-12 | 仓库 | `.gitattributes` | 只有 `*.ico binary`，缺 `*.icns` → `* text eol=lf` 会把 icns 当文本转换，**图标文件被改坏** | P1 | 已修 |
 | B-13 | 依赖安全 | `package.json:dependencies` | react-router 6.11 开放重定向（high）；echarts 5.6 moderate；xlsx 0.18.5 无修复版 | P1/P2 | 部分修（见 §11） |
-| F-1 | 前端/统计 | `src/pages/Analysis/hooks/useWordStats.ts:getChapterStats` | 日桶用 `[...arr, x]` 累加 → 全年记录 O(n²)，5 万条时十亿级元素搬运 | P1 | 已修 |
+| F-1 | 前端/统计 | `hooks/useWordStats.ts:getChapterStats`、`hooks/wordStatsAggregate.ts:aggregateWordRecords` | 日桶用 `[...arr, x]` 累加（O(n²)）；错误键再 `flatMap` 展开成与错误次数等长的数组。同日 1 万条实测 629ms | P1 | 已修（v11.6.0 修日桶；v11.6.1 去掉展开，28.6ms） |
 | F-2 | 前端/出词 | `src/utils/memory.ts:canonicalizeMemoryRecords`、`src/utils/autoLevel.ts:buildBestRecordMap`、`src/utils/memoryCache.ts` | 每次换词 4~6 次全表遍历且无缓存 → 2 万条记忆记录时可感知卡顿 | P1 | 已修 |
 | F-3 | 前端/结算 | `src/pages/Typing/store/index.ts:104-235`、`Word/useAttemptSettlement.ts` | 重置章节先把统计清零、旧词结算后到 → 旧增量落到新章节同下标的另一个词 | P1 | 已修 |
 | F-4 | 前端/落库 | `Word/useAttemptSettlement.ts:settle`、`src/pages/Typing/hooks/useSaveRecord.ts` | `persisted` 写在 await 之前、失败只 `console.error`，SRS 继续推进 → 错题本与复习进度不一致且不可重试 | P1 | 已修 |
@@ -53,6 +61,8 @@
 | F-8 | 前端/错题 | `src/pages/ErrorBook/index.tsx:startWrongReview` | 用 `currentDictId` 过滤历史错题 → 自动进阶下永远提示「当前词典还没有错题」 | P1 | 已修 |
 | F-9 | 前端/输入 | `src/pages/Typing/index.tsx:142-192`、`TextAreaHandler/index.tsx` | 「开始/继续」重放合成 keydown，code 词库走 textarea input → 首字符丢失 | P2 | 已修（治标，根因方案见 §9.2） |
 | F-10 | 后端/导入 | `local-fork/electron/enhance/enhance.js:importAll` | 逐表 clear+put、非法行静默丢弃 → 中途失败留下半新半旧数据 | P1 | 已修 |
+| F-11 | 前端/计时 | `src/pages/Typing/index.tsx:248-260`（`setInterval` + `TICK_TIMER`） | 窗口不可见（最小化/切走/锁屏）仍每秒累加 `timerData.time` → WPM、结果页用时、章节时长都会被「挂着一下午」稀释 | P2 | 已修（`document.hidden` 时跳过 tick） |
+| F-12 | 前端/统计 | `hooks/wordStatsAggregate.ts:aggregateWordRecords` | 错误键先展开成数组再计数 → 与错误次数等长的内存峰值，5 万条记录时可达数百万字符串 | P2 | 已修（Map 直接合并） |
 | E-1 | 后端/备份 | `main.js:runBackup` | 定时器/托盘/面板/导入前备份可并发；目录名只到秒；修剪按 mtime 删「正在写」的目录 | P1 | 已修 |
 | E-2 | 后端/退出 | `main.js:will-quit`、`app:relaunch`、`saveCachesNow` | `app.exit(0)` 硬退，不等备份与缓存落盘 → 退出瞬间丢最近设置/备份 | P1 | 已修 |
 | E-3 | 后端/安全 | `main.js:handle`、`roleOf`、`CLIPBOARD_CHANNELS` | 剪贴板小窗与主窗口共享 43 个通道 → 展示远端内容的窗口具备全部主进程能力 | P2 | 已修 |
@@ -68,7 +78,7 @@
 | E-13 | 后端/桥 | `preload.js:onClipboardWord`、`onBackupRequest`、`enhance.js` | 事件订阅无法退订（重复挂载会叠加）；主窗口仍暴露无消费方的 `onClipboardWord` | P3 | 已修 |
 | E-14 | 后端/隐私 | `main.js:publicSettings` | 向渲染端下发 `plusDir/userDataDir/exportsDir` 绝对路径（无消费方） | P3 | 已修 |
 
-**级别分布**：共 37 条 —— P0 2、P1 16、P2 16、P3 2，另有 B-13（依赖安全）跨 P1/P2 仍部分开放；其余全部关闭。
+**级别分布**：共 39 条 —— P0 2、P1 16、P2 18、P3 2，另有 B-13（依赖安全）跨 P1/P2 仍部分开放；其余全部关闭。
 
 ## 2. 前端
 
@@ -86,10 +96,15 @@ DB 打不开（配额满/被其它标签页阻塞/隐私模式）时返回 `[]`�
 **F-9 code 词库首字符丢失** — `pages/Typing/index.tsx:142-192`、`TextAreaHandler/index.tsx`
 开始/继续时缓存按键并用合成 `KeyboardEvent` 重放；code 模式走 textarea 的 `input` 事件，合成 keydown 不产生默认输入。已修：焦点在 textarea 时写入值并派发 `InputEvent('input',{data})`。这是**在重放处兜住**，根因（两条输入通道各自解释按键）见 §9.2 的纯函数化方案。
 
+**F-11 后台仍在计时（v11.6.1）** — `pages/Typing/index.tsx:248-260`
+`setInterval` 只看 `state.isTyping`，不看窗口是否可见。桌面上把窗口最小化/切走几小时，`timerData.time` 照样每秒 +1，直接污染三处展示：结果页「用时」、WPM、分享图。根因是**计时器以「会话开始」为唯一条件，没有可见性/空闲状态**。最小修复：`document.hidden` 时跳过 tick（时间只累计可见秒数）。完整方案（暂停原因 + 计时片段）见 §9.2。
+
 ### 2.2 统计（`src/pages/Analysis`）
 
-**F-1 O(n²) 日桶** — `hooks/useWordStats.ts:getChapterStats`
-`bucket.words = [...bucket.words, word]`、`wrongKeys = [...a, ...b]`。5 万条记录时是十亿级元素搬运，打开统计页会卡住数秒。修复：单次遍历 + `Set`/`Map` 就地累加；WPM/正确率口径不变；`totalTime=0` 时不再产生 `Infinity`（图表不再断线）。
+**F-1 聚合 O(n²) + 错误键展开** — `hooks/useWordStats.ts:getChapterStats` → `hooks/wordStatsAggregate.ts:aggregateWordRecords`
+两处放大：① `bucket.words = [...bucket.words, word]`、`wrongKeys = [...a, ...b]`，同一天记录越多复制越多次；② 错误键先 `flatMap` 展开成「每个错误一个元素」的数组再计数。
+修复分两步：v11.6.0 把日桶改成 `Set`/`Map` 就地累加；v11.6.1 再把聚合抽成纯函数，错误键直接用 `Map` 合并，不再展开。
+实测（`npm run test:word-stats`，同一批合成数据）：同日 1 万条 `629.1ms → 28.6ms`（22×）；跨 30 天 2 万条 `72.9ms → 54.4ms`（1.3×，错误键展开 4 万个元素 → 0）。口径不变：`totalTime=0` 仍给 0，不产生 `Infinity`。
 
 ### 2.3 错题本与复习入口（`src/pages/ErrorBook`、`src/pages/Gallery-N`）
 
@@ -218,13 +233,13 @@ DB 打不开（配额满/被其它标签页阻塞/隐私模式）时返回 `[]`�
 
 | 功能 | 关键实现 | 本轮影响 | 验证手段 |
 | --- | --- | --- | --- |
-| 打字 / 默写 / 音标练习 | `WordPanel`、`TextAreaHandler`、`useAttemptSettlement` | F-3/F-4/F-9 修，行为不变 | `test:typing`；冒烟 `practiceWorks`/`finishedText` |
+| 打字 / 默写 / 音标练习 | `WordPanel`、`TextAreaHandler`、`useAttemptSettlement` | F-3/F-4/F-9 修，行为不变；F-11 计时只在窗口可见时累计 | `test:typing`；冒烟 `practiceWorks`/`finishedText` |
 | 首启选档（可改、不打扰老用户） | `LearningStartDialog`、`autoLevel` | 未改 | `test:start-level`；冒烟 `startText`/`startClicked` |
 | 自动进阶 13 级 | `utils/autoLevel.ts` | F-2 缓存、F-8 复习入口 | `test:core` 189 条 |
 | 艾宾浩斯记忆曲线 | `srsRules.ts`、`memoryLadder.ts`、`db.updateMemoryProgress` | F-4 回滚、F-7 存储 | `test:core` 120 条；`test:review-persist` |
 | 错词当场重现 | `sessionRequeue` | 未改 | `test:core`/`test:typing` |
 | 错题本（分组/排序/详情/删除/导出/复习） | `pages/ErrorBook`、`deleteConfirm`、`DropdownExport` | F-8 修；F-6 索引 | 冒烟 `errorBookWorks`/`errorBookText`；`test:pages` 第 0~6 项；`test:csv` |
-| 统计页（练习数/词数/WPM/正确率/错误键） | `pages/Analysis`、`useWordStats` | F-1 改聚合实现，口径不变 | `test:stats` 17 项；冒烟 `analysisWorks`/`analysisCanvas` |
+| 统计页（练习数/词数/WPM/正确率/错误键） | `pages/Analysis`、`wordStatsAggregate` | F-1/F-12 改聚合实现，口径不变 | `test:stats` 17 项 + `test:word-stats` 23 项；冒烟 `analysisWorks`/`analysisCanvas` |
 | 词库画廊 + 自定义词库 | `pages/Gallery-N`、`QwertyPlusDB` | F-7 接入复习会话 | `test:pages`；`test:dict` 45 项 |
 | 词库下载/更新/续传 | `dicts:*`、`lib/dict-fetch.js` | E-9 并发去重 | `test:dict` 45 项（含 206/416） |
 | 导入/导出（数据库 / CSV / JSON） | `data-export.ts`、`file:*` | F-10 事务化；B-11 校验和 | `test:csv` 14 项；`test:pages` 脏 payload 项 |
@@ -240,23 +255,40 @@ DB 打不开（配额满/被其它标签页阻塞/隐私模式）时返回 `[]`�
 | `npm run test:quality`（tsc + typecheck:node + eslint --max-warnings 0） | 通过 |
 | `npm run test:core` | 309/309 + 确定性门禁 |
 | `npm run test:review-persist` | 30/30（拆分、往返、旧键迁移、损坏兜底） |
-| `npm run test:all` | 221 项全通过（含浮层 42 项） |
+| `npm run test:word-stats` | 23/23（五套口径 + 脏数据 + 与上一版逐字段一致） |
+| `npm run test:all` | 244 项全通过（含浮层 42 项 + 复习持久化 30 项 + 统计聚合 23 项） |
 | `npm run test:desktop-smoke` | 13/13（隔离 profile 自启） |
 | `npm run test:desktop-visual` | 5/5，差异 0.000% |
-| `npm run package` | 安装器 110.7MB；静默安装 → 体检 477 条目 / asar 哈希一致 → 冒烟 13/13 → 卸载清理 |
-| 产物 | Win `EB2057E0…`；Linux tar.gz 142.4MB `05A562FE…`；asar `9532263C…` |
+| `npm run package` | 安装器 110.7MB（v11.6.1）；静默安装 → 体检 477 条目 / asar 哈希一致 → 冒烟 13/13 → 卸载清理 |
+| 产物（v11.6.1） | Win `1208D44B…`；Linux tar.gz 142.4MB `3559ED56…`；asar `9934D619…`；tar 内 asar 与 shell-info 已核对 |
 | 运行时探针（复习进度） | 旧键迁移成功；按保存的 index 续接；输入一个词后 session 键字节不变、index 1→2 |
 | 图标 | ICO 7 档 / ICNS 7 档 / 11 档 PNG；14 个文件入库字节与工作区一致 |
 
-## 9. TypeWords 源码级对照（文件 → 机制 → 结论）
+## 9. TypeWords 源码级对照（全量盘点 + 文件级结论）
 
-> 对照基于 `zyronon/TypeWords` 的实际源码（`app/core`、`app/components`），不是 README 摘要。每条给出文件名与本方结论；「未采纳」也写明原因，避免照搬技术栈。
+> 对照对象是 `zyronon/TypeWords` 的实际源码：`app/` 下 **213 个文件、44 个目录（含嵌套）**。方法：先按目录清点，再对「练习主链路 / 数据与缓存 / 调度 / 输入 / 列表 / 导入导出」逐文件读实现；基础组件与国际化资源只做结构确认。
+> 结论按「已采纳 / 值得做 / 明确不采纳」三类给出，每条附文件名与理由；不照搬技术栈，也不把「上游有」当成「我们必须有」。
+
+### 9.0 全量盘点
+
+| 分区 | 主要目录（文件数） | 细读的文件 | 与本项目的关系 |
+| --- | --- | --- | --- |
+| 调度与算法 | `core/hooks`（10）、`core/stores`（5） | `fsrs.ts`、`setting.ts`、`practice.ts`、`base.ts`、`runtime.ts` | FSRS 调度、设置项（含 `wordReviewRatio`、三个 FSRS 阈值）、练习计时状态 |
+| 练习流程 | `core/composables/practice-words`（15）、`core/composables`（5） | `usePracticeWordTyping.ts`、`practice-word-session.ts`、`usePracticeWordNavigator.ts`、`usePracticeIdleTimer.ts`、`study-task.ts`、`usePracticePersistence.ts` | 对应我方 `Typing/store` + `useWordList` + `useAttemptSettlement` |
+| 输入层 | `core/hooks/event.ts`、`components/word/WordTypingCore.vue` | `event.ts`（`CODE_TO_CHAR` / `SHIFT_CODE_TO_CHAR` / `CHAR_TO_CODE`）、`WordTypingCore.vue` | 对应我方 keydown 通道 + `TextAreaHandler` |
+| 数据与缓存 | `core/utils`（10）、`core/hooks/export.ts` | `cache.ts`（`idb-keyval` + `{key, version}`）、`export.ts`（分域 version）、`http.ts`、`wordLookup.ts` | 对应我方 Dexie + 备份 / 查词 |
+| 页面与组件 | `components/word`（22）、`components/list`（6）、`components/setting`（9）、`components/article`（9）、`components/dialog`（7） | `WordMarkPickList.vue`、`WordMetaPanel.vue`、`BaseList.vue`、`Statistics.vue`、`TranslationList.vue` | 对应我方 Word 卡片、错题本、统计页、设置页 |
+| 句子 / 文章 | `composables/practice-sentences`（6）、`components/article`（9） | `useSentenceTypingFlow.ts`（上游自己标了 `@deprecated`）、`article.ts` | 我方无对应功能 |
+| 基础设施 | `base`（23）、`base/icon`（5）、`base/toast`（3）、`base/select`（3）、`plugins`（4） | 只做结构确认（通用按钮/弹窗/选择器） | 我方用 Radix + Headless UI，不照搬 |
+| 账号与云 | `core/utils/supabase.ts`、`rsa-password.ts`、`libs/translate/*` | `rsa-password.ts`（`node-forge` + `VITE_PASSWORD_RSA_PUBLIC_KEY`）、`supabase.ts` | 我方无账号体系，明确不引入 |
+| 国际化 | `locales`、`vue-i18n` 配置 | 只确认存在 14 语言资源 | 我方中英双语，不引入 i18n 框架 |
 
 ### 9.1 已采纳 / 部分采纳
 
 | TypeWords 文件 | 机制 | 我方落点 | 状态 |
 | --- | --- | --- | --- |
-| `app/core/composables/usePracticePersistence.ts` | 进度只存词名字符串（`taskWordsStr` / `wordsStr` / `wrongWordsStr`），读取时用词库 Map 还原 | F-7：学了「大对象与小进度分离」，但 session 仍存完整 Word（跨词库复习要离线可用释义） | 部分采纳（v11.6.0） |
+| `app/core/composables/usePracticePersistence.ts` | 进度只存词名字符串（`taskWordsStr` / `wordsStr` / `wrongWordsStr`），读取时用词库 Map 还原 | F-7：学「大对象与小进度分离」，但 session 仍存完整 Word（跨词库复习要离线可用释义） | 部分采纳（v11.6.0） |
+| `app/core/composables/practice-words/usePracticeIdleTimer.ts` | 3 分钟无操作自动暂停；`getIdlePauseTime` / `normalizePracticeTimer`、按天切分计时片段 | F-11：本轮只做「不可见不累计」的最小版；完整片段模型见 9.2 | 部分采纳（v11.6.1） |
 
 ### 9.2 值得做、尚未做（按收益/成本排序）
 
@@ -264,6 +296,7 @@ DB 打不开（配额满/被其它标签页阻塞/隐私模式）时返回 `[]`�
 | --- | --- | --- | --- |
 | `app/core/composables/practice-words/visible-word-typing.ts` + `usePracticeWordTyping.ts` | 把「这个键是否算对」抽成纯函数（`PracticeKeyboardInput`、`isPracticeCharacterCorrect`、`getPracticeInputCharacterStates`），组件只收集按键 | keydown 与 textarea `input` 两条通道各自解释按键；F-9 只在重放处兜住 | 抽出 `applyInputAction(state, action)` 纯函数，两条通道都调它；不改行为，可用现有 `test:typing` 兜底 |
 | `app/core/hooks/export.ts` | 每类数据独立 `version`（`EXPORT_DATA_KEY.version`、`SAVE_SETTING_KEY.version` 等），导入按版本迁移 | Dexie export + `data.json` 快照；有 `formatName`/库名校验与临时库 staging，但备份头没有 schema 版本 | 备份头加 `schemaVersion` + 迁移函数表；旧备份按版本升级，避免以后改 schema 只能拒绝导入 |
+| `app/core/stores/practice.ts` + `usePracticeIdleTimer.ts` | `timerPaused` + `timerPauseReason`（manual / auto_visibility / auto_idle）+ `segments: [start,end][]`，暂停时定格片段、恢复时新开片段 | 只有 `timerData.time` 一个累计值；可见性已在 v11.6.1 跳过，但没有暂停原因/片段，无法区分「真学」与「挂着」 | 加 `segments` 与暂停原因：统计页可按片段算真实学习时长；迁移时把旧 `time` 视为一个片段 |
 | `app/components/word/WordMarkPickList.vue` | `know / unknown / mastered` 三态标记，已掌握进入忽略集合 | 只有「错题本」和 SRS 自动判定，没有用户主动「已掌握」 | 轻量版：词卡/错题本加「已掌握」，写入 `memoryRecords` 忽略标记，出词时跳过 |
 | `app/components/list/BaseList.vue` | `DynamicScroller` / `DynamicScrollerItem`（vue-virtual-scroller）做虚拟列表 | 错题本分页 + 全量 `toArray`；词库画廊全量渲染 | 数据量阈值触发后再上虚拟列表；先做聚合表（§10.3），否则虚拟列表也只是把内存峰值挪个位置 |
 
@@ -271,18 +304,22 @@ DB 打不开（配额满/被其它标签页阻塞/隐私模式）时返回 `[]`�
 
 | TypeWords 文件 / 做法 | 原因 |
 | --- | --- |
-| `app/core/hooks/fsrs.ts`（`ts-fsrs` + `fsrsEasyLimit/GoodLimit/HardLimit` 把错次数映射为 Rating） | 算法更成熟，但替换会改变所有存量用户的到期时间与复习节奏，属产品行为变更；先做 `Scheduler` 接口抽象，再灰度切换（§10.7） |
+| `app/core/hooks/fsrs.ts`（`ts-fsrs` + `fsrsEasyLimit=0 / Good=3 / Hard=6` 把错次数映射为 Rating） | 算法更成熟，但替换会改变所有存量用户的到期时间与复习节奏，属产品行为变更；先做 `Scheduler` 接口抽象，再灰度切换（§10.7） |
+| `app/core/hooks/event.ts`（`CODE_TO_CHAR` / `SHIFT_CODE_TO_CHAR` / `CHAR_TO_CODE`，按 `event.code` 判定） | 这是「练物理键位」的语义；本应用是「按屏幕上的字符输入」，用 `event.key` 才能让非美式布局打出正确字符（并已用 `isComposing` 挡输入法）。改成 code 映射会引入新的错判 |
 | `app/core/config/env.ts:WordPracticeModeStageMap`（模式 → 阶段流水线） | 需要重排练习流程与 UI，收益偏产品化；当前「打字/默写/音标 + 开关」已覆盖需求 |
-| `app/core/hooks/article.ts`（文章练习） | 新功能而非稳定性问题，不在本轮范围 |
-| Nuxt/Vue 技术栈、`vue-i18n` 14 语言、emoji 文案、默认云同步 | 技术栈不同；本项目离线优先、无账号体系，引入云同步会带来隐私与合规成本 |
+| `app/core/utils/word-test.ts`（选择题干扰项打分：`WORD_CONTAIN_SCORE`、`FUZZ_SCORE_BASE` 等） | 是独立的新题型，不是稳定性问题；且需要题库与 UI 配套 |
+| `app/core/utils/supabase.ts`、`rsa-password.ts`、`libs/translate/*` | 账号/云同步会引入隐私、合规与运营成本；本项目坚持离线优先，翻译走现有免费接口 |
+| `app/composables/practice-sentences/*`、`app/core/hooks/article.ts` | 句子/文章练习是新功能；且上游自己在 `useSentenceTypingFlow.ts` 标了 `@deprecated`（响应式链断裂），不适合照抄 |
+| Nuxt/Vue 技术栈、`vue-i18n` 14 语言、emoji 文案 | 技术栈不同；本项目中英双语已够用 |
 
 ### 9.4 落地顺序（建议）
 
 1. 输入纯函数化（`visible-word-typing.ts` 的思路）——纯重构，风险最低，直接消掉 F-9 的根因；
 2. 备份 `schemaVersion` + 迁移函数——为后续 schema 变更留退路；
-3. 错题聚合表 + 虚拟列表——解决数万条记录的内存峰值；
-4. 「已掌握」标记——减少无效复习，改动小；
-5. `Scheduler` 抽象 → FSRS 灰度——收益最大但需要产品决策。
+3. 计时片段 + 暂停原因（`practice.ts` / `usePracticeIdleTimer.ts`）——统计页可显示「真实学习时长」，本轮已完成可见性这一半；
+4. 错题聚合表 + 虚拟列表——解决数万条记录的内存峰值；
+5. 「已掌握」标记——减少无效复习，改动小；
+6. `Scheduler` 抽象 → FSRS 灰度——收益最大但需要产品决策。
 
 ## 10. 架构级方案（从根源解决，不逐处打补丁）
 
@@ -346,7 +383,8 @@ DB 打不开（配额满/被其它标签页阻塞/隐私模式）时返回 `[]`�
 
 ```bash
 npm run typecheck && npm run typecheck:node && npm run lint:strict
-npm run test:all                       # 221 项，含浮层 42 项 + 复习持久化 30 项
+npm run test:word-stats                # 统计聚合 23 项 + 性能对照
+npm run test:all                       # 244 项，含浮层 42 + 复习持久化 30 + 统计聚合 23
 npm run test:core                      # 309 条
 QZ_TEST_APP_DIR=release/shell-win32-x64 npm run test:desktop-smoke
 QZ_TEST_APP_DIR=release/shell-win32-x64 npm run test:desktop-visual
@@ -368,6 +406,8 @@ npm run test:icons && npm run test:format
 | `*.icns` 被当文本转换 | `.gitattributes` 只有 `*.ico binary` | 补 `*.icns binary` 与其余二进制规则，逐个校验入库字节 |
 | 校验和文件互相覆盖 | `writeSums` 整体重写 | 按产物名合并 |
 | `@svgr/*` 被当死依赖删除 | 静态引用扫描看不到构建期 `require` | 恢复并注明不能删 |
+| `shell.mjs --force` 偶发 EBUSY（两次构建撞到） | Windows 上杀毒/索引服务/上个进程句柄未释放，`rmSync(force:true)` 不吞 EBUSY | `removeDirWithRetry`：200ms 递增退避重试 6 次，仍失败则改名 `*.stale-<ts>` 让路 |
+| `shell-info.json` 写入构建机绝对路径 | 该文件随安装包/tar.gz 分发，泄露目录结构且换平台无意义 | 只记 `app.asar` 文件名 |
 
 ## 附录 B：修复台账（总表里未展开的条目）
 

@@ -249,6 +249,9 @@ function App() {
     let intervalId: number
     if (state.isTyping) {
       intervalId = window.setInterval(() => {
+        // v11.6.1：窗口不可见（最小化 / 切到别的程序 / 锁屏）时不累计学习时间。
+        // 计时只服务 WPM 与章节时长；后台继续 tick 会把「挂着一下午」算成学习时间。
+        if (document.hidden) return
         dispatch({ type: TypingStateActionType.TICK_TIMER })
       }, 1000)
     }

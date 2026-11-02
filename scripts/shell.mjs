@@ -10,7 +10,17 @@
 //   node scripts/shell.mjs --asar release/staging-.../app.asar                # 指定 asar（默认取最新 staging）
 //
 // 说明：只做「可运行的绿色目录」，不生成安装器/图标（那需要平台工具链，见 docs/DSH-FORK.md §7）。
-import { APP_NAME, copyFileAtomic, copyLegalFiles, extractZip, patchPlistKey, sha256, sizeOf, stampNow } from './lib/app-files.mjs'
+import {
+  APP_NAME,
+  copyFileAtomic,
+  copyLegalFiles,
+  extractZip,
+  patchPlistKey,
+  removeDirWithRetry,
+  sha256,
+  sizeOf,
+  stampNow,
+} from './lib/app-files.mjs'
 import { brandWindowsExe, download, sha256File } from './lib/desktop-tools.mjs'
 import { checkInstallDir } from './lib/install-check.mjs'
 import { spawnSync } from 'node:child_process'
@@ -88,7 +98,9 @@ if (!asarPath || !fs.existsSync(asarPath)) {
 // ---------------------------------------------------------------- 目标目录
 if (fs.existsSync(outDir) && fs.readdirSync(outDir).length) {
   if (!force) die(`输出目录非空：${outDir}\n如确认覆盖请加 --force，或换 --out。`)
-  fs.rmSync(outDir, { recursive: true, force: true })
+  // Windows 上 rmSync 会被杀毒/索引服务/上个进程句柄拦成 EBUSY；重试，必要时改名让路
+  const removed = await removeDirWithRetry(outDir)
+  if (removed !== 'removed') warn(`旧目录未能直接删除，已改名让路：${removed.replace('renamed:', '')}`)
 }
 fs.mkdirSync(outDir, { recursive: true })
 
@@ -253,7 +265,8 @@ const info = {
   electron: electronVersion,
   platform,
   arch,
-  asar: asarPath,
+  // 只记文件名：绝对路径会随安装包分发出去（泄露构建机目录结构，且换平台后无意义）
+  asar: path.basename(asarPath),
   asarSha256: sha256(asarPath),
   asarSize: sizeOf(asarPath),
   builtAt: new Date().toISOString(),

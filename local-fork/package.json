@@ -1,6 +1,6 @@
 {
   "name": "qwerty-learner",
-  "version": "1.0.0-enhanced-v11.6.0",
+  "version": "1.0.0-enhanced-v11.6.1",
   "main": "electron/main.js",
   "description": "Qwerty Learner 桌面增强版（基于官方 commit 1182426，冻结上游）：随机出词 + 艾宾浩斯记忆曲线 + 错词当场重现；官方打字/默写/音标/音效/错题本/统计/词库画廊全部保留；增强功能收纳在设置里。",
   "author": "Qwerty Learner Contributors",

@@ -240,3 +240,32 @@ export async function ensurePortFree(port) {
   if (portOwnerPids(port).length) killPortOwner(port)
   return waitPortFree(port)
 }
+
+/**
+ * 删除目录，带重试（Windows 上 EBUSY/EPERM 很常见：杀毒软件/索引服务/上一个进程的句柄还没释放）。
+ *
+ * 背景：`shell.mjs --force` 直接 `fs.rmSync(dir,{recursive:true,force:true})`，
+ * 在 Windows 上偶发失败并抛到顶层（两次构建都撞到），而 `force:true` 只在「路径不存在」时兜底，
+ * 并不会吞掉 EBUSY。这里按 200ms 递增退避重试；仍失败则把目录改名为 `*.stale-<ts>` 后继续，
+ * 至少不阻断构建（残留由人工/下次清理）。
+ */
+export async function removeDirWithRetry(dir, { attempts = 6 } = {}) {
+  for (let i = 0; i < attempts; i += 1) {
+    try {
+      fs.rmSync(dir, { recursive: true, force: true })
+      return 'removed'
+    } catch (e) {
+      if (i === attempts - 1) {
+        const stale = `${dir}.stale-${stampNow()}`
+        try {
+          fs.renameSync(dir, stale)
+          return `renamed:${stale}`
+        } catch {
+          throw e
+        }
+      }
+      await new Promise((r) => setTimeout(r, 200 * (i + 1)))
+    }
+  }
+  return 'unknown'
+}

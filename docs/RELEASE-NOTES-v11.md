@@ -405,3 +405,41 @@ node scripts/shell.mjs --asar <app.asar>         # 指定包
 ### 参考 TypeWords 的后续优化
 
 对 `zyronon/TypeWords` 做了源码级对照（不是只看 README），可借鉴项与落地顺序写在 `AUDIT-v11.6.md` §6：FSRS 调度器、紧凑持久化、计时片段、输入动作抽象、虚拟列表、版本化备份、阶段式练习。明确不照搬 Nuxt 技术栈、默认云同步、emoji 文案与 14 语言 i18n。
+
+---
+
+# v11.6.1（统计聚合实测 + 计时可见性 + TypeWords 全量盘点）
+
+这一版不加功能，只补上一版留下的三处薄弱点：
+
+## 1. 统计聚合：抽成纯函数并给出实测数字
+
+- 新增 `src/pages/Analysis/hooks/wordStatsAggregate.ts`：日桶、去重词数、WPM、正确率、错误键五套口径都在这里，`useWordStats` 只负责读库、取消过期请求与错误态。
+- 去掉第二处放大：错误键不再 `flatMap + Array.from({length: count})` 展开成与错误次数等长的数组，直接按 `Map` 合并。
+- 新增 `npm run test:word-stats`（23 项）：空/脏记录（null、空词、NaN、字符串时间戳、区间外）、同日去重、WPM 与正确率公式、空格/多字符键、结果排序，以及**与上一版实现逐字段一致**。
+- 实测（同一批合成数据，`scripts/verify-word-stats.mjs`）：
+
+  | 场景 | 上一版 | 本版 | 说明 |
+  | --- | --- | --- | --- |
+  | 同日 1 万条（最坏情况） | 629.1ms | 28.6ms | 22×，旧实现的数组 spread 是 O(n²) |
+  | 跨 30 天 2 万条 | 72.9ms | 54.4ms | 1.3×，错误键展开 4 万元素 → 0 |
+
+## 2. 计时只在窗口可见时累计
+
+- 发现：`setInterval` 只看 `isTyping`，最小化/切走/锁屏后仍每秒 +1，结果页用时、WPM、分享图都会被「挂着一下午」稀释。
+- 修复：`document.hidden` 时跳过 tick。完整方案（暂停原因 + 计时片段，可区分手动/切走/空闲）列为下一步，见 `AUDIT-v11.6.md` §9.2。
+
+## 3. TypeWords 全量盘点
+
+- `app/` 下 213 个文件按 9 个分区清点，细读调度、练习流程、输入、缓存、列表、导入导出相关文件；基础组件与 i18n 只做结构确认。
+- 新增候选：计时片段 + 空闲暂停（部分已采纳）、备份 `schemaVersion`、虚拟列表、已掌握标记。
+- 新增「明确不采纳」：`event.code` 物理键位判定（本应用按字符输入）、`word-test.ts` 选择题、Supabase/RSA 账号体系、上游自己标 `@deprecated` 的句子练习。
+
+## 4. 构建脚本两处健壮性修复
+
+- `shell.mjs --force` 在 Windows 上偶发 `EBUSY`（本轮两次撞到）：新增 `removeDirWithRetry`，200ms 递增退避重试，仍失败则把旧目录改名 `*.stale-<ts>` 让路，不再阻断构建。
+- `shell-info.json` 原本写入构建机绝对路径，会随安装包/ tar.gz 分发：改为只记 `app.asar` 文件名。
+
+## 验证
+
+`test:all` 244 项、`test:core` 309/309、`test:word-stats` 23/23、冒烟 13/13、桌面视觉 5/5、安装器全流程。
