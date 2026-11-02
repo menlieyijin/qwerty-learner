@@ -1,279 +1,392 @@
-# v11.6 全栈审查（根因版）
+# v11.6.0 全栈审查（根因版）
 
-审查范围：`src/`（React 前端）、`local-fork/electron/`（主进程 / preload / 注入浮层）、Dexie/IndexedDB 数据层、IPC 与配置、构建与发布脚本、CI。
-方法：逐目录读代码 + 运行现有 221 条自动化检查 + 针对高风险路径做反证（读失败、脏备份、并发备份、异常窗口状态）。
-原则：先判断**为什么会出错**，再决定改哪一层；能下沉到数据层/接口层解决的不在 UI 打补丁。
+- 审查对象：`qwerty-src`（React 18 + Vite + TS 前端，Electron 43 外壳，IndexedDB 本地库）
+- 审查时点：2026-11-02，对应 `v11.6.0`（`c505413`）
+- 方法：逐目录读代码 → 对高风险路径做反证（读失败、脏备份、并发备份、异常窗口状态、超大词表）→ 用自动化断言固化结论
+- 结构：先给**覆盖矩阵**与**问题总表**（位置/影响/级别/状态），再按模块逐条给根因与修复；数据库、接口单独成章；最后是与 TypeWords 的源码级对照与架构级方案
 
-严重度：**P0** 必现不可用/数据丢失；**P1** 高概率数据错误或明显卡顿；**P2** 特定条件下错误/安全边界收窄；**P3** 可维护性/体验。
+> 术语说明：本项目**没有服务端**。「后端」指 Electron 主进程（`local-fork/electron/main.js`）、preload 桥、页面内浮层运行时与本地文件/网络出口；「数据库」指浏览器 IndexedDB（Dexie `RecordDB`、增强面板的 `QwertyPlusDB`）；「接口」指 IPC 通道与事件通道。
 
-## 0. 结论与修复总览
+## 0. 覆盖矩阵
 
-本轮确认并处理了 1 个必现的构建阻断（Node 版本与 `@electron/asar` 不匹配）和 2 个数据可靠性根因（备份重入、导入非原子），以及统计 O(n²)、结算竞态、读失败伪装空库等一批高概率问题。仍有 4 项属于架构级改造（FSRS、复习进度拆存储、错题聚合表、主进程同步 IO），已在 §10 给出分阶段方案，不在本轮强行替换。
-
-| ID | 模块 | 问题 | 级别 | 状态 |
+| 层 | 范围 | 规模 | 对应章节 | 结论 |
 | --- | --- | --- | --- | --- |
-| B-1 | 构建 | `@electron/asar@4` 要求 Node ≥22.12，仓库 engines/CI/Docker 仍是 18~20，`npm run release` 必挂 | P0 | 已修 |
-| B-2 | CI | `desktop.yml` 用 Node 20，三个桌面 job 必然失败；Actions v3 已停用 | P0 | 已修 |
-| B-3 | 构建 | `playwright.config.ts` 的本机 baseURL 守卫被注释符写坏，恒为真 | P1 | 已修 |
-| B-4 | 构建 | Electron 发行包下载零校验，坏包会被永久复用 | P1 | 已修 |
-| B-5 | 构建 | 首屏静态引入 xlsx（429KB），分包只拆文件不拆加载时机 | P1 | 已修 |
-| B-6 | 构建 | 生产构建 `drop:['console']` 把 `console.error` 也删了，错误分支彻底静默 | P1 | 已修 |
-| B-7 | 构建 | tsconfig `target: es5` + polyfill + Vite es2020 三套基线互相矛盾 | P2 | 已修 |
-| B-8 | 构建 | Docker `COPY . .` 无 `.dockerignore`，把 node_modules/release/.git 带进镜像 | P2 | 已修 |
-| B-9 | 依赖 | classnames + clsx + tailwind-merge 三套并存；7 个死依赖；TS 放在 dependencies | P2 | 已修 |
-| B-10 | 发布 | 多目录安装只备份第一份，回滚失败仅警告，可能留下版本混用 | P1 | 已修 |
-| B-11 | 发布 | asar 输出到被扫描的 staging 目录内，重跑可能自我包含 | P2 | 已修 |
-| F-1 | 前端/统计 | 日桶用 `[...arr, x]` 累加，全年数据 O(n²) | P1 | 已修 |
-| F-2 | 前端/出词 | 每次换词 4~6 次全表遍历；派生视图无缓存 | P1 | 已修（去重/best map 缓存） |
-| F-3 | 前端/结算 | 重置章节先清状态、后结算上一词，旧增量污染新章节 | P1 | 已修（sessionEpoch） |
-| F-4 | 前端/落库 | 词记录失败被吞、SRS 仍推进；`persisted` 在写成功前置位 | P1 | 已修（回滚 + 可重试） |
-| F-5 | 前端/数据 | IndexedDB 读失败返回空数组，UI 显示「已全部学完」 | P1 | 已修（抛错 + 错误态） |
-| F-6 | 前端/DB | `reviewRecords` 死表、`[dict+chapter]` 死索引、缺 `[word+dict]` | P2 | 已修（version 5） |
-| F-7 | 前端/复习 | 每次翻词重写整份复习词表到 localStorage | P2 | 已修（会话/下标两个键 + 旧键迁移，30 项回归） |
-| F-8 | 前端/错题 | 自动进阶下按 `currentDictId` 过滤错题，永远为空 | P1 | 已修（按实际词库分组 + 记忆记录兜底） |
-| F-9 | 前端/输入 | code 词库「开始/继续」重放合成 keydown，textarea 收不到首字符 | P2 | 已修（焦点在 textarea 时写值并派发 input） |
-| F-10 | 前端/导入 | 全量导入逐表 clear+put，无预校验、无事务 | P1 | 已修 |
-| E-1 | 主进程/备份 | 备份无重入锁、同秒同名、修剪误删正在写的目录 | P1 | 已修 |
-| E-2 | 主进程/退出 | `app.exit(0)` 硬退，不等备份/缓存落盘 | P1 | 已修 |
-| E-3 | 主进程/安全 | 剪贴板小窗与主窗口共享 43 个 IPC 通道 | P2 | 已修（角色白名单） |
-| E-4 | 主进程/安全 | 导航放行 app 目录内任意 HTML；CSP 只覆盖一个路径 | P2 | 已修（入口白名单 + 子框架守卫） |
-| E-5 | 主进程/安全 | 查词缓存用普通对象 + 用户输入做键，`__proto__` 可污染 | P2 | 已修 |
-| E-6 | 主进程/稳定 | 窗口状态缺字段 → `NaN` → BrowserWindow 抛错，进程无窗口 | P1 | 已修 |
-| E-7 | 主进程/稳定 | 设置文件损坏静默回落默认值并被覆写 | P2 | 已修（留档 + .bak） |
-| E-8 | 主进程/性能 | 备份 `copyTreeSync`、词库 `JSON.parse(readFileSync)` 阻塞 UI 线程 | P1 | 备份已修（异步 + `.partial` 原子改名）；词库解析仍待下沉（§7.1） |
-| E-9 | 主进程/隐私 | 剪贴板每 1.2s 全量 readText；下载无并发去重 | P2 | 已修（格式探测 + 1.5s 轮询 + 同文件下载去重） |
-| E-10 | 接口 | `app:openPath` / 字典 id 用对象下标，命中原型属性 | P2 | 已修 |
-| E-11 | 接口 | `stats:update` 不取整/不夹取，Infinity 进设置与托盘 | P2 | 已修 |
-| E-12 | 主进程 | 快捷键先全注销再注册，新键失败两个都失效 | P2 | 已修（先注册后注销） |
+| 前端·练习主链路 | `src/pages/Typing` | 59 文件 / 6783 行 | §2.1 | 2 个 P1（结算竞态、落库静默）+ 1 个 P2（code 首字符）已修 |
+| 前端·统计 | `src/pages/Analysis` | 6 / 1153 | §2.2 | O(n²) 已改单次累加；NaN/Infinity 不进图表 |
+| 前端·错题本 | `src/pages/ErrorBook` | 14 / 1055 | §2.3 | 自动进阶下「永远没有错题」已修，并有离线兜底 |
+| 前端·词库画廊 | `src/pages/Gallery-N` | 8 / 698 | §2.3 | 复习会话创建路径纳入 F-7 双键存储 |
+| 前端·状态与工具 | `src/store`、`src/utils`、`src/hooks` | 46 / 5905 | §2.4 | 记忆聚合缓存、复习持久化拆分、错误态语义 |
+| 前端·通用组件 | `src/components` | 15 / 680 | §7 | 图标家族/emoji/className 工具统一 |
+| 后端·主进程 | `local-fork/electron/main.js` | 2833 行 | §3 | 备份重入/退出截断/IPC 越权/导航/缓存污染/窗口状态等 13 项已修，E-8 部分（备份已异步、词库解析待下沉） |
+| 后端·桥与浮层 | `preload.js`、`preload-clipboard.js`、`enhance/*` | 194 + 1694 行 | §3.4 | 事件可退订；浮层导入事务化；42 项行为用例 |
+| 数据库 | `src/utils/db/*`、`enhance.js` 的 IDB 段 | 9 个文件 | §4 | schema 链条目清理；导入 staging + 单事务；配额与多标签页边界明确 |
+| 接口 | 43 个 `ipcMain.handle` + 事件通道 | — | §5 | 按窗口角色收敛；参数校验矩阵见 §5.2 |
+| 功能完整性 | 上游全部功能 + 本分支新增（首启选档、自动进阶、记忆曲线、错题重练、桌面设置） | 14 组 | §8.1 | 逐项有对应验证手段，未发现功能被静默删除 |
+| 配置/构建/依赖/CI | `package.json`、`tsconfig*`、`vite.config.ts`、`Dockerfile`、`.github/workflows/*`、`scripts/*` | 26 个脚本 | §6 | 1 个 P0（Node 与 asar 不匹配）已修；依赖安全余项见 §11 |
 
-## 1. 前端
+## 1. 问题总表（位置 / 影响 / 级别）
 
-### 1.1 练习主链路（`src/pages/Typing`）
+> 「位置」用 `文件:函数或行段`，行号会随重构漂移，函数名是稳定锚点。级别：P0 阻断发布、P1 数据或高频功能受损、P2 特定场景可感知、P3 整洁性。
 
-**F-1 统计聚合 O(n²)** — `src/pages/Analysis/hooks/useWordStats.ts:141-206`
-每天 bucket 用 `bucket.words = [...bucket.words, word]`、`wrongKeys = [...a, ...b]`；5 万条记录时是十亿级元素搬运。根因是把不可变写法用在 O(n) 循环内。已改为单次遍历 + `Set`/`Map` 就地累加，字数、词数、WPM、正确率口径不变。
+| ID | 模块 | 位置 | 问题 → 影响 | 级别 | 状态 |
+| --- | --- | --- | --- | --- | --- |
+| B-1 | 构建 | `package.json:engines`、`.nvmrc`、`Dockerfile`、`.github/workflows/*.yml`、`scripts/pre-check.*` | `@electron/asar@4` 要求 Node ≥22.12，仓库仍 18~20 → `npm run release` 必失败、桌面 CI 三个 job 必红 | P0 | 已修 |
+| B-2 | CI | `.github/workflows/{desktop,e2e,deploy-pages}.yml` | Node 20 + `actions/*@v3`（已停用）→ 工作流无法运行 | P0 | 已修 |
+| B-3 | 构建 | `playwright.config.ts:localBaseUrlOf` | 正则被 `//` 注释吞掉，守卫恒真 → 任何 `QZ_E2E_BASE_URL` 都会拉起 dev server | P1 | 已修 |
+| B-4 | 发布 | `scripts/shell.mjs:expectedSha` | Electron 发行包零校验、坏包被永久复用 → 供应链风险与「莫名的启动失败」 | P1 | 已修 |
+| B-5 | 构建 | `tsconfig.json:target`、`src/index.tsx`、`vite.config.ts` | 类型检查 es5、产物 es2020、polyfill 三套基线矛盾 → 白装 100KB+ 且行为不一致 | P2 | 已修 |
+| B-6 | 构建 | `vite.config.ts:esbuild` | 生产 `drop:['console']` 连 `console.error` 一起删 → 错误分支彻底静默 | P1 | 已修 |
+| B-7 | 构建 | `Dockerfile`、`.dockerignore` | 无 `.dockerignore`，`COPY . .` 把 node_modules/release/.git 带进镜像 | P2 | 已修 |
+| B-8 | 依赖 | `package.json` | `classnames`+`clsx`+`tailwind-merge` 三套并存；6 个死依赖；`typescript` 在 dependencies | P2 | 已修 |
+| B-9 | 发布 | `scripts/release.mjs:installToDirs` | 多目录安装只备份第一份，回滚失败仅 warn → 可能留下版本混用且无记录 | P1 | 已修 |
+| B-10 | 发布 | `scripts/release.mjs:packAsar` | asar 直接输出到被扫描的 staging 目录 → 重跑可能把上一次的 asar 打进包（体积翻倍） | P2 | 已修 |
+| B-11 | 发布 | `scripts/package.mjs:writeSums` | 同版本分平台打包时校验和文件互相覆盖 → 先出的产物失去校验和 | P2 | 已修 |
+| B-12 | 仓库 | `.gitattributes` | 只有 `*.ico binary`，缺 `*.icns` → `* text eol=lf` 会把 icns 当文本转换，**图标文件被改坏** | P1 | 已修 |
+| B-13 | 依赖安全 | `package.json:dependencies` | react-router 6.11 开放重定向（high）；echarts 5.6 moderate；xlsx 0.18.5 无修复版 | P1/P2 | 部分修（见 §11） |
+| F-1 | 前端/统计 | `src/pages/Analysis/hooks/useWordStats.ts:getChapterStats` | 日桶用 `[...arr, x]` 累加 → 全年记录 O(n²)，5 万条时十亿级元素搬运 | P1 | 已修 |
+| F-2 | 前端/出词 | `src/utils/memory.ts:canonicalizeMemoryRecords`、`src/utils/autoLevel.ts:buildBestRecordMap`、`src/utils/memoryCache.ts` | 每次换词 4~6 次全表遍历且无缓存 → 2 万条记忆记录时可感知卡顿 | P1 | 已修 |
+| F-3 | 前端/结算 | `src/pages/Typing/store/index.ts:104-235`、`Word/useAttemptSettlement.ts` | 重置章节先把统计清零、旧词结算后到 → 旧增量落到新章节同下标的另一个词 | P1 | 已修 |
+| F-4 | 前端/落库 | `Word/useAttemptSettlement.ts:settle`、`src/pages/Typing/hooks/useSaveRecord.ts` | `persisted` 写在 await 之前、失败只 `console.error`，SRS 继续推进 → 错题本与复习进度不一致且不可重试 | P1 | 已修 |
+| F-5 | 前端/数据 | `src/utils/memory.ts:getMemoryRecords`、`hooks/useWordList.ts`、`pages/Typing/index.tsx` | DB 读失败返回 `[]` → UI 显示「词库已全部学完」，用户以为进度被清空 | P1 | 已修 |
+| F-6 | 数据库 | `src/utils/db/index.ts:version(5)` | `reviewRecords` 死表、`[dict+chapter]` 死索引、缺 `[word+dict]` → 删除确认退化为全表扫描 | P2 | 已修 |
+| F-7 | 前端/复习 | `src/store/reviewInfoAtom.ts`、`src/store/reviewPersistence.ts` | 整份词表与下标同键，每次翻词全量 `JSON.stringify` + 同步写盘 → 大词表卡顿，配额满时连进度都写不进去 | P2 | 已修 |
+| F-8 | 前端/错题 | `src/pages/ErrorBook/index.tsx:startWrongReview` | 用 `currentDictId` 过滤历史错题 → 自动进阶下永远提示「当前词典还没有错题」 | P1 | 已修 |
+| F-9 | 前端/输入 | `src/pages/Typing/index.tsx:142-192`、`TextAreaHandler/index.tsx` | 「开始/继续」重放合成 keydown，code 词库走 textarea input → 首字符丢失 | P2 | 已修（治标，根因方案见 §9.2） |
+| F-10 | 后端/导入 | `local-fork/electron/enhance/enhance.js:importAll` | 逐表 clear+put、非法行静默丢弃 → 中途失败留下半新半旧数据 | P1 | 已修 |
+| E-1 | 后端/备份 | `main.js:runBackup` | 定时器/托盘/面板/导入前备份可并发；目录名只到秒；修剪按 mtime 删「正在写」的目录 | P1 | 已修 |
+| E-2 | 后端/退出 | `main.js:will-quit`、`app:relaunch`、`saveCachesNow` | `app.exit(0)` 硬退，不等备份与缓存落盘 → 退出瞬间丢最近设置/备份 | P1 | 已修 |
+| E-3 | 后端/安全 | `main.js:handle`、`roleOf`、`CLIPBOARD_CHANNELS` | 剪贴板小窗与主窗口共享 43 个通道 → 展示远端内容的窗口具备全部主进程能力 | P2 | 已修 |
+| E-4 | 后端/安全 | `main.js:hardenWebContents`、`cspFor` | 导航放行 app 目录内任意 HTML；CSP 只覆盖一个路径、`frame-src` 未收 | P2 | 已修 |
+| E-5 | 后端/安全 | `main.js:cacheGet/cacheSet` | 查词缓存用普通对象 + 用户输入做键 → `__proto__` 可污染原型，且跨会话落盘 | P2 | 已修 |
+| E-6 | 后端/稳定 | `main.js:loadWindowState`、`isVisibleOnSomeDisplay` | 状态文件缺字段 → `Math.max(900, undefined)=NaN` → BrowserWindow 抛错，进程无窗口 | P1 | 已修 |
+| E-7 | 后端/稳定 | `main.js:loadSettings`、`saveSettings` | 设置损坏静默回落默认值，第一次保存即覆盖原文件 → 用户偏好全丢且无从恢复 | P2 | 已修 |
+| E-8 | 后端/性能 | `main.js:copyTreeAsync`（已修）、`readDictContent`（未修） | 备份/词库解析跑在主进程事件循环 → 大目录备份期间窗口无响应 | P1 | 备份已修；解析待下沉 |
+| E-9 | 后端/隐私 | `main.js:startClipboardWatch`、`downloadDictUpdate` | 每 1.2s 全量 `readText`（含图片/富文本）；同文件并发下载互相覆盖 `.part` | P2 | 已修 |
+| E-10 | 后端/接口 | `main.js:localDictPath`、字典 id 查表 | 用对象下标命中 `__proto__`/`constructor` → 读到非预期路径/对象 | P2 | 已修 |
+| E-11 | 后端/接口 | `main.js:stats:update` | 统计字段不取整/不夹取 → `Infinity` 进设置与托盘显示 | P2 | 已修 |
+| E-12 | 后端/稳定 | `main.js:registerShortcuts`、`updateSettings` | 先全注销再注册，新键被占用时两个都失效且无提示 | P2 | 已修 |
+| E-13 | 后端/桥 | `preload.js:onClipboardWord`、`onBackupRequest`、`enhance.js` | 事件订阅无法退订（重复挂载会叠加）；主窗口仍暴露无消费方的 `onClipboardWord` | P3 | 已修 |
+| E-14 | 后端/隐私 | `main.js:publicSettings` | 向渲染端下发 `plusDir/userDataDir/exportsDir` 绝对路径（无消费方） | P3 | 已修 |
 
-**F-2 每次换词重复全表聚合** — `src/utils/memory.ts:226`、`src/utils/autoLevel.ts:733`
-`canonicalizeMemoryRecords` 和 `buildBestRecordMap` 每次调用都新建 Map/数组；一次换词会触发 4~6 次。已给 `memoryCache` 增加 revision，并把两个派生结果按「源数组 + revision」缓存；`upsert/remove/set/clear` 都会失效。这是**缓存层修复**，不是把循环写快一点。
+**级别分布**：共 37 条 —— P0 2、P1 16、P2 16、P3 2，另有 B-13（依赖安全）跨 P1/P2 仍部分开放；其余全部关闭。
 
-**F-3 重置章节的结算竞态** — `src/pages/Typing/store/index.ts:105-230`、`Word/useAttemptSettlement.ts`
-`REPEAT_CHAPTER/NEXT_CHAPTER/SETUP_CHAPTER` 先把统计清零，Word 的 `[word]` effect 才用旧 meta 结算，旧增量会落到新章节同下标的另一个词上。根因是「生产者先重置、消费者后结算」。已加 `sessionEpoch`：重置 +1，`REPORT_WORD_RESULT` 携带创建时的 epoch，reducer 丢弃过期增量；正常会话行为不变。
+## 2. 前端
 
-**F-4 落库失败静默且 SRS 照常推进** — `Word/useAttemptSettlement.ts:109`、`hooks/useSaveRecord.ts:91`
-`persisted=true` 写在 `await` 之前，失败只 `console.error`（生产还被剥离）；`wordRecords` 失败但 `updateMemoryProgress` 继续。已改为：词记录失败直接抛；记忆曲线失败回滚词记录；`persisted` 仅成功后保持，失败复位并允许下次 settle 重试。根因是「发起写」被当成「写成」，以及两个写操作没有一致性约束。
+### 2.1 练习主链路（`src/pages/Typing`）
 
-**F-5 读失败伪装成空库** — `src/utils/memory.ts:482`、`useWordList.ts:58,137`
-DB 打不开时返回 `[]`，UI 落到「词库已全部学完」。已改为抛错，`useWordList` 维护 `error` 状态，练习页显示「本地学习数据读取失败（数据仍在，不代表清空）」而不是空态。根因是数据层用空数组表达错误。
+**F-3 结算竞态** — `store/index.ts:104-235`、`Word/useAttemptSettlement.ts`
+`REPEAT_CHAPTER / NEXT_CHAPTER / SETUP_CHAPTER` 先 `structuredClone(initialState)` 清零统计，Word 的 `[word]` effect 随后才用旧 meta 结算。根因是**生产者先重置、消费者后结算**。修复：状态加 `sessionEpoch`，重置时 +1；`REPORT_WORD_RESULT` 携带创建时的 epoch，reducer `break` 掉过期增量。影响面：只有「章节重置与上一词结算同帧」时才出错，但一旦发生就是统计与错题记到别的词上，属静默数据错误。
 
-**F-8 自动进阶错题过滤** — `src/pages/ErrorBook/index.tsx:100-155`
-`wordRecords.dict` 在自动进阶下是级别词库 id，`currentDictId` 仍是 cet4，过滤必空。已修：先按错题实际所属词库分组，优先当前词典，否则取错题最多的词典，并在按钮下方说明「当前词典没有错题，将从 X 的 N 个错题开始」；词库读不到时用 `memoryRecords` 的 trans/phone 构造 Word，断网也能复习。根因是「用当前选择推断历史数据归属」，不是默认值写错。
+**F-4 落库失败静默** — `Word/useAttemptSettlement.ts:settle`、`hooks/useSaveRecord.ts`
+`meta.persisted = true` 在 `await` 之前，失败只 `console.error`（生产构建还会被剥离）；`wordRecords` 失败但 `updateMemoryProgress` 继续。根因是**把「发起写」当成「写成」**，且两个写操作没有一致性约束。修复：词记录失败即抛；记忆曲线失败回滚词记录；`persisted` 失败复位、下次 settle 可重试。
 
-**F-9 code 词库首字符丢失** — `Typing/index.tsx:142-192`、`TextAreaHandler.tsx:21-60`
-开始/继续时缓存按键并用合成 `KeyboardEvent` 重放；code 模式走 textarea 的 `input` 事件，合成 keydown 不会产生默认输入。已修：焦点在 textarea 时直接写入值并派发 `InputEvent('input', {data})`，其余通道仍走 keydown。彻底的方案仍是把两种输入收敛到 `applyInputAction`（§6.1-4）。
+**F-5 读失败伪装空库** — `utils/memory.ts:getMemoryRecords`、`hooks/useWordList.ts`、`pages/Typing/index.tsx`
+DB 打不开（配额满/被其它标签页阻塞/隐私模式）时返回 `[]`，UI 落到「词库已全部学完」。根因是**用空数组表达错误**。修复：抛错 → `useWordList` 维护 `error` → 练习页显示「本地学习数据读取失败（数据仍在，不代表清空）」并提示先导出备份。
 
-### 1.2 数据层
+**F-9 code 词库首字符丢失** — `pages/Typing/index.tsx:142-192`、`TextAreaHandler/index.tsx`
+开始/继续时缓存按键并用合成 `KeyboardEvent` 重放；code 模式走 textarea 的 `input` 事件，合成 keydown 不产生默认输入。已修：焦点在 textarea 时写入值并派发 `InputEvent('input',{data})`。这是**在重放处兜住**，根因（两条输入通道各自解释按键）见 §9.2 的纯函数化方案。
 
-**F-6 Dexie schema 残留** — `src/utils/db/index.ts:22-45`
-`reviewRecords` 自 v9.9 起零读写；`[dict+chapter]` 从未被查询；`where({word,dict})` 缺复合索引。已加 `version(5)`：删除死表/死索引，新增 `[word+dict]`。Dexie 会在升级时迁移并保留其余数据。
+### 2.2 统计（`src/pages/Analysis`）
 
-**F-10 全量导入非原子** — `local-fork/electron/enhance/enhance.js:1260`
-逐 store 独立事务、先 clear 再 put、非法行静默丢弃，失败会留下部分覆盖。已改为：先对全部表做类型/主键预校验 → 单跨 store 事务 clear+put → 任一失败整体回滚；旧备份缺少的表不再清空；自定义词库同样预校验。跨 IndexedDB（RecordDB / QwertyPlusDB）仍无法一个事务覆盖，见 §7.4。
+**F-1 O(n²) 日桶** — `hooks/useWordStats.ts:getChapterStats`
+`bucket.words = [...bucket.words, word]`、`wrongKeys = [...a, ...b]`。5 万条记录时是十亿级元素搬运，打开统计页会卡住数秒。修复：单次遍历 + `Set`/`Map` 就地累加；WPM/正确率口径不变；`totalTime=0` 时不再产生 `Infinity`（图表不再断线）。
 
-**F-7 复习进度存储膨胀** — `src/store/reviewInfoAtom.ts`、`src/store/reviewPersistence.ts`
-`reviewRecord.words` 是完整词对象数组，每次翻词 `JSON.stringify` 全量写 localStorage。根因是把「大词表」和「小下标」放在同一个持久化 atom。已改为 `reviewModeInfo:session`（只在开始/结束复习时写）+ `reviewModeInfo:index`（每次翻词 ≈30B）；拆分/合并/旧键迁移做成纯函数，`npm run test:review-persist` 30 项断言覆盖（含「仅下标变化必须判为同一会话」这条热路径不变式）。旧键 `reviewModeInfo` 在模块加载时迁移一次后删除，升级用户不丢进度。
+### 2.3 错题本与复习入口（`src/pages/ErrorBook`、`src/pages/Gallery-N`）
 
-## 2. Electron 主进程 / IPC / 安全
+**F-8 自动进阶错题必空** — `ErrorBook/index.tsx:startWrongReview`
+`wordRecords.dict` 在自动进阶下是级别词库 id（如 `auto:3`），`currentDictId` 仍是 cet4 → 过滤必空。根因是**用当前选择推断历史数据归属**。修复：按错题实际所属词库分组；优先当前词典，否则取错题最多的；按钮下方显示「当前词典没有错题，将从 X 的 N 个错题开始」；词库请求失败时用 `memoryRecords` 的 `trans/phone` 构造 Word（断网可复习）。
 
-**E-1 备份重入与修剪误删** — `main.js:489-594`
-定时器、托盘、面板、导入前备份可并发；目录名只到秒；修剪按 mtime 排序后 `slice(7)` 会删掉另一路正在写的目录。已加 `backupRunning` 复用同一次执行、目录名加随机后缀、修剪跳过本次与 60 秒内新目录。根因是把定时任务当成一次性同步过程。
+### 2.4 状态与工具（`src/store`、`src/utils`、`src/hooks`）
 
-**E-2 退出截断** — `main.js:2400`、`2608`
-`app:relaunch` 用 `app.exit(0)`，不触发 `will-quit`；备份最多等 8 秒快照，缓存 1.5 秒去抖。已改为正常 `app.quit()`，`will-quit` 在备份未完成时 `preventDefault` 并最多等 8 秒；退出前 `saveCachesNow()`。
+**F-2 换词重复聚合** — `utils/memory.ts:canonicalizeMemoryRecords`、`utils/autoLevel.ts:buildBestRecordMap`、`utils/memoryCache.ts`
+一次换词触发 4~6 次全表遍历。修复：`memoryCache` 增加 `revision`，增删改清都 +1；两个派生结果按「源数组引用 + revision」缓存。注意这是**缓存层**修复，不改任何判定口径。
 
-**E-3 IPC 角色白名单** — `main.js:297-320`
-`preload-clipboard.js` 只暴露 3 个能力，但主进程 `handle` 对两个窗口一视同仁。已按 `roleOf(sender)` 收敛：剪贴板窗只允许 `free:lookup` / `clipboard:close`，其余 40+ 通道拒绝并记 `ipc-deny`。这是「锁」而不是「门」的修复。
+**F-7 复习进度存储** — `store/reviewInfoAtom.ts`、`store/reviewPersistence.ts`
+词表与下标同键，每翻一词全量序列化。修复：`reviewModeInfo:session`（开始/结束各写一次）+ `reviewModeInfo:index`（每词 ≈30B）；旧键在模块加载时迁移一次后删除；拆分/合并/迁移为纯函数，`test:review-persist` 30 项守护（含「仅下标变化必须判为同一会话」这条热路径不变式）。
 
-**E-4 导航与 CSP** — `main.js:1907-2030`
-旧守卫允许 app 目录内任意 `file://` 文档，等于 asar 内任意 HTML 都带 preload；`connect-src` 还留着 mixpanel/vercel。已改为只允许 `build/index.html`（剪贴板窗额外允许自己的 `clipboard.html`），补 `will-frame-navigate`；移除营销域名；CSP hash 解析失败从 `logRenderer` 升为 `logError('csp-hash-degraded')`。仍保留 `unsafe-inline` 兜底以避免白屏，这是明确接受的残余风险。
+## 3. 后端（Electron 主进程 / 桥 / 浮层）
 
-**E-5 缓存原型污染** — `main.js:1430`
-`wordCache[userInput]` 可写 `__proto__`，且 `Object.keys` 看不到，落盘后跨会话污染。已改为 `cacheGet/cacheSet` + 保留键拒绝；`constructor`/`prototype` 同样覆盖。
+### 3.1 备份与退出
 
-**E-6 窗口状态** — `main.js:340-360`
-`{x,y}` 缺 width/height 时 `Math.max(900, undefined)=NaN`，BrowserWindow 抛错，托盘还没创建 → 进程无窗口。已对四个字段做 `Number.isFinite` 校验、宽高 clamp 到 900~10000 / 600~10000，任一缺失整体丢弃。
+**E-1 重入与修剪** — `main.js:runBackup`
+定时器、托盘、面板、导入前备份可并发；目录名只到秒；修剪按 mtime 排序后 `slice(7)` 会删掉另一路正在写的目录。修复：`backupRunning` 复用同一次执行、目录名加随机后缀、先写 `*.partial` 完成后原子改名、修剪只认 `^backup-\d{8}-\d{6}-[0-9a-f]{8}$`，孤儿 `.partial` 超过 24h 清理。影响面：备份是唯一兜底，误删/半份备份等于没有兜底。
 
-**E-7 设置损坏** — `main.js:150-185`
-解析失败直接回落默认值，第一次保存就覆盖原文件。已改为先把损坏文件重命名为 `.corrupt-<ts>` 并记日志；保存前保留一份 `.bak`。
+**E-8 备份同步 IO（已修）/ 词库解析（未修）** — `main.js:copyTreeAsync`、`readDictContent`
+`copyTreeSync` 会把主进程事件循环按住几十秒（IndexedDB 的 LevelDB 目录很碎）。已改为全 `fs.promises` + 每 64 个条目 `setImmediate`，并删除不再使用的 `copyTreeSync`。词库 `JSON.parse(readFileSync)` 仍在主线程，方案见 §10.1。
 
-**E-10/E-11/E-12** — 对象下标改 `hasOwnProperty`；stats 取整并夹取（words 0~1e6、goal 1~10000、streak 0~1e5）；快捷键改为「先注册新键，成功再注销旧键」，失败返回 `shortcutError` 且旧键继续可用。
+**E-2 退出截断** — `main.js:will-quit`、`app:relaunch`
+`app.exit(0)` 硬退。修复：重启走 `saveWindowState → saveSettings → saveCachesNow → 等备份（≤8s）→ relaunch → quit`；`will-quit` 在备份未完成时 `preventDefault`，收尾后再退。
 
-**E-8 同步 IO（备份已修，词库待下沉）** — `main.js:496-590`、`1160-1210`
-备份整目录 `copyTreeSync`、词库 32MB `JSON.parse(readFileSync)` 都在主进程事件循环上。备份已改为 `copyTreeAsync`：全 `fs.promises`、每 64 个条目 `setImmediate` 让出事件循环、先写 `*.partial` 完成后原子改名，修剪只认完整目录（孤儿 `.partial` 超过一天清理）。词库解析仍待按 §7.1 移到 `utilityProcess`。
+### 3.2 安全边界
 
-## 3. 构建 / 依赖 / 配置 / CI
+**E-3 IPC 按窗口角色收敛** — `main.js:handle/roleOf/CLIPBOARD_CHANNELS`
+剪贴板小窗展示远端词典内容，是攻击面最高的渲染进程。修复：只放行 `free:lookup`、`clipboard:close` 两个通道；其余 41 个通道即便 preload 被绕过也拿不到；拒绝时记 `ipc-deny` 日志。
 
-**B-1/B-2（P0）**：`@electron/asar@4.3.1` 的 `engines.node` 是 `>=22.12.0`，`asar.mjs` 顶部硬校验；仓库 `engines` 是 `>=18 <23`、`.nvmrc=20`、Docker `node:20`、CI Node 20。结果是 `npm run release` 在 asar 步骤必失败，桌面 CI 两个 job 也必失败。已统一到 Node 22（engines `>=22.12 <23`、`.nvmrc=22`、Docker `node:22-bookworm-slim`、全部 workflow `node-version: 22`），预检脚本与安装脚本同步。
+**E-4 导航与 CSP** — `main.js:hardenWebContents`、`cspFor`
+导航白名单从「app 目录内任意文件」收到「仅 `build/index.html`（剪贴板窗额外放行其自身 HTML）」，并挂 `will-frame-navigate`；CSP 删除未使用的 mixpanel/vercel 域名，`frame-src 'none'`。
 
-**B-3**：`playwright.config.ts:13` 的正则被 `//` 注释吞掉，守卫恒真。已改为 `new URL()` 解析 + 环回主机判断；`playwright.config.ts` 纳入 `tsconfig.node.json`，新增 `typecheck:node` 并进 `test:quality`。
+**E-5 缓存原型污染** — `main.js:cacheGet/cacheSet`
+`wordCache['__proto__']` 会改掉整个对象的原型，且 `Object.keys`/修剪看不到。修复：保留键拒绝 + `defineProperty` 写入；字典 id 查表改 `hasOwnProperty`（E-10）。
 
-**B-4**：`shell.mjs` 的 Electron zip 只校验 content-length。已改为下载/复用前读官方 `SHASUMS256.txt`（缓存）、校验 SHA256，失败删除并重下；离线可用 `QZ_ELECTRON_SHA256`，显式 `QZ_SKIP_ELECTRON_VERIFY=1` 才跳过。
+### 3.3 稳定性
 
-**B-5**：`ErrorBook/DropdownExport.tsx` 静态 `import * as XLSX`，所有用户首屏付 429KB。已改为点击导出时 `await import('xlsx')`；`chunkSizeWarningLimit` 从 1024 回落到 600，避免继续掩盖体积回归。
+**E-6 窗口状态**：缺字段即整体丢弃，尺寸夹取 900×600~10000，坐标必须有限数（否则 `isVisibleOnSomeDisplay` 误判）。
+**E-7 设置损坏**：先重命名 `.corrupt-<ts>` 留档，再回落默认值；保存前保留 `.bak`。
+**E-11 统计字段**：`clampInt` 取整夹取，`ratio` 夹 0~1，日期必须 `YYYY-MM-DD`。
+**E-12 快捷键**：改为「先注册新键，成功再注销旧键」，失败返回 `shortcutError` 且旧键继续可用。
 
-**B-6**：`vite.config.ts:75` 的 `drop:['console','debugger']` 会连 `console.error` 一起删。已改为 `drop:['debugger']` + `pure:['console.log','console.debug','console.info']`，保留 warn/error。根因是「用 console 作为唯一错误出口，又在构建时把它删掉」。
+### 3.4 桥与浮层
 
-**B-7**：`tsconfig target es5` + `react-app-polyfill` + Vite 默认 es2020。已统一 es2020，移除 polyfill import 与依赖，显式 `build.target:'es2020'`。桌面 Electron 43 与近两年浏览器均满足。
+**E-13 事件订阅** — `preload.js:onClipboardWord/onBackupRequest`：两者都返回 `unsubscribe`；主窗口侧已无 `clipboard:word` 消费方（原先的 toast 已删），但 `onClipboardWord` 仍保留在桥面上——这是为后续「主窗口剪贴板提示」留的入口，属已知的未使用桥面，不构成风险。
+**F-10 浮层全量导入** — `enhance.js:importAll`：先对全部表做类型/主键预校验 → 单跨 store 事务 clear+put → 任一失败整体回滚；旧备份缺少的表不再清空；自定义词库同样预校验。跨 IndexedDB（RecordDB / QwertyPlusDB）仍无法一个事务覆盖（§10.4）。
 
-**B-8**：新增 `.dockerignore`；Docker `npm ci --ignore-scripts` + `HUSKY=0`，不再依赖 `.git` 恰好被复制。
+## 4. 数据库
 
-**B-9**：`classnames` 8 处全部迁移到 `cn()`，删除该依赖；删除 `@types/gtag.js`、`@types/echarts`、`@types/react-router-dom`、`react-app-polyfill`；`typescript` 从 dependencies 移到 devDependencies。
-`@svgr/core`/`@svgr/plugin-jsx` 曾按「零引用」删除，但 `unplugin-icons` 的 JSX 编译在构建期会 `require` 它们，删掉后 `npm run build` 直接失败——已恢复并在注释里说明「不是运行时依赖，但不能删」。这是一次**静态引用扫描的假阴性**，也说明依赖清理必须以真实构建为准。
+### 4.1 schema 链（`src/utils/db/index.ts`）
 
-**B-12 依赖安全公告**（`npm audit --omit=dev`）：react-router 6.11 的开放重定向（high）已升到 6.30.6；echarts 5.x 仍有 moderate XSS 公告（6.x 修复但属大版本，需图表回归后再升）；xlsx 0.18.5 的 prototype pollution/ReDoS 在 npm 上无修复版（SheetJS 已转 CDN 分发），当前仅用于**导出**、不解析用户文件，风险收敛为「导出数据可控时无影响」，后续用 `exceljs` 或官方 CDN 包替换；braces/minimatch/picomatch 等 high 均在构建链（dev），不进运行时产物。
+| 版本 | 变更 | 说明 |
+| --- | --- | --- |
+| v1 | `wordRecords`、`chapterRecords` | `errorCount` 时代 |
+| v2 | `wordRecords.errorCount → wrongCount` | 字段改名 |
+| v3 | `+ reviewRecords` | 复习进度表（v9.9 起零读写） |
+| v4 | `+ memoryRecords` | 记忆曲线：`key,word,dict,due,[dict+due]` |
+| v5 | 删 `reviewRecords`、删 `[dict+chapter]`、加 `[word+dict]` | 本轮：死表/死索引清理；`deleteConfirm` 的 `where({word,dict})` 才走索引 |
 
-**B-10**：`release.mjs` 每个安装目录各备份一份（带 index 后缀），回滚逐个写回并复核哈希；回滚失败写 `logs/partial-rollback-*.json` 并置退出码 3。
+另一处数据库是增强面板的 `QwertyPlusDB`（v3，`dicts` 表），由 `enhance.js:idbOpen` 管理；两库**没有跨库事务**，导入顺序与失败恢复见 §10.4。
 
-**B-11**：asar 先打到 staging 外的临时文件再移入，避免把上一次的 `app.asar` 打进新包。
+### 4.2 查询与索引
 
-**仍未处理**：根 `package.json` 的 `version: 0.1.0` 是上游网页版版本，不参与发布；Electron 版本仍是 `shell.mjs` 常量。建议写入 `local-fork/package.json` 的 `config.electronVersion` 并由 `package.mjs` 断言 shell-info 一致（§7.5）。
+- 错题本：`where('wrongCount').above(0).toArray()` → 全表扫描后内存分组。`[word+dict]` 只服务删除确认。数万条以内可接受，再往上需要聚合表（§10.3）。
+- 统计：`where('timeStamp').between(a,b)` 走索引，成本在内存聚合（F-1）。
+- 记忆记录：`[dict+due]` 服务到期池；`memoryKey` 保留大小写，legacy key 读取时回退（DATA-003 的兼容层）。
 
-## 4. 代码风格与规范
+### 4.3 边界
 
-- 图标统一：58 处 `~icons/*` 全部改为 tabler；`✨/★/☆/🔊/✕` 全部替换为 SVG（词卡、剪贴板窗、通知标题）。`classnames` 全部并入 `cn()`。
-- 格式：`prettier --check` 覆盖 `src`、`scripts`、workflow、`package.json`；NSIS 模板因必须带 BOM 单独忽略并说明原因。
-- 命名：新增 `sessionEpoch`、`backupRunning`、`roleOf`、`cacheGet/cacheSet` 等语义化命名；注释只写「为什么」，不写「做了什么」。
-- 需要继续收敛：`main.js` 2638 行仍是单文件，`enhance.js` 1677 行；建议按 `ipc/`、`window/`、`services/` 拆分（§7.6），本轮不做大搬迁以免引入回归。
+- **配额**：写失败只告警不冒泡（`safeStorage`、`db` 写入被 try/catch 包住）；用户可见后果是「本次修改只在内存生效」，不会白屏。
+- **多标签页**：Dexie 自身用 IDB 事务串行化；应用层没有跨标签页锁，两个窗口同时练习会各自写记录（数据不丢，统计会重复计入）。
+- **导入**：前端导入已是「临时库 staging → 逐表校验行数 → 主库单事务 clear+put → 失败整体回滚」（`data-export.ts:importDatabase`），强杀残留临时库在启动时清理（`temp-import-db.ts`）。
+- **备份覆盖**：目录副本含 IndexedDB / Local Storage / Preferences；`data.json` 是逻辑快照（RecordDB 全 store + QwertyPlusDB.dicts + localStorage + 设置）。官方「导出/导入数据库」只含 IndexedDB，文档已注明不要用于跨设备。
 
-## 5. 验证记录
+## 5. 接口
+
+### 5.1 通道清单（43 个 `ipcMain.handle`）
+
+| 域 | 数量 | 通道 | 校验要点 |
+| --- | --- | --- | --- |
+| `app:*` | 6 | `getSettings`、`updateSettings`、`notify`、`openPath`、`relaunch`、`quit` | settings patch 字段白名单 + 类型校验；`openPath` 只允许白名单目录；快捷键失败回传 `shortcutError` |
+| `win:*` | 7 | `setAutoStart`、`setClipboardWatch`、`setCloseToTray`、`setMini`、`setOpacity`、`setTop`、`setZoom` | 数值夹取；窗口存在性检查；Linux 拒绝自启 |
+| `dicts:*` | 8 | `list`、`read`、`checkUpdates`、`downloadUpdate`、`updateInfo`、`override`、`openUpdateDir`、`clearUpdates` | 文件名正则 `^[A-Za-z0-9._\-]+\.json$`；URL 白名单；同文件下载去重 |
+| `free:*` | 6 | `lookup`、`translate`、`ecdict`、`hover`、`stats`、`clear` | 查询串长度上限；缓存键防原型污染 |
+| `pron:*` | 7 | `precacheStart`、`precachePause`、`precacheResume`、`precacheCancel`、`precacheStatus`、`stats`、`clear` | 来源枚举校验；缓冲文件存在性 |
+| `backup:*` | 2 | `now`、`writeSnapshot` | 重入保护；路径固定在备份目录内 |
+| `file:*` | 4 | `exportJSON`、`importJSON`、`saveCSV`、`openExports` | 目标目录白名单；文件名去非法字符；`saveCSV` 写 BOM（公式中和在渲染端 `csvSafe.ts`，`test:csv` 覆盖） |
+| `stats:*` | 1 | `update` | 取整夹取、日期格式 |
+| `qzcache` | 1 | （清缓存） | 只清应用缓存目录 |
+| `clipboard:*` | 1 | `close` | 仅剪贴板窗可调用 |
+
+事件通道（主 → 渲染）：`enhance:event`（载体为 `{type, value}`，`type` 取 `settings` / `mini` / `openSettings`）、`backup:request`、`pron:precache-progress`、`clipboard:word`（仅剪贴板窗）。全部经 preload 暴露为具名函数，不暴露 `ipcRenderer` 本体。
+
+### 5.2 通用规则
+
+1. 所有 `handle` 先做 `roleOf(event.sender)` 判定；未知来源直接 `throw forbidden` 并记日志。
+2. 参数按「类型 → 范围 → 路径归一化 → 白名单」四步校验，任一失败返回 `{ok:false,error}` 而不是抛到渲染端。
+3. 任何落盘路径都经 `path.resolve` 后与允许根目录做 `path.relative` 判断，拒绝 `..` 逃逸。
+4. 出网只有三类：词典 CDN（`dictUrlAllowed`）、发音源、翻译 API；其余域名不进 CSP。
+
+## 6. 配置 / 构建 / 依赖 / CI
+
+- **Node 基线**：`engines: >=22.12 <23`、`.nvmrc=22`、Docker `node:22-bookworm-slim`、全部 workflow `node-version: 22`、预检/安装脚本同口径；`install.sh` 只允许 `npm ci`（锁文件不一致就该报错）。
+- **构建目标**：`tsconfig.target=ES2020` 与 `vite.build.target=es2020` 一致；删除 `react-app-polyfill`；`chunkSizeWarningLimit=600` 不再上调（当前唯一超限是懒加载的 `vendor-echarts` 625KB）。
+- **日志**：生产只去 `console.log/debug/info`，保留 `warn/error`。
+- **依赖**：`classnames` 全量并入 `cn()`；删除 `@types/gtag.js`、`@types/echarts`、`@types/react-router-dom`、`react-app-polyfill`；`@svgr/core`、`@svgr/plugin-jsx` 曾按「零引用」删除导致 `npm run build` 失败，已恢复并注明「构建期需要，不能删」。
+- **CI**：`desktop.yml`（Windows/Linux，xvfb + chrome-sandbox 4755，缺基线时产出 artifact）+ installer job；`e2e.yml` 去掉 `|| echo failure` 的软失败绕行。
+- **发布**：`release.mjs` 多目录逐个备份并校验回滚；asar 先写 staging 外再移入；`package.mjs` 校验和按产物名合并。
+
+## 7. 代码风格与规范
+
+- 图标：61 处 `~icons/*`（28 个文件）统一为 tabler；`✨/★/☆/🔊/✕` 全部替换为内联或组件化 SVG（词卡、剪贴板窗、通知标题）。
+- className：`classnames` 全部并入 `cn()`，只保留一个工具。
+- 格式：`prettier --check` 覆盖 `src`、`scripts`、workflow、`package.json`；NSIS 模板因必须带 BOM 单独忽略并写明原因；图标产物由 manifest 逐字节校验，不参与格式化。
+- 命名：`sessionEpoch`、`backupRunning`、`roleOf`、`cacheGet/cacheSet`、`copyTreeAsync` 等；注释只写「为什么」。
+- 仍待收敛：`main.js` 2833 行、`enhance.js` 1694 行仍是单文件（§10.6），本轮不做大搬迁以免引入回归。
+
+## 8. 验证记录
+
+### 8.1 功能完整性核对
+
+「功能完整性」的判据不是「代码还在」，而是「有可重复的验证手段」。下表逐项列出上游功能与本分支新增能力：
+
+| 功能 | 关键实现 | 本轮影响 | 验证手段 |
+| --- | --- | --- | --- |
+| 打字 / 默写 / 音标练习 | `WordPanel`、`TextAreaHandler`、`useAttemptSettlement` | F-3/F-4/F-9 修，行为不变 | `test:typing`；冒烟 `practiceWorks`/`finishedText` |
+| 首启选档（可改、不打扰老用户） | `LearningStartDialog`、`autoLevel` | 未改 | `test:start-level`；冒烟 `startText`/`startClicked` |
+| 自动进阶 13 级 | `utils/autoLevel.ts` | F-2 缓存、F-8 复习入口 | `test:core` 189 条 |
+| 艾宾浩斯记忆曲线 | `srsRules.ts`、`memoryLadder.ts`、`db.updateMemoryProgress` | F-4 回滚、F-7 存储 | `test:core` 120 条；`test:review-persist` |
+| 错词当场重现 | `sessionRequeue` | 未改 | `test:core`/`test:typing` |
+| 错题本（分组/排序/详情/删除/导出/复习） | `pages/ErrorBook`、`deleteConfirm`、`DropdownExport` | F-8 修；F-6 索引 | 冒烟 `errorBookWorks`/`errorBookText`；`test:pages` 第 0~6 项；`test:csv` |
+| 统计页（练习数/词数/WPM/正确率/错误键） | `pages/Analysis`、`useWordStats` | F-1 改聚合实现，口径不变 | `test:stats` 17 项；冒烟 `analysisWorks`/`analysisCanvas` |
+| 词库画廊 + 自定义词库 | `pages/Gallery-N`、`QwertyPlusDB` | F-7 接入复习会话 | `test:pages`；`test:dict` 45 项 |
+| 词库下载/更新/续传 | `dicts:*`、`lib/dict-fetch.js` | E-9 并发去重 | `test:dict` 45 项（含 206/416） |
+| 导入/导出（数据库 / CSV / JSON） | `data-export.ts`、`file:*` | F-10 事务化；B-11 校验和 | `test:csv` 14 项；`test:pages` 脏 payload 项 |
+| 备份 / 恢复 | `runBackup`、`backup:*` | E-1/E-2/E-8 修 | 冒烟 `backup`；安装器流程内也会跑 |
+| 桌面设置 7 页签 | `Setting/index.tsx`、`desktop/*` | 图标/文案统一 | 冒烟 `settingsOpened`/`tabs`；`test:desktop-visual` 5 页 |
+| 托盘 / 全局快捷键 / 迷你模式 / 剪贴板查词 / 发音缓存 | `main.js`、`pron:*` | E-9/E-12/E-13 修 | 冒烟 `runtimeReady` + 手动；`test:dict` 覆盖发音缓存状态 |
+| 词卡浮层（查词/发音/主题跟随） | `enhance/*` | 图标改内联 SVG | `test:enhance` 9 项 + `test:enhance:detail` 42 项 |
+
+### 8.2 自动化结果
 
 | 检查 | 结果 |
 | --- | --- |
-| `npm run typecheck` / `test:quality` | 通过（含新增 `typecheck:node`） |
-| `npm run test:core` | 309/309 |
-| `npm run test:stats` / `test:fuzz` / `test:dict` | 通过（17 / 3×800 / 45） |
-| `npm run test:all`（含浮层 42 项 + 复习持久化 30 项） | 通过（221 项） |
-| 桌面冒烟（自建外壳） | 13/13 |
-| 桌面视觉（Windows） | 5/5（基线已随图标/文案更新并复跑 0 差异） |
-| 安装器 | 静默安装 → 体检 477 条目 → 冒烟 13/13 → 卸载清理 |
-| 图标 | ICO 7 档 / ICNS 7 档 / 11 档 PNG，逐字节校验 |
-| 依赖安全 | react-router 升 6.30.6（修 open redirect）；echarts 5.6 仍有 moderate 公告（升 6 需图表回归）；xlsx 仅导出用途并列入替换计划 |
+| `npm run test:quality`（tsc + typecheck:node + eslint --max-warnings 0） | 通过 |
+| `npm run test:core` | 309/309 + 确定性门禁 |
+| `npm run test:review-persist` | 30/30（拆分、往返、旧键迁移、损坏兜底） |
+| `npm run test:all` | 221 项全通过（含浮层 42 项） |
+| `npm run test:desktop-smoke` | 13/13（隔离 profile 自启） |
+| `npm run test:desktop-visual` | 5/5，差异 0.000% |
+| `npm run package` | 安装器 110.7MB；静默安装 → 体检 477 条目 / asar 哈希一致 → 冒烟 13/13 → 卸载清理 |
+| 产物 | Win `EB2057E0…`；Linux tar.gz 142.4MB `05A562FE…`；asar `9532263C…` |
+| 运行时探针（复习进度） | 旧键迁移成功；按保存的 index 续接；输入一个词后 session 键字节不变、index 1→2 |
+| 图标 | ICO 7 档 / ICNS 7 档 / 11 档 PNG；14 个文件入库字节与工作区一致 |
 
-> Windows 桌面视觉基线已重建并复跑（差异 0.000%）；Linux 基线由 CI 首次运行生成后，用 `test:desktop-visual:apply` 落地。
+## 9. TypeWords 源码级对照（文件 → 机制 → 结论）
 
-## 6. TypeWords 借鉴（全盘源码，非 README 摘要）
+> 对照基于 `zyronon/TypeWords` 的实际源码（`app/core`、`app/components`），不是 README 摘要。每条给出文件名与本方结论；「未采纳」也写明原因，避免照搬技术栈。
 
-参考仓库：`zyronon/TypeWords`（Nuxt 3 + Vue 3 + Pinia + UnoCSS + ts-fsrs）。读了 `app/core/{stores,composables,hooks,utils}`、`app/components/{word,list,import,setting}`、`app/pages`，不是只看功能列表。
+### 9.1 已采纳 / 部分采纳
 
-### 6.1 值得直接借鉴（按收益/成本排序）
+| TypeWords 文件 | 机制 | 我方落点 | 状态 |
+| --- | --- | --- | --- |
+| `app/core/composables/usePracticePersistence.ts` | 进度只存词名字符串（`taskWordsStr` / `wordsStr` / `wrongWordsStr`），读取时用词库 Map 还原 | F-7：学了「大对象与小进度分离」，但 session 仍存完整 Word（跨词库复习要离线可用释义） | 部分采纳（v11.6.0） |
 
-1. **FSRS 调度器（`app/core/hooks/fsrs.ts`）**
-   用 `ts-fsrs` 的 `Card/Grade/Rating` 替代手写艾宾浩斯阶梯；`getGradeByWrongTimes` 把错误次数映射到 Again/Hard/Good/Easy，`fsrs.next(card, now, grade)` 统一处理间隔、难度、遗忘。收益：调度可解释、可调参、有成熟边界处理；成本：需要一次 `memoryRecords` 迁移（stage/interval/ease → Card），并保留旧字段只读兼容。建议先做「影子模式」：FSRS 只计算 `shadowDue`，不影响实际 due，跑一周对比再切换（我们的 `shadowInterval` 已有影子字段，可复用）。
+### 9.2 值得做、尚未做（按收益/成本排序）
 
-2. **紧凑持久化（`usePracticePersistence.ts:serializePracticeWordCache`）**
-   只存 `taskWordsStr` / `wordsStr` / `wrongWordsStr`（单词名），读取时用当前词库 Map 还原完整对象；同时把 `statStoreData` 与练习数据分开。直接解决我们 F-7「每次翻词序列化整份词表」。落地：`reviewInfoAtom` 拆成 `reviewSessionAtom`（词表，写入一次） + `reviewIndexAtom`（小对象，每次翻词只写 index），或照它存 `{words: string[], index}` 并在读取时从当前词库补全。
+| TypeWords 文件 | 机制 | 我方现状 | 建议 |
+| --- | --- | --- | --- |
+| `app/core/composables/practice-words/visible-word-typing.ts` + `usePracticeWordTyping.ts` | 把「这个键是否算对」抽成纯函数（`PracticeKeyboardInput`、`isPracticeCharacterCorrect`、`getPracticeInputCharacterStates`），组件只收集按键 | keydown 与 textarea `input` 两条通道各自解释按键；F-9 只在重放处兜住 | 抽出 `applyInputAction(state, action)` 纯函数，两条通道都调它；不改行为，可用现有 `test:typing` 兜底 |
+| `app/core/hooks/export.ts` | 每类数据独立 `version`（`EXPORT_DATA_KEY.version`、`SAVE_SETTING_KEY.version` 等），导入按版本迁移 | Dexie export + `data.json` 快照；有 `formatName`/库名校验与临时库 staging，但备份头没有 schema 版本 | 备份头加 `schemaVersion` + 迁移函数表；旧备份按版本升级，避免以后改 schema 只能拒绝导入 |
+| `app/components/word/WordMarkPickList.vue` | `know / unknown / mastered` 三态标记，已掌握进入忽略集合 | 只有「错题本」和 SRS 自动判定，没有用户主动「已掌握」 | 轻量版：词卡/错题本加「已掌握」，写入 `memoryRecords` 忽略标记，出词时跳过 |
+| `app/components/list/BaseList.vue` | `DynamicScroller` / `DynamicScrollerItem`（vue-virtual-scroller）做虚拟列表 | 错题本分页 + 全量 `toArray`；词库画廊全量渲染 | 数据量阈值触发后再上虚拟列表；先做聚合表（§10.3），否则虚拟列表也只是把内存峰值挪个位置 |
 
-3. **计时片段 + 暂停原因（`app/core/stores/practice.ts`）**
-   `segments: [start,end][]` + `pauseTimer(reason: manual|auto_visibility|auto_idle)`，切标签/空闲自动暂停，跨天时长能正确拆分。我们的计时是 `setInterval +1s`，切后台仍计时，统计会虚高。落地：在 `timerData` 增加 `segments` 与 `pauseReason`，统计页按片段汇总；这是数据口径修复，不是 UI 功能。
+### 9.3 明确不采纳
 
-4. **输入动作抽象（`usePracticeWordTyping.ts` + `visible-word-typing.ts`）**
-   把键盘/DOM input 统一成 `{key, code}` 动作（Backspace/Space/字符），状态机只处理动作；`inputLock`、重复练习、错误清空、自动下一词都在同一层。可直接修 F-9（code 首字符）与 IME 边界；我们的 `KeyEventHandler` / `TextAreaHandler` 两套事件模型应收敛到 `applyInputAction(action)`。
+| TypeWords 文件 / 做法 | 原因 |
+| --- | --- |
+| `app/core/hooks/fsrs.ts`（`ts-fsrs` + `fsrsEasyLimit/GoodLimit/HardLimit` 把错次数映射为 Rating） | 算法更成熟，但替换会改变所有存量用户的到期时间与复习节奏，属产品行为变更；先做 `Scheduler` 接口抽象，再灰度切换（§10.7） |
+| `app/core/config/env.ts:WordPracticeModeStageMap`（模式 → 阶段流水线） | 需要重排练习流程与 UI，收益偏产品化；当前「打字/默写/音标 + 开关」已覆盖需求 |
+| `app/core/hooks/article.ts`（文章练习） | 新功能而非稳定性问题，不在本轮范围 |
+| Nuxt/Vue 技术栈、`vue-i18n` 14 语言、emoji 文案、默认云同步 | 技术栈不同；本项目离线优先、无账号体系，引入云同步会带来隐私与合规成本 |
 
-5. **虚拟列表（`app/components/list/BaseList.vue`）**
-   `list.length > 200` 时用 `DynamicScroller`，否则普通滚动；`scrollToItem` 统一两种模式。适合我们的错题本（数万条）、词库画廊（385 本）、词卡例句列表。落地：React 侧用 `@tanstack/react-virtual`（已在 vendor-ui 分组里，需显式加依赖）或轻量自写窗口化；先用在错题本。
+### 9.4 落地顺序（建议）
 
-6. **版本化备份信封（`BackupData` + `useDataSyncPersistence`）**
-   每个 section 带 `version`，读取时 `checkAndUpgradeSaveSetting/SaveDict` 迁移；远端同步按 `updated_at` 比较后 pull/push，冲突有明确策略。我们已有 `release-info` 与导入校验，但备份没有 section 版本。落地：`data.json` 增加 `schemaVersion` 与每表 `version`，导入时按版本迁移，未知高版本拒绝而不是「尽力导入」。
+1. 输入纯函数化（`visible-word-typing.ts` 的思路）——纯重构，风险最低，直接消掉 F-9 的根因；
+2. 备份 `schemaVersion` + 迁移函数——为后续 schema 变更留退路；
+3. 错题聚合表 + 虚拟列表——解决数万条记录的内存峰值；
+4. 「已掌握」标记——减少无效复习，改动小；
+5. `Scheduler` 抽象 → FSRS 灰度——收益最大但需要产品决策。
 
-7. **学习任务生成与「认识/不认识/已掌握」标记（`study-task.ts`、`WordMarkPickList.vue`）**
-   `createStudyTask` 先取到期复习，没有到期时按 `wordReviewRatio` 从已学词里随机补复习；`addRandomReviewWhenNoDue` 用排除集避免与新词重复。`WordMarkPickList` 支持批量标记「我认识/不认识/已掌握」，已掌握词进入忽略集合，后续跳过。我们的 `MIX_WINDOW` 只做「掺入上级词」，没有「用户主动标记已掌握」；可借鉴为轻量「标记已掌握」入口，直接减少无效复习。
+## 10. 架构级方案（从根源解决，不逐处打补丁）
 
-8. **练习阶段流水线（`WordPracticeModeStageMap`）**
-   跟写→听写→默写→识别，按模式组合成阶段；每阶段有明确完成条件。我们目前是「模式开关 + 随机出词」，可借鉴为可选的「智能模式」：新词跟写 → 当日听写 → 次日默写，阶段状态存 memoryRecords，不改变现有自由练习。
+### 10.1 主进程同步 IO 下沉
 
-9. **单词元信息面板（`WordMetaPanel.vue` / `TranslationList.vue`）**
-   音标、英美音、例句、短语、同义词、词根、词源分区展示，信息架构清晰。我们的词卡已有中文/英文释义、例句、同义词，可补「短语/词根」区块，但需要数据源；先做 UI 分区与空态，不引入新 API。
+**根因**：备份/词库/日志都跑在 Electron 主进程事件循环；`JSON.parse(readFileSync(32MB))` 会阻塞消息泵。
+**已完成**：备份复制改 `copyTreeAsync` + `*.partial` 原子改名。
+**待做**：词库解析移到 `utilityProcess` 或 `worker_threads`，主进程只保留「请求-响应 + LRU」；日志改内存队列 + 2s 批量 `appendFile`；`injectEnhance` 的 CSS/JS 启动时读一次缓存。
+**验收**：备份 300MB 期间主窗口 `requestAnimationFrame` 间隔 <50ms；查询 8MB 词库 IPC 往返 <100ms。
 
-### 6.2 不建议照搬
+### 10.2 复习进度存储拆分（已完成）
 
-- **Nuxt/Vue/Pinia 技术栈**：重写成本远大于收益；我们只借模式，不借框架。
-- **Supabase 云同步默认开启**：与「本地优先、遥测默认关闭」的定位冲突；可保留「可选自建 Supabase」方案，但不作为默认。
-- **结果页 emoji 鼓励文案**：与本次「去 emoji、统一线性图标」的方向相反。
-- **14 种语言的 i18n**：维护成本高；先把中英文案与术语统一，再按需扩展。
-- **vxe-table / UnoCSS / 多套 iconify 集合**：我们已统一 Tailwind + tabler，引入会增加体积与风格分裂。
+`reviewModeInfo:session` + `reviewModeInfo:index`，纯函数 + 30 项断言；旧键迁移一次后删除。
+**验收**：1000 词会话翻词写入 <1KB；配额满时只丢 index，不丢词表。已达成。
 
-### 6.3 落地顺序（建议）
-
-1. 修 F-7（复习进度拆存储）+ F-9（输入动作层）——直接消除卡顿与首字符丢失，风险低。
-2. 错题本窗口化 + 聚合表（F-8 的根因）——解决数万条记录的白屏。
-3. FSRS 影子模式运行两周，再决定是否切换主调度。
-4. 计时片段与统计口径统一（会改变历史统计的解释，需要发布说明）。
-5. 备份 section 版本 + 可选云同步（默认关闭）。
-
-## 7. 架构级方案（从根源解决，不逐处打补丁）
-
-### 7.1 主进程同步 IO 下沉
-
-**根因**：备份/词库/日志都直接跑在 Electron 主进程事件循环上；`copyTreeSync` 与 `JSON.parse(readFileSync(32MB))` 会阻塞窗口消息泵。
-**方案**：
-1. 备份复制改为 `fs.promises` 版 `copyTree`，每个目录/每 N 个文件 `await new Promise(setImmediate)`；先写到 `backup-*.partial`，完成后原子改名，修剪只认完整目录。
-2. 词库解析移到 `utilityProcess`（Electron 43 支持）或 `worker_threads`；主进程只保留「请求-响应 + LRU 缓存」，`readDictContent` 不再同步 parse。
-3. 日志改内存队列 + 2 秒批量 `fs.promises.appendFile`；`injectEnhance` 的 CSS/JS 在启动时读一次缓存。
-**验收**：备份 300MB 用户数据期间，主窗口 `requestAnimationFrame` 间隔 <50ms；查询 8MB 词库时 IPC 往返 <100ms。
-
-### 7.2 复习进度存储拆分
-
-**根因**：`reviewInfoAtom` 把词表与大对象放进同一个 `atomWithStorage`，每次翻词都全量序列化。
-**方案**（v11.6 已落地，见 F-7）：`reviewModeInfo:session` 存会话（词表/词库/创建时间/结束标记，开始与结束时各写一次）+ `reviewModeInfo:index` 存下标（每次翻词 ≈30B）；旧键在模块加载时迁移一次后删除。拆分/合并/迁移是纯函数（`src/store/reviewPersistence.ts`），由 `npm run test:review-persist` 30 项断言守护。
-**验收**：1000 词复习会话，翻词时 localStorage 写入 <1KB；配额满时只丢 index（可重来），不丢词表。已达成（翻词只写 `index`）。
-
-### 7.3 错题本聚合与自动进阶
+### 10.3 错题本聚合与自动进阶
 
 **根因**：错题本每次全量读 `wordRecords` 再内存分组；自动进阶用 `currentDictId` 过滤级别词库 id。
-**方案**：
-1. 新增物化表 `wrongWordAggregate: 'word,dict,[dict+word]'`，字段 `wrongCount,lastAt,recordIds`；`saveWordRecord` 在同一事务里增量维护，删除/导入时重建。
-2. 错题本按 `wrongCount` 倒序分页查询聚合表，详情再按 `[word+dict]` 取原始记录；列表用窗口化渲染。
-3. 错题复习不再依赖 `currentDictId`：按聚合表里实际出现的 dict 分组，逐组加载词库；缺失时用 `memoryRecords` 的 trans/phone 构造 Word。
-**验收**：5 万条记录打开错题本 <500ms；自动进阶用户点「错题回顾」能进入复习而不是弹「当前词典没有错题」。
-**进度**：第 3 条已落地（F-8，按实际 dict 分组 + 记忆记录兜底）；第 1、2 条（聚合表 + 虚拟列表）仍是计划——当前只查 `wrongCount > 0` 且 `[word+dict]` 已有索引，几万条以内可用，再往上需要物化表。
+**已完成**：第 3 条（按实际 dict 分组 + 记忆记录兜底）随 F-8 落地。
+**待做**：物化表 `wrongWordAggregate: 'word,dict,[dict+word]'`（`wrongCount,lastAt,recordIds`），`saveWordRecord` 同事务增量维护；错题本按 `wrongCount` 倒序分页查聚合表；列表窗口化渲染。
+**验收**：5 万条记录打开错题本 <500ms。
 
-### 7.4 跨 IndexedDB 导入
+### 10.4 跨 IndexedDB 导入
 
-**根因**：RecordDB 与 QwertyPlusDB 是两个数据库，浏览器不提供跨库事务。
-**方案**：导入前把两份数据都写到 `*.importing` 临时库并校验行数/主键；校验通过后按「QwertyPlusDB → RecordDB」顺序切换（先写小库，失败可重试），并写 `importJournal` 记录阶段；下次启动若发现未完成 journal，提示「上次导入未完成，是否继续/回滚」。这是「可恢复」而不是「假装原子」。
-**验收**：构造第二段写入失败，重启后能明确提示并回到旧数据或继续完成，不出现半新半旧。
+**根因**：`RecordDB` 与 `QwertyPlusDB` 是两个库，浏览器不提供跨库事务。前端导入已有「临时库 staging + 主库单事务」，但面板的全量导入要同时写两个库。
+**方案**：导入前把两份数据写到 `*.importing` 临时库并校验行数/主键；按「QwertyPlusDB → RecordDB」顺序切换；写 `importJournal` 记录阶段，下次启动发现未完成 journal 时提示「继续/回滚」。这是「可恢复」而不是「假装原子」。
 
-### 7.5 版本单一来源
+### 10.5 版本单一来源
 
-**根因**：根 `package.json` 0.1.0、`local-fork/package.json` 应用版本、`shell.mjs` Electron 常量、安装器 DisplayVersion 四处各自为政。
-**方案**：`local-fork/package.json` 增加 `config.electronVersion` 与 `config.appVersion`；`shell.mjs`/`package.mjs` 只读它；`shell-info.json` 记录后由 `package.mjs` 断言一致；根 `package.json` 的 version 改为 `0.0.0-private` 并注明「上游网页版占位，不参与发布」。
-**验收**：`npm run shell && npm run package` 后，`shell-info.json`、exe FileVersion、安装器 DisplayVersion、界面版本四处一致。
+**根因**：根 `package.json` 0.1.0（上游网页版）、`local-fork/package.json` 应用版本、`shell.mjs` Electron 常量、安装器 DisplayVersion 四处各自为政。
+**方案**：`local-fork/package.json` 增加 `config.electronVersion`/`config.appVersion`，`shell.mjs`/`package.mjs` 只读它，`shell-info.json` 记录后由 `package.mjs` 断言一致。
+**验收**：`shell-info.json`、exe FileVersion、安装器 DisplayVersion、界面版本四处一致。
 
-### 7.6 main.js 拆分
+### 10.6 main.js 拆分
 
-**根因**：2638 行单文件，IPC、窗口、备份、词库、缓存混在一起，任何改动都可能碰全局状态。
-**方案**：按依赖方向拆 `electron/ipc/{settings,dict,backup,window}.js`、`electron/services/{backup,dict-cache,log}.js`、`electron/windows/{main,clipboard}.js`；共享状态收敛到 `electron/state.js`（显式 getter/setter），禁止模块间互相 require 具体实现。
-**验收**：`main.js` <300 行；每个 service 可在 Node 里单独 import 测试；现有 13 项冒烟与 221 条检查不变。
+**根因**：2833 行单文件，IPC、窗口、备份、词库、缓存混在一起，任何改动都可能碰全局状态。
+**方案**：按依赖方向拆 `electron/ipc/{settings,dict,backup,window}.js`、`electron/services/{backup,dict-cache,log}.js`、`electron/windows/{main,clipboard}.js`；共享状态收敛到 `electron/state.js`（显式 getter/setter）。
+**验收**：`main.js` <300 行；每个 service 可在 Node 里单独 import 测试；13 项冒烟与 221 条检查不变。
 
-## 8. 剩余风险（明确边界）
+### 10.7 调度器抽象（为 FSRS 留口）
 
-| 风险 | 说明 | 建议 |
+**根因**：艾宾浩斯阶梯硬编码在 `srsRules.ts` + `memoryLadder.ts`，`computeDue/evaluateWrong` 是纯函数但调用点分散。
+**方案**：定义 `Scheduler` 接口（`nextDue(record, grade) → {due, stage, ease}`），现有阶梯作为 `ladder` 实现，FSRS 作为可选实现；`updateMemoryProgress` 只依赖接口；迁移时按记录 `createdAt` 分批灰度。
+**验收**：切换实现不改 UI 与存储结构；`test:core` 309 条对两种实现都能跑（各自期望值）。
+
+## 11. 剩余风险（明确边界）
+
+| 风险 | 影响 | 现状/下一步 |
 | --- | --- | --- |
-| 主进程同步 IO | 备份已异步化；词库 `JSON.parse(readFileSync)` 仍可能卡 UI 数百毫秒（大词库） | 按 §7.1 把词库解析移到 `utilityProcess` |
-| 错题本全量内存 | 数万条记录一次 `toArray` + 内存分页（已按 `wrongCount` 过滤并有 `[word+dict]` 索引） | §7.3 聚合表 + 虚拟列表 |
-| 跨 DB 导入 | RecordDB 与 QwertyPlusDB 无法同一事务 | 先写 RecordDB，再写自定义词库；失败时提示「部分导入」并保留备份，后续做导入日志 |
-| CSP 兜底 | hash 解析失败仍回退 `unsafe-inline` | 改为构建期生成 hash 清单，运行时只读清单；失败则拒绝内联脚本 |
-| 安装器未签名 | SmartScreen 提示 | 购买代码签名证书后接入 signtool |
-| Linux 实机 | 只在 CI（xvfb）验证 | 在 Ubuntu 22.04/24.04 实机跑一次冒烟与视觉 |
+| 词库解析在主进程 | 首次打开超大词库可能卡数百毫秒 | §10.1 `utilityProcess` |
+| 错题本全量内存 | 数万条以上打开变慢 | §10.3 聚合表 + 虚拟列表 |
+| 安装器未签名 | SmartScreen 首次拦截 | 购买代码签名证书后接 signtool |
+| Linux 未上实机 | 只在 CI（xvfb）验证 | Ubuntu 22.04/24.04 实机跑一次冒烟与视觉 |
+| 多标签页同时练习 | 记录各写各的，统计重复计入 | 需要跨标签页锁（`navigator.locks`）或单实例提示 |
+| echarts 5.6 moderate 公告 | 图表页理论 XSS 面 | 升 6 需图表回归，单独一版做 |
+| xlsx 0.18.5 无修复版 | 仅用于导出、不解析用户文件 | 换 `exceljs` 或官方 CDN 包 |
+| macOS | 已移出支持范围（无实机/签名/dmg） | 交叉组装代码保留但不再承诺 |
 | Electron 43 EOL | 2027-01-05 | 到期前升级 44+，品牌化已自动化 |
 
-## 9. 复核方法（可重复）
+## 12. 复核方法（可重复）
 
 ```bash
 npm run typecheck && npm run typecheck:node && npm run lint:strict
 npm run test:all                       # 221 项，含浮层 42 项 + 复习持久化 30 项
+npm run test:core                      # 309 条
 QZ_TEST_APP_DIR=release/shell-win32-x64 npm run test:desktop-smoke
 QZ_TEST_APP_DIR=release/shell-win32-x64 npm run test:desktop-visual
-npm run package                        # 安装器全流程
+npm run package                        # 安装器全流程（Windows）
 npm run test:icons && npm run test:format
 ```
 
+## 附录 A：本轮自引入并修掉的缺陷
+
+| 问题 | 根因 | 修复 |
+| --- | --- | --- |
+| 交叉组装 Linux 外壳体检失败 | `checkInstallDir` 永远按当前机器平台找 exe | 增加目标平台参数，`shell.mjs` 传入 `--platform` |
+| 交叉组装 macOS 报「缺少 resources」 | `resourcesDirFor` 只认目录本身以 `.app` 结尾 | 支持「外层目录含 .app」 |
+| macOS 外壳重命名 EPERM | Windows 文件系统代理先建目标再报错；脚本提前创建目标 Resources | 空目标清理重试 + 系统 `move` + 延后创建 |
+| Windows 打 Linux tar.gz 报 `Cannot connect to D:` | GNU tar 把盘符当远程主机 | 检测 GNU tar 后加 `--force-local` |
+| 安装器静默安装到了默认目录 | NSIS 的 `/D=` 必须是最后一个参数 | 调整参数顺序 + 不含空格的临时目录 |
+| 卸载残留 `Uninstall.exe` | 卸载器从安装目录运行，删不掉自己 | 去掉 `_?=`，卸载段先 `SetOutPath $TEMP` |
+| 「冒烟通过（0 项 PASS）」 | dsh-smoke 输出 JSON，不是 PASS 文本 | 解析 JSON 并要求 13/13 |
+| `*.icns` 被当文本转换 | `.gitattributes` 只有 `*.ico binary` | 补 `*.icns binary` 与其余二进制规则，逐个校验入库字节 |
+| 校验和文件互相覆盖 | `writeSums` 整体重写 | 按产物名合并 |
+| `@svgr/*` 被当死依赖删除 | 静态引用扫描看不到构建期 `require` | 恢复并注明不能删 |
+
+## 附录 B：修复台账（总表里未展开的条目）
+
+> 正文按模块展开的是有代表性的根因；下表补齐其余条目的**可执行修复动作**，便于逐条复核。
+
+| ID | 可执行修复 |
+| --- | --- |
+| B-1 | 统一 Node 基线：`engines.node >=22.12 <23`、`.nvmrc=22`、Docker `node:22-bookworm-slim`、四个 workflow `node-version: 22`、`pre-check.{sh,ps1}` 与 `install.{sh,ps1}` 同口径 |
+| B-2 | Actions 升 v4；`e2e.yml` 去掉 `\|\| echo "status=failure"` 这类软失败写法与随后的 status 检查，失败即红 |
+| B-3 | `new URL()` 解析 + `127.0.0.1/localhost/::1` 白名单；`playwright.config.ts` 纳入 `tsconfig.node.json`，新增 `typecheck:node` 进 `test:quality` |
+| B-4 | 下载后核对官方 `SHASUMS256.txt`；不符则删除重下；支持 `QZ_ELECTRON_SHA256` 指定、`QZ_SKIP_ELECTRON_VERIFY=1` 显式跳过（会打警告） |
+| B-5 | `tsconfig.target=ES2020`；删除 `react-app-polyfill`；`vite.build.target='es2020'`，与 Electron 43 对齐 |
+| B-6 | `drop:['debugger']` + `pure:['console.log','console.debug','console.info']`，保留 `warn/error` |
+| B-7 | 新增 `.dockerignore`（node_modules/build/release/backup/logs/.git/.tools 等）；构建阶段 `npm ci --ignore-scripts` + `HUSKY=0` |
+| B-8 | `classnames` 全量替换为 `cn()` 并删依赖；删 `@types/gtag.js`、`@types/echarts`、`@types/react-router-dom`、`react-app-polyfill`；`typescript` 移到 devDependencies；`@svgr/*` 恢复（构建期需要） |
+| B-9 | 每个安装目录各备份一份；回滚后校验 sha256；失败写 `logs/partial-rollback-*.json` 并 `exitCode=3` |
+| B-10 | asar 先打到 staging 外的临时文件，成功后 `rename` 进 `resources/`；`finally` 清理临时文件 |
+| B-11 | `writeSums` 读旧文件按产物名合并，再按名称排序写回 |
+| B-12 | `.gitattributes` 补 `*.icns/*.jpg/*.gif/*.webp/*.woff*/*.ttf/*.zip/*.gz/*.exe/*.dll/*.node/*.asar` 为 `binary`，`scripts/templates/*.nsi` 为 `-text` |
+| B-13 | react-router 升 6.30.6（修 open redirect）；echarts 5.6 待升 6（需图表回归）；xlsx 仅导出用途，计划换 `exceljs` |
+| E-14 | `publicSettings()` 不再拼接 `plusDir/userDataDir/exportsDir`，只下发 `version` 与设置项 |
+| E-10 | 字典 id 与路径映射改 `Object.prototype.hasOwnProperty.call(map, key)`，拒绝原型链命中 |
