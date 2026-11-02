@@ -91,6 +91,8 @@ scripts/                 发布 / 安装器 / 回滚 / 质量门禁 / CDP 冒烟
 | `npm run test:core` | **核心算法回归 309 条**（SRS 120 + 自动进阶 189）+ 确定性门禁，真实源码打包仿真 |
 | `npm run test:review-persist` | 复习进度持久化 30 项：会话/下标拆分、往返一致、旧键迁移、损坏数据兜底 |
 | `npm run test:word-stats` | 统计聚合 23 项：五套口径、脏记录、与上一版逐字段一致；附新旧实现性能对照 |
+| `npm run test:input-judge` | 输入判定 27 项：增量起点、越界夹取、大小写/分隔符等价、错误文案；含与重构前实现 2000 组对拍 |
+| `npm run test:schema-sync` | 备份 schema 6 项：Dexie 版本 ↔ 备份常量 ↔ 导入守卫一致性 |
 | `npm run test:all` | **一键跑完**：图标一致性 + tsc/eslint + 正确率 + 统计聚合 + 属性测试 + 词库下载 + 核心回归 309 + 五个 CDP 行为脚本（不含 `test:visual` / `test:desktop-visual`，它们分别需要浏览器与桌面程序） |
 | `npm run test:stats` | 结果页正确率/错误分级的 17 条断言（空词表 0/0、NaN 兜底、0~100 夹取、分档边界） |
 | `npm run test:fuzz` | 纯函数属性测试：csvSafeCell / normalizeTrans / computeCorrectRate 各 800 组固定种子随机输入 |

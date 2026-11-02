@@ -443,3 +443,38 @@ node scripts/shell.mjs --asar <app.asar>         # 指定包
 ## 验证
 
 `test:all` 244 项、`test:core` 309/309、`test:word-stats` 23/23、冒烟 13/13、桌面视觉 5/5、安装器全流程。
+
+---
+
+# v11.6.2（把 TypeWords 的两条设计真正落进代码）
+
+前两版是「盘点 + 判断」，这一版把其中两条收益最高、风险最低的借鉴落地。
+
+## 1. 输入判定纯函数化（技术实现，借鉴 `visible-word-typing.ts`）
+
+TypeWords 把「这个键是否算对」从组件里抽成纯函数（`PracticeKeyboardInput`、`isPracticeCharacterCorrect`、
+`getPracticeInputCharacterStates`），组件只收集按键。我们照这个结构做了对应实现：
+
+- 新增 `src/pages/Typing/components/WordPanel/components/Word/inputJudgement.ts`
+  - `judgeInput({displayWord, inputWord, judgedLength, ignoreCase, allowSeparatorEquivalence})`
+    返回 `idle` / `correct{from,judged,finished}` / `wrong{index,extra}`；
+  - `describeMistake(...)` 返回漏字、重复、大小写、错字、多输入五类提示。
+- `Word/index.tsx` 的判定 effect 从 ~90 行缩到「守卫 → 按结果写状态 / 播音效」，keydown 与 textarea
+  两条通道共用同一判定，不再各写一份比较逻辑。
+- 新增 `npm run test:input-judge`（27 项）：增量起点、越界输入夹取、大小写、分隔符等价、错误文案，
+  以及**与重构前实现 2000 组随机输入逐字段对拍**（等价性由测试保证，不靠肉眼）。
+
+## 2. 备份 schemaVersion（数据健壮性，借鉴 `export.ts` 的分域版本）
+
+TypeWords 的导出数据每类都带 `version`，导入按版本迁移。我们给备份快照加上 `schemaVersion`：
+
+- `collectBackupSnapshot()` 写入 `schemaVersion`（与 Dexie `version(5)` 同步）；
+- 全量导入时若 `incomingSchema > 当前`，直接拒绝并提示「请先升级应用」——旧代码读新结构只会写坏数据；
+- 旧备份没有该字段时按兼容处理，不误拒；
+- 新增 `npm run test:schema-sync`（6 项）：Dexie 版本、备份常量、快照写入、导入比较、提示文案五处一致，
+  防止以后改 schema 忘了改常量。
+
+## 验证
+
+`test:all` 277 项、`test:core` 309/309、`test:input-judge` 27/27、`test:schema-sync` 6/6、
+冒烟 13/13、桌面视觉 5/5、安装器全流程。

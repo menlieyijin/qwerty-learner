@@ -76,16 +76,18 @@
     "rollback": "node scripts/rollback.mjs",
     "rollback:list": "node scripts/rollback.mjs --list",
     "check:install": "node scripts/check-install.mjs",
-    "test:all": "npm run test:icons && npm run test:quality && npm run test:stats && npm run test:word-stats && npm run test:fuzz && npm run test:dict && npm run test:core && npm run test:review-persist && npm run test:start-level && npm run test:pages && npm run test:typing && npm run test:enhance && npm run test:enhance:detail && npm run test:csv",
+    "test:all": "npm run test:icons && npm run test:quality && npm run test:stats && npm run test:word-stats && npm run test:fuzz && npm run test:dict && npm run test:core && npm run test:input-judge && npm run test:schema-sync && npm run test:review-persist && npm run test:start-level && npm run test:pages && npm run test:typing && npm run test:enhance && npm run test:enhance:detail && npm run test:csv",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint .",
     "lint:strict": "eslint src --ext .ts,.tsx --max-warnings 0",
-    "quality": "npm run test:icons && npm run test:format && npm run test:quality && npm run test:stats && npm run test:word-stats && npm run test:fuzz && npm run test:dict && npm run test:core && npm run test:review-persist",
+    "quality": "npm run test:icons && npm run test:format && npm run test:quality && npm run test:stats && npm run test:word-stats && npm run test:fuzz && npm run test:dict && npm run test:core && npm run test:input-judge && npm run test:schema-sync && npm run test:review-persist",
     "prettier": "prettier --write .",
     "prepare": "husky install",
     "typecheck:node": "tsc -p tsconfig.node.json --noEmit",
     "test:review-persist": "node scripts/verify-review-persist.mjs",
-    "test:word-stats": "node scripts/verify-word-stats.mjs"
+    "test:word-stats": "node scripts/verify-word-stats.mjs",
+    "test:input-judge": "node scripts/verify-input-judge.mjs",
+    "test:schema-sync": "node scripts/verify-schema-sync.mjs"
   },
   "lint-staged": {
     "src/**/*.{ts,tsx}": [

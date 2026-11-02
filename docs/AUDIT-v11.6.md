@@ -1,7 +1,7 @@
 # v11.6.0 全栈审查（根因版）
 
 - 审查对象：`qwerty-src`（React 18 + Vite + TS 前端，Electron 43 外壳，IndexedDB 本地库）
-- 审查时点：2026-11-02，对应 `v11.6.0`（`c505413`）；`v11.6.1` 为增量（统计聚合拆分 + 计时可见性修复 + 补齐 TypeWords 全量盘点）
+- 审查时点：2026-11-02，对应 `v11.6.0`（`c505413`）；`v11.6.1` 为增量（统计聚合拆分 + 计时可见性修复 + 补齐 TypeWords 全量盘点）；`v11.6.2` 落地两条 TypeWords 借鉴（输入判定纯函数化 + 备份 schemaVersion）
 - 方法：逐目录读代码 → 对高风险路径做反证（读失败、脏备份、并发备份、异常窗口状态、超大词表）→ 用自动化断言固化结论
 - 结构：先给**覆盖矩阵**与**问题总表**（位置/影响/级别/状态），再按模块逐条给根因与修复；数据库、接口单独成章；最后是与 TypeWords 的源码级对照与架构级方案
 
@@ -14,6 +14,9 @@
 1. **性能结论从形容词变成实测数字**：把统计聚合抽成纯函数 `wordStatsAggregate.ts`，新增 `npm run test:word-stats`——23 项口径/脏数据断言，外加与「上一版实现」「v11.6 之前的数组展开实现」的同数据对照（同日 1 万条 629.1ms → 28.6ms）。
 2. **计时语义补一半**：发现窗口最小化/切走时仍每秒累加学习时间（F-11），已改为不可见不累计；完整「暂停原因 + 计时片段」模型列为下一步（§9.2）。
 3. **TypeWords 从「读过几个文件」变成全量盘点**：213 个文件按 9 个分区清点，逐条标「已采纳 / 值得做 / 不采纳」，并补上两条此前漏掉的候选（计时片段、空闲暂停）与两条不采纳理由（`event.code`、`word-test`）。
+4. **两条借鉴真正落地（v11.6.2）**：
+   - 技术实现：按 `visible-word-typing.ts` 的思路，把「键是否算对 / 判到哪一位 / 错在哪」抽成纯函数 `inputJudgement.ts`，Word 组件只负责写状态与音效；两条输入通道共用同一判定。新增 `test:input-judge` 27 项，含与重构前实现的 2000 组随机对拍。
+   - 数据健壮性：按 `export.ts` 的分域版本思路，备份快照写入 `schemaVersion`，导入时拒绝更新版本的备份；新增 `test:schema-sync` 6 项静态校验，防止常量与 Dexie 版本漂移。
 
 ## 0.2 覆盖矩阵
 
@@ -59,7 +62,7 @@
 | F-6 | 数据库 | `src/utils/db/index.ts:version(5)` | `reviewRecords` 死表、`[dict+chapter]` 死索引、缺 `[word+dict]` → 删除确认退化为全表扫描 | P2 | 已修 |
 | F-7 | 前端/复习 | `src/store/reviewInfoAtom.ts`、`src/store/reviewPersistence.ts` | 整份词表与下标同键，每次翻词全量 `JSON.stringify` + 同步写盘 → 大词表卡顿，配额满时连进度都写不进去 | P2 | 已修 |
 | F-8 | 前端/错题 | `src/pages/ErrorBook/index.tsx:startWrongReview` | 用 `currentDictId` 过滤历史错题 → 自动进阶下永远提示「当前词典还没有错题」 | P1 | 已修 |
-| F-9 | 前端/输入 | `src/pages/Typing/index.tsx:142-192`、`TextAreaHandler/index.tsx` | 「开始/继续」重放合成 keydown，code 词库走 textarea input → 首字符丢失 | P2 | 已修（治标，根因方案见 §9.2） |
+| F-9 | 前端/输入 | `pages/Typing/index.tsx:142-192`、`TextAreaHandler/index.tsx`、`Word/inputJudgement.ts` | 「开始/继续」重放合成 keydown，code 词库走 textarea input → 首字符丢失 | P2 | 已修（重放兜住 + 判定抽纯函数，见 §2.1） |
 | F-10 | 后端/导入 | `local-fork/electron/enhance/enhance.js:importAll` | 逐表 clear+put、非法行静默丢弃 → 中途失败留下半新半旧数据 | P1 | 已修 |
 | F-11 | 前端/计时 | `src/pages/Typing/index.tsx:248-260`（`setInterval` + `TICK_TIMER`） | 窗口不可见（最小化/切走/锁屏）仍每秒累加 `timerData.time` → WPM、结果页用时、章节时长都会被「挂着一下午」稀释 | P2 | 已修（`document.hidden` 时跳过 tick） |
 | F-12 | 前端/统计 | `hooks/wordStatsAggregate.ts:aggregateWordRecords` | 错误键先展开成数组再计数 → 与错误次数等长的内存峰值，5 万条记录时可达数百万字符串 | P2 | 已修（Map 直接合并） |
@@ -94,7 +97,7 @@
 DB 打不开（配额满/被其它标签页阻塞/隐私模式）时返回 `[]`，UI 落到「词库已全部学完」。根因是**用空数组表达错误**。修复：抛错 → `useWordList` 维护 `error` → 练习页显示「本地学习数据读取失败（数据仍在，不代表清空）」并提示先导出备份。
 
 **F-9 code 词库首字符丢失** — `pages/Typing/index.tsx:142-192`、`TextAreaHandler/index.tsx`
-开始/继续时缓存按键并用合成 `KeyboardEvent` 重放；code 模式走 textarea 的 `input` 事件，合成 keydown 不产生默认输入。已修：焦点在 textarea 时写入值并派发 `InputEvent('input',{data})`。这是**在重放处兜住**，根因（两条输入通道各自解释按键）见 §9.2 的纯函数化方案。
+开始/继续时缓存按键并用合成 `KeyboardEvent` 重放；code 模式走 textarea 的 `input` 事件，合成 keydown 不产生默认输入。已修两层：① 焦点在 textarea 时写入值并派发 `InputEvent('input',{data})`（重放处兜住）；② v11.6.2 把判定抽成 `judgeInput` / `describeMistake`（`Word/inputJudgement.ts`），Word 组件只保留「守卫 → 写状态 / 播音效」，keydown 与 textarea 两条通道共用同一判定。`test:input-judge` 27 项，其中 2000 组随机输入与重构前实现逐字段一致。
 
 **F-11 后台仍在计时（v11.6.1）** — `pages/Typing/index.tsx:248-260`
 `setInterval` 只看 `state.isTyping`，不看窗口是否可见。桌面上把窗口最小化/切走几小时，`timerData.time` 照样每秒 +1，直接污染三处展示：结果页「用时」、WPM、分享图。根因是**计时器以「会话开始」为唯一条件，没有可见性/空闲状态**。最小修复：`document.hidden` 时跳过 tick（时间只累计可见秒数）。完整方案（暂停原因 + 计时片段）见 §9.2。
@@ -256,11 +259,13 @@ DB 打不开（配额满/被其它标签页阻塞/隐私模式）时返回 `[]`�
 | `npm run test:core` | 309/309 + 确定性门禁 |
 | `npm run test:review-persist` | 30/30（拆分、往返、旧键迁移、损坏兜底） |
 | `npm run test:word-stats` | 23/23（五套口径 + 脏数据 + 与上一版逐字段一致） |
-| `npm run test:all` | 244 项全通过（含浮层 42 项 + 复习持久化 30 项 + 统计聚合 23 项） |
+| `npm run test:input-judge` | 27/27（判定边界 + 错误文案 + 与重构前实现 2000 组对拍） |
+| `npm run test:schema-sync` | 6/6（Dexie 版本 ↔ 备份常量 ↔ 导入守卫） |
+| `npm run test:all` | 277 项全通过（含浮层 42 + 复习持久化 30 + 统计聚合 23 + 输入判定 27 + schema 6） |
 | `npm run test:desktop-smoke` | 13/13（隔离 profile 自启） |
 | `npm run test:desktop-visual` | 5/5，差异 0.000% |
-| `npm run package` | 安装器 110.7MB（v11.6.1）；静默安装 → 体检 477 条目 / asar 哈希一致 → 冒烟 13/13 → 卸载清理 |
-| 产物（v11.6.1） | Win `1208D44B…`；Linux tar.gz 142.4MB `3559ED56…`；asar `9934D619…`；tar 内 asar 与 shell-info 已核对 |
+| `npm run package` | 安装器 110.7MB（v11.6.2）；静默安装 → 体检 477 条目 / asar 哈希一致 → 冒烟 13/13 → 卸载清理 |
+| 产物（v11.6.2） | Win `5C916676…`；Linux tar.gz `3E0035C0…`；asar `7EE88101…`；tar 内 asar 与 shell-info 已核对 |
 | 运行时探针（复习进度） | 旧键迁移成功；按保存的 index 续接；输入一个词后 session 键字节不变、index 1→2 |
 | 图标 | ICO 7 档 / ICNS 7 档 / 11 档 PNG；14 个文件入库字节与工作区一致 |
 
@@ -289,13 +294,13 @@ DB 打不开（配额满/被其它标签页阻塞/隐私模式）时返回 `[]`�
 | --- | --- | --- | --- |
 | `app/core/composables/usePracticePersistence.ts` | 进度只存词名字符串（`taskWordsStr` / `wordsStr` / `wrongWordsStr`），读取时用词库 Map 还原 | F-7：学「大对象与小进度分离」，但 session 仍存完整 Word（跨词库复习要离线可用释义） | 部分采纳（v11.6.0） |
 | `app/core/composables/practice-words/usePracticeIdleTimer.ts` | 3 分钟无操作自动暂停；`getIdlePauseTime` / `normalizePracticeTimer`、按天切分计时片段 | F-11：本轮只做「不可见不累计」的最小版；完整片段模型见 9.2 | 部分采纳（v11.6.1） |
+| `app/core/composables/practice-words/visible-word-typing.ts` + `usePracticeWordTyping.ts` | 「这个键是否算对」抽成纯函数（`PracticeKeyboardInput`、`isPracticeCharacterCorrect`、`getPracticeInputCharacterStates`），组件只收集按键 | `Word/inputJudgement.ts`：`judgeInput` 给出 idle/correct/wrong（含增量起点、越界夹取）、`describeMistake` 给出漏字/重复/大小写/错字/多输入文案；Word 组件只写状态与音效 | **已采纳**（v11.6.2，27 项） |
+| `app/core/hooks/export.ts` | 每类数据独立 `version`（`EXPORT_DATA_KEY.version`、`SAVE_SETTING_KEY.version` 等），导入按版本迁移 | 备份快照写入 `schemaVersion`（与 Dexie 版本同步）；导入时 `incoming > current` 直接拒绝并提示升级；旧备份缺字段则按兼容处理 | **已采纳（最小版）**（v11.6.2，6 项静态校验） |
 
 ### 9.2 值得做、尚未做（按收益/成本排序）
 
 | TypeWords 文件 | 机制 | 我方现状 | 建议 |
 | --- | --- | --- | --- |
-| `app/core/composables/practice-words/visible-word-typing.ts` + `usePracticeWordTyping.ts` | 把「这个键是否算对」抽成纯函数（`PracticeKeyboardInput`、`isPracticeCharacterCorrect`、`getPracticeInputCharacterStates`），组件只收集按键 | keydown 与 textarea `input` 两条通道各自解释按键；F-9 只在重放处兜住 | 抽出 `applyInputAction(state, action)` 纯函数，两条通道都调它；不改行为，可用现有 `test:typing` 兜底 |
-| `app/core/hooks/export.ts` | 每类数据独立 `version`（`EXPORT_DATA_KEY.version`、`SAVE_SETTING_KEY.version` 等），导入按版本迁移 | Dexie export + `data.json` 快照；有 `formatName`/库名校验与临时库 staging，但备份头没有 schema 版本 | 备份头加 `schemaVersion` + 迁移函数表；旧备份按版本升级，避免以后改 schema 只能拒绝导入 |
 | `app/core/stores/practice.ts` + `usePracticeIdleTimer.ts` | `timerPaused` + `timerPauseReason`（manual / auto_visibility / auto_idle）+ `segments: [start,end][]`，暂停时定格片段、恢复时新开片段 | 只有 `timerData.time` 一个累计值；可见性已在 v11.6.1 跳过，但没有暂停原因/片段，无法区分「真学」与「挂着」 | 加 `segments` 与暂停原因：统计页可按片段算真实学习时长；迁移时把旧 `time` 视为一个片段 |
 | `app/components/word/WordMarkPickList.vue` | `know / unknown / mastered` 三态标记，已掌握进入忽略集合 | 只有「错题本」和 SRS 自动判定，没有用户主动「已掌握」 | 轻量版：词卡/错题本加「已掌握」，写入 `memoryRecords` 忽略标记，出词时跳过 |
 | `app/components/list/BaseList.vue` | `DynamicScroller` / `DynamicScrollerItem`（vue-virtual-scroller）做虚拟列表 | 错题本分页 + 全量 `toArray`；词库画廊全量渲染 | 数据量阈值触发后再上虚拟列表；先做聚合表（§10.3），否则虚拟列表也只是把内存峰值挪个位置 |
@@ -314,8 +319,8 @@ DB 打不开（配额满/被其它标签页阻塞/隐私模式）时返回 `[]`�
 
 ### 9.4 落地顺序（建议）
 
-1. 输入纯函数化（`visible-word-typing.ts` 的思路）——纯重构，风险最低，直接消掉 F-9 的根因；
-2. 备份 `schemaVersion` + 迁移函数——为后续 schema 变更留退路；
+1. ~~输入纯函数化~~（v11.6.2 已完成，`test:input-judge` 27 项）；
+2. ~~备份 `schemaVersion`~~（v11.6.2 已完成最小版；迁移函数表等第一次真正改 schema 时再加）；
 3. 计时片段 + 暂停原因（`practice.ts` / `usePracticeIdleTimer.ts`）——统计页可显示「真实学习时长」，本轮已完成可见性这一半；
 4. 错题聚合表 + 虚拟列表——解决数万条记录的内存峰值；
 5. 「已掌握」标记——减少无效复习，改动小；
@@ -384,7 +389,9 @@ DB 打不开（配额满/被其它标签页阻塞/隐私模式）时返回 `[]`�
 ```bash
 npm run typecheck && npm run typecheck:node && npm run lint:strict
 npm run test:word-stats                # 统计聚合 23 项 + 性能对照
-npm run test:all                       # 244 项，含浮层 42 + 复习持久化 30 + 统计聚合 23
+npm run test:input-judge               # 输入判定 27 项（含 2000 组对拍）
+npm run test:schema-sync                # 备份 schema 6 项
+npm run test:all                       # 277 项，含浮层 42 + 复习持久化 30 + 统计聚合 23 + 判定 27 + schema 6
 npm run test:core                      # 309 条
 QZ_TEST_APP_DIR=release/shell-win32-x64 npm run test:desktop-smoke
 QZ_TEST_APP_DIR=release/shell-win32-x64 npm run test:desktop-visual

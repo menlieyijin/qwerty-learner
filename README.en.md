@@ -89,6 +89,8 @@ scripts/                 release / rollback / quality gate / CDP smoke / level-p
 | `npm run test:core` | **309 core-algorithm assertions** (120 SRS + 189 auto-advance) + determinism gate, simulated from real source |
 | `npm run test:review-persist` | 30 review-persistence checks: session/index split, round-trip, legacy-key migration, corrupt-data fallback |
 | `npm run test:word-stats` | 23 stats-aggregation checks: five metrics, dirty rows, byte-identical output vs the previous implementation, plus a before/after benchmark |
+| `npm run test:input-judge` | 27 input-judgement checks: incremental offset, overflow clamping, case/separator equivalence, hint text, plus 2000 randomized cases against the pre-refactor implementation |
+| `npm run test:schema-sync` | 6 backup-schema checks: Dexie version, backup constant, snapshot field and import guard stay in sync |
 | `npm run test:all` | **Everything in one shot**: icon consistency + tsc/eslint + stats + property tests + dict download + 309 core assertions + five CDP behaviour scripts (excludes `test:visual` / `test:desktop-visual`, which need a browser / desktop build) |
 | `npm run test:stats` | 17 assertions for the result-screen accuracy/mistake-level (0/0 boundary, NaN guards, 0–100 clamp, level thresholds) |
 | `npm run test:fuzz` | Property tests: csvSafeCell / normalizeTrans / computeCorrectRate, 800 seeded random inputs each |

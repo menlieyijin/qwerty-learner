@@ -216,9 +216,15 @@
   // 主进程在备份时通过 'backup:request' 事件请求；这里只读收集 RecordDB 全部 store、
   // QwertyPlusDB.dicts（自定义词库）、localStorage 全量与主进程设置，序列化后回传。
   // 注意：全程只读、连接用完即关；任何一步失败都不影响主进程的目录副本备份。
+  //
+  // v11.6.2（借鉴 TypeWords 的分域 version）：备份里带 schemaVersion。
+  // 与 src/utils/db/index.ts 的 this.version(5) 必须同步（`npm run test:schema-sync` 会校验）；
+  // 导入时若备份的 schema 比当前应用新，直接拒绝——旧代码读新结构只会写坏数据。
+  const RECORD_DB_SCHEMA_VERSION = 5
   async function collectBackupSnapshot() {
     const snap = {
       version: api.version || settings.version || '',
+      schemaVersion: RECORD_DB_SCHEMA_VERSION,
       ts: Date.now(),
       recordDb: {},
       customDicts: [],
@@ -1277,6 +1283,11 @@
         return toast('JSON 解析失败')
       }
       if (!data || !data.recordDb) return toast('不是有效的全量数据文件')
+      // v11.6.2：备份来自更新的 schema 时拒绝导入（旧代码不认识新表/新字段，写进去只会半坏）
+      const incomingSchema = Number(data.schemaVersion)
+      if (Number.isFinite(incomingSchema) && incomingSchema > RECORD_DB_SCHEMA_VERSION) {
+        return toast(`备份来自更新的版本（数据版本 ${incomingSchema}，当前支持 ${RECORD_DB_SCHEMA_VERSION}），请先升级应用`)
+      }
       if (!testHook && !window.confirm('导入会覆盖当前全部学习数据（会先自动备份一份），确定继续？')) return
       toast('正在备份当前数据…')
       const backup = await api.backupNow()
