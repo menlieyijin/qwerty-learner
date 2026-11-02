@@ -100,10 +100,24 @@ function pngDiffRatio(aBuf, bBuf) {
 }
 
 function writeSums(files, name = `SHA256SUMS-${short}.txt`) {
-  const lines = files.map((f) => `${sha256(f)}  ${path.basename(f)}`)
   const p = path.join(outDir, name)
-  fs.writeFileSync(p, `${lines.join('\n')}\n`)
-  ok(`校验和：${p}`)
+  // 合并而不是覆盖：同一版本会分平台各跑一次 package，覆盖会让先出的产物失去校验和
+  const entries = new Map()
+  if (fs.existsSync(p)) {
+    for (const line of fs.readFileSync(p, 'utf8').split(/\r?\n/)) {
+      const m = line.match(/^([a-f0-9]{64})\s{2}(.+)$/i)
+      if (m) entries.set(m[2], m[1].toUpperCase())
+    }
+  }
+  for (const f of files) entries.set(path.basename(f), sha256(f).toUpperCase())
+  fs.writeFileSync(
+    p,
+    `${[...entries.entries()]
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([n, h]) => `${h}  ${n}`)
+      .join('\n')}\n`,
+  )
+  ok(`校验和：${p}（${entries.size} 个产物）`)
   return p
 }
 
